@@ -1,14 +1,11 @@
 add_rules("mode.debug", "mode.release")
 
-target("OpenSourceWinWEditor")
-    set_kind("binary")
-    add_files("**.cpp")
+local function SourceCommon()
+    set_languages("c99", "c++17")
     if is_mode("debug") then
         add_cxflags("-DDEBUG")
     end
-    add_includedirs("PrecompiledHeaders")
     add_includedirs("./")
-    set_pcxxheader("PrecompiledHeaders/OpenSourcePrefix.h")
     if is_os("windows") then
         add_defines("PLATFORM_WIN")
     elseif is_os("linux") then 
@@ -16,6 +13,36 @@ target("OpenSourceWinWEditor")
     elseif is_os("macosx") then 
     elseif is_os("ios") then 
     end
+end 
+
+target("SourceEditor")
+    set_kind("binary")
+    add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
+    SourceCommon()
+
+target("Source")
+    set_kind("shared")
+    add_headerfiles("Editor/**.h|Platform/Windows/EntryPoint/*.h")
+    add_files("Editor/**.cpp|platform/Windows/EntryPoint/*.cpp")
+
+    add_headerfiles("Runtime/**.h")
+    add_files("Runtime/**.cpp")
+
+    add_headerfiles("PlatformDependent/**.h")
+
+    add_headerfiles("Modules/**.h")
+    add_files("Modules/**.cpp")
+
+    add_headerfiles("External/**.h")
+    add_files("External/**.cpp")
+
+    add_headerfiles("Configuration/**.h")
+    add_files("Configuration/**.cpp")
+
+    SourceCommon()
+    add_defines("SOURCE_EDITOR")
+    add_includedirs("PrecompiledHeaders")
+    set_pcxxheader("PrecompiledHeaders/SourcePrefix.h")
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --
