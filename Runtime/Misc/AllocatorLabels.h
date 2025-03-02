@@ -22,17 +22,38 @@ enum MemLabelIdentifier : uint16_t
 	kMemLabelCount,
 };
 
+struct AllocationRootWithSalt
+{
+	uint16_t m_Salt;
+	uint32_t m_RootReferenceIndex;
+
+	static constexpr uint32_t kNotInList = (uint32_t)-1;
+};
+
 struct EXPORT_COREMODULE MemLabelId
 {
 	constexpr MemLabelId()
 		: identifier(kMemDefaultId)
+		, salt(0)
+		, rootReferenceIndex(AllocationRootWithSalt::kNotInList)
 	{}
+
+	constexpr MemLabelId(int64_t) = delete;
+	constexpr MemLabelId(uint64_t) = delete;
 
 	constexpr MemLabelId(MemLabelIdentifier identifier)
 		: identifier(identifier)
+		, salt(0)
+		, rootReferenceIndex(AllocationRootWithSalt::kNotInList)
 	{
-		
+
 	}
+
+	constexpr MemLabelId(MemLabelIdentifier identifier, AllocationRootWithSalt rootReferenceWithSalt)
+		: identifier(identifier)
+		, salt(rootReferenceWithSalt.m_Salt)
+		, rootReferenceIndex(rootReferenceWithSalt.m_RootReferenceIndex)
+	{}
 	MemLabelIdentifier identifier;
 	uint16_t salt;
 	uint16_t rootReferenceIndex;
@@ -41,6 +62,8 @@ struct EXPORT_COREMODULE MemLabelId
 EXPORT_COREMODULE typedef const MemLabelId& MemLabelRef;
 
 inline EXPORT_COREMODULE MemLabelIdentifier GetLabelIdentifier(MemLabelRef label) { return label.identifier; }
+
+MemLabelId SetCurrentMemoryOwner(MemLabelRef label);
 
 #define DO_LABEL_STRUCT(Name, EnumName) constexpr MemLabelId Name = { EnumName };
 #define DO_LABEL(Name, EnumName) DO_LABEL_STRUCT(kMem##Name, EnumName)

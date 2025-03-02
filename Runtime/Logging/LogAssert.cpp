@@ -11,7 +11,7 @@ enum class LineEndInfoHint
 	EndsWithNewLine,
 };
 
-#define LOG_FORCE_INLINE FORCE_INLINE
+#define LOG_FORCE_INLINE inline
 
 static void EnsureStdOutInitialized()
 {
@@ -36,7 +36,7 @@ void printf_consolev_to_console_file_or_stdout(const char* log, va_list alist, b
 	va_end(list);
 }
 
-static LOG_FORCE_INLINE void printf_consolev_helper(LogType logType, const char* log, va_list alist, bool flushOnWrite)
+static inline void printf_consolev_helper(LogType logType, const char* log, va_list alist, bool flushOnWrite)
 {
 	printf_consolev_to_console_file_or_stdout(log, alist, flushOnWrite);
 }
@@ -70,7 +70,8 @@ void DebugStringToFilePostprocessedStacktrace(const DebugStringToFileData& data)
 {
 	LogType logType = LogModeToLogType(data.mode);
 	PrintConsole* printConsole = InternalLogConsoleWithNewLine;
-	printConsole("%s", )
+	core::string message = core::string::create_from_external(data.message, kMemTempAlloc);
+	printConsole("%s", message.c_str());
 }
 
 void DebugStringToFile(const DebugStringToFileData& data)

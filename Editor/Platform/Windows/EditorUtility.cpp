@@ -12,8 +12,18 @@ static INT_PTR EditorDisplayDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARA
 {
 	switch (msg)
 	{
-		
+	case WM_INITDIALOG:
+		{
+			
+		}
+		return TRUE;
+	case WM_COMMAND:
+		break;
+	case WM_DPICHANGED:
+		break;
 	}
+
+	return FALSE;
 }
 
 int DisplayDialogComplexPlatformSpecific(const core::string& title, const core::string& content, const core::string& okButton, const core::string& cancelButton, const core::string& altButton)

@@ -7,6 +7,7 @@
 #include "TLSAllocator.h"
 #include "Runtime/Allocator/BaseAllocator.h"
 #include "Runtime/Allocator/MallocTrackingManager.h"
+#include "Runtime/Threads/Mutex.h"
 
 class MemoryManager
 {
@@ -58,6 +59,8 @@ public:
 
 	void EarlyDeallocate(void* ptr, MemLabelId label, const char* file, int line);
 
+	BaseAllocator* GetAllocator(MemLabelRef label);
+
 	static MemoryManager* g_MemoryManager;
 private:
 	int m_NumAllocators;
@@ -70,6 +73,10 @@ private:
 	BaseAllocator* m_ThreadAllocators[kMaxAllocators];
 
 	bool m_IsActive;
+	bool m_IsInitializedDebugAllocator;
+
+	Mutex m_CustomAllocatorMutex;
+	BaseAllocator* m_CustomAllocators[kMaxCustomAllocators];
 
 	struct LabelInfo
 	{
@@ -90,7 +97,7 @@ inline MemoryManager& GetMemoryManager()
 {
 	if (MemoryManager::g_MemoryManager == nullptr)
 	{
-		
+
 	}
 	return *MemoryManager::g_MemoryManager;
 }

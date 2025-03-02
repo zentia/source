@@ -11,7 +11,7 @@ StackAllocatorBase::StackAllocatorBase(void* blockStart, size_t blockSize, const
 	
 }
 
-StackAllocatorBase::StatkAllocatorBase(void* blockStart, size_t initalBlockSize, size_t commitableBlockSize, const char* name, LowLevelVirtualAllocator* llAlloc)
+StackAllocatorBase::StackAllocatorBase(void* blockStart, size_t initalBlockSize, size_t commitableBlockSize, const char* name, LowLevelVirtualAllocator* llAlloc)
 	: BaseAllocator(name, true)
 	, m_Block(blockStart)
 	, m_CurrentSize(initalBlockSize)

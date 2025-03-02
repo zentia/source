@@ -13,8 +13,9 @@ LocalizationDatabase& LocalizationDatabase::GetEditorDatabase()
 	{
 		Mutex::AutoLock lock(s_pEditorInstanceMutex);
 		if (!s_pEditorInstance)
-			
+			CreateInstance();
 	}
+	return *s_pEditorInstance;
 }
 
 

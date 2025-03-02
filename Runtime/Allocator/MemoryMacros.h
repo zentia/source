@@ -8,6 +8,11 @@
 #include <malloc.h>
 #endif
 
+enum
+{
+	kDefaultMemoryAlignment = 16
+};
+
 enum AllocateOptions
 {
 	kAllocateOptionNone = 0,

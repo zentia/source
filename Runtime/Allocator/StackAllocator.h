@@ -7,7 +7,7 @@ class StackAllocatorBase : public BaseAllocator
 {
 public:
 	StackAllocatorBase(void* blockStart, size_t blockSize, const char* name);
-	StatkAllocatorBase(void* blockStart, size_t initalBlockSize, size_t commitableBlockSize, const char* name, LowLevelVirtualAllocator* llAlloc);
+	StackAllocatorBase(void* blockStart, size_t initalBlockSize, size_t commitableBlockSize, const char* name, LowLevelVirtualAllocator* llAlloc);
 protected:
 	void* m_Block;
 	size_t m_CurrentSize;

@@ -2,12 +2,16 @@ add_rules("mode.debug", "mode.release")
 
 local function SourceCommon()
     set_languages("c99", "c++17")
+    add_cxxflags("gxx::-fexec-charset=GBK")
     if is_mode("debug") then
         add_cxflags("-DDEBUG")
     end
+    
     add_includedirs("./")
     if is_os("windows") then
         add_defines("PLATFORM_WIN")
+        add_rules("win.sdk.application")
+        
     elseif is_os("linux") then 
     elseif is_os("android") then 
     elseif is_os("macosx") then 
@@ -36,13 +40,10 @@ target("Source")
     add_files("Modules/**.cpp")
 
     add_headerfiles("External/**.h")
-    add_files("External/**.cpp")
 
-    add_includedirs("./External/baselib")
-    add_includedirs("./External/baselib/baselib/Include")
+    add_includedirs("./External")
 
     add_headerfiles("Configuration/**.h")
-    add_files("Configuration/**.cpp")
 
     add_includedirs("./PlatformDependent/Win")
     add_includedirs("./Platforms/Windows/Configuration")

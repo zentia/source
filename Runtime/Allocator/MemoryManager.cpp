@@ -8,16 +8,18 @@
 #include "Allocator/PlatformMemory.h"
 #include "Runtime/Logging/DebugBreak.h"
 #include "Runtime/Logging/LogAssert.h"
+#include "Runtime/Threads/Mutex.h"
 #include "Runtime/Utitlities/MTEUtil.h"
 
 void* malloc_internal(size_t size, size_t align, MemLabelRef label, AllocateOptions allocateOptions, const char* file, int line)
 {
-	
+	return GetMemoryManager().Allocate(size, align, label, allocateOptions, file, line);
 }
 
 void* operator new(size_t size, MemLabelRef label, size_t align, const char* file, int line)
 {
-
+	void* p = malloc_internal(size, align, label, kAllocateOptionNone, file, line);
+	return p;
 }
 
 #if ENABLE_MEMORY_MANAGER
@@ -27,7 +29,7 @@ void* operator new(size_t size, MemLabelRef label, size_t align, const char* fil
 #include "Runtime/Allocator/ThreadsafeLinearAllocator.h"
 
 #if SOURCE_ALLOC_ALLOW_NEWDELETE_OVERRIDE
-void* operator new(size_t size) { return GetMemoryManager(); }
+void* operator new(size_t size) { return GetMemoryManager().Allocate(size == 0 ? 4 : size, kDefaultMemoryAlignment, kMemNewDelete, kAllocateOptionNone, "Overloaded New"); }
 #endif
 
 #define AlignSize16(size) (AlignSize(size, 16))
@@ -35,13 +37,13 @@ void* operator new(size_t size) { return GetMemoryManager(); }
 const size_t kNumAllocators = 20;
 const size_t kAdditionalStaticMem = AlignSize16(sizeof(DynamicHeapAllocator)) * kNumAllocators;
 
-static const int kPreallocatedSize = 
-	AlignSize16(sizeof(MemoryManager)) + 
-	AlignSize16(sizeof(MallocTrackingManager)) + 
-	AlignSize16(sizeof(TLSAllocator<AllocatorMode::TrackLeaks>)) + 
-	AlignSize16(sizeof(BucketAllocator)) * 2 +
-	AlignSize16(sizeof(ThreadsafeLinearAllocator<true>)) * 4 +
-	kAdditionalStaticMem;
+static const int kPreallocatedSize =
+AlignSize16(sizeof(MemoryManager)) +
+AlignSize16(sizeof(MallocTrackingManager)) +
+AlignSize16(sizeof(TLSAllocator<AllocatorMode::TrackLeaks>)) +
+AlignSize16(sizeof(BucketAllocator)) * 2 +
+AlignSize16(sizeof(ThreadsafeLinearAllocator<true>)) * 4 +
+kAdditionalStaticMem;
 
 alignas(16) static char g_MemoryBlockForMemoryManager[kPreallocatedSize];
 static char* g_MemoryBlockPtr = g_MemoryBlockForMemoryManager;
@@ -94,12 +96,16 @@ void MemoryManager::InitializeMemory()
 
 void* MemoryManager::Allocate(size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line)
 {
-	
+	if (size == 0)
+		size = 1;
+	BaseAllocator* alloc = GetAllocator(label);
+	void* ptr = alloc->Allocate(size, align);
+	return ptr;
 }
 
 void MemoryManager::Deallocate(void* ptr, MemLabelId label, const char* file, int line)
 {
-	
+
 }
 
 bool MemoryManager::TryDeallocateWithLabel(void* ptr, MemLabelId label, const char* file, int line)
@@ -111,7 +117,7 @@ bool MemoryManager::TryDeallocateWithLabel(void* ptr, MemLabelId label, const ch
 
 	if (!IsActive())
 	{
-		
+
 	}
 }
 
@@ -169,9 +175,29 @@ LowLevelVirtualAllocator::BlockInfo MemoryManager::VirtualAllocator::GetMemoryBl
 
 void MemoryManager::EarlyDeallocate(void* ptr, MemLabelId label, const char* file, int line)
 {
-	
+
 }
 
+BaseAllocator* MemoryManager::GetAllocator(MemLabelRef label)
+{
+	const MemLabelIdentifier labelId = GetLabelIdentifier(label);
+	if (labelId < kMemLabelCount)
+	{
+		if (m_IsInitializedDebugAllocator)
+			return m_Allocators[0];
+
+		BaseAllocator* alloc = m_AllocatorMap[labelId].alloc;
+		return alloc;
+	}
+	else
+	{
+		Mutex::AutoLock lock(m_CustomAllocatorMutex);
+
+		int index = labelId - kMemLabelCount;
+		DebugAssert(index < kMaxCustomAllocators);
+		return m_CustomAllocators[index] <= (void*)kMaxCustomAllocators ? nullptr : m_CustomAllocators[index];
+	}
+}
 
 #endif
 
