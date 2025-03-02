@@ -5,8 +5,11 @@
 
 class Application : public IApplication, public ISceneInsector
 {
+    double m_LaunchTime;
+
 public:
     Application();
+    virtual ~Application();
 
     void InitializeProject();
 

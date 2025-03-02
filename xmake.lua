@@ -22,6 +22,7 @@ target("SourceEditor")
 
 target("Source")
     set_kind("shared")
+
     add_headerfiles("Editor/**.h|Platform/Windows/EntryPoint/*.h")
     add_files("Editor/**.cpp|platform/Windows/EntryPoint/*.cpp")
 
@@ -29,6 +30,7 @@ target("Source")
     add_files("Runtime/**.cpp")
 
     add_headerfiles("PlatformDependent/**.h")
+    add_files("PlatformDependent/**.cpp")
 
     add_headerfiles("Modules/**.h")
     add_files("Modules/**.cpp")
@@ -36,11 +38,20 @@ target("Source")
     add_headerfiles("External/**.h")
     add_files("External/**.cpp")
 
+    add_includedirs("./External/baselib")
+    add_includedirs("./External/baselib/baselib/Include")
+
     add_headerfiles("Configuration/**.h")
     add_files("Configuration/**.cpp")
 
+    add_includedirs("./PlatformDependent/Win")
+    add_includedirs("./Platforms/Windows/Configuration")
+
+    add_headerfiles("Platforms/**.h")
+
     SourceCommon()
     add_defines("SOURCE_EDITOR")
+    add_defines("ENABLE_ASSERTIONS")
     add_includedirs("PrecompiledHeaders")
     set_pcxxheader("PrecompiledHeaders/SourcePrefix.h")
 --

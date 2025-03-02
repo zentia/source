@@ -30,6 +30,22 @@ namespace core
         {
             return length() == 0;
         }
+
+        const value_type* c_str() const
+        {
+            return TStorage::get_data();
+        }
+
+        SOURCE_FORCEINLINE basic_string& assign_external(const value_type* referenceStr)
+        {
+	        
+        }
+
+        SOURCE_FORCEINLINE static basic_string create_from_external(const value_type* referenceStr, MemLabelRef label = kMemString)
+        {
+            basic_string s(label);
+
+        }
     };
 
     typedef basic_string<char> string;

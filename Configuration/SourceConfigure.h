@@ -1,5 +1,21 @@
+#pragma once
+
 #if ENABLE_STRIPPING_SOURCE_FILERNAMES
 #define __FILE_STRIPPED__ ""
 #else
 #define __FILE_STRIPPED__ __FILE__
+#endif
+
+#ifndef UNITY_EXTERNAL_TOOL
+#define UNITY_EXTERNAL_TOOL 0
+#endif
+
+#define ENABLE_MEMORY_MANAGER (!UNITY_EXTERNAL_TOOL)
+
+#ifndef ENABLE_PROFILER
+#define ENABLE_PROFILER ((SOURCE_EDITOR) && !UNITY_EXTERNAL_TOOL)
+#endif
+
+#ifndef SOURCE_DYNAMIC_TLS
+#define SOURCE_DYNAMIC_TLS 1
 #endif

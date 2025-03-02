@@ -1,5 +1,5 @@
-# OpenSource
-OpenSource game engine. Support Android iOS pc ps5 switch
+# Source
+Source game engine. Support Android iOS pc ps5 switch
 由于我只看过Unity和Unreal的源码，所以这个引擎可以基本认为是Unity和Unrael的混合体。
 不会采纳Unity的Libaray，会使用Unreal的uasset，但是源文件需要和meta文件放在一起，这里的meta文件其实是uasset文件。
 这样的话，工程会大很多，所以会提供一个虚拟路径，也就是说可以做一个映射，原始文件和meta文件不在一起，但是要求工程结构保持一致，或者可配置，这样的话，可以做到每个工种之间不得尽量少感知别人的文件。仓库管理也会方便一些。
