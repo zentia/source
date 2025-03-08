@@ -19,6 +19,13 @@ local function SourceCommon()
     end
 end 
 
+local function Baselib()
+    add_defines("BASELIB_INLINE_NAMESPACE=SourceClassic")
+    add_includedirs("./External/baselib")
+    add_includedirs("./External/baselib/Include")
+    add_syslinks("wsock32", "ws2_32")
+end
+
 target("SourceEditor")
     set_kind("binary")
     add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
@@ -40,8 +47,10 @@ target("Source")
     add_files("Modules/**.cpp")
 
     add_headerfiles("External/**.h")
+    add_files("External/**.cpp")
 
     add_includedirs("./External")
+    Baselib()
 
     add_headerfiles("Configuration/**.h")
 
