@@ -152,8 +152,6 @@ namespace detail
             }
         }
 
-        // Based on IL2CPP source:
-        // https://github.cds.internal.unity3d.com/unity/il2cpp/blame/master/libil2cpp/os/Win32/SocketImpl.cpp
         static constexpr DWORD SocketExceptionFilter(DWORD exceptionCode)
         {
             // Sometimes, we call the socket functions and close the socket right after,

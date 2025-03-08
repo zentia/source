@@ -17,7 +17,7 @@
 #define IDR_CLOSE_IMAGE_2X              123
 #define IDC_SLIDE_ARROW_VISTA           126
 #define IDC_SLIDE_ARROW_VISTA_S         127
-#define IDR_UNITY_ICON                  129
+#define IDR_SOURCE_ICON                  129
 #define IDC_PLUS_ARROW_VISTA_S          131
 #define IDC_MINUS_ARROW_VISTA           134
 #define IDC_MINUS_ARROW_VISTA_S         135

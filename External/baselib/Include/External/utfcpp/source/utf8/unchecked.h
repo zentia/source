@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 */
 
 /*
-Modifications made to this file (Copyright © 2023 Unity Technologies):
+Modifications made to this file:
     function "output_iterator replace_invalid(octet_iterator start, octet_iterator end, output_iterator out, uint32_t replacement)"
     - "case internal::NOT_ENOUGH_ROOM" changed to return out
 

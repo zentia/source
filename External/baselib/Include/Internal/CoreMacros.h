@@ -48,7 +48,7 @@
 //
 //   #pragma COMPILER_WARNING("this file is obsolete! use foo/bar.h instead.")
 //
-#define COMPILER_WARNING(MESSAGE_) message(__FILE__ "(" UNITY_STRINGIFY(__LINE__) ") : warning: " MESSAGE_)
+#define COMPILER_WARNING(MESSAGE_) message(__FILE__ "(" SOURCE_STRINGIFY(__LINE__) ") : warning: " MESSAGE_)
 
 #define UNSIGNED_FLAGS_1(FLAG1_) static_cast<unsigned int>(FLAG1_)
 #define UNSIGNED_FLAGS_2(FLAG1_, FLAG2_) UNSIGNED_FLAGS_1(FLAG1_) | UNSIGNED_FLAGS_1(FLAG2_)
@@ -63,16 +63,6 @@
 #ifndef DETAIL__PP_AND_DETAILS_CORE_MACROS_DEFINED
 #define DETAIL__PP_AND_DETAILS_CORE_MACROS_DEFINED
 
-// when putting control-flow, multiple statements, or unknown code (e.g. passed via an outer macro) inside of a macro,
-// wrap it in PP_WRAP_CODE to be safe. https://q.unity3d.com/answers/1382/view.html
-//
-// (also see http://stackoverflow.com/questions/154136/do-while-and-if-else-statements-in-c-c-macros)
-//
-// things not to use PP_WRAP_CODE for:
-//
-//   * 'break' or 'continue' statements that are expected to operate on the scope containing the macro
-//   * introduction of variables that are expected not to go out of scope at macro end
-//
 #define PP_WRAP_CODE(CODE_) \
     do { CODE_; } while (0)
 

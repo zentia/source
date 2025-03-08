@@ -39,7 +39,6 @@
 // Detect SIMD features.
 
 // SSE2
-// Naming is inherited from Unity and indicates full SSE2 support.
 #ifndef PLATFORM_SUPPORTS_SSE
     #if (defined(_M_IX86_FP) && _M_IX86_FP == 2) || defined(_M_AMD64) || defined(_M_X64) || defined(__SSE2__)
         #define PLATFORM_SUPPORTS_SSE 1

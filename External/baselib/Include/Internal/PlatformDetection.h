@@ -2,7 +2,6 @@
 
 // Detect BASELIB_PLATFORM_X define.
 //
-// Note that PLATFORM_X defines in Unity code base may refer to one or more platforms defined by BASELIB_PLATFORM_X
 // Platforms here are very loosely defined on the set of available system apis.
 // They have closest relation with the platform toolchains defined in Bee.
 

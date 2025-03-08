@@ -171,20 +171,6 @@ namespace detail
         Baselib_ErrorState*     errorState
     )
     {
-        // Zero write has a special meaning in WinApi, which why it stands to reason that we should not skip it.
-        // From https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile
-        //
-        // > A value of zero specifies a null write operation.
-        // > The behavior of a null write operation depends on the underlying file system or communications technology.
-        // [...]
-        // > The system interprets zero bytes to write as specifying a null write operation and WriteFile does not truncate or extend the file.
-        //
-        // However, we observed spurious failure via ERROR_NO_SYSTEM_RESOURCES (1450) for zero sized writes on some WinApi platforms.
-        // (see https://github.cds.internal.unity3d.com/unity/baselib/issues/629)
-        // As of writing, the skip on zero size behavior is consistent with the pre-existing Unity implementation:
-        // https://github.cds.internal.unity3d.com/unity/unity/blob/2135fd4aa57c5ceb0f4495fb0afd4086025c1d85/PlatformDependent/Win/LocalFileSystemWindowsShared.cpp#L702
-        //
-        // TODO: Revisit decision to pass on zero writes in general.
         if (size == 0)
         {
             shouldContinue = false;

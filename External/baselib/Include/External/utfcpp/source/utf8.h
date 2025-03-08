@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 */
 
 /*
-Modifications made to this file (Copyright © 2023 Unity Technologies):
+Modifications made to this file 
     #include "utf8/checked.h" 
     - removed because we only need the non-exception version
 */

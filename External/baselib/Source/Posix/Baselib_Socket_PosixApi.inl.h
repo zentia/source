@@ -479,9 +479,6 @@ namespace detail
             {
                 const int error = errno;
                 if (error != EAGAIN && error != EWOULDBLOCK && error != ENOBUFS &&
-                    // EPERM can occur if the conntrack table fills up. We treat it like EAGAIN since it usually goes away after a short wait.
-                    // (source: https://blog.cloudflare.com/conntrack-tales-one-thousand-and-one-flows/)
-                    // (fix for https://unity3d.atlassian.net/browse/BASE-274)
                     error != EPERM
                 )
                     errorState |= RaiseError(detail::SocketErrorToErrorCode(error)) | WithErrno(error);

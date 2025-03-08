@@ -108,7 +108,6 @@ namespace WinApi
         Baselib_DynamicLibrary_Handle handle
     )
     {
-        // FYI: In some cases libil2cpp uses Baselib_DynamicLibrary_OpenProgramHandle without calling Baselib_DynamicLibrary_Close.
         // So if in the future this implementation will need to allocate any resources, then users of baselib need to be fixed first.
         const auto module = ::detail::AsNativeType<HMODULE>(handle);
         if (FreeLibrary(module) == 0)

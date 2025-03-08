@@ -12,7 +12,7 @@
 // that any following memory reclaiming actions will not happen before the final release.
 
 // Historical note:
-// Baselib_atomic_ref_dec was previously known as AtomicRelease in Unity. Additionally, AtomicRetain provided a relaxed increment.
+// Baselib_atomic_ref_dec was previously known as AtomicRelease in Source. Additionally, AtomicRetain provided a relaxed increment.
 
 
 // On architectures where read-modify-write with memory_order_acq_rel is more expensive than memory_order_release

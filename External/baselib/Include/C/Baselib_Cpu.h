@@ -20,34 +20,6 @@ typedef struct
     const bool supported;
 } Baselib_Cpu_Monitor;
 
-// Emit machine instruction preparing the monitor for a loop. This is important to do to not have missed wakeups.
-// See:
-// https://community.arm.com/support-forums/f/architectures-and-processors-forum/4273/how-to-understand-armv8-sevl-instruction-in-spin-lock
-//
-// Example pseudo code trying to acquire a lock:
-// outer_loop:
-// {
-//     if (TryToAcquireLock())
-//         return;
-//
-//     Baselib_Cpu_Hint_MonitorInit();
-//     inner_loop:
-//     {
-//         if (Baselib_Cpu_Hint_MonitorAddress(address))
-//         {
-//             // Value denoted by address may have changed before we established the monitor
-//             // So we need to do a check here before calling wait
-//             if (atomic_load(*address) == UNLOCKED)
-//                 goto outer_loop;
-//         }
-//         Baselib_Cpu_Hint_MonitorWait();
-//         if (atomic_load(*address) == UNLOCKED)
-//             goto outer_loop;
-//         goto inner_loop;
-//     }
-// }
-//
-// \returns          a monitor struct
 static FORCE_INLINE Baselib_Cpu_Monitor Baselib_Cpu_Hint_MonitorInit(void);
 
 // Emit machine instruction establishing a monitor for the given address. The
