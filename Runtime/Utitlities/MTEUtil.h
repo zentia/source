@@ -1,5 +1,7 @@
 #pragma once
 
+constexpr auto ENABLE_MEMORY_TAG_EXTENSION = 0;
+
 #include "Runtime/Utitlities/MTE/MTEUtilNullImpl.inl.h"
 
 namespace MTEUtil

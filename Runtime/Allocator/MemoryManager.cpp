@@ -2,14 +2,23 @@
 
 #include "Runtime/Allocator/MemoryManager.h"
 
+#include <mutex>
+
+#include "DualThreadAllocator.h"
 #include "MemoryMacros.h"
+#include "MTEAllocator.h"
 
 #include "Runtime/Misc/AllocatorLabels.h"
 #include "Allocator/PlatformMemory.h"
+#include "Runtime/Bootstrap/BootConfig.h"
 #include "Runtime/Logging/DebugBreak.h"
 #include "Runtime/Logging/LogAssert.h"
+#include "Runtime/Misc/SystemInfoMemory.h"
 #include "Runtime/Threads/Mutex.h"
+#include "Runtime/Utitlities/Argv.h"
 #include "Runtime/Utitlities/MTEUtil.h"
+#include "Runtime/Allocator/MemorySetup.h"
+
 
 void* malloc_internal(size_t size, size_t align, MemLabelRef label, AllocateOptions allocateOptions, const char* file, int line)
 {
@@ -27,6 +36,8 @@ void* operator new(size_t size, MemLabelRef label, size_t align, const char* fil
 #include "Runtime/Allocator/TLSAllocator.h"
 #include "Runtime/Allocator/BucketAllocator.h"
 #include "Runtime/Allocator/ThreadsafeLinearAllocator.h"
+
+typedef DualThreadAllocator<DynamicHeapAllocator> MainThreadAllocator;
 
 #if SOURCE_ALLOC_ALLOW_NEWDELETE_OVERRIDE
 void* operator new(size_t size) { return GetMemoryManager().Allocate(size == 0 ? 4 : size, kDefaultMemoryAlignment, kMemNewDelete, kAllocateOptionNone, "Overloaded New"); }
@@ -64,21 +75,115 @@ void* GetPreallocatedMemory(int size)
 #define HEAP_NEW(TYPE_) new (GetPreallocatedMemory(sizeof(TYPE_))) TYPE_
 #define HEAP_DELETE(OBJECT_, TYPE_) OBJECT_->~TYPE_();
 
+struct CreateAllocatorImpl
+{
+	template<typename T, class ... Args, bool enable = T::IsMTECompliant(), typename std::enable_if<(enable && ENABLE_MEMORY_TAG_EXTENSION), int>::type = 0>
+	static T* createAllocator(Args&& ... agrs) { return HEAP_NEW(MTEAllocator<T>(1024 * 1024 * 16), std::forward<Args>(args)...); }
+
+	template<typename T, class ... Args, bool enable = T::IsMTECompliant(), typename std::enable_if<((!enable) || (!ENABLE_MEMORY_TAG_EXTENSION)), int>::type = 0>
+	static T* createAllocator(Args&& ... args) { return HEAP_NEW(T) (std::forward<Args>(args)...); }
+};
+
+template<typename T, class ... Args>
+static T* createAllocator(Args&& ... args) { return CreateAllocatorImpl::createAllocator<T>(std::forward<Args>(args)...); }
+
 MemoryManager* MemoryManager::g_MemoryManager = nullptr;
+
+using namespace memorysetup;
+
+static BootConfig::Parameter<UINT64> s_MainAllocatorBlockSize(kMainAllocatorBlockSizeString, kMainAllocatorBlockSize);
+static BootConfig::Parameter<UInt64> s_ThreadAllocatorBlockSize(kThreadAllocatorBlockSizeString, kThreadAllocatorBlockSize);
 
 MemoryManager::MemoryManager()
 	: m_NumAllocators(0)
 	, m_IsActive(false)
 	, m_FastFrameTempAllocator(nullptr)
+	, m_FrameTempAllocator(nullptr)
+	, m_BucketAllocator(nullptr)
 {
 	memset(m_Allocators, 0, sizeof(m_Allocators));
 	memset(m_MainAllocators, 0, sizeof(m_MainAllocators));
 	memset(m_ThreadAllocators, 0, sizeof(m_ThreadAllocators));
+
+	for (int i = 0; i < kMemLabelCount; i++)
+	{
+		m_AllocatorMap[i].relatedThreadAllocator = kMemInvalidLabeldId;
+		m_AllocatorMap[i].fallbackLabel = kMemInvalidLabeldId;
+		m_AllocatorMap[i].fallbackThreadLabel = kMemInvalidLabeldId;
+	}
+}
+
+void MemoryManager::InitializeFallbackAllocators()
+{
+	m_InitialFallbackAllocator = createAllocator<DynamicHeapAllocator>(1024 * 1024, true, nullptr, &m_LowLevelAllocator, "ALLOC_FALLBACK", false);
+
+	for (int i = 0; i < kMemLabelCount; i++)
+		m_AllocatorMap[i].alloc = m_InitialFallbackAllocator;
+}
+
+
+void MemoryManager::InitializeInitialAllocators()
+{
+	if (m_FrameTempAllocator == nullptr)
+	{
+		m_FastFrameTempAllocator = createAllocator<TLSAllocator<> >(&m_LowLevelAllocator, "ALLOC_TEMP_TLS");
+		m_FrameTempAllocator = m_FastFrameTempAllocator;
+	}
+
+	m_Allocators[m_NumAllocators++] = m_FrameTempAllocator;
+	m_AllocatorMap[kMemTempAllocId].alloc = m_FrameTempAllocator;
+	m_AllocatorMap[kMemTempAllocId].relatedThreadAllocator = kMemTempJobAllocId;
+}
+
+BucketAllocator* MemoryManager::InitializeBucketAllocator()
+{
+	BucketAllocator* bucketAllocator = nullptr;
+	
+}
+
+
+void MemoryManager::InitializeDefaultAllocators()
+{
+	bool useSystemAllocator = HasARGV("systemallocator");
+	bool useDynamicHeapAllocator = !useSystemAllocator;
+	bool isLowMemoryPlatform = systeminfo::GetPhysicalMemoryMB() < 2048;
+
+	BucketAllocator* bucketAllocator = useDynamicHeapAllocator ? InitializeBucketAllocator() : nullptr;
+
+	BaseAllocator* defaultAllocator = nullptr;
+	if (useDynamicHeapAllocator)
+	{
+		m_MainAllocators[m_NumAllocators] = createAllocator<DynamicHeapAllocator>(s_MainAllocatorBlockSize, false, nullptr, nullptr, "ALLOC_DEFAULT_MAIN", false);
+		m_ThreadAllocators[m_NumAllocators] = createAllocator<DynamicHeapAllocator>(s_ThreadAllocatorBlockSize, true, nullptr, nullptr, "ALLOC_DEFAULT_THREAD", false);
+		defaultAllocator = m_Allocators[m_NumAllocators] = createAllocator<MainThreadAllocator>("ALLOC_DEFAULT", bucketAllocator, m_MainAllocators[m_NumAllocators], m_ThreadAllocators[m_NumAllocators], &m_LowLevelAllocator);
+		m_AllocatorMap[kMemThreadId].alloc = m_ThreadAllocators[m_NumAllocators];
+		m_NumAllocators++;
+	}
+	else
+	{
+		
+	}
+	for (int i = 0; i < kMemLabelCount; i++)
+	{
+		if (m_AllocatorMap[i].alloc == m_InitialFallbackAllocator)
+		{
+			m_AllocatorMap[i].alloc = defaultAllocator;
+		}
+	}
+}
+
+
+namespace
+{
+	std::once_flag g_InitMemoryManager;
 }
 
 void MemoryManager::InitializeMemoryLazily()
 {
-
+	std::call_once(g_InitMemoryManager, []()
+		{
+			InitializeMemory();
+		});
 }
 
 void MemoryManager::InitializeMemory()
@@ -92,6 +197,7 @@ void MemoryManager::InitializeMemory()
 #endif
 
 	g_MemoryManager = HEAP_NEW(MemoryManager)();
+	g_MemoryManager->InitializeFallbackAllocators();
 }
 
 void* MemoryManager::Allocate(size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line)

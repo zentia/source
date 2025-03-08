@@ -18,3 +18,16 @@ StackAllocatorBase::StackAllocatorBase(void* blockStart, size_t initalBlockSize,
 {
 	
 }
+
+template <AllocatorMode allocMode>
+void* StackAllocator<allocMode>::Allocate(size_t size, int align)
+{
+	align = AlignSize(align, kDefaultMemoryAlignment);
+
+	const size_t alignmask = align - 1;
+
+	return nullptr;
+}
+
+template class StackAllocator<AllocatorMode::Normal>;
+template class StackAllocator<AllocatorMode::TrackLeaks>;

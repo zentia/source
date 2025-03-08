@@ -28,6 +28,7 @@ public:
 	static const size_t kMaxCustomAllocators = 512;
 
 	MemoryManager();
+	void InitializeFallbackAllocators();
 
 	static void InitializeMemoryLazily();
 
@@ -63,10 +64,20 @@ public:
 
 	static MemoryManager* g_MemoryManager;
 private:
+	void InitializeInitialAllocators();
+	void InitializeDefaultAllocators();
+	class BucketAllocator* InitializeBucketAllocator();
+
 	int m_NumAllocators;
+
+	using FrameAllocator_t = TLSAllocatorBase;
 	using FastFrameAllocator_t = TLSAllocator<AllocatorMode::Normal>;
 
+	FrameAllocator_t* m_FrameTempAllocator;
 	FastFrameAllocator_t* m_FastFrameTempAllocator;
+	BaseAllocator* m_BucketAllocator;
+	BaseAllocator* m_InitialFallbackAllocator;
+	int m_InitialFallbackTempAllocationsCount;
 
 	BaseAllocator* m_Allocators[kMaxAllocators];
 	BaseAllocator* m_MainAllocators[kMaxAllocators];
@@ -97,7 +108,7 @@ inline MemoryManager& GetMemoryManager()
 {
 	if (MemoryManager::g_MemoryManager == nullptr)
 	{
-
+		MemoryManager::InitializeMemoryLazily();
 	}
 	return *MemoryManager::g_MemoryManager;
 }

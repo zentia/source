@@ -1,6 +1,12 @@
+
+-- add modes: debug and release 
 add_rules("mode.debug", "mode.release")
 
+-- enable unicode
+add_defines("_UNICODE", "UNICODE")
+
 local function SourceCommon()
+
     set_languages("c99", "c++17")
     add_cxxflags("gxx::-fexec-charset=GBK")
     if is_mode("debug") then
@@ -10,8 +16,7 @@ local function SourceCommon()
     add_includedirs("./")
     if is_os("windows") then
         add_defines("PLATFORM_WIN")
-        add_rules("win.sdk.application")
-        
+        add_rules("win.source.shared")
     elseif is_os("linux") then 
     elseif is_os("android") then 
     elseif is_os("macosx") then 
@@ -26,10 +31,42 @@ local function Baselib()
     add_syslinks("wsock32", "ws2_32")
 end
 
-target("SourceEditor")
-    set_kind("binary")
-    add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
-    SourceCommon()
+-- define rule: shared
+rule("win.source.shared")
+    -- on_load(function (target)
+    --     target:set("kind", "shared")
+    -- end)
+
+    after_load(function (target)
+
+        -- -- set subsystem: windows
+        -- if target:is_plat("mingw") then
+        --     target:add("ldflags", "-mwindows", {force = true})
+        -- else
+        --     local subsystem = false
+        --     for _, ldflag in ipairs(target:get("ldflags")) do
+        --         if type(ldflag) == "string" then
+        --             ldflag = ldflag:lower()
+        --             if ldflag:find("[/%-]subsystem:") then
+        --                 subsystem = true
+        --                 break
+        --             end
+        --         end
+        --     end
+        --     if not subsystem then
+        --         target:add("ldflags", "-subsystem:windows", {force = true, tools = {"link"}})
+        --     end
+        -- end
+
+        -- add links
+        target:add("syslinks", "kernel32", "user32", "gdi32", "winspool", "comdlg32", "advapi32")
+        target:add("syslinks", "shell32", "ole32", "oleaut32", "uuid", "odbc32", "odbccp32", "comctl32")
+        target:add("syslinks", "comdlg32", "setupapi", "shlwapi")
+        if not target:is_plat("mingw") then
+            target:add("syslinks", "strsafe")
+        end
+    end)
+
 
 target("Source")
     set_kind("shared")
@@ -48,6 +85,7 @@ target("Source")
 
     add_headerfiles("External/**.h")
     add_files("External/**.cpp")
+    add_files("External/**.c")
 
     add_includedirs("./External")
     Baselib()
@@ -64,6 +102,13 @@ target("Source")
     add_defines("ENABLE_ASSERTIONS")
     add_includedirs("PrecompiledHeaders")
     set_pcxxheader("PrecompiledHeaders/SourcePrefix.h")
+
+    
+target("SourceEditor")
+    set_kind("binary")
+    add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
+    SourceCommon()
+
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --

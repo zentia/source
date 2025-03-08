@@ -23,6 +23,8 @@ inline bool StackAllocatorBase::InBlock(const void* ptr) const
 template<AllocatorMode allocMode = AllocatorMode::Normal>
 class StackAllocator : public StackAllocatorBase
 {
+public:
+	void* Allocate(size_t size, int align) override;
 	bool Contains(const void* p) const override;
 };
 
