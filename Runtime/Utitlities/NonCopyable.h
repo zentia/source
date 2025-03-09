@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Runtime/Modules/ExportModuels.h"
-
-class EXPORT_COREMODULE NonCopyable
+class NonCopyable
 {
 public:
     constexpr NonCopyable() {}

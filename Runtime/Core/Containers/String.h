@@ -33,6 +33,12 @@ namespace core
 			TStorage::assign(copyStr, std::char_traits<value_type>::length(copyStr));
 		}
 
+		SOURCE_FORCEINLINE basic_string(const value_type* copyStr, MemLabelId label)
+			: TStorage(label)
+		{
+			TStorage::assign(copyStr, std::char_traits<value_type>::length(copyStr));
+		}
+
 		size_type length() const
 		{
 			return TStorage::size();

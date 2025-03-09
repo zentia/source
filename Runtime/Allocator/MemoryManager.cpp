@@ -10,6 +10,7 @@
 
 #include "Runtime/Misc/AllocatorLabels.h"
 #include "Allocator/PlatformMemory.h"
+#include "Cpp/Algorithm.h"
 #include "Runtime/Bootstrap/BootConfig.h"
 #include "Runtime/Logging/DebugBreak.h"
 #include "Runtime/Logging/LogAssert.h"
@@ -36,6 +37,9 @@ void* operator new(size_t size, MemLabelRef label, size_t align, const char* fil
 #include "Runtime/Allocator/TLSAllocator.h"
 #include "Runtime/Allocator/BucketAllocator.h"
 #include "Runtime/Allocator/ThreadsafeLinearAllocator.h"
+
+const size_t kMaxAllocatorOverhead = 64 * 1024;
+const char OverflowInMemoryAllocatorString[] = "Overflow in memory allocator.";
 
 typedef DualThreadAllocator<DynamicHeapAllocator> MainThreadAllocator;
 
@@ -94,6 +98,75 @@ using namespace memorysetup;
 static BootConfig::Parameter<UINT64> s_MainAllocatorBlockSize(kMainAllocatorBlockSizeString, kMainAllocatorBlockSize);
 static BootConfig::Parameter<UInt64> s_ThreadAllocatorBlockSize(kThreadAllocatorBlockSizeString, kThreadAllocatorBlockSize);
 
+void* realloc_internal(void* ptr, size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line)
+{
+	return GetMemoryManager().Reallocate(ptr, size, align, label, allocateOptions, file, line);
+}
+
+void* MemoryManager::Reallocate(void* ptr, size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line)
+{
+	DebugAssert(baselib::Algorithm::IsPowerOfTwo(align));
+	DebugAssert(align != 0);
+	DebugAssert(GetLabelIdentifier(label) != GetLabelIdentifier(kMemInvalidLabel));
+
+	if (ptr == nullptr)
+		return Allocate(size, align, label, allocateOptions, file, line);
+
+	if (size == 0)
+	{
+		Deallocate(ptr, label, file, line);
+		return nullptr;
+	}
+
+	align = MaxAlignment(align, kDefaultMemoryAlignment);
+
+	if (baselib::Algorithm::DoesAdditionOverflow(size, align + kMaxAllocatorOverhead))
+	{
+		WarnAdditionOverflow(allocateOptions);
+		return nullptr;
+	}
+
+	if (!IsActive())
+		ReallocateFallbackToAllocateDeallocate(ptr, size, align, label, allocateOptions, file, line);
+
+	if (IsTempLabel(label))
+	{
+		return ReallocateFallbackToAllocateDeallocate(ptr, size, align, label, allocateOptions, file, line);
+	}
+
+}
+
+void* MemoryManager::ReallocateFallbackToAllocateDeallocate(void* ptr, size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line)
+{
+	void* newptr = Allocate(size, align, label, allocateOptions, file, line);
+	if ((allocateOptions & kAllocateOptionReturnNUllIfOutOfMemory) && !newptr)
+		return nullptr;
+
+	BaseAllocator* oldAlloc = GetAllocator(label);
+	if (!oldAlloc->Contains(ptr))
+		oldAlloc = GetAllocatorContainingPtr(ptr);
+
+	size_t oldSize = oldAlloc->GetPtrSize(ptr);
+	MTEUtil::CopyMemorySizeUnaligned(newptr, size, ptr, oldSize);
+
+	Deallocate(ptr, label, file, line);
+	return newptr;
+}
+
+
+bool MemoryManager::WarnAdditionOverflow(AllocateOptions allocateOptions)
+{
+	if ((allocateOptions & kAllocateOptionReturnNUllIfOutOfMemory) != kAllocateOptionReturnNUllIfOutOfMemory)
+	{
+		FatalErrorMsg(OverflowInMemoryAllocatorString);
+	}
+	else
+	{
+		WarningStringMsg(OverflowInMemoryAllocatorString);
+	}
+}
+
+
 MemoryManager::MemoryManager()
 	: m_NumAllocators(0)
 	, m_IsActive(false)
@@ -138,7 +211,14 @@ void MemoryManager::InitializeInitialAllocators()
 BucketAllocator* MemoryManager::InitializeBucketAllocator()
 {
 	BucketAllocator* bucketAllocator = nullptr;
-	
+	return nullptr;
+}
+
+void MemoryManager::InitializeMainThreadAllocator()
+{
+	if (!m_IsInitializedDebugAllocator)
+		InitializeDefaultAllocators();
+
 }
 
 
@@ -177,6 +257,18 @@ namespace
 {
 	std::once_flag g_InitMemoryManager;
 }
+
+void MemoryManager::LateStaticInitialize()
+{
+	if (GetMemoryManager().m_IsInitialized)
+		return;
+
+	GetMemoryManager().InitializeInitialAllocators();
+
+	GetMemoryManager().InitializeMainThreadAllocator();
+
+}
+
 
 void MemoryManager::InitializeMemoryLazily()
 {
@@ -267,6 +359,24 @@ LowLevelVirtualAllocator::BlockInfo MemoryManager::VirtualAllocator::GetBlockInf
 	int blockIndex = address / kReserveBlockGranularity;
 	return GetMemoryBlockOwnerAndOffset(blockIndex);
 }
+
+void* MemoryManager::VirtualAllocator::GetMemoryBlockFromPointer(const void* ptrInBlock)
+{
+	size_t address = MTEUtil::UntaggedAddress(ptrInBlock);
+	void* basePtr = (void*)(address & (~(kReserveBlockGranularity - 1)));
+	int index = (size_t)basePtr / kReserveBlockGranularity;
+	BlockInfo info = GetMemoryBlockOwnerAndOffset(index);
+	while (info.offset == 0xff)
+	{
+		basePtr = (void*)((size_t)basePtr - info.offset * kReserveBlockGranularity);
+		index -= 0xff;
+		info = GetMemoryBlockOwnerAndOffset(index);
+	}
+	if (OPTIMIZER_UNLIKELY(info.allocatorIdentifier == 0))
+		return nullptr;
+	return (void*)((size_t)basePtr - info.offset * kReserveBlockGranularity);
+}
+
 
 LowLevelVirtualAllocator::BlockInfo MemoryManager::VirtualAllocator::GetMemoryBlockOwnerAndOffset(int index)
 {

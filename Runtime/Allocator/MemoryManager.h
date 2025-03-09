@@ -30,6 +30,7 @@ public:
 	MemoryManager();
 	void InitializeFallbackAllocators();
 
+	static void LateStaticInitialize();
 	static void InitializeMemoryLazily();
 
 	static void InitializeMemory();
@@ -38,8 +39,12 @@ public:
 	void* Allocate(size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions = kAllocateOptionNone, const char* file = nullptr, int line = 0);
 	void* Reallocate(void* ptr, size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions = kAllocateOptionNone, const char* file = nullptr, int line = 0);
 
+	void* ReallocateFallbackToAllocateDeallocate(void* ptr, size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line);
+
 	void Deallocate(void* ptr, MemLabelId label, const char* file = nullptr, int line = 0);
 	bool TryDeallocateWithLabel(void* ptr, MemLabelId label, const char* file = nullptr, int line = 0);
+
+	bool WarnAdditionOverflow(AllocateOptions allocateOptions);
 
 	BaseAllocator* GetAllocatorContainingPtr(const void* ptr);
 
@@ -50,6 +55,7 @@ public:
 		BaseAllocator* GetAllocatorFromIdentifier(UInt16 identifier);
 		BaseAllocator* GetAllocatorFromPointer(const void* ptr);
 		virtual BlockInfo GetBlockInfoFromPointer(const void* ptr) override;
+		void* GetMemoryBlockFromPointer(const void* ptrInBlock) override;
 	private:
 		BlockInfo* m_MemoryBlockOwner[kHugeBlockCount];
 
@@ -65,10 +71,14 @@ public:
 	static MemoryManager* g_MemoryManager;
 private:
 	void InitializeInitialAllocators();
+	void InitializeMainThreadAllocator();
 	void InitializeDefaultAllocators();
 	class BucketAllocator* InitializeBucketAllocator();
 
 	int m_NumAllocators;
+	bool m_IsInitialized;
+	bool m_IsActive;
+	bool m_IsInitializedDebugAllocator;
 
 	using FrameAllocator_t = TLSAllocatorBase;
 	using FastFrameAllocator_t = TLSAllocator<AllocatorMode::Normal>;
@@ -82,9 +92,6 @@ private:
 	BaseAllocator* m_Allocators[kMaxAllocators];
 	BaseAllocator* m_MainAllocators[kMaxAllocators];
 	BaseAllocator* m_ThreadAllocators[kMaxAllocators];
-
-	bool m_IsActive;
-	bool m_IsInitializedDebugAllocator;
 
 	Mutex m_CustomAllocatorMutex;
 	BaseAllocator* m_CustomAllocators[kMaxCustomAllocators];

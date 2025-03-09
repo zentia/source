@@ -1,6 +1,8 @@
 #include "SourcePrefix.h"
 #include "Application.h"
 
+#include "Runtime/Allocator/MemoryManager.h"
+
 static Application* gApp = nullptr;
 
 Application::Application()
@@ -18,7 +20,7 @@ Application::~Application()
 
 void Application::InitializeProject()
 {
-
+	MemoryManager::LateStaticInitialize();
 }
 
 void Application::RequestRecreateGfxDevice()

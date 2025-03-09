@@ -22,6 +22,8 @@ public:
 
 	void* Allocate(size_t size, int align) override;
 	virtual bool Contains(const void* p) const override;
+	void Deallocate(void* p) override;
+	size_t GetPtrSize(const void* ptr) const override;
 
 	static constexpr bool IsMTECompliant() { return true; }
 

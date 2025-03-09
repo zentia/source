@@ -6,7 +6,6 @@ add_rules("mode.debug", "mode.release")
 add_defines("_UNICODE", "UNICODE")
 
 local function SourceCommon()
-
     set_languages("c99", "c++17")
     add_cxxflags("gxx::-fexec-charset=GBK")
     if is_mode("debug") then
@@ -17,6 +16,7 @@ local function SourceCommon()
     if is_os("windows") then
         add_defines("PLATFORM_WIN")
         add_rules("win.source.shared")
+        add_syslinks("synchronization")
     elseif is_os("linux") then 
     elseif is_os("android") then 
     elseif is_os("macosx") then 

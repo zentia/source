@@ -4,7 +4,9 @@
 
 #include "PlatformSystemInfo.h"
 
-#include "Source/Baselib_Config_Common_WinApiBased.inl.h"
+#include <winioctl.h>
+#include <ShlObj.h>
+
 
 static const UInt64 kMegabyte = 1048576ULL;
 

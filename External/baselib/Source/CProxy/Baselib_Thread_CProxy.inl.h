@@ -46,7 +46,6 @@ BASELIB_C_INTERFACE
         if (!thread)
             return Baselib_Thread_InvalidId;
 
-        // Assuming Baselib_Thread inherits Baselib_Thread_Common
         return thread->id;
     }
 

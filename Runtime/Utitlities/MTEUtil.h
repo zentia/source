@@ -12,8 +12,19 @@ namespace MTEUtil
 	}
 
 	template<typename T>
+	static constexpr inline size_t RealAddress(T* ptr)
+	{
+		return detail::RealAddress(ptr);
+	}
+
+	template<typename T>
 	static constexpr inline size_t UntaggedAddress(T* ptr)
 	{
 		return detail::UntaggedAddress(ptr);
+	}
+
+	static size_t CopyMemorySizeUnaligned(void* dstData, size_t dstSize, void* srcData, size_t srcSize)
+	{
+		return detail::CopyMemorySizeUnaligned(dstData, dstSize, srcData, srcSize);
 	}
 }

@@ -92,7 +92,6 @@ namespace baselib
             Thread(Thread&& other);
             Thread& operator=(Thread&& other);
 
-            // Return true if threads are supported
             static bool SupportsThreads();
 
             // Return true if join succeeded

@@ -8,3 +8,12 @@ BaseAllocator::BaseAllocator(const char* name, bool isThreadSafe)
 {
 	memcpy(m_Name, name, (std::min)((int)kMaxNameLength, (int)strlen(name) + 1));
 }
+
+bool BaseAllocator::TryDeallocate(void* p)
+{
+	if (!Contains(p))
+		return false;
+
+	Deallocate(p);
+	return true;
+}

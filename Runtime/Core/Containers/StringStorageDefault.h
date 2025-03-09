@@ -1,4 +1,7 @@
 #pragma once
+
+#include "Runtime/Allocator/MemoryMacros.h"
+
 #include <assert.h>
 #include <cstdint>
 
@@ -70,6 +73,29 @@ namespace core
 			}
 		}
 
+		void assign(const_pointer str, size_type strLen)
+		{
+			if (get_data_representation() == StringRepresentation::EMBEDDED)
+				init();
+
+			pointer d = nullptr;
+
+			if (OPTIMIZER_LIKELY(!is_ptr_within_range(str)))
+			{
+				clear();
+				d = grow(strLen);
+				SOURCE_MEMCPY(d, str, sizeof(value_type) * strLen);
+			}
+			else
+			{
+				d = get_data();
+				memmove(d, str, sizeof(value_type) * strLen);
+			}
+
+			d[strLen] = static_cast<value_type>(0);
+			set_size(strLen);
+		}
+
 		pointer get_data()
 		{
 			return (get_data_representation() == StringRepresentation::EMBEDDED) ? m_embedded.data : m_heap.data;
@@ -113,6 +139,15 @@ namespace core
 			return (get_data_representation() == StringRepresentation::EMBEDDED) ? kInternalBufferCapacity : m_heap.capacity;
 		}
 
+		void set_size(size_type newSize)
+		{
+			assert(newSize <= capacity_internal());
+			if (get_data_representation() == StringRepresentation::EMBEDDED)
+				m_embedded.free_count = static_cast<value_type>(kInternalBufferCapacity - newSize);
+			else
+				m_heap.size = newSize;
+		}
+
 		void init() noexcept
 		{
 			set_data_representation(StringRepresentation::EMBEDDED);
@@ -128,7 +163,16 @@ namespace core
 			StringRepresentation repr = get_data_representation();
 			if (OPTIMIZER_UNLIKELY(repr == StringRepresentation::HEAP))
 			{
-				m_heap.data = static_cast<value_type*>()
+				m_heap.data = static_cast<value_type*>(SOURCE_REALLOC(m_label, m_heap.data, (newCapacity + 1) * sizeof(value_type)));
+				m_heap.capacity = newCapacity;
+				return m_heap.data;
+			}
+
+			const bool going_to_heap = (newCapacity > kInternalBufferCapacity);
+
+			if (going_to_heap)
+			{
+				
 			}
 		}
 	public:

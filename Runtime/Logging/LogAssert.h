@@ -10,9 +10,8 @@ enum LogMessageFlags
 	kError = 1 << 0,
 	kAssert = 1 << 1,
 	kLog = 1 << 2,
-	kFatal = 1 << 3,
-	kAssetImportError = 1 << 4,
-
+	kFatal = 1 << 4,
+	kWarning = 1 << 9,
 };
 
 enum LogType
@@ -37,16 +36,22 @@ struct DebugStringToFileData
 	{}
 };
 
-EXPORT_COREMODULE void DebugStringToFile(const DebugStringToFileData& data);
+void DebugStringToFile(const DebugStringToFileData& data);
+core::string Format(const char* format, ...);
 
 template<typename TString>
-void DebugStringToFile(const TString& message, const char* file, int line, int column, LogMessageFlags mode, const InstanceID objectInstanceID = InstanceID_None, int identifier = 0)
+void DebugStringToFile(const TString& message, const char* file, int line, int column, int mode, const InstanceID objectInstanceID = InstanceID_None, int identifier = 0)
 {
 	DebugStringToFileData data;
 	data.message = StringTraits::AsConstTChars(message);
-	data.mode = mode;
+	data.mode = (LogMessageFlags)mode;
 	DebugStringToFile(data);
 }
+
+#define WarningStringMsg(...)	PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kWarning))
+#define FatalErrorMsg(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError | kFatal))
+
+#include "DebugBreak.h"
 
 #define NON_SOURCE_RELEASE_ONLY(code) code
 
@@ -62,5 +67,6 @@ bool AssertImplementation(InstanceID objID, const char* fileStripped, int line, 
 	})
 
 #define Assert(test) SOURCE__ASSERT_IMPL(test, InstanceID_None, "Assertion failed on expression: '" #test "'")
+#define AssertMsg(test, msg, ...) SOURCE__ASSERT_IMPL(test, GetInstanceIDFrom(__VA_ARGS__), msg)
 
 #define DebugAssert(x) Assert(x)

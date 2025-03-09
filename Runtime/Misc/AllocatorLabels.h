@@ -62,6 +62,7 @@ struct EXPORT_COREMODULE MemLabelId
 EXPORT_COREMODULE typedef const MemLabelId& MemLabelRef;
 
 inline EXPORT_COREMODULE MemLabelIdentifier GetLabelIdentifier(MemLabelRef label) { return label.identifier; }
+inline bool IsTempLabel(MemLabelRef label) { return GetLabelIdentifier(label) < kMemRegularLabels; }
 
 MemLabelId SetCurrentMemoryOwner(MemLabelRef label);
 

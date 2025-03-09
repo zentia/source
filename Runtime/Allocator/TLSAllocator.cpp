@@ -5,7 +5,7 @@
 TLSAllocatorBase::TLSAllocatorBase(const char* name, bool isThreadSafe)
 	: BaseAllocator(name, isThreadSafe)
 {
-	
+
 }
 
 
@@ -16,7 +16,7 @@ template <AllocatorMode allocMode>
 TLSAllocator<allocMode>::TLSAllocator(LowLevelVirtualAllocator* llAlloc, const char* name)
 	: TLSAllocatorBase(name, true)
 {
-	
+
 }
 
 template <AllocatorMode allocMode>
@@ -37,6 +37,22 @@ bool TLSAllocator<allocMode>::Contains(const void* p) const
 	if (alloc && alloc->StackAllocator_t::Contains(p))
 		return true;
 	return false;
+}
+
+template <AllocatorMode allocMode>
+void TLSAllocator<allocMode>::Deallocate(void* p)
+{
+	StackAllocator_t* alloc = GetThreadAllocator();
+	if (OPTIMIZER_UNLIKELY(!alloc))
+	{
+		return;
+	}
+}
+
+template <AllocatorMode allocMode>
+size_t TLSAllocator<allocMode>::GetPtrSize(const void* ptr) const
+{
+	return GetThreadAllocator()->StackAllocator_t::GetPtrSize(ptr);
 }
 
 template <AllocatorMode allocMode>

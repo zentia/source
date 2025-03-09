@@ -19,5 +19,6 @@ public:
 	static const size_t kHugeBlockCount = kMaxAddress / kHugeBlockSize;
 	static const size_t kReserveBlockCount = kHugeBlockSize / kReserveBlockGranularity;
 
+	virtual void* GetMemoryBlockFromPointer(const void* ptrInBlock) = 0;
 	virtual BlockInfo GetBlockInfoFromPointer(const void* ptr) = 0;
 };
