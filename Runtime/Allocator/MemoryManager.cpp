@@ -98,7 +98,7 @@ using namespace memorysetup;
 static BootConfig::Parameter<UINT64> s_MainAllocatorBlockSize(kMainAllocatorBlockSizeString, kMainAllocatorBlockSize);
 static BootConfig::Parameter<UInt64> s_ThreadAllocatorBlockSize(kThreadAllocatorBlockSizeString, kThreadAllocatorBlockSize);
 
-void* realloc_internal(void* ptr, size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line)
+void* realloc_internal(void* ptr, size_t size, size_t align, MemLabelRef label, AllocateOptions allocateOptions, const char* file, int line)
 {
 	return GetMemoryManager().Reallocate(ptr, size, align, label, allocateOptions, file, line);
 }
@@ -154,7 +154,7 @@ void* MemoryManager::ReallocateFallbackToAllocateDeallocate(void* ptr, size_t si
 }
 
 
-bool MemoryManager::WarnAdditionOverflow(AllocateOptions allocateOptions)
+void MemoryManager::WarnAdditionOverflow(AllocateOptions allocateOptions)
 {
 	if ((allocateOptions & kAllocateOptionReturnNUllIfOutOfMemory) != kAllocateOptionReturnNUllIfOutOfMemory)
 	{

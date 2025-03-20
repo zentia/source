@@ -18,3 +18,16 @@ void* BucketAllocator::Allocate(size_t size, int align)
 {
 	return nullptr;
 }
+
+size_t BucketAllocator::GetPtrSize(const void* ptr) const
+{
+	if (!ContainsPtr(ptr))
+		return 0;
+
+	return GetBlockFromPtr(ptr)->bucketSize;
+}
+
+bool BucketAllocator::ContainsPtr(const void* p) const
+{
+	return p >= m_ReservePointer && p < (char*)m_ReservePointer + m_ReserveSize;
+}

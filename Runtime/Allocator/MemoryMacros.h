@@ -37,7 +37,7 @@ inline T constexpr AlignSize(T size, size_t alignment)
 
 void* realloc_internal(void* ptr, size_t size, size_t align, MemLabelRef label, AllocateOptions allocateOptions, const char* file, int line);
 
-#define SOURCE_REALLOC(label, ptr, size) realloc_internal(ptr, size, kDefaultMemoryAlignment, label, kAllocateOptionNone, __FILE_STRIPPED__, __FILE__)
+#define SOURCE_REALLOC(label, ptr, size) realloc_internal(ptr, size, kDefaultMemoryAlignment, label, kAllocateOptionNone, __FILE_STRIPPED__, __LINE__)
 
 inline size_t MaxAlignment(size_t alignment1, size_t alignment2)
 {

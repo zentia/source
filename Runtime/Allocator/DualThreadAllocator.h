@@ -14,6 +14,7 @@ public:
 	void* Allocate(size_t size, int align) override;
 	bool Contains(const void* p) const override;
 	void Deallocate(void* p) override { TryDeallocate(p); };
+	size_t GetPtrSize(const void* ptr) const override;
 	static constexpr bool IsMTECompliant() { return true; }
 	struct LowLevelAllocator : public LowLevelVirtualAllocator
 	{

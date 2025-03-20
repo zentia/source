@@ -113,5 +113,15 @@ bool DualThreadAllocator<UnderlyingAllocator>::Contains(const void* p) const
 	return true;
 }
 
+template <class UnderlyingAllocator>
+size_t DualThreadAllocator<UnderlyingAllocator>::GetPtrSize(const void* ptr) const
+{
+	size_t size = m_BucketAllocator != nullptr ? m_BucketAllocator->BucketAllocator::GetPtrSize(ptr) : 0;
+	if (size != 0)
+		return size;
+
+	return m_MainAllocator->UnderlyingAllocator::GetPtrSize(ptr);
+}
+
 
 template class DualThreadAllocator<DynamicHeapAllocator>;

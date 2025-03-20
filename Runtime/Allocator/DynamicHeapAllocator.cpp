@@ -56,6 +56,15 @@ void* DynamicHeapAllocator::Allocate(size_t size, int align)
 			FatalErrorMsg("Size overflow in allocator.");
 		}
 	}
+
+	char* newRealPtr = nullptr;
+
+	if (m_UseLocking)
+		m_DHAMutex.Lock();
+
+	newRealPtr = (char*)tlsf_memalign(m_TlsfInstance, allocationAlignment, realSize);
+	/*if (newRealPtr)
+		GetBlockInfo()*/
 	return nullptr;
 }
 

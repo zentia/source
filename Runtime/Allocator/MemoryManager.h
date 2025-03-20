@@ -44,7 +44,7 @@ public:
 	void Deallocate(void* ptr, MemLabelId label, const char* file = nullptr, int line = 0);
 	bool TryDeallocateWithLabel(void* ptr, MemLabelId label, const char* file = nullptr, int line = 0);
 
-	bool WarnAdditionOverflow(AllocateOptions allocateOptions);
+	void WarnAdditionOverflow(AllocateOptions allocateOptions);
 
 	BaseAllocator* GetAllocatorContainingPtr(const void* ptr);
 
