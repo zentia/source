@@ -27,4 +27,9 @@ namespace MTEUtil
 	{
 		return detail::CopyMemorySizeUnaligned(dstData, dstSize, srcData, srcSize);
 	}
+
+	static __forceinline uint32_t MemoryProtectionPageState()
+	{
+		return detail::MemoryProtectionPageState();
+	}
 }
