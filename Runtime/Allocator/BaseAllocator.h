@@ -22,6 +22,7 @@ public:
 protected:
 	static const int kMaxNameLength = 64;
 	char m_Name[kMaxNameLength];
+	UInt16 m_AllocatorIdentifier;
 private:
 	bool m_IsThreadSafe;
 };

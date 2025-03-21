@@ -20,6 +20,7 @@
 #include "Runtime/Utitlities/MTEUtil.h"
 #include "Runtime/Allocator/MemorySetup.h"
 
+#define SOURCE_LL_ALLOC(l, s, a) ::_aligned_malloc(s, a)
 
 void* malloc_internal(size_t size, size_t align, MemLabelRef label, AllocateOptions allocateOptions, const char* file, int line)
 {
@@ -32,7 +33,6 @@ void* operator new(size_t size, MemLabelRef label, size_t align, const char* fil
 	return p;
 }
 
-#if ENABLE_MEMORY_MANAGER
 #include "Runtime/Allocator/DynamicHeapAllocator.h"
 #include "Runtime/Allocator/TLSAllocator.h"
 #include "Runtime/Allocator/BucketAllocator.h"
@@ -415,5 +415,10 @@ BaseAllocator* MemoryManager::GetAllocator(MemLabelRef label)
 	}
 }
 
-#endif
-
+void* MemoryManager::LowLevelAllocate(size_t size, size_t align)
+{
+	void* ptr = SOURCE_LL_ALLOC(kMemDefault, size, align);
+	if (ptr != nullptr)
+		MallocTrackingManager::RegisterLowLevelAlloc(size);
+	return ptr;
+}

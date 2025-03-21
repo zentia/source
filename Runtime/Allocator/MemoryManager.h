@@ -64,6 +64,8 @@ public:
 		BlockInfo GetMemoryBlockOwnerAndOffset(int index);
 	};
 
+	static void* LowLevelAllocate(size_t size, size_t align = kDefaultMemoryAlignment);
+
 	void EarlyDeallocate(void* ptr, MemLabelId label, const char* file, int line);
 
 	BaseAllocator* GetAllocator(MemLabelRef label);

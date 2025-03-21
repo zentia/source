@@ -26,8 +26,18 @@ DynamicHeapAllocator::DynamicHeapAllocator(UInt32 memoryBlockSize, bool useLocki
 	, m_LLAlloc(llAlloc)
 {
 	AssertMsg(memoryBlockSize <= kBlockSizeMax && memoryBlockSize >= kBlockSizeMin, core::Format("Allocator"));
+	InitializeTLSF();
 }
 
+void DynamicHeapAllocator::InitializeTLSF()
+{
+	m_TlsfInstance = tlsf_create(GetMemoryManager().LowLevelAllocate(tlsf_size(), tlsf_align_size()));
+}
+
+size_t DynamicHeapAllocator::GetControlStructureSize() const
+{
+	return AlignSize(sizeof(MemoryRegionInfo) + sizeof(SInt16) * m_BlocksPerRegion, 16);
+}
 
 void* DynamicHeapAllocator::Allocate(size_t size, int align)
 {
@@ -63,8 +73,23 @@ void* DynamicHeapAllocator::Allocate(size_t size, int align)
 		m_DHAMutex.Lock();
 
 	newRealPtr = (char*)tlsf_memalign(m_TlsfInstance, allocationAlignment, realSize);
-	/*if (newRealPtr)
-		GetBlockInfo()*/
+	if (newRealPtr)
+		GetBlockInfo(newRealPtr)->allocationCount += 1;
+
+	if (m_UseLocking)
+		m_DHAMutex.Unlock();
+
+	if (newRealPtr == nullptr)
+	{
+		if (size < m_RequestedBlockSize / 4)
+		{
+			if (m_UseLocking)
+				m_DHAMutex.Lock();
+
+			size_t tlsfBlockSize;
+			void* memoryBlock = CreateTL
+		}
+	}
 	return nullptr;
 }
 
@@ -112,8 +137,69 @@ size_t DynamicHeapAllocator::GetPtrSize(const void* ptr) const
 	return size;
 }
 
+void* DynamicHeapAllocator::ReserveMemoryRegion(size_t size, regionType type)
+{
+	LowLevelVirtualAllocator::BlockInfo info;
+	info.allocatorIdentifier = m_AllocatorIdentifier;
+	info.blockType = type;
+	m_LowLevelReservedMemory += size;
+	return m_LLAlloc->ReserveMemoryBlock(size, info);
+}
+
+void DynamicHeapAllocator::InitializeMemoryRegion(void* memoryBlock, regionType type, size_t size)
+{
+	MemoryRegionInfo* regionInfo = GetMemoryRegionInfo(memoryBlock);
+	new(regionInfo) MemoryRegionInfo();
+	if (type == kTLSFBlocks)
+	{
+		// initialize freelist, but remove item at index 0 for immediate use
+		regionInfo->m_MemoryBlockFreeList = (SInt16*)(regionInfo + 1);
+		regionInfo->m_NextFreeMemoryBlockIndex = 1;
+		regionInfo->m_MemoryBlockFreeList[0] = -1;
+		for (int i = 1; i < m_BlocksPerRegion; i++)
+			regionInfo->m_MemoryBlockFreeList[i] = i + 1;
+		regionInfo->m_MemoryBlockFreeList[m_BlocksPerRegion - 1] = -1;
+	}
+	regionInfo->m_LargeAllocCount = 0;
+	regionInfo->m_Type = type;
+	regionInfo->m_RegionSize = size;
+	m_MemoryRegions.pus
+}
+
 
 bool DynamicHeapAllocator::IsTLSFBlock(const void* ptr) const
 {
 	return GetMemoryRegionInfo(ptr)->m_Type == kTLSFBlocks;
+}
+
+void* DynamicHeapAllocator::CreateTLSFBlock(size_t& blockSize)
+{
+	// Get free MemoryBlockIndex in Region
+	size_t controlStructureSize = sizeof(MemoryBlockInfo);
+	void* block = nullptr;
+	size_t blockSize = 0;
+	void* baseAddress = nullptr;
+	for (ListIterator<MemoryRegionInfo> iMR = m_MemoryRegions.begin(); iMR != m_MemoryRegions.end(); iMR++)
+	{
+		if ((*iMR).m_Type == kTLSFBlocks)
+		{
+			SInt16 blockIndex = (*iMR).m_NextFreeMemoryBlockIndex;
+			if (blockIndex != -1)
+			{
+				(*iMR).m_NextFreeMemoryBlockIndex = (*iMR).m_MemoryBlockFreeList[blockIndex];
+				(*iMR).m_MemoryBlockFreeList[blockIndex] = -1;
+				baseAddress = (void*)((UInt64)(GetMemoryRegionPointer(&(*iMR))) + blockIndex * m_RequestedBlockSize);
+				break;
+			}
+		}
+	}
+	if (baseAddress == nullptr)
+	{
+		// if no free blocks are left in the region, allocate block in new region
+		block = ReserveMemoryRegion(m_RequestedBlockSize, kTLSFBlocks);
+		controlStructureSize += GetControlStructureSize();
+
+		blockSize = m_LLAlloc->CommitMemory(block, m_RequestedBlockSize);
+		Init
+	}
 }
