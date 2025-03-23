@@ -24,11 +24,23 @@ local function SourceCommon()
     end
 end 
 
+local function TLSF()
+    add_headerfiles("External/tlsf/**.h")
+    add_files("External/tlsf/**.c")
+end
+
 local function Baselib()
+    add_headerfiles("External/baselib/**.h")
+    add_files("External/baselib/**.cpp")
     add_defines("BASELIB_INLINE_NAMESPACE=SourceClassic")
     add_includedirs("./External/baselib")
     add_includedirs("./External/baselib/Include")
     add_syslinks("wsock32", "ws2_32")
+end
+
+local function IMGUI()
+    add_headerfiles("External/imgui/*.h")
+    add_files("External/imgui/*.cpp|imgui_demo.cpp")
 end
 
 -- define rule: shared
@@ -83,12 +95,10 @@ target("Source")
     add_headerfiles("Modules/**.h")
     add_files("Modules/**.cpp")
 
-    add_headerfiles("External/**.h")
-    add_files("External/**.cpp")
-    add_files("External/**.c")
-
     add_includedirs("./External")
     Baselib()
+    IMGUI()
+    TLSF()
 
     add_headerfiles("Configuration/**.h")
 
