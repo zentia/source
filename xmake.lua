@@ -1,4 +1,4 @@
-
+includes("External/xmake.lua")
 -- add modes: debug and release 
 add_rules("mode.debug", "mode.release")
 
@@ -23,29 +23,6 @@ local function SourceCommon()
     elseif is_os("ios") then 
     end
 end 
-
-local function ACL()
-    add_headerfiles("External/acl/includes/acl/**.h")
-end 
-
-local function TLSF()
-    add_headerfiles("External/tlsf/**.h")
-    add_files("External/tlsf/**.c")
-end
-
-local function Baselib()
-    add_headerfiles("External/baselib/**.h")
-    add_files("External/baselib/**.cpp")
-    add_defines("BASELIB_INLINE_NAMESPACE=SourceClassic")
-    add_includedirs("./External/baselib")
-    add_includedirs("./External/baselib/Include")
-    add_syslinks("wsock32", "ws2_32")
-end
-
-local function IMGUI()
-    add_headerfiles("External/imgui/*.h")
-    add_files("External/imgui/*.cpp")
-end
 
 -- define rule: shared
 rule("win.source.shared")
@@ -100,10 +77,7 @@ target("Source")
     add_files("Modules/**.cpp")
 
     add_includedirs("./External")
-    ACL()
-    Baselib()
-    IMGUI()
-    TLSF()
+    External()
 
     add_headerfiles("Configuration/**.h")
 
@@ -111,6 +85,7 @@ target("Source")
     add_includedirs("./Platforms/Windows/Configuration")
 
     add_headerfiles("Platforms/**.h")
+    add_headerfiles("Platforms/**.cpp")
 
     SourceCommon()
     add_defines("SOURCE_EDITOR")
