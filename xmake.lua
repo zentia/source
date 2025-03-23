@@ -24,6 +24,10 @@ local function SourceCommon()
     end
 end 
 
+local function ACL()
+    add_headerfiles("External/acl/includes/acl/**.h")
+end 
+
 local function TLSF()
     add_headerfiles("External/tlsf/**.h")
     add_files("External/tlsf/**.c")
@@ -40,7 +44,7 @@ end
 
 local function IMGUI()
     add_headerfiles("External/imgui/*.h")
-    add_files("External/imgui/*.cpp|imgui_demo.cpp")
+    add_files("External/imgui/*.cpp")
 end
 
 -- define rule: shared
@@ -96,6 +100,7 @@ target("Source")
     add_files("Modules/**.cpp")
 
     add_includedirs("./External")
+    ACL()
     Baselib()
     IMGUI()
     TLSF()
