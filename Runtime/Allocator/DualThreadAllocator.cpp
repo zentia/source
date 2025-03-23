@@ -60,6 +60,31 @@ void DelayedPointerDeletionManager::CleanupPendingMainThreadPointersInternal()
 	
 }
 
+template <class UnderlyingAllocator>
+void* DualThreadAllocator<UnderlyingAllocator>::LowLevelAllocator::ReserveMemoryBlock(size_t size, BlockInfo info)
+{
+	info.secondaryAllocatorIdentifier = info.allocatorIdentifier;
+	info.allocatorIdentifier = m_Identifier;
+	return m_SystemLLAlloc->ReserveMemoryBlock(size, info);
+}
+
+template <class UnderlyingAllocator>
+void DualThreadAllocator<UnderlyingAllocator>::LowLevelAllocator::ReleaseMemoryBlock(void* ptr, size_t size)
+{
+	m_SystemLLAlloc->ReleaseMemoryBlock(ptr, size);
+}
+
+template <class UnderlyingAllocator>
+size_t DualThreadAllocator<UnderlyingAllocator>::LowLevelAllocator::CommitMemory(void* ptr, size_t size)
+{
+	return m_SystemLLAlloc->CommitMemory(ptr, size);
+}
+
+template <class UnderlyingAllocator>
+size_t DualThreadAllocator<UnderlyingAllocator>::LowLevelAllocator::DecommitMemory(void* ptr, size_t size)
+{
+	return m_SystemLLAlloc->DecommitMemory(ptr, size);
+}
 
 template <class UnderlyingAllocator>
 LowLevelVirtualAllocator::BlockInfo DualThreadAllocator<UnderlyingAllocator>::LowLevelAllocator::GetBlockInfoFromPointer(const void* ptr)
@@ -69,7 +94,6 @@ LowLevelVirtualAllocator::BlockInfo DualThreadAllocator<UnderlyingAllocator>::Lo
 	return info;
 }
 
-
 template <class UnderlyingAllocator>
 DualThreadAllocator<UnderlyingAllocator>::DualThreadAllocator(const char* name, BucketAllocator* bucketAllocator, BaseAllocator* mainAllocator, BaseAllocator* threadAllocator, LowLevelVirtualAllocator* llAlloc)
 	: BaseAllocator(name)
@@ -77,6 +101,10 @@ DualThreadAllocator<UnderlyingAllocator>::DualThreadAllocator(const char* name, 
 	, m_MainAllocator((UnderlyingAllocator*)mainAllocator)
 	, m_ThreadAllocator((UnderlyingAllocator*)threadAllocator)
 {
+	m_LowLevelAllocator.Initialize(llAlloc, m_AllocatorIdentifier);
+	m_MainAllocator->SetLowLevelAllocator(&m_LowLevelAllocator);
+	m_ThreadAllocator->SetLowLevelAllocator(&m_LowLevelAllocator);
+
 	m_DelayedDeletion = new (m_MainAllocator->Allocate(sizeof(DelayedPointerDeletionManager), kDefaultMemoryAlignment)) DelayedPointerDeletionManager(m_MainAllocator, m_ThreadAllocator);
 }
 

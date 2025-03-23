@@ -5,14 +5,24 @@
 class ListElement
 {
 public:
+	inline ListElement();
 	ListElement* GetPrev() const { return m_Prev; }
 	ListElement* GetNext() const { return m_Next; }
 
-	inline void 
+	inline bool IsInList() const;
+	inline bool RemoveFromList();
+	inline void InsertInList(ListElement* pos);
+protected:
+	inline void SetAsListRoot();
 private:
 	ListElement* m_Prev;
 	ListElement* m_Next;
+
+	template<class T> friend class List;
 };
+
+template<class T>
+class List;
 
 template<class T>
 class ListIterator
@@ -43,9 +53,59 @@ class List
 public:
 	typedef ListIterator<T> iterator;
 
-	void push_back(T& node) { node.I}
+	List();
+	void push_back(T& node) { node.InsertInList(&m_Root); }
 	iterator begin() { return iterator(m_Root.m_Next); }
 	iterator end() { return iterator(&m_Root); }
 private:
 	ListElement m_Root;
 };
+
+template <class T>
+List<T>::List()
+{
+	m_Root.SetAsListRoot();
+}
+
+
+inline bool ListElement::IsInList() const
+{
+	return m_Prev != nullptr;
+}
+
+inline bool ListElement::RemoveFromList()
+{
+	if (!IsInList())
+		return false;
+	m_Prev->m_Next = m_Next;
+	m_Next->m_Prev = m_Prev;
+	m_Prev = nullptr;
+	m_Next = nullptr;
+	return true;
+}
+
+
+inline void ListElement::InsertInList(ListElement* pos)
+{
+	if (this == pos)
+	{
+		return;
+	}
+	if (IsInList())
+		RemoveFromList();
+	m_Prev = pos->m_Prev;
+	m_Next = pos;
+	m_Prev->m_Next = this;
+	m_Next->m_Prev = this;
+}
+
+inline void ListElement::SetAsListRoot()
+{
+	m_Prev = m_Next = this;
+}
+
+inline ListElement::ListElement()
+{
+	m_Prev = nullptr;
+	m_Next = nullptr;
+}

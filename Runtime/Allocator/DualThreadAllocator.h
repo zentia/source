@@ -18,11 +18,20 @@ public:
 	static constexpr bool IsMTECompliant() { return true; }
 	struct LowLevelAllocator : public LowLevelVirtualAllocator
 	{
+		void* ReserveMemoryBlock(size_t size, BlockInfo info) override;
+		void ReleaseMemoryBlock(void* ptr, size_t size) override;
+		size_t CommitMemory(void* ptr, size_t size) override;
+		size_t DecommitMemory(void* ptr, size_t size) override;
 		void* GetMemoryBlockFromPointer(const void* ptrInBlock) override { return m_SystemLLAlloc->GetMemoryBlockFromPointer(ptrInBlock); }
 		BlockInfo GetBlockInfoFromPointer(const void* ptr) override;
+		void Initialize(LowLevelVirtualAllocator* llAlloc, UInt16 allocatorIdentifier)
+		{
+			m_SystemLLAlloc = llAlloc;
+			m_Identifier = allocatorIdentifier;
+		}
 
 		LowLevelVirtualAllocator* m_SystemLLAlloc;
-
+		UInt16 m_Identifier;
 	};
 private:
 	UnderlyingAllocator* GetCurrentAllocator() const;

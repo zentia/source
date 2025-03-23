@@ -27,4 +27,7 @@ public:
 
 	virtual void* GetMemoryBlockFromPointer(const void* ptrInBlock) = 0;
 	virtual BlockInfo GetBlockInfoFromPointer(const void* ptr) = 0;
+	size_t GetPageSize() const { return m_DefaultPageSize; }
+protected:
+	size_t m_DefaultPageSize;
 };

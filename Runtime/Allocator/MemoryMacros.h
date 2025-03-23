@@ -43,3 +43,9 @@ inline size_t MaxAlignment(size_t alignment1, size_t alignment2)
 {
 	return ((alignment1 - 1) | (alignment2 - 1)) + 1;
 }
+
+template<typename T>
+inline bool DoesAdditionOverflow(T a, T b)
+{
+	return std::numeric_limits<T>::max() - a < b;
+}

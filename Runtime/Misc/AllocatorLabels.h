@@ -27,6 +27,7 @@ struct AllocationRootWithSalt
 	uint16_t m_Salt;
 	uint32_t m_RootReferenceIndex;
 
+	static const AllocationRootWithSalt kNoRoot;
 	static constexpr uint32_t kNotInList = (uint32_t)-1;
 };
 
@@ -59,10 +60,12 @@ struct EXPORT_COREMODULE MemLabelId
 	uint16_t rootReferenceIndex;
 };
 
-EXPORT_COREMODULE typedef const MemLabelId& MemLabelRef;
+typedef const MemLabelId& MemLabelRef;
 
-inline EXPORT_COREMODULE MemLabelIdentifier GetLabelIdentifier(MemLabelRef label) { return label.identifier; }
+inline MemLabelIdentifier GetLabelIdentifier(MemLabelRef label) { return label.identifier; }
 inline bool IsTempLabel(MemLabelRef label) { return GetLabelIdentifier(label) < kMemRegularLabels; }
+
+inline MemLabelId CreateMemLabel(MemLabelIdentifier id) { return { id, AllocationRootWithSalt::kNoRoot }; }
 
 MemLabelId SetCurrentMemoryOwner(MemLabelRef label);
 

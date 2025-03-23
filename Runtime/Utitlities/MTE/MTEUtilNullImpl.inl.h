@@ -20,5 +20,7 @@ namespace MTEUtil
 			SOURCE_MEMCPY(dstData, srcData, copySize);
 			return copySize;
 		}
+
+		static constexpr inline uint32_t MemoryProtectionPageState() { return 0; }
 	}
 }
