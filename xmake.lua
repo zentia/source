@@ -1,12 +1,12 @@
-includes("External/xmake.lua")
 -- add modes: debug and release 
 add_rules("mode.debug", "mode.release")
-
 -- enable unicode
 add_defines("_UNICODE", "UNICODE")
+set_languages("c99", "c++20")
+
+includes("External/xmake.lua")
 
 local function SourceCommon()
-    set_languages("c99", "c++17")
     add_cxxflags("gxx::-fexec-charset=GBK")
     if is_mode("debug") then
         add_cxflags("-DDEBUG")

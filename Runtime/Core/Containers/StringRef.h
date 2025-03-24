@@ -67,7 +67,7 @@ namespace core
 
 		int compare(const value_type* compareStr, ComparisonType comparisonType = kComparisonCaseSensitive) const
 		{
-			return compare_no_check(data(), size(), compareStr, comparisonType);
+			return basic_string_operations<TChar>::compare_no_check(data(), size(), compareStr, comparisonType);
 		}
 
 		const value_type* data() const
