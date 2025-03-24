@@ -2,11 +2,6 @@ local function ACL()
     add_headerfiles("External/acl/includes/acl/**.h")
 end 
 
-local function TLSF()
-    add_headerfiles("External/tlsf/**.h")
-    add_files("External/tlsf/**.c")
-end
-
 local function Baselib()
     add_headerfiles("External/baselib/**.h")
     add_files("External/baselib/**.cpp")
@@ -27,9 +22,21 @@ local function IMGUI()
     add_files("External/imgui/backends/imgui_impl_win32.cpp")
 end
 
+local function SPINE_RUNTIMES()
+    add_includedirs("External/spine-runtimes/spine-cpp/spine-cpp/include")
+    add_headerfiles("External/spine-runtimes/spine-cpp/spine-cpp/include/spine/*.h")
+    add_files("External/spine-runtimes/spine-cpp/spine-cpp/src/spine/*.cpp")
+end
+
+local function TLSF()
+    add_headerfiles("External/tlsf/**.h")
+    add_files("External/tlsf/**.c")
+end
+
 function External()
     ACL()
-    TLSF()
     Baselib()
     IMGUI()
+    SPINE_RUNTIMES()
+    TLSF()
 end 
