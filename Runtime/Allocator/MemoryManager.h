@@ -43,8 +43,9 @@ public:
 	void* ReallocateFallbackToAllocateDeallocate(void* ptr, size_t size, size_t align, MemLabelId label, AllocateOptions allocateOptions, const char* file, int line);
 
 	void Deallocate(void* ptr, MemLabelId label, const char* file = nullptr, int line = 0);
-	bool TryDeallocate(void* ptr, const char* file = nullptr, int line = 0);
 	void Deallocate(void* ptr, const char* file = nullptr, int line = 0);
+	void FallbackDeallocate(void* ptr, MemLabelRef label, const char* file, int line);
+	bool TryDeallocate(void* ptr, const char* file = nullptr, int line = 0);
 	bool TryDeallocateWithLabel(void* ptr, MemLabelId label, const char* file = nullptr, int line = 0);
 
 	void WarnAdditionOverflow(AllocateOptions allocateOptions);
@@ -100,6 +101,25 @@ public:
 
 	BaseAllocator* GetAllocator(MemLabelRef label);
 
+	struct allocation_log_details
+	{
+		allocation_log_details(void* ptr, const size_t size, const size_t align, const MemLabelId label, const char* function, const char* file, const int line)
+			: ptr(ptr)
+			, size(size)
+			, align(align)
+			, label(label)
+			, function(function)
+			, file(file)
+			, line(line)
+		{}
+		void* ptr;
+		size_t size;
+		size_t align;
+		MemLabelId label;
+		const char* function;
+		const char* file;
+		int line;
+	};
 	static MemoryManager* g_MemoryManager;
 private:
 	void InitializeInitialAllocators();

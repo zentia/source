@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "WindowsIncludes.h"
 #include "Editor/Platform/Windows/WinEditorMain.h"
 
@@ -39,21 +41,15 @@ std::wstring_view DeleteLastPathNameComponent(const TString& path)
     return std::wstring_view(&path[0], pos + 1);
 }
 
-// std::wstring GetDeveloperWorkspaceRoot()
-// {
-//     std::wstring exePath = GetExecutablePath();
-//     std::
-// }
-
 void DisplayFailedToLoadSourceError(LPWSTR cmdLine)
 {
 	// MessageBoxW(nullptr, )
 }
 
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, LPWSTR cmdLine, int)
+int main(int argc, char** argv)
 {
 
-    auto sourceDll = LoadLibraryExW(L"Source.dll", nullptr, 0);
+    auto sourceDll = LoadLibraryEx("Source.dll", nullptr, 0);
     if (sourceDll == nullptr)
     {
         auto error = GetLastError();
@@ -66,6 +62,5 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, LPWSTR cmdLine, int)
         auto error = GetLastError();
         return MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, error);
     }
-
-    return sourceMain();
+    return sourceMain(argc, argv);
 }

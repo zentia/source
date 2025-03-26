@@ -1,8 +1,11 @@
 #pragma once
 
+#include <memory>
+
 #include "Runtime/BaseClasses/InstanceID.h"
 #include "Runtime/Modules/ExportModuels.h"
 #include "Runtime/Utitlities/StringTraits.h"
+#include <spdlog/spdlog.h>
 
 enum LogMessageFlags
 {
@@ -10,19 +13,9 @@ enum LogMessageFlags
 	kError = 1 << 0,
 	kAssert = 1 << 1,
 	kLog = 1 << 2,
+	kDebug = 1 << 3,
 	kFatal = 1 << 4,
 	kWarning = 1 << 9,
-};
-
-enum LogType
-{
-	kLogTypeError = 0,
-	kLogTypeAssert = 1,
-	kLogTypeWarning = 2,
-	kLogTypeLog = 3,
-	kLogTypeException = 4,
-	kLogTypeDebug = 5,
-	kLogTypeNumLevels
 };
 
 struct DebugStringToFileData
@@ -48,6 +41,7 @@ void DebugStringToFile(const TString& message, const char* file, int line, int c
 	DebugStringToFile(data);
 }
 
+#define LOG_DEBUG(...) PP_WRAP_CODE(DebugStringToFile(Format(__VA_ARGS__),__FILE_STRIPPED__,__LINE__,-1,kDebug))
 #define ErrorStringMsg(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError))
 #define WarningStringMsg(...)	PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kWarning))
 #define FatalErrorMsg(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError | kFatal))
@@ -71,3 +65,34 @@ bool AssertImplementation(InstanceID objID, const char* fileStripped, int line, 
 #define AssertMsg(test, msg, ...) SOURCE__ASSERT_IMPL(test, GetInstanceIDFrom(__VA_ARGS__), msg)
 
 #define DebugAssert(x) Assert(x)
+
+class LogSystem
+{
+public:
+	enum class LogLevel : std::uint8_t
+	{
+		Debug,
+		Info,
+		Warn,
+		Error,
+		Fatal
+	};
+	LogSystem();
+	~LogSystem();
+
+	template<typename... TARGS>
+	void Log(LogLevel level, TARGS&&... args)
+	{
+		switch (level)
+		{
+		case LogLevel::Debug:
+			m_Logger->debug(std::forward<TARGS>(args)...);
+			break;
+		case LogLevel::Info:
+			m_Logger->info(std::forward<TARGS>(args)...);
+			break;
+		}
+	}
+private:
+	std::shared_ptr<spdlog::logger> m_Logger;
+};

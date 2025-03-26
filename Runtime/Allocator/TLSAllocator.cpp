@@ -56,6 +56,12 @@ size_t TLSAllocator<allocMode>::GetPtrSize(const void* ptr) const
 }
 
 template <AllocatorMode allocMode>
+size_t TLSAllocator<allocMode>::get_requested_ptr_size(const void* ptr) const
+{
+	return GetThreadAllocator()->StackAllocator_t::get_requested_ptr_size(ptr);
+}
+
+template <AllocatorMode allocMode>
 typename TLSAllocator<allocMode>::StackAllocator_t* TLSAllocator<allocMode>::GetThreadAllocator() const
 {
 	return m_UniqueThreadAllocator.IsValid() ? (StackAllocator_t*)m_UniqueThreadAllocator : nullptr;

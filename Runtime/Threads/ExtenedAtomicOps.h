@@ -1,7 +1,7 @@
 #pragma once
 
 #include "baselib/Include/Cpp/Atomic.h"
-#include "ExtendedAtomicTypes.h"
+#include "extended_atomic_types.h"
 
 #include <type_traits>
 
@@ -10,6 +10,10 @@ enum memory_order_acquire_t { memory_order_acquire = 2, memory_order_consume = :
 enum memory_order_release_t { memory_order_release = 3 };
 enum memory_order_acq_rel_t { memory_order_acq_rel = 4 };
 enum memory_order_seq_cst_t { memory_order_seq_cst = 5 };
+
+#if defined(__x86_64__) || defined(_M_64)
+#include "Runtime/Threads/extended_atomic_ops_x86_64.h"
+#endif
 
 __forceinline baselib::memory_order_relaxed_t TranslateMemoryOrder(memory_order_relaxed_t) { return baselib::memory_order_relaxed; }
 __forceinline baselib::memory_order_acquire_t TranslateMemoryOrder(memory_order_acquire_t) { return baselib::memory_order_acquire; }

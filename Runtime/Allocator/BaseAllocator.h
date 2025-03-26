@@ -14,13 +14,14 @@ class BaseAllocator : public NonCopyable
 {
 public:
 	BaseAllocator(const char* name, bool isThreadSafe = false);
-
+	const char* get_name() const { return m_Name; }
 	virtual void* Allocate(size_t size, int align) = 0;
 	virtual void Deallocate(void* p) = 0;
 	virtual bool TryDeallocate(void* p);
 	virtual bool Contains(const void* p) const = 0;
 	virtual size_t GetPtrSize(const void* ptr) const = 0;
 	virtual bool IsAssigned() const { return true; }
+	virtual size_t get_requested_ptr_size(const void* ptr) const = 0;
 protected:
 	void RegisterAllocationData(size_t allocatedSize, size_t overhead);
 	void RegisterReallocationData(size_t oldAllocatedSize, size_t oldOverhead, size_t allocatedSize, size_t overhead);

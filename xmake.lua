@@ -1,8 +1,17 @@
 -- add modes: debug and release 
 add_rules("mode.debug", "mode.release")
 -- enable unicode
-add_defines("_UNICODE", "UNICODE")
-set_languages("c99", "c++20")
+-- add_defines("_UNICODE", "UNICODE")
+-- for all source/target encodings
+-- set_encodings("utf-8") -- msvc: /utf-8
+-- set_encodings("source:utf-8", "target:utf-8")
+
+-- -- gcc/clang: -finput-charset=UTF-8, msvc: -source-charset=utf-8
+-- set_encodings("source:utf-8")
+
+-- -- gcc/clang: -fexec-charset=UTF-8, msvc: -target-charset=utf-8
+-- set_encodings("target:utf-8")
+set_languages("c99", "c++23")
 
 includes("External/xmake.lua")
 
@@ -15,6 +24,7 @@ local function SourceCommon()
     add_includedirs("./")
     if is_os("windows") then
         add_defines("PLATFORM_WIN")
+        add_defines("__x86_64__")
         add_rules("win.source.shared")
         add_syslinks("synchronization")
     elseif is_os("linux") then 
@@ -97,6 +107,7 @@ target("Source")
 target("SourceEditor")
     set_kind("binary")
     add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
+    add_deps("Source")
     SourceCommon()
 
 --

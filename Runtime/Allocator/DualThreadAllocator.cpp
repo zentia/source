@@ -1,5 +1,7 @@
 #include "SourcePrefix.h"
 #include "DualThreadAllocator.h"
+
+#include "AllocationHeader.h"
 #include "Runtime/Allocator/BucketAllocator.h"
 #include "Runtime/Allocator/DynamicHeapAllocator.h"
 #include "Runtime/Threads/CurrentThread.h"
@@ -151,5 +153,10 @@ size_t DualThreadAllocator<UnderlyingAllocator>::GetPtrSize(const void* ptr) con
 	return m_MainAllocator->UnderlyingAllocator::GetPtrSize(ptr);
 }
 
+template <class UnderlyingAllocator>
+size_t DualThreadAllocator<UnderlyingAllocator>::get_requested_ptr_size(const void* ptr) const
+{
+	return AllocationHeader::GetAllocationHeader(ptr)->GetAllocationSize();
+}
 
 template class DualThreadAllocator<DynamicHeapAllocator>;

@@ -47,16 +47,36 @@ private:
 	ListElement* m_Node;
 };
 
+template <class T>
+class list_const_iterator
+{
+public:
+	list_const_iterator(const T* node = nullptr) :m_node_(node) {}
+
+	friend bool operator==(const list_const_iterator& x, const list_const_iterator& y) { return x.m_node_ == y.m_node_; }
+private:
+	friend class List<T>;
+	list_const_iterator(const ListElement* node) : m_node_(node) {}
+	const ListElement* m_node_;
+};
+
 template<class T>
 class List
 {
 public:
+	typedef list_const_iterator<T> const_iterator;
 	typedef ListIterator<T> iterator;
 
 	List();
 	void push_back(T& node) { node.InsertInList(&m_Root); }
+
 	iterator begin() { return iterator(m_Root.m_Next); }
 	iterator end() { return iterator(&m_Root); }
+
+	const_iterator begin() const { return const_iterator(m_Root.m_Next); }
+	const_iterator end() const { return const_iterator(&m_Root); }
+
+	[[nodiscard]] bool empty() const { return begin() == end(); }
 private:
 	ListElement m_Root;
 };

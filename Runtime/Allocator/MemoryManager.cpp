@@ -24,6 +24,7 @@
 #include "Runtime/Threads/ReadWriteLock.h"
 
 #define SOURCE_LL_ALLOC(l, s, a) ::_aligned_malloc(s, a)
+#define SOURCE_LL_FREE(l, p) ::_aligned_free(p)
 
 void* malloc_internal(size_t size, size_t align, MemLabelRef label, AllocateOptions allocateOptions, const char* file, int line)
 {
@@ -48,6 +49,7 @@ typedef DualThreadAllocator<DynamicHeapAllocator> MainThreadAllocator;
 
 #if SOURCE_ALLOC_ALLOW_NEWDELETE_OVERRIDE
 void* operator new(size_t size) { return GetMemoryManager().Allocate(size == 0 ? 4 : size, kDefaultMemoryAlignment, kMemNewDelete, kAllocateOptionNone, "Overloaded New"); }
+void operator delete(void* p) noexcept { return GetMemoryManager().Deallocate(p, kMemNewDelete); }
 #endif
 
 #define AlignSize16(size) (AlignSize(size, 16))
@@ -350,11 +352,25 @@ void* MemoryManager::Allocate(size_t size, size_t align, MemLabelId label, Alloc
 
 void MemoryManager::Deallocate(void* ptr, const char* file, int line)
 {
-	if (TryDeallocate(ptr, file, line))
+	if (ptr == nullptr)
 		return;
 
-	if (IsActive())
-		PlatformMemory::PlatformLowLevelFree(kMemDefault, ptr);
+	BaseAllocator* alloc = GetAllocatorContainingPtr(ptr);
+
+	if (alloc)
+	{
+		alloc->Deallocate(ptr);
+	}
+	else
+	{
+		if (IsActive())
+			SOURCE_LL_FREE(kMemDefault, ptr);
+	}
+}
+
+void MemoryManager::FallbackDeallocate(void* ptr, MemLabelRef label, const char* file, int line)
+{
+	return Deallocate(ptr, file, line);
 }
 
 bool MemoryManager::TryDeallocate(void* ptr, const char* file, int line)
@@ -374,11 +390,34 @@ bool MemoryManager::TryDeallocate(void* ptr, const char* file, int line)
 
 void MemoryManager::Deallocate(void* ptr, MemLabelId label, const char* file, int line)
 {
-	if (TryDeallocateWithLabel(ptr, label, file, line))
+	DebugAssert(GetLabelIdentifier(label) != GetLabelIdentifier(kMemInvalidLabel));
+
+	if (ptr == nullptr)
 		return;
 
-	if (IsActive())
-		PlatformMemory::PlatformLowLevelFree(kMemDefault, ptr);
+	if (!IsActive())
+	{
+		FallbackDeallocate(ptr, label, file, line);
+		return;
+	}
+
+	if (IsTempLabel(label))
+	{
+		bool success;
+		if (OPTIMIZER_LIKELY(m_FastFrameTempAllocator != nullptr) && IsTempAllocatorLabel(label))
+		{
+			success = m_FastFrameTempAllocator->TryDeallocate(ptr);
+			if (success)
+				return;
+		}
+		else
+		{
+			success = GetAllocator(label)->TryDeallocate(ptr);
+			if (success)
+				return;
+		}
+		Deallocate(ptr, GetFallbackLabel(label));
+	}
 }
 
 bool MemoryManager::TryDeallocateWithLabel(void* ptr, MemLabelId label, const char* file, int line)

@@ -24,6 +24,7 @@ public:
 	virtual bool Contains(const void* p) const override;
 	void Deallocate(void* p) override;
 	size_t GetPtrSize(const void* ptr) const override;
+	size_t get_requested_ptr_size(const void* ptr) const override;
 
 	static constexpr bool IsMTECompliant() { return true; }
 

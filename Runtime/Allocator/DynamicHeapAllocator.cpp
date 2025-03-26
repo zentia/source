@@ -7,7 +7,7 @@
 #include "Runtime/Allocator/LowLevelDefaultAllocator.h"
 #include "Runtime/Allocator/MemoryManager.h"
 
-#include "External/tlsf/tlsf.h"
+#include "tlsf.h"
 #include "Runtime/Core/Containers/Format/Format.h"
 #include "Runtime/Logging/DebugBreak.h"
 #include "Runtime/Utitlities/BitUtility.h"
@@ -171,6 +171,43 @@ void DynamicHeapAllocator::Deallocate(void* ptr)
 	{
 		const AllocationHeader* allocHeader = AllocationHeader::GetAllocationHeader(ptr);
 		void* realPtr = allocHeader->GetAllocationPtr();
+
+		RegisterDeallocationData(GetTlsfAllocationSize(allocHeader), allocHeader->GetOverheadSize());
+
+		if (m_UseLocking)
+			m_DHAMutex.Lock();
+
+		GetBlockInfo(realPtr)->allocationCount -= 1;
+
+		tlsf_free(m_TlsfInstance, realPtr);
+
+		if (GetBlockInfo(realPtr)->allocationCount == 0)
+		{
+			try_remove_block(GetBlockInfo(realPtr));
+		}
+		if (m_UseLocking)
+			m_DHAMutex.Unlock();
+	}
+	else
+	{
+		const AllocationHeaderWithSize* allocation_header = AllocationHeaderWithSize::GetAllocationHeader(ptr);
+		uint64_t requested_size = allocation_header->GetAllocationSize();
+		LargeAllocInfo* large_alloc_info = (LargeAllocInfo*)(allocation_header->GetAllocationPtr()) - 1;
+		size_t real_size = large_alloc_info->allocatedSize;
+
+		RegisterDeallocationData(requested_size, real_size - requested_size);
+
+		if (m_UseLocking)
+			m_DHAMutex.Lock();
+
+		large_alloc_info->RemoveFromList();
+		MemoryRegionInfo* region_info = GetMemoryRegionInfo(ptr);
+		region_info->m_LargeAllocCount--;
+
+		remove_large_alloc(large_alloc_info, real_size);
+
+		if (m_UseLocking)
+			m_DHAMutex.Unlock();
 	}
 }
 
@@ -202,6 +239,16 @@ size_t DynamicHeapAllocator::GetPtrSize(const void* ptr) const
 	size = largeAllocHeader->GetAllocationSize();
 
 	return size;
+}
+
+size_t DynamicHeapAllocator::get_requested_ptr_size(const void* ptr) const
+{
+	if (m_BucketAllocator != nullptr && m_BucketAllocator->BucketAllocator::Contains(ptr))
+		return m_BucketAllocator->BucketAllocator::get_requested_ptr_size(ptr);
+	if (GetMemoryRegionInfo(ptr)->m_Type == kTLSFBlocks)
+		return AllocationHeader::GetAllocationHeader(ptr)->GetAllocationSize();
+	// large alloc
+	return AllocationHeaderWithSize::GetAllocationHeader(ptr)->GetAllocationSize();
 }
 
 void DynamicHeapAllocator::ReleaseMemoryBlock(void* ptr, size_t size)
@@ -263,6 +310,30 @@ void* DynamicHeapAllocator::RequestLargeAllocMemory(size_t size, size_t& commitS
 	m_PeakLargeAllocationBytes = std::max(m_PeakLargeAllocationBytes, m_CurrentLargeAllocationBytes);
 	m_TotalAllocatedBytes += commitSize;
 	return largeAllocPtr;
+}
+
+void DynamicHeapAllocator::remove_large_alloc(void* ptr, size_t size)
+{
+	m_LLAlloc->DecommitMemory(ptr, size);
+	m_TotalReservedBytes -= size;
+	m_CurrentLargeAllocationBytes -= size;
+	
+	if (MemoryRegionInfo* region_info = GetMemoryRegionInfo(ptr); region_info->m_LargeAllocCount == 0)
+	{
+		if (region_info != m_LargeAllocBaseCommitAddress)
+		{
+			region_info->RemoveFromList();
+			size_t region_size = region_info->m_RegionSize;
+			const size_t commit_size = m_LLAlloc->DecommitMemory(region_info, sizeof(MemoryRegionInfo));
+			m_TotalReservedBytes -= commit_size;
+			m_LLAlloc->ReleaseMemoryBlock(GetMemoryRegionPointer(ptr), region_size);
+			m_LowLevelReservedMemory -= region_size;
+		}
+		else
+		{
+			m_LargeAllocNextCommitAddress = (uint64_t)m_LargeAllocBaseCommitAddress + AlignSize(sizeof(MemoryRegionInfo), m_LLAlloc->GetPageSize());
+		}
+	}
 }
 
 void DynamicHeapAllocator::InitializeMemoryRegion(void* memoryBlock, regionType type, size_t size)
@@ -349,4 +420,45 @@ void* DynamicHeapAllocator::CreateTLSFBlock(size_t& tlsfBlockSize)
 
 	tlsfBlockSize = blockSize - controlStructureSize;
 	return GetTLSFBlockPointer(block);
+}
+
+void DynamicHeapAllocator::try_remove_block(void* ptr_in_block)
+{
+	if (GetBlockInfo(ptr_in_block)->allocationCount == 0 && GetBlockInfo(ptr_in_block)->canDecommitBlock)
+		remove_block(ptr_in_block);
+
+	// if there is one block left, then that has to be the first block in the region (containing mrinfo)
+	MemoryRegionInfo* region_info = GetMemoryRegionInfo(ptr_in_block);
+	ListIterator<MemoryBlockInfo> it = region_info->m_TLSFMemoryBlocks.begin();
+	if (!region_info->m_TLSFMemoryBlocks.empty() && ++it == region_info->m_TLSFMemoryBlocks.end())
+	{
+		AssertMsg((--it, GetBlockPointer(&(*it)) == GetMemoryRegionPointer(&(*it))), "Block must be first in the region");
+		// if there are no allocations in the block and the block is not the one held by m_LastEmptyTLSFBlock
+		// then remove then region
+		if (GetBlockInfo(region_info)->allocationCount == 0)
+		{
+			region_info->RemoveFromList();
+			remove_block(region_info);
+			m_LLAlloc->ReleaseMemoryBlock(region_info, m_RequestedBlockSize);
+			m_LowLevelReservedMemory -= m_RequestedBlockSize;
+		}
+	}
+}
+
+void DynamicHeapAllocator::remove_block(void* ptr_in_block)
+{
+	MemoryBlockInfo* block_info = GetBlockInfo(ptr_in_block);
+	void* block_ptr = GetBlockPointer(block_info);
+	Assert(block_info->allocationCount == 0);
+	block_info->RemoveFromList();
+	tlsf_remove_pool(m_TlsfInstance, GetTLSFBlockPointer(block_ptr));
+
+	MemoryRegionInfo* region_info = GetMemoryRegionInfo(ptr_in_block);
+	int16_t block_index = ((uintptr_t)block_ptr - (uintptr_t)GetMemoryRegionPointer(ptr_in_block)) / m_RequestedBlockSize;
+	region_info->m_MemoryBlockFreeList[block_index] = region_info->m_NextFreeMemoryBlockIndex;
+	region_info->m_NextFreeMemoryBlockIndex = block_index;
+
+	m_LLAlloc->DecommitMemory(block_ptr, m_RequestedBlockSize);
+	m_TotalReservedBytes -= m_RequestedBlockSize;
+	m_CurrentTLSFBlockCount--;
 }

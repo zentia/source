@@ -2,6 +2,7 @@
 #include "Application.h"
 
 #include "Runtime/Allocator/MemoryManager.h"
+#include "Runtime/RenderCore/WindowSystem.h"
 
 static Application* gApp = nullptr;
 
@@ -18,9 +19,15 @@ Application::~Application()
 }
 
 
-void Application::InitializeProject()
+void Application::InitializeProject(const std::string& config_file_path)
 {
 	MemoryManager::LateStaticInitialize();
+	m_config_module_ = std::make_shared<source_runtime::config_module>();
+	m_config_module_->initialize(config_file_path);
+	m_LoggerSystem = std::make_shared<LogSystem>();
+	m_WindowSystem = std::make_shared<Source::WindowSystem>();
+	Source::WindowCreateInfo windowCreateInfo;
+	m_WindowSystem->Initialize(windowCreateInfo);
 }
 
 void Application::RequestRecreateGfxDevice()
@@ -36,4 +43,9 @@ void Application::RequestLoadRenderDoc()
 Application& GetApplication()
 {
 	return *gApp;
+}
+
+void Application::clear()
+{
+	
 }

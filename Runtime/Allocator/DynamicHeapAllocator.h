@@ -2,7 +2,7 @@
 
 #include "BaseAllocator.h"
 #include "LowLevelDefaultAllocator.h"
-#include "External/tlsf/tlsf.h"
+#include "tlsf.h"
 #include "Runtime/Threads/Mutex.h"
 #include "Runtime/Utitlities/LinkedList.h"
 
@@ -20,6 +20,7 @@ public:
 	void Deallocate(void* ptr) override;
 	bool Contains(const void* p) const override;
 	size_t GetPtrSize(const void* ptr) const override;
+	size_t get_requested_ptr_size(const void* ptr) const override;
 	static constexpr bool IsMTECompliant() { return true; }
 
 private:
@@ -63,6 +64,7 @@ private:
 	void ReleaseMemoryRegion(void* ptr, size_t size);
 
 	void* RequestLargeAllocMemory(size_t size, size_t& commitSize);
+	void remove_large_alloc(void* ptr, size_t size);
 
 	void* m_LargeAllocBaseCommitAddress;
 	SInt64 m_LargeAllocNextCommitAddress;
@@ -71,6 +73,8 @@ private:
 	bool IsTLSFBlock(const void* ptr) const;
 
 	void* CreateTLSFBlock(size_t& blockSize);
+	void try_remove_block(void* ptr_in_block);
+	void remove_block(void* ptr_in_block);
 	void* GetMemoryRegionPointer(const void* ptr) const { return m_LLAlloc->GetMemoryBlockFromPointer(ptr); }
 	MemoryRegionInfo* GetMemoryRegionInfo(const void* ptr) const { return (MemoryRegionInfo*)((UInt64)GetMemoryRegionPointer(ptr)); }
 	BucketAllocator* m_BucketAllocator;

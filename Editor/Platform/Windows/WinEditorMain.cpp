@@ -6,10 +6,15 @@
 #include <iostream>
 #include <Windows.h>
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <tchar.h>
+#include <filesystem>
+
+#include "Editor/Src/Editor.h"
+#include "Runtime/Engine.h"
+#include "Runtime/Utitlities/file_path_utils.h"
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
@@ -19,9 +24,6 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 #endif
-
-#include "backends/imgui_impl_dx12.h"
-#include "backends/imgui_impl_win32.h"
 
 int32_t LanunchWindowsStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance, char*, int32_t nCmdShow, const TCHAR* CmdLine)
 {
@@ -112,153 +114,22 @@ void WaitForLastSubmittedFrame();
 FrameContext* WaitForNextFrameResources();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-extern "C" SOURCE_API int SourceMain()
+extern "C" SOURCE_API int SourceMain(int argc, char** argv)
 {
+    std::filesystem::path executable_path(argv[0]);
+    const std::filesystem::path config_file_path = executable_path.parent_path() / "SourceEditor.json";
     new Application();
-    GetApplication().InitializeProject();
-    // Create application window
-    WNDCLASSEX wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr,nullptr, nullptr,L"Source Engine", nullptr };
-    ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Source Engine", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+    GetApplication().InitializeProject(config_file_path.generic_string());
+    LOG_DEBUG("Start");
+    SourceRuntime::SourceEngine* engine = new SourceRuntime::SourceEngine();
+    engine->StartEngine(config_file_path.generic_string());
 
-    // Initialize Direct3D
-    if (!CreateDeviceD3D(hwnd))
-    {
-        CleanupDeviceD3D();
-        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
-        return 1;
-    }
-
-    // Show the window
-    ::ShowWindow(hwnd, SW_SHOWDEFAULT);
-    ::UpdateWindow(hwnd);
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;// Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(hwnd);
-
-    ImGui_ImplDX12_InitInfo init_info = {};
-    init_info.Device = g_pd3dDevice;
-    init_info.CommandQueue = g_pd3dCommandQueue;
-    init_info.NumFramesInFlight = APP_NUM_FRAMES_IN_FLIGHT;
-    init_info.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    init_info.DSVFormat = DXGI_FORMAT_UNKNOWN;
-    // Allocating SRV descriptor (for textures) is up to the application, so we provide callbacks.
-    // (current version of the backend will only allocate one descriptor, future versions will need to allocate more)
-    init_info.SrvDescriptorHeap = g_pd3dSrvDescHeap;
-    init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) {return g_pd3dSrvDescHeapAlloc.Alloc(out_cpu_handle, out_gpu_handle); };
-    init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) {return g_pd3dSrvDescHeapAlloc.Free(cpu_handle, gpu_handle); };
-    ImGui_ImplDX12_Init(&init_info);
-
-    // Out State
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    //  Main loop
-    bool done = false;
-    while (!done)
-    {
-	    // Poll and handle messages (inputs, window resize, etc.)
-        // See the WndProc() function below for out to dispatch events to the Win32 backend.
-        MSG msg;
-	    while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
-	    {
-            ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
-            if (msg.message == WM_QUIT)
-                done = true;
-	    }
-        if (done)
-            break;
-
-        // Handle window screen locked
-        if (g_SwapChainOccluded && g_pSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED)
-        {
-            ::Sleep(10);
-            continue;
-        }
-        g_SwapChainOccluded = false;
-
-        // Start the Dear ImGui frame
-        ImGui_ImplDX12_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");
-            ImGui::Text("This is some useful Text.");
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-        // Rendering
-        ImGui::Render();
-
-        FrameContext* frameCtx = WaitForNextFrameResources();
-        UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
-        frameCtx->CommandAllocator->Reset();
-
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-        barrier.Transition.pResource = g_mainRenderTargetResource[backBufferIdx];
-        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        g_pd3dCommandList->Reset(frameCtx->CommandAllocator, nullptr);
-        g_pd3dCommandList->ResourceBarrier(1, &barrier);
-
-        // Render Dear ImGui graphics
-        const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-        g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
-        g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
-        g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
-        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), g_pd3dCommandList);
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-        g_pd3dCommandList->ResourceBarrier(1, &barrier);
-        g_pd3dCommandList->Close();
-
-        g_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&g_pd3dCommandList);
-
-        // Present
-        HRESULT hr = g_pSwapChain->Present(1, 0); // Present with vsync
-        g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
-
-        UINT64 fenceVaule = g_fenceLastSignaledValue + 1;
-        g_pd3dCommandQueue->Signal(g_fence, fenceVaule);
-        g_fenceLastSignaledValue = fenceVaule;
-        frameCtx->FenceValue = fenceVaule;
-    }
-
-    WaitForLastSubmittedFrame();
-
-    // Cleanup
-    ImGui_ImplDX12_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
-
-    CleanupDeviceD3D();
-    ::DestroyWindow(hwnd);
-    ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+    SourceEditor::SourceEditor* editor = new SourceEditor::SourceEditor();
+    editor->Initialize(engine);
+    editor->Run();
+    editor->Clear();
+    engine->clear();
+    engine->shutdown_engine();
     return 0;
 }
 
@@ -446,13 +317,8 @@ void CleanupDeviceD3D()
 #endif
 }
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-        return true;
-
     switch (msg)
     {
     case WM_SIZE:
