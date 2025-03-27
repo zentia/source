@@ -13,12 +13,19 @@ namespace source_runtime
 		void initialize_debug_messenger();
 		void create_window_surface();
 		void initialize_physical_device();
+		void create_logical_device();
+		queue_family_indices m_queue_family_indices;
 		GLFWwindow* m_window{ nullptr };
 		VkSurfaceKHR m_surface{ nullptr };
+		// 硬件层的抽象
 		VkPhysicalDevice m_physical_device{ nullptr };
+		// 逻辑设备，逻辑层的抽象
+		VkDevice m_device{ nullptr };
 		rhi_viewport m_viewport;
 		rhi_rect_2d m_scissor;
 		static uint8_t constexpr k_max_frames_in_flight{ 3 };
+		rhi_queue* m_graphics_queue{ nullptr };
+		rhi_queue* m_compute_queue{ nullptr };
 	private:
 		[[nodiscard]] bool check_validation_layer_support() const;
 		std::vector<const char*> get_required_extensions();

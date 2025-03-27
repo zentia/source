@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Editor/Src/Application/Application.h"
+#include "interface/vulkan/vulkan_rhi_resource.h"
 
 namespace source_runtime
 {
@@ -36,6 +37,7 @@ namespace source_runtime
 		initialize_debug_messenger();
 		create_window_surface();
 		initialize_physical_device();
+		create_logical_device();
 	}
 
 	void vulkan_rhi::create_instance()
@@ -113,7 +115,7 @@ namespace source_runtime
 		if (glfwCreateWindowSurface(m_instance_, m_window, nullptr, &m_surface) != VK_SUCCESS)
 		{
 			LOG_ERROR("glfwCreateWindowSurface failed!");
-		}	
+		}
 	}
 
 	void vulkan_rhi::initialize_physical_device()
@@ -147,7 +149,7 @@ namespace source_runtime
 					score += 100;
 				}
 
-				auto& [f,s] = ranked_physical_devices.emplace_back();
+				auto& [f, s] = ranked_physical_devices.emplace_back();
 				f = score;
 				s = device;
 			}
@@ -173,6 +175,62 @@ namespace source_runtime
 				LOG_ERROR("failed to find suitable physical device");
 			}
 		}
+	}
+
+	void vulkan_rhi::create_logical_device()
+	{
+		m_queue_family_indices = find_queue_families(m_physical_device);
+
+		std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
+		std::set<uint32_t> queue_families =
+		{
+			m_queue_family_indices.graphics_family.value(),
+			m_queue_family_indices.present_family.value(),
+			m_queue_family_indices.compute_family.value()
+		};
+
+		float queue_priority = 1.0f;
+		for (uint32_t queue_family : queue_families)
+		{
+			VkDeviceQueueCreateInfo queue_create_info
+			{
+				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+				.queueFamilyIndex = queue_family,
+				.queueCount = 1,
+				.pQueuePriorities = &queue_priority
+			};
+			queue_create_infos.push_back(queue_create_info);
+		}
+
+		// physical device features
+		VkPhysicalDeviceFeatures physical_device_features{};
+		physical_device_features.samplerAnisotropy = VK_TRUE;
+		physical_device_features.fragmentStoresAndAtomics = VK_TRUE;
+		physical_device_features.independentBlend = VK_TRUE;
+		if (m_enable_point_light_shadow_)
+		{
+			physical_device_features.geometryShader = VK_TRUE;
+		}
+
+		// device create info
+		VkDeviceCreateInfo device_create_info{};
+		device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		device_create_info.pQueueCreateInfos = queue_create_infos.data();
+		device_create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
+		device_create_info.pEnabledFeatures = &physical_device_features;
+		device_create_info.enabledExtensionCount = static_cast<uint32_t>(m_device_extensions_.size());
+		device_create_info.ppEnabledExtensionNames = m_device_extensions_.data();
+		device_create_info.enabledLayerCount = 0;
+		if (vkCreateDevice(m_physical_device, &device_create_info, nullptr, &m_device) != VK_SUCCESS)
+		{
+			LOG_ERROR("vk create device");
+		}
+
+		// 从逻辑设备中获取一个可用的队列，以便后续的命令提交
+		VkQueue vk_graphics_queue;
+		vkGetDeviceQueue(m_device, m_queue_family_indices.graphics_family.value(), 0, &vk_graphics_queue);
+		m_graphics_queue = new vulkan_rhi_queue();
+		static_cast<vulkan_rhi_queue*>(m_graphics_queue)->set_resource(vk_graphics_queue);
 	}
 
 	bool vulkan_rhi::check_validation_layer_support() const
@@ -221,7 +279,7 @@ namespace source_runtime
 		return extensions;
 	}
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT, 
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT,
 		VkDebugUtilsMessageTypeFlagsEXT,
 		const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
 		void*)
