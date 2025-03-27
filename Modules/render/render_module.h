@@ -1,4 +1,5 @@
 #pragma once
+#include "Modules/rhi/rhi_module.h"
 #include "Runtime/RenderCore/WindowSystem.h"
 
 namespace source_runtime
@@ -14,5 +15,6 @@ namespace source_runtime
 		void tick(float delta_time);
 	private:
 		void process_swap_data();
+		std::shared_ptr<rhi> m_rhi_;
 	};
 }

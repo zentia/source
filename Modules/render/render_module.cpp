@@ -3,6 +3,7 @@
 #include "Editor/Src/Application/Application.h"
 #include "Modules/Config/ConfigModule.h"
 #include "Modules/rhi/rhi_module.h"
+#include "Modules/rhi/vulkan_rhi.h"
 
 namespace source_runtime
 {
@@ -15,7 +16,8 @@ namespace source_runtime
 		rhi_init_info rhi_init_info;
 		rhi_init_info.window_system = init_info.window_system;
 
-
+		m_rhi_ = std::make_shared<vulkan_rhi>();
+		m_rhi_->initialize(rhi_init_info);
 	}
 
 	void render_module::tick(float delta_time)

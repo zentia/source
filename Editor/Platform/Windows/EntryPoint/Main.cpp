@@ -23,24 +23,6 @@ std::wstring GetExecutablePath()
     return exePath;
 }
 
-template<typename TString>
-std::wstring_view DeleteLastPathNameComponent(const TString& path)
-{
-    auto pos = path.find_last_not_of(L'\\');
-    if (pos == TString::npos)
-        return std::wstring_view();
-
-    pos = path.find_last_of(L'\\', pos);
-    if (pos == TString::npos)
-        return std::wstring_view();
-
-    pos = path.find_last_not_of(L'\\', pos);
-    if (pos == TString::npos)
-        return std::wstring_view();
-
-    return std::wstring_view(&path[0], pos + 1);
-}
-
 void DisplayFailedToLoadSourceError(LPWSTR cmdLine)
 {
 	// MessageBoxW(nullptr, )

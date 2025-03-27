@@ -5,7 +5,11 @@
 #include "Runtime/Interface/IApplication.h"
 #include "PlayerLoopController.h"
 #include "Modules/Config/ConfigModule.h"
-#include "Modules/renderer/render_module.h"
+
+namespace source_runtime
+{
+	class render_module;
+}
 
 namespace Source
 {

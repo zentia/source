@@ -1,6 +1,7 @@
 #include "SourcePrefix.h"
 #include "Application.h"
 
+#include "Modules/render/render_module.h"
 #include "Runtime/Allocator/MemoryManager.h"
 #include "Runtime/RenderCore/WindowSystem.h"
 
@@ -31,7 +32,7 @@ void Application::InitializeProject(const std::string& config_file_path)
 	m_render_module = std::make_shared<source_runtime::render_module>();
 	source_runtime::render_init_info render_init_info;
 	render_init_info.window_system = m_WindowSystem;
-
+	m_render_module->initialize(render_init_info);
 }
 
 void Application::RequestRecreateGfxDevice()
