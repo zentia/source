@@ -2,23 +2,27 @@ local function ACL()
     add_headerfiles("External/acl/includes/acl/**.h")
 end 
 
+local packages = {
+    ""
+}
 function External()
     ACL()
     add_deps("baselib")
-    add_packages("imgui")
     add_packages("tlsf")
-    add_packages("vulkan-hpp")
     add_packages("spdlog")
-    add_packages("tinyobjloader")
+    -- add_packages("tinyobjloader")
     add_packages("joltphysics")
-    add_packages("stb")
-    add_packages("spine-runtimes")
-    add_packages("glfw")
-    add_packages("reflect-cpp")
+    add_packages("stb","spine-runtimes","reflect-cpp")
 end 
 
-add_requires("imgui", "tlsf", "spdlog", "tinyobjloader", "joltphysics", "stb", "spine-runtimes", "vulkan-hpp", "glfw"
-, "reflect-cpp"
+add_requires(
+    "tlsf", 
+    "spdlog", 
+    -- "tinyobjloader", 
+    "joltphysics", 
+    "stb",
+    "spine-runtimes",
+    "reflect-cpp"
 )
 
 target("baselib")

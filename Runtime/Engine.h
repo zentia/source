@@ -11,6 +11,7 @@ namespace SourceRuntime
 		void shutdown_engine();
 		float calculate_delta_time();
 		bool tick_one_frame(float delta_time);
+		bool renderer_tick(float delta_time);
 	protected:
 		std::chrono::steady_clock::time_point m_last_tick_time_point_{ std::chrono::steady_clock::now() };
 	};

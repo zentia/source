@@ -1,5 +1,11 @@
--- add modes: debug and release 
-add_rules("mode.debug", "mode.release")
+add_rules("plugin.vsxmake.autoupdate")
+add_rules("plugin.compile_commands.autoupdate")
+
+add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
+
+add_requires("glm", "glfw", "glslang", "vulkan-headers")
+add_requires("imgui")
+add_requires("vulkansdk")
 -- enable unicode
 -- add_defines("_UNICODE", "UNICODE")
 -- for all source/target encodings
@@ -11,7 +17,9 @@ add_rules("mode.debug", "mode.release")
 
 -- -- gcc/clang: -fexec-charset=UTF-8, msvc: -target-charset=utf-8
 -- set_encodings("target:utf-8")
-set_languages("c99", "c++23")
+-- set_arch("x64")
+-- set_warnings("all")
+-- set_toolchains("clang")
 
 includes("External/xmake.lua")
 
@@ -74,6 +82,10 @@ rule("win.source.shared")
 target("Source")
     set_kind("shared")
 
+    add_packages("glm", "imgui", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk")
+    
+    set_languages("c++20")
+
     add_headerfiles("Editor/**.h|Platform/Windows/EntryPoint/*.h")
     add_files("Editor/**.cpp|platform/Windows/EntryPoint/*.cpp")
 
@@ -102,14 +114,14 @@ target("Source")
     add_defines("ENABLE_ASSERTIONS")
     add_includedirs("PrecompiledHeaders")
     set_pcxxheader("PrecompiledHeaders/SourcePrefix.h")
-
+target_end()
     
 target("SourceEditor")
     set_kind("binary")
     add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
     add_deps("Source")
     SourceCommon()
-
+target_end()
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --

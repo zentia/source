@@ -5,6 +5,7 @@
 #include "Runtime/Interface/IApplication.h"
 #include "PlayerLoopController.h"
 #include "Modules/Config/ConfigModule.h"
+#include "Modules/renderer/render_module.h"
 
 namespace Source
 {
@@ -29,13 +30,14 @@ public:
     std::shared_ptr<LogSystem>& GetLogSystem() { return m_LoggerSystem; }
     std::shared_ptr<Source::WindowSystem>& get_window_system() { return m_WindowSystem; }
     void clear();
-private:
+public:
     bool m_RecreateGfxDevice;
     bool m_LoadRenderDoc;
     PlayerLoopController m_PlayerLoopController;
     std::shared_ptr<LogSystem> m_LoggerSystem;
     std::shared_ptr<Source::WindowSystem> m_WindowSystem;
-    std::shared_ptr<source_runtime::config_module> m_config_module_;
+    std::shared_ptr<source_runtime::config_module> m_config_module;
+    std::shared_ptr<source_runtime::render_module> m_render_module;
 };
 
 Application& GetApplication();

@@ -64,6 +64,8 @@ namespace Source
 		}
 	private:
 		GLFWwindow* m_Window{ nullptr };
+		int m_width_{ 0 };
+		int m_height_{ 0 };
 		std::vector<OnKeyFunc> m_on_key_func_;
 	};
 }

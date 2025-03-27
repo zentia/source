@@ -43,4 +43,9 @@ namespace SourceRuntime
 		return !should_window_close;
 	}
 
+	bool SourceEngine::renderer_tick(float delta_time)
+	{
+		return true;
+	}
+
 }

@@ -42,7 +42,7 @@ void DebugStringToFile(const TString& message, const char* file, int line, int c
 }
 
 #define LOG_DEBUG(...) PP_WRAP_CODE(DebugStringToFile(Format(__VA_ARGS__),__FILE_STRIPPED__,__LINE__,-1,kDebug))
-#define ErrorStringMsg(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError))
+#define LOG_ERROR(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError))
 #define WarningStringMsg(...)	PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kWarning))
 #define FatalErrorMsg(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError | kFatal))
 
