@@ -3,7 +3,7 @@
 
 #include "Modules/rhi/rhi_struct.h"
 
-#define VULKAN_RHI_RESOURCE_DECLARE(PARENT, SELF, TYPE) \
+#define VULKAN_RHI_RESOURCE_DECLARE(PARENT, SELF, TYPE, REF) \
 	class SELF : public PARENT \
 	{ \
 	public: \
@@ -11,7 +11,7 @@
 		{ \
 			m_resource_ = res; \
 		} \
-		[[nodiscard]] TYPE get_resource() const \
+		[[nodiscard]] TYPE REF get_resource() \
 		{ \
 			return m_resource_; \
 		} \
@@ -21,19 +21,19 @@
 
 namespace source_runtime
 {
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_buffer, vulkan_buffer, VkBuffer);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_buffer_view, vulkan_buffer_view, VkBufferView);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_command_buffer, vulkan_command_buffer, VkCommandBuffer);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_command_pool, vulkan_command_pool, VkCommandPool);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_descriptor_pool, vulkan_descriptor_pool, VkDescriptorPool);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_descriptor_set, vulkan_descriptor_set, VkDescriptorSet);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_descriptor_set_layout, vulkan_descriptor_set_layout, VkDescriptorSetLayout);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_buffer, vulkan_rhi_buffer, VkBuffer);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_buffer_view, vulkan_rhi_buffer_view, VkBufferView);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_command_buffer, vulkan_rhi_command_buffer, VkCommandBuffer);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_command_pool, vulkan_rhi_command_pool, VkCommandPool);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_descriptor_pool, vulkan_rhi_descriptor_pool, VkDescriptorPool);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_descriptor_set, vulkan_rhi_descriptor_set, VkDescriptorSet);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_descriptor_set_layout, vulkan_rhi_descriptor_set_layout, VkDescriptorSetLayout);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_device, vulkan_rhi_device, VkDevice);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_device_memory, vulkan_rhi_device_memory, VkDeviceMemory);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_event, vulkan_rhi_event, VkEvent);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_fence, vulkan_rhi_fence, VkFence);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_frame_buffer, vulkan_rhi_frame_buffer, VkFramebuffer);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_image, vulkan_rhi_image, VkImage);
+	VULKAN_RHI_RESOURCE_DECLARE(rhi_image, vulkan_rhi_image, VkImage, &);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_image_view, vulkan_rhi_image_view, VkImageView);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_instance, vulkan_rhi_instance, VkInstance);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_queue, vulkan_rhi_queue, VkQueue);

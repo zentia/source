@@ -3,7 +3,7 @@
 #include "Editor/Src/Application/Application.h"
 #include "Modules/Config/ConfigModule.h"
 #include "Modules/rhi/rhi_module.h"
-#include "Modules/rhi/vulkan_rhi.h"
+#include "Modules/rhi/vulkan/vulkan_rhi.h"
 
 namespace source_runtime
 {

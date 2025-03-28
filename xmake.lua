@@ -5,7 +5,7 @@ add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 
 add_requires("glm", "glfw", "glslang", "vulkan-headers")
 add_requires("imgui")
-add_requires("vulkansdk")
+add_requires("vulkansdk", "vulkan-memory-allocator")
 -- enable unicode
 -- add_defines("_UNICODE", "UNICODE")
 -- for all source/target encodings
@@ -82,7 +82,7 @@ rule("win.source.shared")
 target("Source")
     set_kind("shared")
 
-    add_packages("glm", "imgui", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk")
+    add_packages("glm", "imgui", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator")
     
     set_languages("c++20")
 

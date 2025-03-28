@@ -3,7 +3,9 @@
 #include <iostream>
 
 #include "Editor/Src/Application/Application.h"
-#include "interface/vulkan/vulkan_rhi_resource.h"
+#include "Modules/rhi/rhi_module.h"
+#include "Modules/rhi/interface/vulkan/vulkan_rhi_resource.h"
+#include "Modules/rhi/interface/vulkan/vulkan_util.h"
 
 namespace source_runtime
 {
@@ -38,6 +40,263 @@ namespace source_runtime
 		create_window_surface();
 		initialize_physical_device();
 		create_logical_device();
+	}
+
+	void vulkan_rhi::prepare_context()
+	{
+		m_vk_current_command_buffer_ = m_vk_command_buffers_[m_current_frame_index_];
+		static_cast<vulkan_rhi_command_buffer*>(m_current_command_buffer_)->set_resource(m_vk_current_command_buffer_);
+	}
+
+	bool vulkan_rhi::allocate_command_buffers(const rhi_command_buffer_allocator_info* allocator_info, rhi_command_buffer*& command_buffer)
+	{
+		const VkCommandBufferAllocateInfo command_buffer_allocate_info
+		{
+			.sType = static_cast<VkStructureType>(allocator_info->type),
+			.pNext = static_cast<const void*>(allocator_info->next),
+			.commandPool = static_cast<vulkan_rhi_command_pool*>(allocator_info->command_pool)->get_resource(),
+			.level = static_cast<VkCommandBufferLevel>(allocator_info->level),
+			.commandBufferCount = allocator_info->command_buffer_count
+		};
+
+		VkCommandBuffer vk_command_buffer;
+		command_buffer = new rhi_command_buffer;
+		const VkResult result = vkAllocateCommandBuffers(m_device, &command_buffer_allocate_info, &vk_command_buffer);
+		static_cast<vulkan_rhi_command_buffer*>(command_buffer)->set_resource(vk_command_buffer);
+
+		if (result == VK_SUCCESS)
+		{
+			return true;
+		}
+		LOG_ERROR("vkAllocateCommandBuffers failed!");
+		return false;
+	}
+
+	bool vulkan_rhi::allocate_descriptor_sets(const rhi_descriptor_set_allocator_info* allocator_info, rhi_descriptor_set*& descriptor_sets)
+	{
+		const uint32_t descriptor_set_layout_size = allocator_info->descriptor_set_count;
+		std::vector<VkDescriptorSetLayout> vk_descriptor_set_layout_list(descriptor_set_layout_size);
+		for (int i = 0; i < descriptor_set_layout_size; ++i)
+		{
+			const auto& rhi_descriptor_set_layout_element = allocator_info->set_layouts[i];
+			auto& vk_descriptor_set_layout_element = vk_descriptor_set_layout_list[i];
+
+			vk_descriptor_set_layout_element = static_cast<vulkan_rhi_descriptor_set_layout*>(rhi_descriptor_set_layout_element)->get_resource();
+		}
+
+		VkDescriptorSetAllocateInfo descriptor_set_allocate_info
+		{
+			.sType = static_cast<VkStructureType>(allocator_info->type),
+			.pNext = static_cast<const void*>(allocator_info->next),
+			.descriptorPool = static_cast<vulkan_rhi_descriptor_pool*>(allocator_info->descriptor_pool)->get_resource(),
+			.descriptorSetCount = allocator_info->descriptor_set_count,
+			.pSetLayouts = vk_descriptor_set_layout_list.data()
+		};
+
+		VkDescriptorSet vk_descriptor_set;
+		descriptor_sets = new vulkan_rhi_descriptor_set;
+		const VkResult result = vkAllocateDescriptorSets(m_device, &descriptor_set_allocate_info, &vk_descriptor_set);
+		static_cast<vulkan_rhi_descriptor_set*>(descriptor_sets)->set_resource(vk_descriptor_set);
+
+		if (result == VK_SUCCESS)
+		{
+			return true;
+		}
+		LOG_ERROR("vkAllocateDescriptorSets failed!");
+		return false;
+	}
+
+	void vulkan_rhi::create_swap_chain()
+	{
+		const swap_chain_support_details swap_chain_support_details = query_swap_chain_support(m_physical_device);
+
+		VkSurfaceFormatKHR surface_format = choose_swap_chain_surface_format_form_details(swap_chain_support_details.format);
+		VkPresentModeKHR present_mode = choose_swap_chain_present_mode_from_details(swap_chain_support_details.present_mode);
+		const VkExtent2D extent_2d = choose_swap_chain_extent_from_details(swap_chain_support_details.capabilities);
+
+		uint32_t image_count = swap_chain_support_details.capabilities.minImageCount + 1;
+		if (swap_chain_support_details.capabilities.minImageCount > 0 && image_count > swap_chain_support_details.capabilities.maxImageCount)
+		{
+			image_count = swap_chain_support_details.capabilities.maxImageCount;
+		}
+
+		VkSwapchainCreateInfoKHR create_info
+		{
+			.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+			.surface = m_surface,
+			.minImageCount = image_count,
+			.imageFormat = surface_format.format,
+			.imageColorSpace = surface_format.colorSpace,
+			.imageExtent = extent_2d,
+			.imageArrayLayers = 1,
+			.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+		};
+
+		uint32_t queue_family_indices[] = { m_queue_family_indices.graphics_family.value(), m_queue_family_indices.present_family.value() };
+
+		if (m_queue_family_indices.graphics_family != m_queue_family_indices.present_family)
+		{
+			// 指定图像可以用于颜色附件
+			create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+			create_info.queueFamilyIndexCount = 2;
+			create_info.pQueueFamilyIndices = queue_family_indices;
+		}
+		else
+		{
+			// 任何资源只能被一个队列使用，可以提供性能，因为它避免了多队列访问同一资源时可能出现的同步问题。这种模式通常会导致更见的资源管理和更高的效率
+			create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		}
+
+		create_info.preTransform = swap_chain_support_details.capabilities.currentTransform;
+		// 合成时完全不透明
+		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		create_info.presentMode = present_mode;
+		create_info.clipped = VK_TRUE;
+
+		create_info.oldSwapchain = VK_NULL_HANDLE;
+
+		if (vkCreateSwapchainKHR(m_device, &create_info, nullptr, &m_swap_chain) != VK_SUCCESS)
+		{
+			LOG_ERROR("vk create swap chain khr");
+		}
+
+		vkGetSwapchainImagesKHR(m_device, m_swap_chain, &image_count, nullptr);
+		m_swap_chain_images.resize(image_count);
+		vkGetSwapchainImagesKHR(m_device, m_swap_chain, &image_count, m_swap_chain_images.data());
+
+		m_swap_chain_image_format = static_cast<rhi_format>(surface_format.format);
+		m_swap_chain_extent.height = extent_2d.height;
+		m_swap_chain_extent.width = extent_2d.width;
+
+		m_scissor = { {0,0},{m_swap_chain_extent.width,m_swap_chain_extent.height} };
+	}
+
+	void vulkan_rhi::recreate_swap_chain()
+	{
+		int width = 0;
+		int height = 0;
+		glfwGetFramebufferSize(m_window, &width, &height);
+		while (width == 0 || height == 0) // minimized 0,0, pause for now
+		{
+			glfwGetFramebufferSize(m_window, &width, &height);
+			glfwWaitEvents();
+		}
+
+		VkResult res_wait_for_fences = m_vk_wait_for_fences_(m_device, k_max_frames_in_flight, m_is_frame_in_flight_fences, VK_TRUE, UINT64_MAX);
+		if (VK_SUCCESS != res_wait_for_fences)
+		{
+			LOG_ERROR("m_vk_wait_for_fences_ failed");
+			return;
+		}
+
+		destroy_image_view(m_depth_image_view);
+		vkDestroyImage(m_device, static_cast<vulkan_rhi_image*>(m_depth_image_)->get_resource(), nullptr);
+		vkFreeMemory(m_device, m_depth_image_memory_, nullptr);
+
+		for (const auto image_view : m_swap_chain_image_views)
+		{
+			vkDestroyImageView(m_device, static_cast<vulkan_rhi_image_view*>(image_view)->get_resource(), nullptr);
+		}
+
+		create_swap_chain();
+		create_swap_chain_image_views();
+		create_frame_buffer_image_view();
+	}
+
+	void vulkan_rhi::create_swap_chain_image_views()
+	{
+		m_swap_chain_image_views.resize(m_swap_chain_images.size());
+
+		for (size_t i = 0; i < m_swap_chain_images.size(); ++i)
+		{
+			const VkImageView vk_image_view = vulkan_util::create_image_view(m_device, m_swap_chain_images[i], static_cast<VkFormat>(m_swap_chain_image_format), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1, 1);
+			m_swap_chain_image_views[i] = new vulkan_rhi_image_view;
+			static_cast<vulkan_rhi_image_view*>(m_swap_chain_image_views[i])->set_resource(vk_image_view);
+		}
+	}
+
+	void vulkan_rhi::create_frame_buffer_image_view()
+	{
+		vulkan_util::create_image(m_physical_device, 
+			m_device, 
+			m_swap_chain_extent.width, 
+			m_swap_chain_extent.height, 
+			static_cast<VkFormat>(m_depth_image_format), 
+			VK_IMAGE_TILING_OPTIMAL, 
+			VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+			static_cast<vulkan_rhi_image*>(m_depth_image_)->get_resource(), 
+			m_depth_image_memory_, 
+			0, 
+			1, 
+			1);
+
+		static_cast<vulkan_rhi_image_view*>(m_depth_image_view)->set_resource(vulkan_util::create_image_view(m_device,
+			static_cast<vulkan_rhi_image*>(m_depth_image_)->get_resource(),
+			static_cast<VkFormat>(m_depth_image_format),
+			VK_IMAGE_ASPECT_DEPTH_BIT,
+			VK_IMAGE_VIEW_TYPE_2D,
+			1,
+			1));
+	}
+
+	rhi_sampler* vulkan_rhi::get_or_create_default_sampler(rhi_default_sampler_type type)
+	{
+		switch (type)
+		{
+		case default_sampler_linear:
+			if (m_linear_sampler_ == nullptr)
+			{
+				m_linear_sampler_ = new vulkan_rhi_sampler;
+				static_cast<vulkan_rhi_sampler*>(m_linear_sampler_)->set_resource(vulkan_util::get_or_create_linear_sampler(m_physical_device, m_device));
+			}
+			return m_linear_sampler_;
+		case default_sampler_nearest:
+			if (m_nearest_sampler_ == nullptr)
+			{
+				m_nearest_sampler_ = new vulkan_rhi_sampler;
+				static_cast<vulkan_rhi_sampler*>(m_nearest_sampler_)->set_resource(vulkan_util::get_or_create_nearest_sampler(m_physical_device, m_device));
+			}
+			return m_nearest_sampler_;
+		default:
+			return nullptr;
+		}
+	}
+
+	rhi_sampler* vulkan_rhi::get_or_create_mipmap_sampler(uint32_t width, uint32_t height)
+	{
+		if (width == 0 || height == 0)
+		{
+			LOG_ERROR("width == 0 || height == 0");
+			return nullptr;
+		}
+		
+		uint32_t mip_levels = floor(log2(std::max(width, height))) + 1;
+		auto find_sampler = m_mipmap_sampler_map_.find(mip_levels);
+		if (find_sampler != m_mipmap_sampler_map_.end())
+		{
+			return find_sampler->second;
+		}
+		rhi_sampler* sampler = new vulkan_rhi_sampler;
+
+		VkSampler vk_sampler = vulkan_util::get_or_create_mipmap_sampler(m_physical_device, m_device, width, height);
+
+		static_cast<vulkan_rhi_sampler*>(sampler)->set_resource(vk_sampler);
+
+		m_mipmap_sampler_map_.insert(std::make_pair(mip_levels, sampler));
+
+		return sampler;
+	}
+
+	rhi_shader* vulkan_rhi::create_shader_module(const std::vector<unsigned char>& shader_code)
+	{
+		rhi_shader* shader = new vulkan_rhi_shader;
+
+		VkShaderModule vk_shader = vulkan_util::create_shader_module(m_device, shader_code);
+
+		static_cast<vulkan_rhi_shader*>(shader)->set_resource(vk_shader);
+
+		return shader;
 	}
 
 	void vulkan_rhi::create_instance()
@@ -233,6 +492,11 @@ namespace source_runtime
 		static_cast<vulkan_rhi_queue*>(m_graphics_queue)->set_resource(vk_graphics_queue);
 	}
 
+	void vulkan_rhi::destroy_image_view(rhi_image_view* image_view)
+	{
+		vkDestroyImageView(m_device, static_cast<vulkan_rhi_image_view*>(image_view)->get_resource(), nullptr);
+	}
+
 	bool vulkan_rhi::check_validation_layer_support() const
 	{
 		// 查询可用的实例层数量
@@ -407,6 +671,48 @@ namespace source_runtime
 		}
 
 		return required_extensions.empty();
+	}
+
+	VkSurfaceFormatKHR vulkan_rhi::choose_swap_chain_surface_format_form_details(const std::vector<VkSurfaceFormatKHR>& available_surface_formats)
+	{
+		for (const auto surface_format : available_surface_formats)
+		{
+			if (surface_format.format == VK_FORMAT_B8G8R8A8_UNORM && surface_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+			{
+				return surface_format;
+			}
+		}
+		return available_surface_formats[0];
+	}
+
+	VkPresentModeKHR vulkan_rhi::choose_swap_chain_present_mode_from_details(const std::vector<VkPresentModeKHR>& available_present_modes)
+	{
+		for (const VkPresentModeKHR available_present_mode : available_present_modes)
+		{
+			if (available_present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
+			{
+				// 用于低延迟和高帧率的应用，可能会导致撕裂
+				return VK_PRESENT_MODE_MAILBOX_KHR;
+			}
+		}
+		// 垂直同步模式，图像的城乡会被限制在显示器的刷新率内
+		return VK_PRESENT_MODE_FIFO_KHR;
+	}
+
+	VkExtent2D vulkan_rhi::choose_swap_chain_extent_from_details(const VkSurfaceCapabilitiesKHR& capabilities) const
+	{
+		if (capabilities.currentExtent.width != UINT32_MAX)
+		{
+			return capabilities.currentExtent;
+		}
+		int width, height;
+		glfwGetFramebufferSize(m_window, &width, &height);
+
+		VkExtent2D actual_extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+
+		actual_extent.width = std::clamp(actual_extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+		actual_extent.height = std::clamp(actual_extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+		return actual_extent;
 	}
 
 }
