@@ -214,4 +214,142 @@ namespace source_runtime
 		uint32_t height;
 		uint32_t layers;
 	};
+
+	struct rhi_specialization_map_entry
+	{
+		uint32_t constant_id;
+		uint32_t offset;
+		size_t size;
+	};
+	struct rhi_specialization_info
+	{
+		uint32_t map_entry_count;
+		const rhi_specialization_map_entry** map_entries;
+		size_t data_size;
+		const void* data;
+	};
+	struct rhi_pipeline_shader_stage_create_info
+	{
+		rhi_structure_type type;
+		const void* next;
+		rhi_pipeline_shader_stage_create_flags flags;
+		rhi_shader_stage_flag_bits stage;
+		rhi_shader* module;
+		const char* name;
+		const rhi_specialization_info* specialization_info;
+	};
+
+	struct rhi_vertex_input_binding_description
+	{
+		uint32_t binding;
+		uint32_t stride;
+		rhi_vertex_input_rate input_rate;
+	};
+
+	struct rhi_vertex_input_attribute_description
+	{
+		uint32_t location;
+		uint32_t binding;
+		rhi_format format;
+		uint32_t offset;
+	};
+	struct rhi_pipeline_vertex_input_state_create_info
+	{
+		rhi_structure_type type;
+		const void* next;
+		rhi_pipeline_vertex_input_state_create_flags flags;
+		uint32_t vertex_binding_description_count;
+		const rhi_vertex_input_binding_description* vertex_input_binding_descriptions;
+		uint32_t vertex_input_binding_description_count;
+		const rhi_vertex_input_attribute_description* vertex_input_attribute_descriptions;
+	};
+	struct rhi_graphics_pipeline_create_info
+	{
+		rhi_structure_type type;
+		const void* next;
+		rhi_pipeline_create_flags flags;
+		uint32_t stage_count;
+		const rhi_pipeline_shader_stage_create_info* stage;
+		const rhi_pipeline_vertex_input_state_create_info* vertex_input_state;
+
+	};
+	struct rhi_command_buffer_inheritance_info
+	{
+		rhi_structure_type type;
+		const void* next;
+		rhi_render_pass* render_pass;
+		uint32_t sub_pass;
+		rhi_frame_buffer* frame_buffer;
+		rhi_bool32 occlusion_query_enable;
+		rhi_query_control_flags query_flags;
+		rhi_query_pipeline_statistic_flags pipeline_statistic_flags;
+	};
+
+	struct rhi_command_buffer_begin_info
+	{
+		rhi_structure_type type;
+		const void* next;
+		rhi_command_buffer_usage_flags flags;
+		const rhi_command_buffer_inheritance_info* inheritance_info;
+	};
+
+	struct rhi_clear_depth_stencil_value
+	{
+		float depth;
+		uint32_t stencil;
+	};
+
+	union rhi_clear_color_value
+	{
+		float float32[4];
+		int32_t int32[4];
+		uint32_t uint32[4];
+	};
+
+	union rhi_clear_value
+	{
+		rhi_clear_color_value color;
+		rhi_clear_depth_stencil_value depth_stencil;
+	};
+
+	struct rhi_render_pass_begin_info
+	{
+		rhi_structure_type type;
+		const void* next;
+		rhi_render_pass* render_pass;
+		rhi_frame_buffer* frame_buffer;
+		rhi_rect_2d render_area;
+		uint32_t clear_value_count;
+		const rhi_clear_value* clear_value;
+	};
+
+	struct rhi_clear_attachment
+	{
+		rhi_image_aspect_flags aspect_mask;
+		uint32_t color_attachment;
+		rhi_clear_value clear_value;
+	};
+
+	struct rhi_clear_rect
+	{
+		rhi_rect_2d rect;
+		uint32_t base_array_layer;
+		uint32_t layer_count;
+	};
+
+	struct rhi_swap_chain_desc
+	{
+		rhi_extent_2d extent;
+		rhi_format image_format;
+		rhi_viewport* viewport;
+		rhi_rect_2d* scissor;
+		std::vector<rhi_image_view*> image_views;
+	};
+
+	struct rhi_depth_image_desc
+	{
+		rhi_image* depth_image = VK_NULL_HANDLE;
+		rhi_image_view* depth_image_view = VK_NULL_HANDLE;
+		rhi_format depth_image_format;
+	};
 }

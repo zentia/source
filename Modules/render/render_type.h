@@ -37,7 +37,15 @@ namespace source_runtime
 		rhi_format_r4g4_unorm_pack8 = 1,
 		rhi_format_r4g4b4a4_unorm_pack16 = 2,
 		rhi_format_b4r4g4r4_unorm_pack16 = 3,
-
+		rhi_format_r8g8b8_unorm = 23,
+		rhi_format_r8g8b8_snorm = 24,
+		rhi_format_r8g8b8_srgb = 29,
+		rhi_format_r8g8b8a8_unorm = 37,
+		rhi_format_r8g8b8a8_srgb = 43,
+		rhi_format_r32_sfloat = 100,
+		rhi_format_r32g32_sfloat = 103,
+		rhi_format_r32g32b32_sfloat = 106,
+		rhi_format_r32g32b32a32_sfloat = 109,
 	};
 
 	enum rhi_image_view_type : uint8_t
@@ -88,6 +96,50 @@ namespace source_runtime
 		rhi_descriptor_type_acceleration_structure_nv = 1000165000,
 		rhi_descriptor_type_mutable_value = 1000351000,
 		rhi_descriptor_type_max_enum = 0x07fffffff,
+	};
+	enum rhi_shader_stage_flag_bits : int
+	{
+		rhi_shader_stage_vertex_bit = 1 << 0,
+		rhi_shader_stage_tessellation_control_bit = 1 << 1,
+		rhi_shader_stage_tessellation_evaluation_bit = 1 << 2,
+		rhi_shader_stage_geometry_bit = 1 << 3,
+	};
+
+	enum rhi_vertex_input_rate : int
+	{
+		rhi_vertex_input_rate_vertex = 0,
+		rhi_vertex_input_rate_instance = 1,
+		rhi_vertex_input_rate_max_enum = 0x7fffffff
+	};
+
+	enum rhi_sub_pass_contents
+	{
+		rhi_sub_pass_contents_inline = 0,
+		rhi_sub_pass_contents_secondary_command_buffers = 1,
+		rhi_sub_pass_contents_max_enum = 0x7fffffff,
+	};
+
+	enum rhi_pipeline_bind_point
+	{
+		rhi_pipeline_bind_point_graphics = 0,
+		rhi_pipeline_bind_point_compute = 1,
+		rhi_pipeline_bind_point_ray_tracing_khr = 1000165000,
+		rhi_pipeline_bind_point_max_enum = 0x7fffffff,
+	};
+
+	enum rhi_index_type
+	{
+		rhi_index_type_uint16 = 0,
+		rhi_index_type_uint32 = 1,
+		rhi_index_type_max_enum = 0x7fffffff,
+	};
+
+	enum rhi_image_tiling
+	{
+		rhi_image_tiling_optimal = 0,
+		rhi_image_tiling_linear = 1,
+		rhi_image_tiling_drm_format_modifier_ext = 1000158000,
+		rhi_image_tiling_max_enum = 0x7fffffff
 	};
 	typedef uint32_t rhi_access_flags;
 	typedef uint32_t rhi_image_aspect_flags;
