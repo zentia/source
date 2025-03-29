@@ -1,5 +1,5 @@
 #include "SourcePrefix.h"
-#include "Editor/Src/HubClient/HubClient.h"
+#include "Editor/base//HubClient/HubClient.h"
 
 bool HubClient::HandleNotHubInit()
 {

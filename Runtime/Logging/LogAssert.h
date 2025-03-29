@@ -42,7 +42,8 @@ void DebugStringToFile(const TString& message, const char* file, int line, int c
 }
 
 #define LOG_DEBUG(...) PP_WRAP_CODE(DebugStringToFile(Format(__VA_ARGS__),__FILE_STRIPPED__,__LINE__,-1,kDebug))
-#define LOG_ERROR(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError))
+#define LOG_ERROR(...)		PP_WRAP_CODE(DebugStringToFile (__VA_ARGS__, __FILE_STRIPPED__, __LINE__, -1, kError))
+#define LOG_ERROR_FORMAT(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError))
 #define WarningStringMsg(...)	PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kWarning))
 #define FatalErrorMsg(...)		PP_WRAP_CODE(DebugStringToFile (Format(__VA_ARGS__), __FILE_STRIPPED__, __LINE__, -1, kError | kFatal))
 
@@ -66,7 +67,7 @@ bool AssertImplementation(InstanceID objID, const char* fileStripped, int line, 
 
 #define DebugAssert(x) Assert(x)
 
-class LogSystem
+class log_system
 {
 public:
 	enum class LogLevel : std::uint8_t
@@ -77,8 +78,8 @@ public:
 		Error,
 		Fatal
 	};
-	LogSystem();
-	~LogSystem();
+	log_system();
+	~log_system();
 
 	template<typename... TARGS>
 	void Log(LogLevel level, TARGS&&... args)
@@ -86,13 +87,16 @@ public:
 		switch (level)
 		{
 		case LogLevel::Debug:
-			m_Logger->debug(std::forward<TARGS>(args)...);
+			m_logger_->debug(std::forward<TARGS>(args)...);
 			break;
 		case LogLevel::Info:
-			m_Logger->info(std::forward<TARGS>(args)...);
+			m_logger_->info(std::forward<TARGS>(args)...);
+			break;
+		case LogLevel::Error:
+			m_logger_->error(std::forward<TARGS>(args)...);
 			break;
 		}
 	}
 private:
-	std::shared_ptr<spdlog::logger> m_Logger;
+	std::shared_ptr<spdlog::logger> m_logger_;
 };

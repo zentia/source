@@ -1,7 +1,7 @@
 #include "SourcePrefix.h"
 
-#include "Editor/Src/DisplayDialog.h"
-#include "Editor/Src/InteractionContext.h"
+#include "Editor/base//DisplayDialog.h"
+#include "Editor/base//InteractionContext.h"
 
 int DisplayDialogComplexPlatformSpecific(const core::string& title, const core::string& content, const core::string& okButton, const core::string& secondary, const core::string& third);
 

@@ -575,7 +575,7 @@ uint16_t MemoryManager::VirtualAllocator::RegisterAllocator(BaseAllocator* alloc
 	Mutex::AutoLock lock(m_LowLevelAllocLock);
 	uint16_t identifier = m_NextFreeIdentifier;
 	if (identifier >= kMaxAllocatorIdentifier)
-		LOG_ERROR("More than %d Allocators are registered. Reduce allocator count", kMaxAllocatorIdentifier);
+		LOG_ERROR_FORMAT("More than %d Allocators are registered. Reduce allocator count", kMaxAllocatorIdentifier);
 	m_NextFreeIdentifier = reinterpret_cast<size_t>(m_AllocatorsByIdentifier[identifier]) & 0xFFFF;
 	m_AllocatorsByIdentifier[identifier] = alloc;
 	return identifier;

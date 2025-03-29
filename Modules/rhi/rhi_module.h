@@ -2,14 +2,14 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include "rhi_struct.h"
-#include "Runtime/RenderCore/WindowSystem.h"
 #include "vk_mem_alloc.h"
+#include "Modules/window/window_module.h"
 
 namespace source_runtime
 {
 	struct rhi_init_info
 	{
-		std::shared_ptr<Source::WindowSystem> window_system;
+		std::shared_ptr<source_runtime::window_module> window_system;
 	};
 
 	class rhi

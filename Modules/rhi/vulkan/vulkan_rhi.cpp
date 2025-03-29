@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "Editor/Src/Application/Application.h"
+#include "Editor/base/Application/application.h"
 #include "Modules/rhi/rhi_module.h"
 #include "Modules/rhi/interface/vulkan/vulkan_rhi_resource.h"
 #include "Modules/rhi/interface/vulkan/vulkan_util.h"
@@ -11,9 +11,9 @@ namespace source_runtime
 {
 	void vulkan_rhi::initialize(const rhi_init_info init_info)
 	{
-		m_window = init_info.window_system->GetWindow();
+		m_window = init_info.window_system->get_window();
 
-		const std::array<int, 2> window_size = init_info.window_system->GetWindowSize();
+		const std::array<int, 2> window_size = init_info.window_system->get_window_size();
 		const float width = static_cast<float>(window_size[0]);
 		const float height = static_cast<float>(window_size[1]);
 		m_viewport = { 0.0f,0.0f, width, height, 0.0f, 1.0f };

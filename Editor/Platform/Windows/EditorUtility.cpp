@@ -3,7 +3,7 @@
 
 #include <Windows.h>
 
-#include "Editor/Src/DisplayDialog.h"
+#include "Editor/base/DisplayDialog.h"
 #include "WindowsEditorUtility.h"
 #include "resource.h"
 #include "PlatformDependent/Win/WinUtils.h"

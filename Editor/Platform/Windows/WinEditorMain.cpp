@@ -1,7 +1,7 @@
 #include "SourcePrefix.h"
 #include "WinEditorMain.h"
 
-#include "Editor/Src/Application/Application.h"
+#include "Editor/base/Application/application.h"
 
 #include <iostream>
 #include <Windows.h>
@@ -12,8 +12,7 @@
 #include <tchar.h>
 #include <filesystem>
 
-#include "Editor/Src/Editor.h"
-#include "Runtime/Engine.h"
+#include "Editor/base/Editor.h"
 #include "Runtime/Utitlities/file_path_utils.h"
 
 #ifdef _DEBUG
@@ -117,15 +116,15 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 extern "C" SOURCE_API int SourceMain(int argc, char** argv)
 {
     std::filesystem::path executable_path(argv[0]);
-    const std::filesystem::path config_file_path = executable_path.parent_path() / "SourceEditor.json";
-    new Application();
-    GetApplication().InitializeProject(config_file_path.generic_string());
+    const std::filesystem::path config_file_path = executable_path.parent_path() / "source_editor.json";
+    new application();
+    get_application().initialize_project(config_file_path.generic_string());
     LOG_DEBUG("Start");
-    SourceRuntime::SourceEngine* engine = new SourceRuntime::SourceEngine();
-    engine->StartEngine(config_file_path.generic_string());
+    source_runtime::source_engine* engine = new source_runtime::source_engine();
+    engine->start_engine(config_file_path.generic_string());
 
-    SourceEditor::SourceEditor* editor = new SourceEditor::SourceEditor();
-    editor->Initialize(engine);
+    source_editor::editor* editor = new source_editor::editor();
+    editor->initialize(engine);
     editor->Run();
     editor->Clear();
     engine->clear();

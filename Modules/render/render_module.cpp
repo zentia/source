@@ -1,7 +1,6 @@
 #include "render_module.h"
 
-#include "Editor/Src/Application/Application.h"
-#include "Modules/Config/ConfigModule.h"
+#include "Editor/base/Application/application.h"
 #include "Modules/rhi/rhi_module.h"
 #include "Modules/rhi/vulkan/vulkan_rhi.h"
 
@@ -9,7 +8,7 @@ namespace source_runtime
 {
 	void render_module::initialize(render_init_info& init_info)
 	{
-		std::shared_ptr<config_module> config_module = GetApplication().m_config_module;
+		std::shared_ptr<config_module> config_module = get_application().m_config_module;
 		Assert(config_module);
 
 		// render context initialize

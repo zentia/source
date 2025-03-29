@@ -101,7 +101,7 @@ target("Source")
     add_includedirs("./External")
     External()
 
-    add_headerfiles("Configuration/**.h")
+    add_headerfiles("configuration/**.h")
 
     add_includedirs("./PlatformDependent/Win")
     add_includedirs("./Platforms/Windows/Configuration")
@@ -121,6 +121,16 @@ target("SourceEditor")
     add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
     add_deps("Source")
     SourceCommon()
+    after_build(function (target) 
+        local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
+        local build_dir = os.projectdir() .. "\\" .. target:targetdir()
+
+        if os.isfile(source_file) then 
+            os.cp(source_file, build_dir)
+        else 
+            print("file " .. source_file .. " does not exist.")
+        end 
+    end)
 target_end()
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
