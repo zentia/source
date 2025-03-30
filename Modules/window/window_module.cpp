@@ -40,6 +40,11 @@ namespace source_runtime
 		return glfwWindowShouldClose(m_Window);
 	}
 
+	void window_module::set_should_close(const bool value) const
+	{
+		glfwSetWindowShouldClose(m_Window, value);
+	}
+
 	void window_module::set_title(const char* title) const
 	{
 		glfwSetWindowTitle(m_Window, title);

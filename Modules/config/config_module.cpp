@@ -21,6 +21,11 @@ namespace source_runtime
 		return m_config_.get_root_folder();
 	}
 
+	std::filesystem::path config_module::get_editor_font_path() const
+	{
+		return m_config_.m_root_folder / m_config_.m_editor_font_path;
+	}
+
 	std::string& config_module::get_global_rendering_res_url()
 	{
 		return m_config_.m_global_render_res_url;

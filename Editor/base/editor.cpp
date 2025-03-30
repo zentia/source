@@ -21,7 +21,7 @@ namespace source_editor
 
 		m_EngineRuntime = engineRuntime;
 		m_editor_ui_ = std::make_shared<editor_ui>();
-		source_runtime::window_ui_init_info ui_init_info = 
+		source_runtime::ui::window_ui_init_info ui_init_info = 
 		{
 			get_application().m_window_module,
 			get_application().m_render_module

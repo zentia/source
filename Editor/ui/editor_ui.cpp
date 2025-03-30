@@ -11,7 +11,7 @@ namespace source_editor
 	{
 		
 	}
-	void editor_ui::initialize(source_runtime::window_ui_init_info init_info)
+	void editor_ui::initialize(source_runtime::ui::window_ui_init_info init_info)
 	{
 		std::shared_ptr<source_runtime::config_module> config_module = get_application().m_config_module;
 		assert(config_module);
@@ -25,10 +25,20 @@ namespace source_editor
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
-		//io.Fonts->AddFontFromFileTTF();
+		io.Fonts->AddFontFromFileTTF(config_module->get_editor_font_path().generic_string().data(), content_scale * 16, nullptr, nullptr);
+		io.Fonts->Build();
+
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.WindowPadding = ImVec2(1.0, 0);
+		style.FramePadding = ImVec2(14.0, 2.0f);
+		style.ChildBorderSize = 0.0f;
+		style.FrameRounding = 5.0f;
+		style.FrameBorderSize = 1.5f;
+
+
 	}
 
-	void editor_ui::pre_render()
+	void editor_ui::render()
 	{
 		show_editor_ui();
 	}
@@ -41,6 +51,11 @@ namespace source_editor
 	void editor_ui::show_editor_menu(bool* open)
 	{
 		const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+	}
+
+	void editor_ui::set_ui_color_style()
+	{
+		
 	}
 
 }

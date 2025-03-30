@@ -2,7 +2,7 @@
 #include "Modules/render/render_module.h"
 #include "Modules/window/window_module.h"
 
-namespace source_runtime
+namespace source_runtime::ui
 {
 	struct window_ui_init_info
 	{
@@ -10,10 +10,10 @@ namespace source_runtime
 		std::shared_ptr<render_module> render_module;
 	};
 
-	class window_ui
+	class ui_module
 	{
 	public:
 		virtual void initialize(window_ui_init_info init_info) = 0;
-		virtual void pre_render() = 0;
+		virtual void render();
 	};
 }

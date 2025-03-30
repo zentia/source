@@ -32,6 +32,7 @@ namespace source_runtime
 	public:
 		void initialize(const std::filesystem::path& config_file_path);
 		std::filesystem::path get_root_folder();
+		std::filesystem::path get_editor_font_path() const;
 		std::string& get_global_rendering_res_url();
 		std::string& get_global_particle_res_url();
 	private:

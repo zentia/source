@@ -10,6 +10,7 @@
 #include "Modules/render/render_module.h"
 #include "Modules/window/window_module.h"
 #include "Modules/world/world_module.h"
+#include "modules/ui/ui_module.h"
 
 class application : public IApplication, public ISceneInsector
 {
@@ -19,12 +20,12 @@ public:
     application();
     virtual ~application();
 
-    void initialize_project(const std::string& config_file_path);
+    void initialize(const std::string& config_file_path);
 
     virtual void RequestRecreateGfxDevice();
     virtual void RequestLoadRenderDoc();
-    virtual void SetSceneRepaintDirty(){}
-    virtual void ForceRepaintNextFrame(){}
+    virtual void SetSceneRepaintDirty() {}
+    virtual void ForceRepaintNextFrame() {}
     virtual bool IsPaused() const { return m_PlayerLoopController.IsPaused(); }
     std::shared_ptr<log_system>& GetLogSystem() { return m_LoggerSystem; }
     std::shared_ptr<source_runtime::window_module>& get_window_system() { return m_window_module; }
@@ -40,7 +41,7 @@ public:
     std::shared_ptr<source_runtime::world_module> m_world_module;
     std::shared_ptr<source_editor::editor_scene_manager> m_scene_manager{ nullptr };
     std::shared_ptr<source_editor::editor_input_module> m_input_module{ nullptr };
-
+    std::shared_ptr<source_runtime::ui::ui_module> m_ui_module;
 };
 
 application& get_application();

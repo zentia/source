@@ -21,7 +21,8 @@ namespace source_runtime
 		~window_module();
 		void Initialize(WindowCreateInfo createInfo);
 		void poll_events() const;
-		bool should_close() const;
+		[[nodiscard]]bool should_close() const;
+		void set_should_close(bool value) const;
 		void set_title(const char* title) const;
 		GLFWwindow* get_window() const;
 		std::array<int, 2> get_window_size() const;

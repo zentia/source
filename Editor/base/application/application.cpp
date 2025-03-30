@@ -1,6 +1,7 @@
 #include "SourcePrefix.h"
 #include "application.h"
 
+#include "Editor/ui/editor_ui.h"
 #include "Modules/render/render_module.h"
 #include "Runtime/Allocator/MemoryManager.h"
 
@@ -19,7 +20,7 @@ application::~application()
 }
 
 
-void application::initialize_project(const std::string& config_file_path)
+void application::initialize(const std::string& config_file_path)
 {
 	MemoryManager::LateStaticInitialize();
 	m_LoggerSystem = std::make_shared<log_system>();
@@ -39,6 +40,14 @@ void application::initialize_project(const std::string& config_file_path)
 
 	m_input_module = std::make_shared<source_editor::editor_input_module>();
 	m_input_module->initialize();
+
+	m_ui_module = std::make_shared<source_editor::editor_ui>();
+	const source_runtime::ui::window_ui_init_info ui_init_info
+	{
+		m_window_module,
+		m_render_module
+	};
+	m_ui_module->initialize(ui_init_info);
 }
 
 void application::RequestRecreateGfxDevice()
@@ -58,5 +67,5 @@ application& get_application()
 
 void application::clear()
 {
-	
+
 }

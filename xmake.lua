@@ -4,16 +4,12 @@ add_rules("plugin.compile_commands.autoupdate")
 add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 
 add_requires("glm", "glfw", "glslang", "vulkan-headers")
-add_requires("imgui")
-add_requires("vulkansdk", "vulkan-memory-allocator")
+add_requires("vulkansdk", "vulkan-memory-allocator", "eventpp")
 -- enable unicode
 -- add_defines("_UNICODE", "UNICODE")
 -- for all source/target encodings
 -- set_encodings("utf-8") -- msvc: /utf-8
 -- set_encodings("source:utf-8", "target:utf-8")
-
--- -- gcc/clang: -finput-charset=UTF-8, msvc: -source-charset=utf-8
--- set_encodings("source:utf-8")
 
 -- -- gcc/clang: -fexec-charset=UTF-8, msvc: -target-charset=utf-8
 -- set_encodings("target:utf-8")
@@ -82,7 +78,7 @@ rule("win.source.shared")
 target("Source")
     set_kind("shared")
 
-    add_packages("glm", "imgui", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator")
+    add_packages("glm", "imgui", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp")
     
     set_languages("c++20")
 
@@ -118,7 +114,7 @@ target_end()
     
 target("SourceEditor")
     set_kind("binary")
-    add_files("Editor/Platform/Windows/EntryPoint/Main.cpp")
+    add_files("Editor/Platform/Windows/entry_point/Main.cpp")
     add_deps("Source")
     SourceCommon()
     after_build(function (target) 
@@ -129,6 +125,14 @@ target("SourceEditor")
             os.cp(source_file, build_dir)
         else 
             print("file " .. source_file .. " does not exist.")
+        end 
+
+        local source_dir = os.projectdir() .. "\\External\\resource"
+
+        if os.isdir(source_dir) then 
+            os.cp(source_dir, build_dir)
+        else 
+            print("dir " .. source_dir .. " does not exist.")
         end 
     end)
 target_end()

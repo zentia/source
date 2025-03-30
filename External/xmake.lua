@@ -2,12 +2,10 @@ local function ACL()
     add_headerfiles("External/acl/includes/acl/**.h")
 end 
 
-local packages = {
-    ""
-}
 function External()
     ACL()
     add_deps("baselib")
+    add_deps("imgui")
     add_packages("tlsf")
     add_packages("spdlog")
     -- add_packages("tinyobjloader")
@@ -33,3 +31,10 @@ target("baselib")
     add_includedirs("baselib", {public = true})
     add_includedirs("baselib/Include", {public = true})
     add_syslinks("wsock32", "ws2_32")
+
+target("imgui")
+    add_packages("vulkansdk")
+    set_kind("static")
+    add_headerfiles("imgui/*.h", "imgui/backends/imgui_impl_vulkan.h", "imgui/backends/imgui_impl_glfw.h")
+    add_files("imgui/*.cpp", "imgui/backends/imgui_impl_vulkan.cpp", "imgui/backends/imgui_impl_glfw.cpp")
+    add_includedirs("imgui", {public = true})

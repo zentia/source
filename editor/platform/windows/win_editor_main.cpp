@@ -1,5 +1,5 @@
 #include "SourcePrefix.h"
-#include "WinEditorMain.h"
+#include "win_editor_main.h"
 
 #include "Editor/base/Application/application.h"
 
@@ -13,6 +13,7 @@
 #include <filesystem>
 
 #include "Editor/base/Editor.h"
+#include "Editor/hub/hub.h"
 #include "Runtime/Utitlities/file_path_utils.h"
 
 #ifdef _DEBUG
@@ -118,8 +119,18 @@ extern "C" SOURCE_API int SourceMain(int argc, char** argv)
     std::filesystem::path executable_path(argv[0]);
     const std::filesystem::path config_file_path = executable_path.parent_path() / "source_editor.json";
     new application();
-    get_application().initialize_project(config_file_path.generic_string());
-    LOG_DEBUG("Start");
+    get_application().initialize(config_file_path.generic_string());
+    source_editor::hub hub;
+    if (argc >= 2)
+    {
+        hub.initialize(argv[1]);
+    }
+    else
+    {
+        hub.initialize("");
+    }
+    hub.run();
+
     source_runtime::source_engine* engine = new source_runtime::source_engine();
     engine->start_engine(config_file_path.generic_string());
 
