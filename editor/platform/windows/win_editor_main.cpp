@@ -13,7 +13,7 @@
 #include <filesystem>
 
 #include "Editor/base/Editor.h"
-#include "Editor/hub/hub.h"
+#include "Editor/hub/hub_module.h"
 #include "Runtime/Utitlities/file_path_utils.h"
 
 #ifdef _DEBUG
@@ -120,7 +120,7 @@ extern "C" SOURCE_API int SourceMain(int argc, char** argv)
     const std::filesystem::path config_file_path = executable_path.parent_path() / "source_editor.json";
     new application();
     get_application().initialize(config_file_path.generic_string());
-    source_editor::hub hub;
+    source_editor::hub::hub_module hub;
     if (argc >= 2)
     {
         hub.initialize(argv[1]);

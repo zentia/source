@@ -3,19 +3,13 @@ add_rules("plugin.compile_commands.autoupdate")
 
 add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 
-add_requires("glm", "glfw", "glslang", "vulkan-headers", "vulkan-memory-allocator", "eventpp")
+add_requires("glslang", "vulkan-headers", "vulkan-memory-allocator", "eventpp")
 add_requires("LuisaRender", {configs={shared=true}})
 -- enable unicode
 -- add_defines("_UNICODE", "UNICODE")
 -- for all source/target encodings
--- set_encodings("utf-8") -- msvc: /utf-8
--- set_encodings("source:utf-8", "target:utf-8")
-
--- -- gcc/clang: -fexec-charset=UTF-8, msvc: -target-charset=utf-8
--- set_encodings("target:utf-8")
--- set_arch("x64")
--- set_warnings("all")
--- set_toolchains("clang")
+set_encodings("utf-8") -- msvc: /utf-8
+set_encodings("source:utf-8", "target:utf-8")
 
 includes("External/xmake.lua")
 
@@ -77,8 +71,7 @@ rule("win.source.shared")
 
 target("Source")
     set_kind("binary")
-
-    add_packages("glm", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp", "LuisaRender")
+    add_packages("glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp", "LuisaRender")
     set_languages("c++20")
 
     add_headerfiles("Editor/**.h")
@@ -96,6 +89,9 @@ target("Source")
     add_includedirs("./External")
     
     add_includedirs("./External/LuisaRender/src/compute/src/ext/imgui")
+    add_includedirs("./External/LuisaRender/src/compute/src/ext/glfw/include")
+    add_includedirs("./External/LuisaRender/src/compute/src/ext/spdlog/include")
+    add_includedirs("./External/LuisaRender/src/ext/assimp/include")
     External()
 
     add_headerfiles("configuration/**.h")

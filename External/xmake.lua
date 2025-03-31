@@ -6,7 +6,6 @@ function External()
     ACL()
     add_deps("baselib")
     add_packages("tlsf")
-    add_packages("spdlog")
     -- add_packages("tinyobjloader")
     add_packages("joltphysics")
     add_packages("stb","spine-runtimes","reflect-cpp")
@@ -15,7 +14,6 @@ end
 
 add_requires(
     "tlsf", 
-    "spdlog", 
     -- "tinyobjloader", 
     "joltphysics", 
     "stb",
