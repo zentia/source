@@ -5,12 +5,12 @@ end
 function External()
     ACL()
     add_deps("baselib")
-    add_deps("imgui")
     add_packages("tlsf")
     add_packages("spdlog")
     -- add_packages("tinyobjloader")
     add_packages("joltphysics")
     add_packages("stb","spine-runtimes","reflect-cpp")
+
 end 
 
 add_requires(
@@ -20,7 +20,8 @@ add_requires(
     "joltphysics", 
     "stb",
     "spine-runtimes",
-    "reflect-cpp"
+    "reflect-cpp",
+    "LuisaRender"
 )
 
 target("baselib")
@@ -32,9 +33,14 @@ target("baselib")
     add_includedirs("baselib/Include", {public = true})
     add_syslinks("wsock32", "ws2_32")
 
-target("imgui")
-    add_packages("vulkansdk")
-    set_kind("static")
-    add_headerfiles("imgui/*.h", "imgui/backends/imgui_impl_vulkan.h", "imgui/backends/imgui_impl_glfw.h")
-    add_files("imgui/*.cpp", "imgui/backends/imgui_impl_vulkan.cpp", "imgui/backends/imgui_impl_glfw.cpp")
-    add_includedirs("imgui", {public = true})
+package("LuisaRender")
+    add_deps("cmake")
+    set_sourcedir(path.join(os.scriptdir(), "LuisaRender"))
+    on_install(function (package)
+        local configs = {}
+        table.insert(configs, "-DCMAKE_BUILD_TYPE=" .. (package:debug() and "Debug" or "Release"))
+        table.insert(configs, "-DBUILD_SHARED_LIBS=" .. (package:config("shared") and "ON" or "OFF"))
+        table.insert(configs, "LUISA_COMPUTE_DOWNLOAD_LLVM=ON")
+        import("package.tools.cmake").install(package, configs)
+    end)
+package_end()

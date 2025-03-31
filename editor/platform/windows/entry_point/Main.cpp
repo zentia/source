@@ -31,7 +31,7 @@ void DisplayFailedToLoadSourceError(LPWSTR cmdLine)
 int main(int argc, char** argv)
 {
 
-    auto sourceDll = LoadLibraryEx("Source.dll", nullptr, 0);
+    /*auto sourceDll = LoadLibraryEx("Source.dll", nullptr, 0);
     if (sourceDll == nullptr)
     {
         auto error = GetLastError();
@@ -43,6 +43,6 @@ int main(int argc, char** argv)
     {
         auto error = GetLastError();
         return MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, error);
-    }
-    return sourceMain(argc, argv);
+    }*/
+    return SourceMain(argc, argv);
 }

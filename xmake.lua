@@ -3,8 +3,8 @@ add_rules("plugin.compile_commands.autoupdate")
 
 add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 
-add_requires("glm", "glfw", "glslang", "vulkan-headers")
-add_requires("vulkansdk", "vulkan-memory-allocator", "eventpp")
+add_requires("glm", "glfw", "glslang", "vulkan-headers", "vulkan-memory-allocator", "eventpp")
+add_requires("LuisaRender", {configs={shared=true}})
 -- enable unicode
 -- add_defines("_UNICODE", "UNICODE")
 -- for all source/target encodings
@@ -76,14 +76,13 @@ rule("win.source.shared")
 
 
 target("Source")
-    set_kind("shared")
+    set_kind("binary")
 
-    add_packages("glm", "imgui", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp")
-    
+    add_packages("glm", "glfw", "glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp", "LuisaRender")
     set_languages("c++20")
 
-    add_headerfiles("Editor/**.h|Platform/Windows/EntryPoint/*.h")
-    add_files("Editor/**.cpp|platform/Windows/EntryPoint/*.cpp")
+    add_headerfiles("Editor/**.h")
+    add_files("Editor/**.cpp")
 
     add_headerfiles("Runtime/**.h")
     add_files("Runtime/**.cpp")
@@ -95,6 +94,8 @@ target("Source")
     add_files("Modules/**.cpp")
 
     add_includedirs("./External")
+    
+    add_includedirs("./External/LuisaRender/src/compute/src/ext/imgui")
     External()
 
     add_headerfiles("configuration/**.h")
@@ -110,13 +111,7 @@ target("Source")
     add_defines("ENABLE_ASSERTIONS")
     add_includedirs("PrecompiledHeaders")
     set_pcxxheader("PrecompiledHeaders/SourcePrefix.h")
-target_end()
-    
-target("SourceEditor")
-    set_kind("binary")
-    add_files("Editor/Platform/Windows/entry_point/Main.cpp")
-    add_deps("Source")
-    SourceCommon()
+
     after_build(function (target) 
         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
         local build_dir = os.projectdir() .. "\\" .. target:targetdir()
@@ -136,6 +131,32 @@ target("SourceEditor")
         end 
     end)
 target_end()
+    
+-- target("SourceEditor")
+--     set_kind("binary")
+--     add_files("Editor/Platform/Windows/entry_point/Main.cpp")
+--     add_deps("Source")
+--     add_packages("Source")
+--     SourceCommon()
+--     after_build(function (target) 
+--         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
+--         local build_dir = os.projectdir() .. "\\" .. target:targetdir()
+
+--         if os.isfile(source_file) then 
+--             os.cp(source_file, build_dir)
+--         else 
+--             print("file " .. source_file .. " does not exist.")
+--         end 
+
+--         local source_dir = os.projectdir() .. "\\External\\resource"
+
+--         if os.isdir(source_dir) then 
+--             os.cp(source_dir, build_dir)
+--         else 
+--             print("dir " .. source_dir .. " does not exist.")
+--         end 
+--     end)
+-- target_end()
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --
