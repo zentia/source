@@ -6,4 +6,4 @@
 #define SOURCE_API __declspec(dllimport)
 #endif
 
-extern "C" SOURCE_API int SourceMain(int argc, char** argv);
+SOURCE_API int source_main(int argc, char** argv);

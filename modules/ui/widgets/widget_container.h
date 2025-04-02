@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace source_runtime::ui
 {
 	class widget;

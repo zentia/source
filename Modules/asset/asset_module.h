@@ -5,6 +5,8 @@
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 
+#include "spdlog/spdlog.h"
+
 namespace source_runtime
 {
 	class asset_module
@@ -18,7 +20,7 @@ namespace source_runtime
 			std::ifstream asset_json_file(asset_path);
 			if (!asset_json_file)
 			{
-				LOG_ERROR_FORMAT("open file: {} failed!", asset_path.generic_string());
+				SPDLOG_ERROR("open file: {} failed!", asset_path.generic_string());
 				return AssetType();
 			}
 
@@ -34,7 +36,7 @@ namespace source_runtime
 			std::ofstream asset_json_file(get_full_path(asset_url));
 			if (!asset_json_file)
 			{
-				LOG_ERROR_FORMAT("open file {} failed!", asset_url);
+				SPDLOG_ERROR("open file {} failed!", asset_url);
 			}
 
 			rfl::json::write<rfl::SnakeCaseToCamelCase>(asset, asset_json_file);

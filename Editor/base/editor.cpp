@@ -1,7 +1,6 @@
-#include "Editor.h"
-#include "SourcePrefix.h"
-#include "Application/application.h"
-#include "Editor/ui/editor_ui.h"
+#include "editor.h"
+#include "application/application.h"
+#include "editor/ui/editor_ui.h"
 
 namespace source_editor
 {

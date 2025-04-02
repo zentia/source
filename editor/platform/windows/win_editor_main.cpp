@@ -1,4 +1,3 @@
-#include "SourcePrefix.h"
 #include "win_editor_main.h"
 
 #include "Editor/base/Application/application.h"
@@ -14,7 +13,6 @@
 
 #include "Editor/base/Editor.h"
 #include "Editor/hub/hub_module.h"
-#include "Runtime/Utitlities/file_path_utils.h"
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
@@ -114,11 +112,11 @@ void WaitForLastSubmittedFrame();
 FrameContext* WaitForNextFrameResources();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-extern "C" SOURCE_API int SourceMain(int argc, char** argv)
+SOURCE_API int source_main(int argc, char** argv)
 {
     std::filesystem::path executable_path(argv[0]);
     const std::filesystem::path config_file_path = executable_path.parent_path() / "source_editor.json";
-    new application();
+    new application(argv[0]);
     get_application().initialize(config_file_path.generic_string());
     source_editor::hub::hub_module hub;
     if (argc >= 2)

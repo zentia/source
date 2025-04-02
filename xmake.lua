@@ -1,65 +1,30 @@
-add_rules("plugin.vsxmake.autoupdate")
-add_rules("plugin.compile_commands.autoupdate")
+set_languages("cxx23")
 
 add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 
-add_requires("glslang", "vulkan-headers", "vulkan-memory-allocator", "eventpp")
-add_requires("LuisaRender", {configs={shared=true}})
--- enable unicode
--- add_defines("_UNICODE", "UNICODE")
--- for all source/target encodings
+add_requires("vulkan-headers", "vulkan-memory-allocator", "eventpp")
 set_encodings("utf-8") -- msvc: /utf-8
 set_encodings("source:utf-8", "target:utf-8")
 
 includes("External/xmake.lua")
 
-local function SourceCommon()
-    add_cxxflags("gxx::-fexec-charset=GBK")
-    if is_mode("debug") then
-        add_cxflags("-DDEBUG")
-    end
-    
-    add_includedirs("./")
-    if is_os("windows") then
-        add_defines("PLATFORM_WIN")
-        add_defines("__x86_64__")
-        add_rules("win.source.shared")
-        add_syslinks("synchronization")
-    elseif is_os("linux") then 
-    elseif is_os("android") then 
-    elseif is_os("macosx") then 
-    elseif is_os("ios") then 
-    end
-end 
-
--- define rule: shared
-rule("win.source.shared")
-    -- on_load(function (target)
-    --     target:set("kind", "shared")
-    -- end)
-
+rule("module")
+    on_load(function (target)
+        if is_mode("debug", "releasedbg") then
+            target:set("kind", "shared")
+            if is_plat("windows") then
+                import("core.project.rule")
+                local rule = rule.rule("utils.symbols.export_all")
+                target:rule_add(rule)
+                target:extraconf_set("rules", "utils.symbols.export_all", {export_classes = true})
+            end
+        elseif is_mode("release") then
+            target:set("kind", "static")
+        else
+            assert(false, "Unknown build kind")
+        end
+    end)
     after_load(function (target)
-
-        -- -- set subsystem: windows
-        -- if target:is_plat("mingw") then
-        --     target:add("ldflags", "-mwindows", {force = true})
-        -- else
-        --     local subsystem = false
-        --     for _, ldflag in ipairs(target:get("ldflags")) do
-        --         if type(ldflag) == "string" then
-        --             ldflag = ldflag:lower()
-        --             if ldflag:find("[/%-]subsystem:") then
-        --                 subsystem = true
-        --                 break
-        --             end
-        --         end
-        --     end
-        --     if not subsystem then
-        --         target:add("ldflags", "-subsystem:windows", {force = true, tools = {"link"}})
-        --     end
-        -- end
-
-        -- add links
         target:add("syslinks", "kernel32", "user32", "gdi32", "winspool", "comdlg32", "advapi32")
         target:add("syslinks", "shell32", "ole32", "oleaut32", "uuid", "odbc32", "odbccp32", "comctl32")
         target:add("syslinks", "comdlg32", "setupapi", "shlwapi", "d3d12", "dxgi")
@@ -67,47 +32,46 @@ rule("win.source.shared")
             target:add("syslinks", "strsafe")
         end
     end)
+rule_end()
 
-
-target("Source")
-    set_kind("binary")
-    add_packages("glad", "fmt", "glslang", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp", "LuisaRender")
-    set_languages("c++20")
-
-    add_headerfiles("Editor/**.h")
-    add_files("Editor/**.cpp")
-
+target("source")
+    set_kind("$(kind)")
+    add_packages("glad", "fmt", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp")
+    add_headerfiles("editor/**.h")
+    add_files("Editor/**.cpp|Editor/Platform/Windows/entry_point/Main.cpp")
     add_headerfiles("Runtime/**.h")
     add_files("Runtime/**.cpp")
-
-    add_headerfiles("PlatformDependent/**.h")
-    add_files("PlatformDependent/**.cpp")
-
     add_headerfiles("Modules/**.h")
     add_files("Modules/**.cpp")
-
-    add_includedirs("./External")
-    
-    add_includedirs("./External/LuisaRender/src/compute/src/ext/imgui")
-    add_includedirs("./External/LuisaRender/src/compute/src/ext/glfw/include")
-    add_includedirs("./External/LuisaRender/src/compute/src/ext/spdlog/include")
-    add_includedirs("./External/LuisaRender/src/ext/assimp/include")
-    External()
-
     add_headerfiles("configuration/**.h")
-
-    add_includedirs("./PlatformDependent/Win")
-    add_includedirs("./Platforms/Windows/Configuration")
-
     add_headerfiles("Platforms/**.h")
     add_headerfiles("Platforms/**.cpp")
-
-    SourceCommon()
+    add_cxxflags("gxx::-fexec-charset=GBK")
+    if is_mode("debug") then
+        add_cxflags("-DDEBUG")
+    end
+    add_includedirs("./", {public = true})
+    if is_os("windows") then
+        add_defines("PLATFORM_WIN")
+        add_defines("__x86_64__")
+        add_syslinks("synchronization")
+    elseif is_os("linux") then 
+    elseif is_os("android") then 
+    elseif is_os("macosx") then 
+    elseif is_os("ios") then 
+    end
     add_defines("SOURCE_EDITOR")
     add_defines("ENABLE_ASSERTIONS")
-    add_includedirs("PrecompiledHeaders")
-    set_pcxxheader("PrecompiledHeaders/SourcePrefix.h")
-
+    set_pcxxheader("precompiled_header/source_prefix.h")
+    add_deps(
+        "glfw",
+        "glm",
+        "imgui", 
+        "reflect-cpp",
+        "spdlog",
+        "spine-runtimes"
+    )
+    add_rules("module")
     after_build(function (target) 
         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
         local build_dir = os.projectdir() .. "\\" .. target:targetdir()
@@ -118,7 +82,7 @@ target("Source")
             print("file " .. source_file .. " does not exist.")
         end 
 
-        local source_dir = os.projectdir() .. "\\External\\resource"
+        local source_dir = os.projectdir() .. "\\resource"
 
         if os.isdir(source_dir) then 
             os.cp(source_dir, build_dir)
@@ -126,99 +90,9 @@ target("Source")
             print("dir " .. source_dir .. " does not exist.")
         end 
     end)
-target_end()
-    
--- target("SourceEditor")
---     set_kind("binary")
---     add_files("Editor/Platform/Windows/entry_point/Main.cpp")
---     add_deps("Source")
---     add_packages("Source")
---     SourceCommon()
---     after_build(function (target) 
---         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
---         local build_dir = os.projectdir() .. "\\" .. target:targetdir()
 
---         if os.isfile(source_file) then 
---             os.cp(source_file, build_dir)
---         else 
---             print("file " .. source_file .. " does not exist.")
---         end 
-
---         local source_dir = os.projectdir() .. "\\External\\resource"
-
---         if os.isdir(source_dir) then 
---             os.cp(source_dir, build_dir)
---         else 
---             print("dir " .. source_dir .. " does not exist.")
---         end 
---     end)
--- target_end()
---
--- If you want to known more usage about xmake, please see https://xmake.io
---
--- ## FAQ
---
--- You can enter the project directory firstly before building project.
---
---   $ cd projectdir
---
--- 1. How to build project?
---
---   $ xmake
---
--- 2. How to configure project?
---
---   $ xmake f -p [macosx|linux|iphoneos ..] -a [x86_64|i386|arm64 ..] -m [debug|release]
---
--- 3. Where is the build output directory?
---
---   The default output directory is `./build` and you can configure the output directory.
---
---   $ xmake f -o outputdir
---   $ xmake
---
--- 4. How to run and debug target after building project?
---
---   $ xmake run [targetname]
---   $ xmake run -d [targetname]
---
--- 5. How to install target to the system directory or other output directory?
---
---   $ xmake install
---   $ xmake install -o installdir
---
--- 6. Add some frequently-used compilation flags in xmake.lua
---
--- @code
---    -- add debug and release modes
---    add_rules("mode.debug", "mode.release")
---
---    -- add macro definition
---    add_defines("NDEBUG", "_GNU_SOURCE=1")
---
---    -- set warning all as error
---    set_warnings("all", "error")
---
---    -- set language: c99, c++11
---    set_languages("c99", "c++11")
---
---    -- set optimization: none, faster, fastest, smallest
---    set_optimize("fastest")
---
---    -- add include search directories
---    add_includedirs("/usr/include", "/usr/local/include")
---
---    -- add link libraries and search directories
---    add_links("tbox")
---    add_linkdirs("/usr/local/lib", "/usr/lib")
---
---    -- add system link libraries
---    add_syslinks("z", "pthread")
---
---    -- add compilation and link flags
---    add_cxflags("-stdnolib", "-fno-strict-aliasing")
---    add_ldflags("-L/usr/local/lib", "-lpthread", {force = true})
---
--- @endcode
---
-
+target("source_editor")
+    set_kind("binary")
+    add_files("Editor/Platform/Windows/entry_point/main.cpp")
+    add_deps("source")
+    add_defines("SOURCE_EDITOR")

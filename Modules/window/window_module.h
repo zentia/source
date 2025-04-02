@@ -3,6 +3,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <functional>
 #include <GLFW/glfw3.h>
+#include <glm/vec2.hpp>
+//#include <luisa/gui/imgui_window.h>
 
 namespace source_runtime
 {
@@ -14,18 +16,17 @@ namespace source_runtime
 		bool isFullscreen{ false };
 	};
 
-	class window_module
+	class window_module //: public luisa::compute::ImGuiWindow
 	{
 	public:
-		window_module() = default;
+		window_module(/*luisa::compute::Device &device, luisa::compute::Stream &stream*/);
 		~window_module();
 		void Initialize(WindowCreateInfo createInfo);
-		void poll_events() const;
-		[[nodiscard]]bool should_close() const;
+		bool should_close() const;
 		void set_should_close(bool value) const;
 		void set_title(const char* title) const;
 		GLFWwindow* get_window() const;
-		std::array<int, 2> get_window_size() const;
+		glm::vec2 get_window_size() const;
 
 		typedef std::function<void()> OnResetFunc;
 		typedef std::function<void(int, int, int, int)> OnKeyFunc;
@@ -47,7 +48,7 @@ namespace source_runtime
 			{
 				return false;
 			}
-			return glfwGetMouseButton(m_Window, button) == GLFW_PRESS;
+			return glfwGetMouseButton(m_window_, button) == GLFW_PRESS;
 		}
 	protected:
 		// window event callbacks
@@ -64,7 +65,7 @@ namespace source_runtime
 				func(key, scancode, action, mods);
 		}
 	private:
-		GLFWwindow* m_Window{ nullptr };
+		GLFWwindow* m_window_{ nullptr };
 		int m_width_{ 0 };
 		int m_height_{ 0 };
 		std::vector<OnKeyFunc> m_on_key_func_;

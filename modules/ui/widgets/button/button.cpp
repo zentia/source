@@ -5,7 +5,7 @@
 
 namespace source_runtime::ui
 {
-	button::button(const std::string&& label, const aiVector2D&& size, const bool disabled) : m_label(label), m_size(size), m_disable(disabled)
+	button::button(const std::string&& label, const glm::vec2&& size, const bool disabled) : m_label(label), m_size(size), m_disable(disabled)
 	{
 		
 	}

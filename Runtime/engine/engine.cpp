@@ -44,7 +44,6 @@ namespace source_runtime
 
 		renderer_tick(delta_time);
 		application& application = get_application();
-		application.m_window_module->poll_events();
 		application.m_window_module->set_title(std::string("source - " + std::to_string(m_fps_) + "fps").c_str());
 		const bool should_window_close = get_application().get_window_system()->should_close();
 		return !should_window_close;

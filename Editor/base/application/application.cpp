@@ -1,16 +1,17 @@
-#include "SourcePrefix.h"
 #include "application.h"
 
 #include "Editor/ui/editor_ui.h"
 #include "Modules/render/render_module.h"
-#include "Runtime/Allocator/MemoryManager.h"
 
 static application* gApp = nullptr;
 
-application::application()
+application::application(const std::string&& exe_path)
 	: m_RecreateGfxDevice(false)
 	, m_LoadRenderDoc(false)
+	//, m_context(exe_path)
 {
+	//m_device = m_context.create_default_device();
+	//m_stream = m_device.create_stream(luisa::compute::StreamTag::GRAPHICS);
 	gApp = this;
 }
 
@@ -22,12 +23,9 @@ application::~application()
 
 void application::initialize(const std::string& config_file_path)
 {
-	MemoryManager::LateStaticInitialize();
-	m_LoggerSystem = std::make_shared<log_system>();
-
 	m_config_module = std::make_shared<source_runtime::config_module>();
 	m_config_module->initialize(config_file_path);
-	m_window_module = std::make_shared<source_runtime::window_module>();
+	m_window_module = std::make_shared<source_runtime::window_module>(/*m_device, m_stream*/);
 	source_runtime::WindowCreateInfo windowCreateInfo;
 	m_window_module->Initialize(windowCreateInfo);
 	m_render_module = std::make_shared<source_runtime::render_module>();

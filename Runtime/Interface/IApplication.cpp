@@ -1,4 +1,3 @@
-#include "SourcePrefix.h"
 #include "IApplication.h"
 
 static IApplication* gApplication = nullptr;

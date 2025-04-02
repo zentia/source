@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #include "Modules/ui/widgets/data_widget.h"
 
 namespace source_runtime::ui

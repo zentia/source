@@ -7,5 +7,6 @@ namespace source_editor::hub
 	{
 	public:
 		hub_panel();
+		void draw() override;
 	};
 }

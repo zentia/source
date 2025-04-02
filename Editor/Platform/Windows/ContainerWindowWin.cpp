@@ -1,4 +1,3 @@
-#include "SourcePrefix.h"
 #include "Editor/Platform/Interface/ContainerWindow.h"
 #include <Windows.h>
 #include <windowsx.h>
