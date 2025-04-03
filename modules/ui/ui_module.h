@@ -1,6 +1,7 @@
 #pragma once
 #include "canvas/canvas.h"
 #include "Modules/render/render_module.h"
+#include "Modules/rhi/rhi_module.h"
 #include "Modules/window/window_module.h"
 
 namespace source_runtime::ui
@@ -18,5 +19,6 @@ namespace source_runtime::ui
 		virtual void render();
 	private:
 		canvas* m_canvas_{ nullptr };
+		std::shared_ptr<rhi> m_rhi_;
 	};
 }

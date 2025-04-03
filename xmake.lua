@@ -2,8 +2,7 @@ set_languages("cxx23")
 
 add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 
-add_requires("vulkan-headers", "vulkan-memory-allocator", "eventpp")
-set_encodings("utf-8") -- msvc: /utf-8
+add_requires("vulkan-memory-allocator", "eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
 
 includes("External/xmake.lua")
@@ -36,7 +35,7 @@ rule_end()
 
 target("source")
     set_kind("$(kind)")
-    add_packages("glad", "fmt", "vulkan-headers", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp")
+    add_packages("glad", "fmt", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp")
     add_headerfiles("editor/**.h")
     add_files("Editor/**.cpp|Editor/Platform/Windows/entry_point/Main.cpp")
     add_headerfiles("Runtime/**.h")
