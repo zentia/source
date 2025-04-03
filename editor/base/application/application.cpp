@@ -28,9 +28,9 @@ void application::initialize(const std::string& config_file_path)
 	m_window_module = std::make_shared<source_runtime::window_module>(/*m_device, m_stream*/);
 	source_runtime::WindowCreateInfo windowCreateInfo;
 	m_window_module->Initialize(windowCreateInfo);
-	m_render_module = std::make_shared<source_runtime::render_module>();
-	source_runtime::render_init_info render_init_info;
-	render_init_info.window_system = m_window_module;
+	m_render_module = std::make_shared<source_module::render::render_module>();
+	source_module::render::render_init_info render_init_info;
+	render_init_info.window_module = m_window_module;
 	m_render_module->initialize(render_init_info);
 
 	m_world_module = std::make_shared<source_runtime::world_module>();

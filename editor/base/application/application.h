@@ -36,7 +36,7 @@ public:
     PlayerLoopController m_PlayerLoopController;
     std::shared_ptr<source_runtime::window_module> m_window_module;
     std::shared_ptr<source_runtime::config_module> m_config_module;
-    std::shared_ptr<source_runtime::render_module> m_render_module;
+    std::shared_ptr<source_module::render::render_module> m_render_module;
     std::shared_ptr<source_runtime::world_module> m_world_module;
     std::shared_ptr<source_editor::editor_scene_manager> m_scene_manager{ nullptr };
     std::shared_ptr<source_editor::editor_input_module> m_input_module{ nullptr };

@@ -12,7 +12,7 @@ namespace source_runtime::ui
 		if (m_canvas_)
 		{
 			m_canvas_->draw();
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), std::static_pointer_cast<vulkan_rhi>(m_rhi_)->m_vk_command_buffer);
+			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), std::static_pointer_cast<source_module::rhi::vulkan_rhi>(m_rhi_)->m_vk_command_buffer);
 		}
 	}
 

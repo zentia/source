@@ -71,6 +71,7 @@ target("source")
         "spine-runtimes"
     )
     add_rules("module")
+    add_rules("c++.unity_build", {batchsize = 2})
     after_build(function (target) 
         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
         local build_dir = os.projectdir() .. "\\" .. target:targetdir()

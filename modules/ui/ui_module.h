@@ -9,7 +9,7 @@ namespace source_runtime::ui
 	struct window_ui_init_info
 	{
 		std::shared_ptr<window_module> window_module;
-		std::shared_ptr<render_module> render_module;
+		std::shared_ptr<source_module::render::render_module> render_module;
 	};
 
 	class ui_module
@@ -19,6 +19,6 @@ namespace source_runtime::ui
 		virtual void render();
 	private:
 		canvas* m_canvas_{ nullptr };
-		std::shared_ptr<rhi> m_rhi_;
+		std::shared_ptr<source_module::rhi::rhi> m_rhi_;
 	};
 }

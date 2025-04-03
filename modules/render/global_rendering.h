@@ -1,11 +1,13 @@
-#pragma once
+Ôªø#pragma once
+#include <string>
+
 #include "Modules/camera/camera_config.h"
-#include "Runtime/Math/color.h"
-#include "Runtime/Math/vector3.h"
+#include "Runtime/math/color.h"
+#include "Runtime/math/vector3.h"
 
 namespace source_runtime
 {
-	// ∑¯’’∂»
+	// ËæêÁÖßÂ∫¶
 	class sky_box_irradiance_map
 	{
 	public:
@@ -31,8 +33,8 @@ namespace source_runtime
 	class directional_light
 	{
 	public:
-		vector3 m_direction;
-		color m_color;
+		math::vector3 m_direction;
+		math::color m_color;
 	};
 
 	class global_rendering_res
@@ -44,8 +46,8 @@ namespace source_runtime
 		std::string m_brdf_map;
 		std::string m_color_grading_map;
 
-		color m_sky_color;
-		color m_ambient_light;
+		math::color m_sky_color;
+		math::color m_ambient_light;
 		camera_config m_camera_config;
 		directional_light m_directional_light;
 	};

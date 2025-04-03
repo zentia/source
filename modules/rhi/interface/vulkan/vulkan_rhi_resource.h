@@ -3,7 +3,23 @@
 
 #include "Modules/rhi/rhi_struct.h"
 
-#define VULKAN_RHI_RESOURCE_DECLARE(PARENT, SELF, TYPE, REF) \
+#define VULKAN_RHI_RESOURCE_DECLARE(PARENT, SELF, TYPE) \
+	class SELF : public PARENT \
+	{ \
+	public: \
+		void set_resource(const TYPE res) \
+		{ \
+			m_resource_ = res; \
+		} \
+		[[nodiscard]] TYPE get_resource() \
+		{ \
+			return m_resource_; \
+		} \
+	private: \
+		TYPE m_resource_ { nullptr }; \
+	}
+
+#define VULKAN_RHI_RESOURCE_DECLARE_REF(PARENT, SELF, TYPE, REF) \
 	class SELF : public PARENT \
 	{ \
 	public: \
@@ -33,7 +49,7 @@ namespace source_runtime
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_event, vulkan_rhi_event, VkEvent);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_fence, vulkan_rhi_fence, VkFence);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_frame_buffer, vulkan_rhi_frame_buffer, VkFramebuffer);
-	VULKAN_RHI_RESOURCE_DECLARE(rhi_image, vulkan_rhi_image, VkImage, &);
+	VULKAN_RHI_RESOURCE_DECLARE_REF(rhi_image, vulkan_rhi_image, VkImage, &);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_image_view, vulkan_rhi_image_view, VkImageView);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_instance, vulkan_rhi_instance, VkInstance);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_queue, vulkan_rhi_queue, VkQueue);

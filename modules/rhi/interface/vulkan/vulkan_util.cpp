@@ -1,7 +1,9 @@
-#include "vulkan_util.h"
+ï»¿#include "vulkan_util.h"
 
 #include "Modules/rhi/vulkan/vulkan_rhi.h"
 #include <vk_mem_alloc.h>
+
+#include "spdlog/spdlog.h"
 
 namespace source_runtime
 {
@@ -20,7 +22,7 @@ namespace source_runtime
 				return i;
 			}
 		}
-		LOG_ERROR("find_memory_type error");
+		SPDLOG_ERROR("find_memory_type error");
 		return 0;
 	}
 
@@ -49,7 +51,7 @@ namespace source_runtime
 
 		if (vkCreateBuffer(device, &buffer_create_info, nullptr, &buffer) != VK_SUCCESS)
 		{
-			LOG_ERROR("vkCreateBuffer failed!");
+			SPDLOG_ERROR("vkCreateBuffer failed!");
 			return;
 		}
 
@@ -63,7 +65,7 @@ namespace source_runtime
 
 		if (vkAllocateMemory(device, &memory_allocate_info, nullptr, &device_memory) != VK_SUCCESS)
 		{
-			LOG_ERROR("vkAllocateMemory failed!");
+			SPDLOG_ERROR("vkAllocateMemory failed!");
 			return;
 		}
 
@@ -86,7 +88,7 @@ namespace source_runtime
 			void* mapped;
 			if (vkMapMemory(device, *memory, 0, size, 0, &mapped) != VK_SUCCESS)
 			{
-				LOG_ERROR("map memory failed!");
+				SPDLOG_ERROR("map memory failed!");
 				return;
 			}
 			memcpy(mapped, data, data_size);
@@ -94,20 +96,20 @@ namespace source_runtime
 		}
 	}
 
-	void vulkan_util::copy_buffer(rhi* rhi, const VkBuffer src_buffer, const VkBuffer dst_buffer, const VkDeviceSize src_offset, const VkDeviceSize dst_offset, const VkDeviceSize size)
+	void vulkan_util::copy_buffer(source_module::rhi::rhi* rhi, const VkBuffer src_buffer, const VkBuffer dst_buffer, const VkDeviceSize src_offset, const VkDeviceSize dst_offset, const VkDeviceSize size)
 	{
 		if (rhi == nullptr)
 		{
-			LOG_ERROR("rhi is nullptr");
+			SPDLOG_ERROR("rhi is nullptr");
 			return;
 		}
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<vulkan_rhi*>(rhi)->begin_single_time_commands();
+		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
 		const VkCommandBuffer vk_command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		const VkBufferCopy vk_buffer_copy = { src_offset, dst_offset, size };
 		vkCmdCopyBuffer(vk_command_buffer, src_buffer, dst_buffer, 1, &vk_buffer_copy);
 
-		dynamic_cast<vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
+		dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
 	}
 
 	void vulkan_util::create_image(const VkPhysicalDevice physical_device,
@@ -147,7 +149,7 @@ namespace source_runtime
 
 		if (vkCreateImage(device, &image_create_info, nullptr, &image) != VK_SUCCESS)
 		{
-			LOG_ERROR("failed to create image!");
+			SPDLOG_ERROR("failed to create image!");
 			return;
 		}
 
@@ -163,7 +165,7 @@ namespace source_runtime
 
 		if (vkAllocateMemory(device, &allocate_info, nullptr, &memory) != VK_SUCCESS)
 		{
-			LOG_ERROR("failed to allocate image memory!");
+			SPDLOG_ERROR("failed to allocate image memory!");
 			return;
 		}
 
@@ -196,8 +198,8 @@ namespace source_runtime
 		return image_view;
 	}
 
-	void vulkan_util::create_global_image(rhi* rhi, 
-		VkImage& image, VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
+	void vulkan_util::create_global_image(source_module::rhi::rhi* rhi, 
+	                                      VkImage& image, VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
 	{
 		if (!texture_image_pixels)
 		{
@@ -241,14 +243,14 @@ namespace source_runtime
 			vulkan_image_format = VK_FORMAT_R32G32B32A32_SFLOAT;
 			break;
 		default:
-			LOG_ERROR("invalid texture_byte_size");
+			SPDLOG_ERROR("invalid texture_byte_size");
 			break;
 		}
 
 		VkBuffer inefficient_staging_buffer;
 		VkDeviceMemory inefficient_staging_buffer_memory;
-		create_buffer(dynamic_cast<vulkan_rhi*>(rhi)->m_physical_device,
-			dynamic_cast<vulkan_rhi*>(rhi)->m_device,
+		create_buffer(dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->m_physical_device,
+			dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->m_device,
 			texture_byte_size,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -276,7 +278,7 @@ namespace source_runtime
 		VmaAllocationCreateInfo allocation_create_info;
 		allocation_create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-		vmaCreateImage(dynamic_cast<vulkan_rhi*>(rhi)->m_asset_allocator,
+		vmaCreateImage(dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->m_asset_allocator,
 			&image_create_info,
 			&allocation_create_info,
 			&image,
@@ -290,12 +292,12 @@ namespace source_runtime
 		// layout transitions -- image layout is set from destination to shader_read
 		transition_image_layout(rhi, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1, 1, VK_IMAGE_ASPECT_COLOR_BIT);
 
-		vkDestroyBuffer(dynamic_cast<vulkan_rhi*>(rhi)->m_device, inefficient_staging_buffer, nullptr);
-		vkFreeMemory(dynamic_cast<vulkan_rhi*>(rhi)->m_device, inefficient_staging_buffer_memory, nullptr);
+		vkDestroyBuffer(dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->m_device, inefficient_staging_buffer, nullptr);
+		vkFreeMemory(dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->m_device, inefficient_staging_buffer_memory, nullptr);
 
 		gen_mipmap_image(rhi, image, texture_image_width, texture_image_height, mip_levels);
 
-		image_view = create_image_view(dynamic_cast<vulkan_rhi*>(rhi)->m_device,
+		image_view = create_image_view(dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->m_device,
 			image,
 			vulkan_image_format,
 			VK_IMAGE_ASPECT_COLOR_BIT,
@@ -304,10 +306,10 @@ namespace source_runtime
 			mip_levels);
 	}
 
-	void vulkan_util::create_cube_map(rhi* rhi, 
-		VkImage& image, 
-		VkImageView& image_view, 
-		VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
+	void vulkan_util::create_cube_map(source_module::rhi::rhi* rhi, 
+	                                  VkImage& image, 
+	                                  VkImageView& image_view, 
+	                                  VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
 	{
 		VkDeviceSize texture_layer_byte_size;
 		VkDeviceSize cube_byte_size;
@@ -329,15 +331,15 @@ namespace source_runtime
 		}
 	}
 
-	void vulkan_util::transition_image_layout(rhi* rhi, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t layer_count, uint32_t mip_levels, VkImageAspectFlags aspect_mask_bits)
+	void vulkan_util::transition_image_layout(source_module::rhi::rhi* rhi, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t layer_count, uint32_t mip_levels, VkImageAspectFlags aspect_mask_bits)
 	{
 		if (rhi == nullptr)
 		{
-			LOG_ERROR("rhi is nullptr");
+			SPDLOG_ERROR("rhi is nullptr");
 			return;
 		}
 
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<vulkan_rhi*>(rhi)->begin_single_time_commands();
+		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
 		VkCommandBuffer command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		VkImageMemoryBarrier barrier;
@@ -356,8 +358,8 @@ namespace source_runtime
 		VkPipelineStageFlags src_stage;
 		VkPipelineStageFlags dst_stage;
 
-		// Í¼ÏñµÄ³õÊ¼×´Ì¬£¬ÄÚÈİÎ´¶¨Òå¡£Í¨³£ÔÚÍ¼Ïñ´´½¨ºóÁ¢¼´×ª»»ÎªÆäËû²¼¾Ö
-		// Í¼ÏñÓÃÓÚ×÷ÎªÊı¾İÄ¿±ê½øĞĞ´´Êı²Ù×÷Ê±µÄ×î¼Ñ²¼¾Ö
+		// å›¾åƒçš„åˆå§‹çŠ¶æ€ï¼Œå†…å®¹æœªå®šä¹‰ã€‚é€šå¸¸åœ¨å›¾åƒåˆ›å»ºåç«‹å³è½¬æ¢ä¸ºå…¶ä»–å¸ƒå±€
+		// å›¾åƒç”¨äºä½œä¸ºæ•°æ®ç›®æ ‡è¿›è¡Œåˆ›æ•°æ“ä½œæ—¶çš„æœ€ä½³å¸ƒå±€
 		if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 		{
 			barrier.srcAccessMask = 0;
@@ -366,7 +368,7 @@ namespace source_runtime
 			src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		}
-		// Í¼ÏñÓÃÓÚ×ÅÉ«Æ÷¶ÁÈ¡Ê±µÄ×î¼Ñ²¼¾Ö£¬ÊÊÓÃÓÚÎÆÀí²ÉÑù
+		// å›¾åƒç”¨äºç€è‰²å™¨è¯»å–æ—¶çš„æœ€ä½³å¸ƒå±€ï¼Œé€‚ç”¨äºçº¹ç†é‡‡æ ·
 		else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
 			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -375,8 +377,8 @@ namespace source_runtime
 			src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
-		// Í¼ÏñÓÃ×÷Éî¶È/Ä£°å½øĞĞäÖÈ¾Ê±µÄ×î¼Ñ²¼¾Ö
-		// Í¼ÏñÓÃÓÚ×÷ÎªÊı¾İÔ´½øĞĞ´«Êä²Ù×÷Ê±µÄ×î¼Ñ²¼¾Ö
+		// å›¾åƒç”¨ä½œæ·±åº¦/æ¨¡æ¿è¿›è¡Œæ¸²æŸ“æ—¶çš„æœ€ä½³å¸ƒå±€
+		// å›¾åƒç”¨äºä½œä¸ºæ•°æ®æºè¿›è¡Œä¼ è¾“æ“ä½œæ—¶çš„æœ€ä½³å¸ƒå±€
 		else if (old_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
 		{
 			barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -403,24 +405,24 @@ namespace source_runtime
 		}
 		else
 		{
-			LOG_ERROR("unsupported layout transition!");
+			SPDLOG_ERROR("unsupported layout transition!");
 			return;
 		}
 
 		vkCmdPipelineBarrier(command_buffer, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-		dynamic_cast<vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
+		dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
 	}
 
-	void vulkan_util::copy_buffer_to_image(rhi* rhi, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count)
+	void vulkan_util::copy_buffer_to_image(source_module::rhi::rhi* rhi, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count)
 	{
 		if (rhi == nullptr)
 		{
-			LOG_ERROR("rhi is nullptr");
+			SPDLOG_ERROR("rhi is nullptr");
 			return;
 		}
 
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<vulkan_rhi*>(rhi)->begin_single_time_commands();
+		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
 		VkCommandBuffer command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		VkBufferImageCopy region;
@@ -436,18 +438,18 @@ namespace source_runtime
 
 		vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-		dynamic_cast<vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
+		dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
 	}
 
-	void vulkan_util::gen_mipmap_image(rhi* rhi, VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels)
+	void vulkan_util::gen_mipmap_image(source_module::rhi::rhi* rhi, VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels)
 	{
 		if (rhi == nullptr)
 		{
-			LOG_ERROR("rhi is nullptr");
+			SPDLOG_ERROR("rhi is nullptr");
 			return;
 		}
 
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<vulkan_rhi*>(rhi)->begin_single_time_commands();
+		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
 		VkCommandBuffer command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		for (uint32_t i = 0; i < mip_levels; ++i)
@@ -542,14 +544,14 @@ namespace source_runtime
 			1,
 			&barrier);
 
-		dynamic_cast<vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
+		dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
 	}
 
 	VkSampler vulkan_util::get_or_create_mipmap_sampler(VkPhysicalDevice physical_device, VkDevice device, uint32_t width, uint32_t height)
 	{
 		if (width <= 0 || height <= 0)
 		{
-			LOG_ERROR("width <= 0 || height <= 0");
+			SPDLOG_ERROR("width <= 0 || height <= 0");
 		}
 
 		VkSampler sampler;
@@ -581,7 +583,7 @@ namespace source_runtime
 
 		if (vkCreateSampler(device, &sampler_create_info, nullptr, &m_linear_sampler_) != VK_SUCCESS)
 		{
-			LOG_ERROR("vk create sampler");
+			SPDLOG_ERROR("vk create sampler");
 		}
 
 		m_mipmap_sampler_map_.insert(std::make_pair(mip_levels, sampler));
@@ -617,7 +619,7 @@ namespace source_runtime
 
 			if (vkCreateSampler(device, &sampler_create_info, nullptr, &m_linear_sampler_) != VK_SUCCESS)
 			{
-				LOG_ERROR("vk create sampler");
+				SPDLOG_ERROR("vk create sampler");
 			}
 		}
 		return m_nearest_sampler_;
@@ -651,7 +653,7 @@ namespace source_runtime
 
 			if (vkCreateSampler(device, &sampler_create_info, nullptr, &m_linear_sampler_) != VK_SUCCESS)
 			{
-				LOG_ERROR("vk create sampler");
+				SPDLOG_ERROR("vk create sampler");
 			}
 		}
 

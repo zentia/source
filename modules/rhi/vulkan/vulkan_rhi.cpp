@@ -1,23 +1,26 @@
-#include "vulkan_rhi.h"
+ï»¿#include "vulkan_rhi.h"
 
 #include <iostream>
 
 #include "Editor/base/Application/application.h"
+#include "Editor/Platform/Windows/entry_point/WindowsIncludes.h"
 #include "Modules/rhi/rhi_module.h"
 #include "Modules/rhi/interface/vulkan/vulkan_rhi_resource.h"
 #include "Modules/rhi/interface/vulkan/vulkan_util.h"
+#include "spdlog/spdlog.h"
+#include <algorithm>
 
-namespace source_runtime
+namespace source_module::rhi
 {
 	void vulkan_rhi::initialize(const rhi_init_info init_info)
 	{
-		m_window = init_info.window_system->get_window();
+		m_window = init_info.window_module->get_window();
 
-		const std::array<int, 2> window_size = init_info.window_system->get_window_size();
+		glm::vec2 window_size = init_info.window_module->get_window_size();
 		const float width = static_cast<float>(window_size[0]);
 		const float height = static_cast<float>(window_size[1]);
 		m_viewport = { 0.0f,0.0f, width, height, 0.0f, 1.0f };
-		m_scissor = { {0,0},	{(uint32_t)(window_size[0]), (uint32_t)(window_size[1])} };
+		m_scissor = { {0,0},	{(uint32_t)(window_size.x), (uint32_t)(window_size[1])} };
 #ifdef DEBUG
 		m_enable_validation_layers_ = true;
 		m_enable_debug_utils_label_ = true;
@@ -45,34 +48,34 @@ namespace source_runtime
 	void vulkan_rhi::prepare_context()
 	{
 		m_vk_current_command_buffer_ = m_vk_command_buffers_[m_current_frame_index_];
-		static_cast<vulkan_rhi_command_buffer*>(m_current_command_buffer_)->set_resource(m_vk_current_command_buffer_);
+		static_cast<source_runtime::vulkan_rhi_command_buffer*>(m_current_command_buffer_)->set_resource(m_vk_current_command_buffer_);
 	}
 
-	bool vulkan_rhi::allocate_command_buffers(const rhi_command_buffer_allocator_info* allocator_info, rhi_command_buffer*& command_buffer)
+	bool vulkan_rhi::allocate_command_buffers(const source_runtime::rhi_command_buffer_allocator_info* allocator_info, source_runtime::rhi_command_buffer*& command_buffer)
 	{
 		const VkCommandBufferAllocateInfo command_buffer_allocate_info
 		{
 			.sType = static_cast<VkStructureType>(allocator_info->type),
 			.pNext = static_cast<const void*>(allocator_info->next),
-			.commandPool = static_cast<vulkan_rhi_command_pool*>(allocator_info->command_pool)->get_resource(),
+			.commandPool = static_cast<source_runtime::vulkan_rhi_command_pool*>(allocator_info->command_pool)->get_resource(),
 			.level = static_cast<VkCommandBufferLevel>(allocator_info->level),
 			.commandBufferCount = allocator_info->command_buffer_count
 		};
 
 		VkCommandBuffer vk_command_buffer;
-		command_buffer = new rhi_command_buffer;
+		command_buffer = new source_runtime::rhi_command_buffer;
 		const VkResult result = vkAllocateCommandBuffers(m_device, &command_buffer_allocate_info, &vk_command_buffer);
-		static_cast<vulkan_rhi_command_buffer*>(command_buffer)->set_resource(vk_command_buffer);
+		static_cast<source_runtime::vulkan_rhi_command_buffer*>(command_buffer)->set_resource(vk_command_buffer);
 
 		if (result == VK_SUCCESS)
 		{
 			return true;
 		}
-		LOG_ERROR("vkAllocateCommandBuffers failed!");
+		SPDLOG_ERROR("vkAllocateCommandBuffers failed!");
 		return false;
 	}
 
-	bool vulkan_rhi::allocate_descriptor_sets(const rhi_descriptor_set_allocator_info* allocator_info, rhi_descriptor_set*& descriptor_sets)
+	bool vulkan_rhi::allocate_descriptor_sets(const source_runtime::rhi_descriptor_set_allocator_info* allocator_info, source_runtime::rhi_descriptor_set*& descriptor_sets)
 	{
 		const uint32_t descriptor_set_layout_size = allocator_info->descriptor_set_count;
 		std::vector<VkDescriptorSetLayout> vk_descriptor_set_layout_list(descriptor_set_layout_size);
@@ -81,34 +84,34 @@ namespace source_runtime
 			const auto& rhi_descriptor_set_layout_element = allocator_info->set_layouts[i];
 			auto& vk_descriptor_set_layout_element = vk_descriptor_set_layout_list[i];
 
-			vk_descriptor_set_layout_element = static_cast<vulkan_rhi_descriptor_set_layout*>(rhi_descriptor_set_layout_element)->get_resource();
+			vk_descriptor_set_layout_element = static_cast<source_runtime::vulkan_rhi_descriptor_set_layout*>(rhi_descriptor_set_layout_element)->get_resource();
 		}
 
 		VkDescriptorSetAllocateInfo descriptor_set_allocate_info
 		{
 			.sType = static_cast<VkStructureType>(allocator_info->type),
 			.pNext = static_cast<const void*>(allocator_info->next),
-			.descriptorPool = static_cast<vulkan_rhi_descriptor_pool*>(allocator_info->descriptor_pool)->get_resource(),
+			.descriptorPool = static_cast<source_runtime::vulkan_rhi_descriptor_pool*>(allocator_info->descriptor_pool)->get_resource(),
 			.descriptorSetCount = allocator_info->descriptor_set_count,
 			.pSetLayouts = vk_descriptor_set_layout_list.data()
 		};
 
 		VkDescriptorSet vk_descriptor_set;
-		descriptor_sets = new vulkan_rhi_descriptor_set;
+		descriptor_sets = new source_runtime::vulkan_rhi_descriptor_set;
 		const VkResult result = vkAllocateDescriptorSets(m_device, &descriptor_set_allocate_info, &vk_descriptor_set);
-		static_cast<vulkan_rhi_descriptor_set*>(descriptor_sets)->set_resource(vk_descriptor_set);
+		static_cast<source_runtime::vulkan_rhi_descriptor_set*>(descriptor_sets)->set_resource(vk_descriptor_set);
 
 		if (result == VK_SUCCESS)
 		{
 			return true;
 		}
-		LOG_ERROR("vkAllocateDescriptorSets failed!");
+		SPDLOG_ERROR("vkAllocateDescriptorSets failed!");
 		return false;
 	}
 
 	void vulkan_rhi::create_swap_chain()
 	{
-		const swap_chain_support_details swap_chain_support_details = query_swap_chain_support(m_physical_device);
+		const source_runtime::swap_chain_support_details swap_chain_support_details = query_swap_chain_support(m_physical_device);
 
 		VkSurfaceFormatKHR surface_format = choose_swap_chain_surface_format_form_details(swap_chain_support_details.format);
 		VkPresentModeKHR present_mode = choose_swap_chain_present_mode_from_details(swap_chain_support_details.present_mode);
@@ -136,19 +139,19 @@ namespace source_runtime
 
 		if (m_queue_family_indices.graphics_family != m_queue_family_indices.present_family)
 		{
-			// Ö¸¶¨Í¼Ïñ¿ÉÒÔÓÃÓÚÑÕÉ«¸½¼ş
+			// æŒ‡å®šå›¾åƒå¯ä»¥ç”¨äºé¢œè‰²é™„ä»¶
 			create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 			create_info.queueFamilyIndexCount = 2;
 			create_info.pQueueFamilyIndices = queue_family_indices;
 		}
 		else
 		{
-			// ÈÎºÎ×ÊÔ´Ö»ÄÜ±»Ò»¸ö¶ÓÁĞÊ¹ÓÃ£¬¿ÉÒÔÌá¹©ĞÔÄÜ£¬ÒòÎªËü±ÜÃâÁË¶à¶ÓÁĞ·ÃÎÊÍ¬Ò»×ÊÔ´Ê±¿ÉÄÜ³öÏÖµÄÍ¬²½ÎÊÌâ¡£ÕâÖÖÄ£Ê½Í¨³£»áµ¼ÖÂ¸ü¼ûµÄ×ÊÔ´¹ÜÀíºÍ¸ü¸ßµÄĞ§ÂÊ
+			// ä»»ä½•èµ„æºåªèƒ½è¢«ä¸€ä¸ªé˜Ÿåˆ—ä½¿ç”¨ï¼Œå¯ä»¥æä¾›æ€§èƒ½ï¼Œå› ä¸ºå®ƒé¿å…äº†å¤šé˜Ÿåˆ—è®¿é—®åŒä¸€èµ„æºæ—¶å¯èƒ½å‡ºç°çš„åŒæ­¥é—®é¢˜ã€‚è¿™ç§æ¨¡å¼é€šå¸¸ä¼šå¯¼è‡´æ›´è§çš„èµ„æºç®¡ç†å’Œæ›´é«˜çš„æ•ˆç‡
 			create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		}
 
 		create_info.preTransform = swap_chain_support_details.capabilities.currentTransform;
-		// ºÏ³ÉÊ±ÍêÈ«²»Í¸Ã÷
+		// åˆæˆæ—¶å®Œå…¨ä¸é€æ˜
 		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		create_info.presentMode = present_mode;
 		create_info.clipped = VK_TRUE;
@@ -157,14 +160,14 @@ namespace source_runtime
 
 		if (vkCreateSwapchainKHR(m_device, &create_info, nullptr, &m_swap_chain) != VK_SUCCESS)
 		{
-			LOG_ERROR("vk create swap chain khr");
+			SPDLOG_ERROR("vk create swap chain khr");
 		}
 
 		vkGetSwapchainImagesKHR(m_device, m_swap_chain, &image_count, nullptr);
 		m_swap_chain_images.resize(image_count);
 		vkGetSwapchainImagesKHR(m_device, m_swap_chain, &image_count, m_swap_chain_images.data());
 
-		m_swap_chain_image_format = static_cast<rhi_format>(surface_format.format);
+		m_swap_chain_image_format = static_cast<source_runtime::rhi_format>(surface_format.format);
 		m_swap_chain_extent.height = extent_2d.height;
 		m_swap_chain_extent.width = extent_2d.width;
 
@@ -185,17 +188,17 @@ namespace source_runtime
 		VkResult res_wait_for_fences = m_vk_wait_for_fences_(m_device, k_max_frames_in_flight, m_is_frame_in_flight_fences, VK_TRUE, UINT64_MAX);
 		if (VK_SUCCESS != res_wait_for_fences)
 		{
-			LOG_ERROR("m_vk_wait_for_fences_ failed");
+			SPDLOG_ERROR("m_vk_wait_for_fences_ failed");
 			return;
 		}
 
 		destroy_image_view(m_depth_image_view);
-		vkDestroyImage(m_device, static_cast<vulkan_rhi_image*>(m_depth_image_)->get_resource(), nullptr);
+		vkDestroyImage(m_device, static_cast<source_runtime::vulkan_rhi_image*>(m_depth_image_)->get_resource(), nullptr);
 		vkFreeMemory(m_device, m_depth_image_memory_, nullptr);
 
 		for (const auto image_view : m_swap_chain_image_views)
 		{
-			vkDestroyImageView(m_device, static_cast<vulkan_rhi_image_view*>(image_view)->get_resource(), nullptr);
+			vkDestroyImageView(m_device, static_cast<source_runtime::vulkan_rhi_image_view*>(image_view)->get_resource(), nullptr);
 		}
 
 		create_swap_chain();
@@ -209,53 +212,53 @@ namespace source_runtime
 
 		for (size_t i = 0; i < m_swap_chain_images.size(); ++i)
 		{
-			const VkImageView vk_image_view = vulkan_util::create_image_view(m_device, m_swap_chain_images[i], static_cast<VkFormat>(m_swap_chain_image_format), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1, 1);
-			m_swap_chain_image_views[i] = new vulkan_rhi_image_view;
-			static_cast<vulkan_rhi_image_view*>(m_swap_chain_image_views[i])->set_resource(vk_image_view);
+			const VkImageView vk_image_view = source_runtime::vulkan_util::create_image_view(m_device, m_swap_chain_images[i], static_cast<VkFormat>(m_swap_chain_image_format), VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, 1, 1);
+			m_swap_chain_image_views[i] = new source_runtime::vulkan_rhi_image_view;
+			static_cast<source_runtime::vulkan_rhi_image_view*>(m_swap_chain_image_views[i])->set_resource(vk_image_view);
 		}
 	}
 
 	void vulkan_rhi::create_frame_buffer_image_view()
 	{
-		vulkan_util::create_image(m_physical_device, 
-			m_device, 
-			m_swap_chain_extent.width, 
-			m_swap_chain_extent.height, 
-			static_cast<VkFormat>(m_depth_image_format), 
-			VK_IMAGE_TILING_OPTIMAL, 
-			VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-			static_cast<vulkan_rhi_image*>(m_depth_image_)->get_resource(), 
-			m_depth_image_memory_, 
-			0, 
-			1, 
-			1);
+		source_runtime::vulkan_util::create_image(m_physical_device, 
+		                                          m_device, 
+		                                          m_swap_chain_extent.width, 
+		                                          m_swap_chain_extent.height, 
+		                                          static_cast<VkFormat>(m_depth_image_format), 
+		                                          VK_IMAGE_TILING_OPTIMAL, 
+		                                          VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
+		                                          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		                                          static_cast<source_runtime::vulkan_rhi_image*>(m_depth_image_)->get_resource(), 
+		                                          m_depth_image_memory_, 
+		                                          0, 
+		                                          1, 
+		                                          1);
 
-		static_cast<vulkan_rhi_image_view*>(m_depth_image_view)->set_resource(vulkan_util::create_image_view(m_device,
-			static_cast<vulkan_rhi_image*>(m_depth_image_)->get_resource(),
-			static_cast<VkFormat>(m_depth_image_format),
-			VK_IMAGE_ASPECT_DEPTH_BIT,
-			VK_IMAGE_VIEW_TYPE_2D,
-			1,
-			1));
+		static_cast<source_runtime::vulkan_rhi_image_view*>(m_depth_image_view)->set_resource(source_runtime::vulkan_util::create_image_view(m_device,
+		                                                                                                                                     static_cast<source_runtime::vulkan_rhi_image*>(m_depth_image_)->get_resource(),
+		                                                                                                                                     static_cast<VkFormat>(m_depth_image_format),
+		                                                                                                                                     VK_IMAGE_ASPECT_DEPTH_BIT,
+		                                                                                                                                     VK_IMAGE_VIEW_TYPE_2D,
+		                                                                                                                                     1,
+		                                                                                                                                     1));
 	}
 
-	rhi_sampler* vulkan_rhi::get_or_create_default_sampler(rhi_default_sampler_type type)
+	source_runtime::rhi_sampler* vulkan_rhi::get_or_create_default_sampler(source_runtime::rhi_default_sampler_type type)
 	{
 		switch (type)
 		{
-		case default_sampler_linear:
+		case source_runtime::default_sampler_linear:
 			if (m_linear_sampler_ == nullptr)
 			{
-				m_linear_sampler_ = new vulkan_rhi_sampler;
-				static_cast<vulkan_rhi_sampler*>(m_linear_sampler_)->set_resource(vulkan_util::get_or_create_linear_sampler(m_physical_device, m_device));
+				m_linear_sampler_ = new source_runtime::vulkan_rhi_sampler;
+				static_cast<source_runtime::vulkan_rhi_sampler*>(m_linear_sampler_)->set_resource(source_runtime::vulkan_util::get_or_create_linear_sampler(m_physical_device, m_device));
 			}
 			return m_linear_sampler_;
-		case default_sampler_nearest:
+		case source_runtime::default_sampler_nearest:
 			if (m_nearest_sampler_ == nullptr)
 			{
-				m_nearest_sampler_ = new vulkan_rhi_sampler;
-				static_cast<vulkan_rhi_sampler*>(m_nearest_sampler_)->set_resource(vulkan_util::get_or_create_nearest_sampler(m_physical_device, m_device));
+				m_nearest_sampler_ = new source_runtime::vulkan_rhi_sampler;
+				static_cast<source_runtime::vulkan_rhi_sampler*>(m_nearest_sampler_)->set_resource(source_runtime::vulkan_util::get_or_create_nearest_sampler(m_physical_device, m_device));
 			}
 			return m_nearest_sampler_;
 		default:
@@ -263,59 +266,59 @@ namespace source_runtime
 		}
 	}
 
-	rhi_sampler* vulkan_rhi::get_or_create_mipmap_sampler(uint32_t width, uint32_t height)
+	source_runtime::rhi_sampler* vulkan_rhi::get_or_create_mipmap_sampler(uint32_t width, uint32_t height)
 	{
 		if (width == 0 || height == 0)
 		{
-			LOG_ERROR("width == 0 || height == 0");
+			SPDLOG_ERROR("width == 0 || height == 0");
 			return nullptr;
 		}
-		
-		uint32_t mip_levels = floor(log2(std::max(width, height))) + 1;
+
+		uint32_t mip_levels = floor(log2((std::max)(width, height))) + 1;
 		auto find_sampler = m_mipmap_sampler_map_.find(mip_levels);
 		if (find_sampler != m_mipmap_sampler_map_.end())
 		{
 			return find_sampler->second;
 		}
-		rhi_sampler* sampler = new vulkan_rhi_sampler;
+		source_runtime::rhi_sampler* sampler = new source_runtime::vulkan_rhi_sampler;
 
-		VkSampler vk_sampler = vulkan_util::get_or_create_mipmap_sampler(m_physical_device, m_device, width, height);
+		VkSampler vk_sampler = source_runtime::vulkan_util::get_or_create_mipmap_sampler(m_physical_device, m_device, width, height);
 
-		static_cast<vulkan_rhi_sampler*>(sampler)->set_resource(vk_sampler);
+		static_cast<source_runtime::vulkan_rhi_sampler*>(sampler)->set_resource(vk_sampler);
 
 		m_mipmap_sampler_map_.insert(std::make_pair(mip_levels, sampler));
 
 		return sampler;
 	}
 
-	rhi_shader* vulkan_rhi::create_shader_module(const std::vector<unsigned char>& shader_code)
+	source_runtime::rhi_shader* vulkan_rhi::create_shader_module(const std::vector<unsigned char>& shader_code)
 	{
-		rhi_shader* shader = new vulkan_rhi_shader;
+		source_runtime::rhi_shader* shader = new source_runtime::vulkan_rhi_shader;
 
-		VkShaderModule vk_shader = vulkan_util::create_shader_module(m_device, shader_code);
+		VkShaderModule vk_shader = source_runtime::vulkan_util::create_shader_module(m_device, shader_code);
 
-		static_cast<vulkan_rhi_shader*>(shader)->set_resource(vk_shader);
+		static_cast<source_runtime::vulkan_rhi_shader*>(shader)->set_resource(vk_shader);
 
 		return shader;
 	}
 
-	void vulkan_rhi::create_buffer(rhi_device_size size, rhi_buffer_usage_flags usage, rhi_memory_property_flags properties, rhi_buffer*& buffer, rhi_device_memory*& buffer_memory, void* data, int data_size)
+	void vulkan_rhi::create_buffer(source_runtime::rhi_device_size size, source_runtime::rhi_buffer_usage_flags usage, source_runtime::rhi_memory_property_flags properties, source_runtime::rhi_buffer*& buffer, source_runtime::rhi_device_memory*& buffer_memory, void* data, int data_size)
 	{
 		VkBuffer vk_buffer;
 		VkDeviceMemory vk_device_memory;
 
-		vulkan_util::create_buffer_and_initialize(m_device, m_physical_device, usage, properties, &vk_buffer, &vk_device_memory, size);
+		source_runtime::vulkan_util::create_buffer_and_initialize(m_device, m_physical_device, usage, properties, &vk_buffer, &vk_device_memory, size);
 
-		buffer = new vulkan_rhi_buffer;
-		buffer_memory = new vulkan_rhi_device_memory;
-		static_cast<vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
-		static_cast<vulkan_rhi_device_memory*>(buffer_memory)->set_resource(vk_device_memory);
+		buffer = new source_runtime::vulkan_rhi_buffer;
+		buffer_memory = new source_runtime::vulkan_rhi_device_memory;
+		static_cast<source_runtime::vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
+		static_cast<source_runtime::vulkan_rhi_device_memory*>(buffer_memory)->set_resource(vk_device_memory);
 	}
 
 	bool vulkan_rhi::create_buffer_vma(const VmaAllocator allocator, 
-		const rhi_buffer_create_info* rhi_buffer_create_info, 
-		const VmaAllocationCreateInfo* allocation_create_info, 
-		rhi_buffer*& buffer, 
+		const source_runtime::rhi_buffer_create_info* rhi_buffer_create_info, 
+		const VmaAllocationCreateInfo* allocation_create_info,
+		source_runtime::rhi_buffer*& buffer, 
 		VmaAllocation* allocation, 
 		VmaAllocationInfo* allocation_info)
 	{
@@ -330,14 +333,14 @@ namespace source_runtime
 		buffer_create_info.queueFamilyIndexCount = rhi_buffer_create_info->queue_family_index_count;
 		buffer_create_info.pQueueFamilyIndices = static_cast<const uint32_t*>(rhi_buffer_create_info->queue_family_indices);
 
-		buffer = new vulkan_rhi_buffer;
+		buffer = new source_runtime::vulkan_rhi_buffer;
 		const VkResult result = vmaCreateBuffer(allocator, &buffer_create_info, allocation_create_info, &vk_buffer, allocation, allocation_info);
-		static_cast<vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
+		static_cast<source_runtime::vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
 		return result == VK_SUCCESS;
 	}
 
 	bool vulkan_rhi::create_buffer_with_alignment_vma(VmaAllocator allocator, 
-		const rhi_buffer_create_info* rhi_buffer_create_info, VmaAllocationCreateInfo* allocation_create_info, rhi_device_size min_alignment, rhi_buffer*& buffer, VmaAllocation* allocation, VmaAllocationInfo* allocation_info)
+		const source_runtime::rhi_buffer_create_info* rhi_buffer_create_info, VmaAllocationCreateInfo* allocation_create_info, source_runtime::rhi_device_size min_alignment, source_runtime::rhi_buffer*& buffer, VmaAllocation* allocation, VmaAllocationInfo* allocation_info)
 	{
 		VkBuffer vk_buffer;
 		VkBufferCreateInfo buffer_create_info;
@@ -350,65 +353,65 @@ namespace source_runtime
 		buffer_create_info.queueFamilyIndexCount = rhi_buffer_create_info->queue_family_index_count;
 		buffer_create_info.pQueueFamilyIndices = static_cast<const uint32_t*>(rhi_buffer_create_info->queue_family_indices);
 
-		buffer = new vulkan_rhi_buffer;
+		buffer = new source_runtime::vulkan_rhi_buffer;
 		const VkResult result = vmaCreateBufferWithAlignment(allocator, &buffer_create_info, allocation_create_info, min_alignment, &vk_buffer, allocation, allocation_info);
-		static_cast<vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
+		static_cast<source_runtime::vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
 		return result == VK_SUCCESS;
 	}
 
-	void vulkan_rhi::copy_buffer(rhi_buffer* src_buffer, rhi_buffer* dst_buffer, const rhi_device_size src_offset, const rhi_device_size dst_offset, const rhi_device_size size)
+	void vulkan_rhi::copy_buffer(source_runtime::rhi_buffer* src_buffer, source_runtime::rhi_buffer* dst_buffer, const source_runtime::rhi_device_size src_offset, const source_runtime::rhi_device_size dst_offset, const source_runtime::rhi_device_size size)
 	{
-		const VkBuffer vk_src_buffer = static_cast<vulkan_rhi_buffer*>(src_buffer)->get_resource();
-		const VkBuffer vk_dst_buffer = static_cast<vulkan_rhi_buffer*>(dst_buffer)->get_resource();
-		vulkan_util::copy_buffer(this, vk_src_buffer, vk_dst_buffer, src_offset, dst_offset, size);
+		const VkBuffer vk_src_buffer = static_cast<source_runtime::vulkan_rhi_buffer*>(src_buffer)->get_resource();
+		const VkBuffer vk_dst_buffer = static_cast<source_runtime::vulkan_rhi_buffer*>(dst_buffer)->get_resource();
+		source_runtime::vulkan_util::copy_buffer(this, vk_src_buffer, vk_dst_buffer, src_offset, dst_offset, size);
 	}
 
 	void vulkan_rhi::create_image(const uint32_t image_width, 
-		const uint32_t image_height, rhi_format format,
-		rhi_image_tiling image_tiling,
-		const rhi_image_usage_flags image_usage_flags,
-		const rhi_memory_property_flags memory_property_flags,
-		rhi_image*& image,
-		rhi_device_memory*& memory,
-		const rhi_image_create_flags image_create_flags,
+		const uint32_t image_height, source_runtime::rhi_format format,
+		source_runtime::rhi_image_tiling image_tiling,
+		const source_runtime::rhi_image_usage_flags image_usage_flags,
+		const source_runtime::rhi_memory_property_flags memory_property_flags,
+		source_runtime::rhi_image*& image,
+		source_runtime::rhi_device_memory*& memory,
+		const source_runtime::rhi_image_create_flags image_create_flags,
 		const uint32_t array_layers,
 		const uint32_t mip_levels)
 	{
 		VkImage vk_image;
 		VkDeviceMemory vk_device_memory;
-		vulkan_util::create_image(m_physical_device, m_device, image_width, image_height, static_cast<VkFormat>(format), static_cast<VkImageTiling>(image_tiling), image_usage_flags, memory_property_flags, vk_image, vk_device_memory,
-			image_create_flags, array_layers, mip_levels);
+		source_runtime::vulkan_util::create_image(m_physical_device, m_device, image_width, image_height, static_cast<VkFormat>(format), static_cast<VkImageTiling>(image_tiling), image_usage_flags, memory_property_flags, vk_image, vk_device_memory,
+		                                          image_create_flags, array_layers, mip_levels);
 
-		image = new vulkan_rhi_image;
-		memory = new vulkan_rhi_device_memory;
-		static_cast<vulkan_rhi_image*>(image)->set_resource(vk_image);
-		static_cast<vulkan_rhi_device_memory*>(memory)->set_resource(vk_device_memory);
+		image = new source_runtime::vulkan_rhi_image;
+		memory = new source_runtime::vulkan_rhi_device_memory;
+		static_cast<source_runtime::vulkan_rhi_image*>(image)->set_resource(vk_image);
+		static_cast<source_runtime::vulkan_rhi_device_memory*>(memory)->set_resource(vk_device_memory);
 	}
 
-	void vulkan_rhi::create_image_view(rhi_image* image, rhi_format format, rhi_image_aspect_flags image_aspect_flags, rhi_image_view_type view_type, uint32_t layout_count, uint32_t mip_levels, rhi_image_view*& image_view)
+	void vulkan_rhi::create_image_view(source_runtime::rhi_image* image, source_runtime::rhi_format format, source_runtime::rhi_image_aspect_flags image_aspect_flags, source_runtime::rhi_image_view_type view_type, uint32_t layout_count, uint32_t mip_levels, source_runtime::rhi_image_view*& image_view)
 	{
-		image_view = new rhi_image_view;
-		VkImage vk_image = static_cast<vulkan_rhi_image*>(image)->get_resource();
-		const VkImageView vk_image_view = vulkan_util::create_image_view(m_device, vk_image, static_cast<VkFormat>(format), image_aspect_flags, static_cast<VkImageViewType>(view_type), layout_count, mip_levels);
-		static_cast<vulkan_rhi_image_view*>(image_view)->set_resource(vk_image_view);
+		image_view = new source_runtime::rhi_image_view;
+		VkImage vk_image = static_cast<source_runtime::vulkan_rhi_image*>(image)->get_resource();
+		const VkImageView vk_image_view = source_runtime::vulkan_util::create_image_view(m_device, vk_image, static_cast<VkFormat>(format), image_aspect_flags, static_cast<VkImageViewType>(view_type), layout_count, mip_levels);
+		static_cast<source_runtime::vulkan_rhi_image_view*>(image_view)->set_resource(vk_image_view);
 	}
 
-	void vulkan_rhi::create_global_image(rhi_image*& image, 
-		rhi_image_view*& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
+	void vulkan_rhi::create_global_image(source_runtime::rhi_image*& image,
+	                                     source_runtime::rhi_image_view*& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, source_runtime::rhi_format texture_image_format, uint32_t mip_levels)
 	{
 		VkImage vk_image;
 		VkImageView vk_image_view;
 
-		vulkan_util::create_global_image(this, vk_image, vk_image_view, image_allocation, texture_image_width, texture_image_height, texture_image_pixels, texture_image_format, mip_levels);
+		source_runtime::vulkan_util::create_global_image(this, vk_image, vk_image_view, image_allocation, texture_image_width, texture_image_height, texture_image_pixels, texture_image_format, mip_levels);
 
-		image = new vulkan_rhi_image;
-		image_view = new vulkan_rhi_image_view;
-		static_cast<vulkan_rhi_image*>(image)->set_resource(vk_image);
-		static_cast<vulkan_rhi_image_view*>(image_view)->set_resource(vk_image_view);
+		image = new source_runtime::vulkan_rhi_image;
+		image_view = new source_runtime::vulkan_rhi_image_view;
+		static_cast<source_runtime::vulkan_rhi_image*>(image)->set_resource(vk_image);
+		static_cast<source_runtime::vulkan_rhi_image_view*>(image_view)->set_resource(vk_image_view);
 	}
 
-	void vulkan_rhi::create_cube_map(rhi_image*& image, 
-		rhi_image_view*& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
+	void vulkan_rhi::create_cube_map(source_runtime::rhi_image*& image,
+	                                 source_runtime::rhi_image_view*& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, source_runtime::rhi_format texture_image_format, uint32_t mip_levels)
 	{
 		VkImage vk_image;
 		VkImageView vk_image_view;
@@ -421,32 +424,32 @@ namespace source_runtime
 		
 	}
 
-	bool vulkan_rhi::create_command_pool(const rhi_command_pool_create_info* create_info, rhi_command_pool*& command_pool)
+	bool vulkan_rhi::create_command_pool(const source_runtime::rhi_command_pool_create_info* create_info, source_runtime::rhi_command_pool*& command_pool)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::create_descriptor_pool(const rhi_descriptor_pool_create_info* create_info, rhi_descriptor_pool*& descriptor_pool)
+	bool vulkan_rhi::create_descriptor_pool(const source_runtime::rhi_descriptor_pool_create_info* create_info, source_runtime::rhi_descriptor_pool*& descriptor_pool)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::create_descriptor_set_layout(const rhi_descriptor_set_layout_create_info* create_info, rhi_descriptor_set_layout*& set_layout)
+	bool vulkan_rhi::create_descriptor_set_layout(const source_runtime::rhi_descriptor_set_layout_create_info* create_info, source_runtime::rhi_descriptor_set_layout*& set_layout)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::create_fence(const rhi_fence_create_info* create_info, rhi_fence*& fence)
+	bool vulkan_rhi::create_fence(const source_runtime::rhi_fence_create_info* create_info, source_runtime::rhi_fence*& fence)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::create_frame_buffer(const rhi_frame_buffer_create_info* create_info, rhi_frame_buffer*& frame_buffer)
+	bool vulkan_rhi::create_frame_buffer(const source_runtime::rhi_frame_buffer_create_info* create_info, source_runtime::rhi_frame_buffer*& frame_buffer)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::create_graphics_pipelines(rhi_pipeline_cache* pipeline_cache, uint32_t create_info_count, const rhi_graphics_pipeline_create_info* create_info, rhi_pipeline*& pipeline)
+	bool vulkan_rhi::create_graphics_pipelines(source_runtime::rhi_pipeline_cache* pipeline_cache, uint32_t create_info_count, const source_runtime::rhi_graphics_pipeline_create_info* create_info, source_runtime::rhi_pipeline*& pipeline)
 	{
 		return false;
 	}
@@ -476,134 +479,134 @@ namespace source_runtime
 		return false;
 	}
 
-	bool vulkan_rhi::wait_for_fences(uint32_t fence_count, rhi_fence* const* fence, rhi_bool32 wait_all, uint64_t timeout)
+	bool vulkan_rhi::wait_for_fences(uint32_t fence_count, source_runtime::rhi_fence* const* fence, source_runtime::rhi_bool32 wait_all, uint64_t timeout)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::reset_fences(uint32_t fence_count, rhi_fence* const* fence)
+	bool vulkan_rhi::reset_fences(uint32_t fence_count, source_runtime::rhi_fence* const* fence)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::reset_command_pool(rhi_command_pool* command_pool, rhi_command_pool_reset_flags flags)
+	bool vulkan_rhi::reset_command_pool(source_runtime::rhi_command_pool* command_pool, source_runtime::rhi_command_pool_reset_flags flags)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::begin_command_buffer(rhi_command_buffer* command_buffer, const rhi_command_buffer_begin_info* begin_info)
+	bool vulkan_rhi::begin_command_buffer(source_runtime::rhi_command_buffer* command_buffer, const source_runtime::rhi_command_buffer_begin_info* begin_info)
 	{
 		return false;
 	}
 
-	bool vulkan_rhi::end_command_buffer(rhi_command_buffer* command_buffer)
+	bool vulkan_rhi::end_command_buffer(source_runtime::rhi_command_buffer* command_buffer)
 	{
 		return false;
 	}
 
-	void vulkan_rhi::cmd_begin_render_pass(rhi_command_buffer* command_buffer, const rhi_render_pass_begin_info* render_pass_begin, rhi_sub_pass_contents contents)
+	void vulkan_rhi::cmd_begin_render_pass(source_runtime::rhi_command_buffer* command_buffer, const source_runtime::rhi_render_pass_begin_info* render_pass_begin, source_runtime::rhi_sub_pass_contents contents)
 	{
 		return;
 	}
 
-	void vulkan_rhi::cmd_next_sub_pass(rhi_command_buffer* command_buffer, rhi_sub_pass_contents contents)
+	void vulkan_rhi::cmd_next_sub_pass(source_runtime::rhi_command_buffer* command_buffer, source_runtime::rhi_sub_pass_contents contents)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_end_render_pass(rhi_command_buffer* command_buffer)
+	void vulkan_rhi::cmd_end_render_pass(source_runtime::rhi_command_buffer* command_buffer)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_bind_pipeline(rhi_command_buffer* command_buffer, rhi_pipeline_bind_point pipeline_bind_point, rhi_pipeline* pipeline)
+	void vulkan_rhi::cmd_bind_pipeline(source_runtime::rhi_command_buffer* command_buffer, source_runtime::rhi_pipeline_bind_point pipeline_bind_point, source_runtime::rhi_pipeline* pipeline)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_set_viewport(rhi_command_buffer* command_buffer, uint32_t first_viewport, uint32_t viewport_count, const rhi_viewport* viewports)
+	void vulkan_rhi::cmd_set_viewport(source_runtime::rhi_command_buffer* command_buffer, uint32_t first_viewport, uint32_t viewport_count, const source_runtime::rhi_viewport* viewports)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_set_scissor(rhi_command_buffer* command_buffer, uint32_t first_scissor, uint32_t scissor_count, const rhi_rect_2d* scissors)
+	void vulkan_rhi::cmd_set_scissor(source_runtime::rhi_command_buffer* command_buffer, uint32_t first_scissor, uint32_t scissor_count, const source_runtime::rhi_rect_2d* scissors)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_bind_vertex_buffers(rhi_command_buffer* command_buffer, uint32_t first_binding, uint32_t binding_count, rhi_buffer* const* buffers, const rhi_device_size* offsets)
+	void vulkan_rhi::cmd_bind_vertex_buffers(source_runtime::rhi_command_buffer* command_buffer, uint32_t first_binding, uint32_t binding_count, source_runtime::rhi_buffer* const* buffers, const source_runtime::rhi_device_size* offsets)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_bind_index_buffer(rhi_command_buffer* command_buffer, rhi_buffer* buffer, rhi_device_size offset, rhi_index_type index_type)
+	void vulkan_rhi::cmd_bind_index_buffer(source_runtime::rhi_command_buffer* command_buffer, source_runtime::rhi_buffer* buffer, source_runtime::rhi_device_size offset, source_runtime::rhi_index_type index_type)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_bind_descriptor_sets(rhi_command_buffer* command_buffer, rhi_pipeline_bind_point pipeline_bind_point, rhi_pipeline_layout* layout, uint32_t first_set, uint32_t descriptor_set_count, const rhi_descriptor_set* const* descriptors, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets)
+	void vulkan_rhi::cmd_bind_descriptor_sets(source_runtime::rhi_command_buffer* command_buffer, source_runtime::rhi_pipeline_bind_point pipeline_bind_point, source_runtime::rhi_pipeline_layout* layout, uint32_t first_set, uint32_t descriptor_set_count, const source_runtime::rhi_descriptor_set* const* descriptors, uint32_t dynamic_offset_count, const uint32_t* dynamic_offsets)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_draw_indexed(rhi_command_buffer* command_buffer, uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
+	void vulkan_rhi::cmd_draw_indexed(source_runtime::rhi_command_buffer* command_buffer, uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
 	{
 		
 	}
 
-	void vulkan_rhi::cmd_clear_attachments(rhi_command_buffer* command_buffer, uint32_t attachment_count, const rhi_clear_attachment* attachment, uint32_t rect_count, const rhi_clear_rect* rects)
+	void vulkan_rhi::cmd_clear_attachments(source_runtime::rhi_command_buffer* command_buffer, uint32_t attachment_count, const source_runtime::rhi_clear_attachment* attachment, uint32_t rect_count, const source_runtime::rhi_clear_rect* rects)
 	{
 		
 	}
 
-	void vulkan_rhi::get_physical_device_properties(rhi_physical_device_properties* properties)
+	void vulkan_rhi::get_physical_device_properties(source_runtime::rhi_physical_device_properties* properties)
 	{
 		
 	}
 
-	rhi_command_buffer* vulkan_rhi::get_current_command_buffer() const
+	source_runtime::rhi_command_buffer* vulkan_rhi::get_current_command_buffer() const
 	{
 		return nullptr;
 	}
 
-	rhi_command_buffer* const* vulkan_rhi::get_command_buffer_list() const
+	source_runtime::rhi_command_buffer* const* vulkan_rhi::get_command_buffer_list() const
 	{
 		return nullptr;
 	}
 
-	rhi_command_pool* vulkan_rhi::get_command_pool() const
+	source_runtime::rhi_command_pool* vulkan_rhi::get_command_pool() const
 	{
 		return nullptr;
 	}
 
-	rhi_descriptor_pool* vulkan_rhi::get_descriptor_pool() const
+	source_runtime::rhi_descriptor_pool* vulkan_rhi::get_descriptor_pool() const
 	{
 		return nullptr;
 	}
 
-	rhi_fence* const* vulkan_rhi::get_fence_list() const
+	source_runtime::rhi_fence* const* vulkan_rhi::get_fence_list() const
 	{
 		return nullptr;
 	}
 
-	queue_family_indices vulkan_rhi::get_queue_family_indices() const
+	source_runtime::queue_family_indices vulkan_rhi::get_queue_family_indices() const
 	{
 		return m_queue_family_indices;
 	}
 
-	rhi_queue* vulkan_rhi::get_graphics_queue() const
+	source_runtime::rhi_queue* vulkan_rhi::get_graphics_queue() const
 	{
 		return nullptr;
 	}
 
-	rhi_queue* vulkan_rhi::get_compute_queue() const
+	source_runtime::rhi_queue* vulkan_rhi::get_compute_queue() const
 	{
 		return nullptr;
 	}
 
-	rhi_swap_chain_desc vulkan_rhi::get_swap_chain_info()
+	source_runtime::rhi_swap_chain_desc vulkan_rhi::get_swap_chain_info()
 	{
-		rhi_swap_chain_desc desc;
+		source_runtime::rhi_swap_chain_desc desc;
 		desc.image_format = m_swap_chain_image_format;
 		desc.extent = m_swap_chain_extent;
 		desc.viewport = &m_viewport;
@@ -612,9 +615,9 @@ namespace source_runtime
 		return desc;
 	}
 
-	rhi_depth_image_desc vulkan_rhi::get_depth_image_info()
+	source_runtime::rhi_depth_image_desc vulkan_rhi::get_depth_image_info()
 	{
-		rhi_depth_image_desc desc;
+		source_runtime::rhi_depth_image_desc desc;
 		desc.depth_image_format = m_depth_image_format;
 		desc.depth_image_view = m_depth_image_view;
 		desc.depth_image = m_depth_image_;
@@ -636,12 +639,12 @@ namespace source_runtime
 		
 	}
 
-	rhi_command_buffer* vulkan_rhi::begin_single_time_commands()
+	source_runtime::rhi_command_buffer* vulkan_rhi::begin_single_time_commands()
 	{
 		return nullptr;
 	}
 
-	void vulkan_rhi::end_single_time_commands(rhi_command_buffer* command_buffer)
+	void vulkan_rhi::end_single_time_commands(source_runtime::rhi_command_buffer* command_buffer)
 	{
 		
 	}
@@ -656,12 +659,12 @@ namespace source_runtime
 		
 	}
 
-	void vulkan_rhi::push_event(rhi_command_buffer* command_buffer, const char* name, const float* color)
+	void vulkan_rhi::push_event(source_runtime::rhi_command_buffer* command_buffer, const char* name, const float* color)
 	{
 		
 	}
 
-	void vulkan_rhi::pop_event(rhi_command_buffer* command_buffer)
+	void vulkan_rhi::pop_event(source_runtime::rhi_command_buffer* command_buffer)
 	{
 		
 	}
@@ -681,7 +684,7 @@ namespace source_runtime
 		
 	}
 
-	void vulkan_rhi::destroy_default_sampler(rhi_default_sampler_type type)
+	void vulkan_rhi::destroy_default_sampler(source_runtime::rhi_default_sampler_type type)
 	{
 		
 	}
@@ -691,37 +694,37 @@ namespace source_runtime
 		
 	}
 
-	void vulkan_rhi::destroy_shader_module(rhi_shader* shader)
+	void vulkan_rhi::destroy_shader_module(source_runtime::rhi_shader* shader)
 	{
 		
 	}
 
-	void vulkan_rhi::destroy_semaphore(rhi_semaphore* semaphore)
+	void vulkan_rhi::destroy_semaphore(source_runtime::rhi_semaphore* semaphore)
 	{
 		
 	}
 
-	void vulkan_rhi::destroy_sampler(rhi_sampler* sampler)
+	void vulkan_rhi::destroy_sampler(source_runtime::rhi_sampler* sampler)
 	{
 		
 	}
 
-	void vulkan_rhi::destroy_instance(rhi_instance* instance)
+	void vulkan_rhi::destroy_instance(source_runtime::rhi_instance* instance)
 	{
 		
 	}
 
-	void vulkan_rhi::destroy_image(rhi_image* image)
+	void vulkan_rhi::destroy_image(source_runtime::rhi_image* image)
 	{
 		
 	}
 
-	void vulkan_rhi::destroy_frame_buffer(rhi_frame_buffer* frame_buffer)
+	void vulkan_rhi::destroy_frame_buffer(source_runtime::rhi_frame_buffer* frame_buffer)
 	{
 		
 	}
 
-	void vulkan_rhi::destroy_fence(rhi_fence* fence)
+	void vulkan_rhi::destroy_fence(source_runtime::rhi_fence* fence)
 	{
 		
 	}
@@ -731,27 +734,27 @@ namespace source_runtime
 		
 	}
 
-	void vulkan_rhi::destroy_command_pool(rhi_command_pool* command_pool)
+	void vulkan_rhi::destroy_command_pool(source_runtime::rhi_command_pool* command_pool)
 	{
 		
 	}
 
-	void vulkan_rhi::destroy_buffer(rhi_buffer*& buffer)
+	void vulkan_rhi::destroy_buffer(source_runtime::rhi_buffer*& buffer)
 	{
 		
 	}
 
-	void vulkan_rhi::free_command_buffer(rhi_command_pool* command_pool, uint32_t command_buffer_count, rhi_command_buffer* command_buffer)
+	void vulkan_rhi::free_command_buffer(source_runtime::rhi_command_pool* command_pool, uint32_t command_buffer_count, source_runtime::rhi_command_buffer* command_buffer)
 	{
 		
 	}
 
-	void vulkan_rhi::free_memory(rhi_device_memory*& memory)
+	void vulkan_rhi::free_memory(source_runtime::rhi_device_memory*& memory)
 	{
 		
 	}
 
-	rhi_semaphore*& vulkan_rhi::get_texture_copy_semaphore(uint32_t index)
+	source_runtime::rhi_semaphore*& vulkan_rhi::get_texture_copy_semaphore(uint32_t index)
 	{
 		return m_image_available_for_texturescopy_semaphores_[index];
 	}
@@ -765,7 +768,7 @@ namespace source_runtime
 	{
 		if (m_enable_validation_layers_ && !check_validation_layer_support())
 		{
-			LOG_ERROR("validation layers requested, but not available!");
+			SPDLOG_ERROR("validation layers requested, but not available!");
 		}
 
 		m_vulkan_api_version_ = VK_API_VERSION_1_3;
@@ -808,7 +811,7 @@ namespace source_runtime
 
 		if (vkCreateInstance(&instance_create_info, nullptr, &m_instance_))
 		{
-			LOG_ERROR("vk create instance");
+			SPDLOG_ERROR("vk create instance");
 		}
 	}
 
@@ -820,7 +823,7 @@ namespace source_runtime
 			populate_debug_messenger_create_info(create_info);
 			if (VK_SUCCESS != create_debug_utils_messenger_ext(m_instance_, &create_info, nullptr, &m_debug_messenger_))
 			{
-				LOG_ERROR("failed to set up debug messenger!");
+				SPDLOG_ERROR("failed to set up debug messenger!");
 			}
 		}
 
@@ -835,7 +838,7 @@ namespace source_runtime
 	{
 		if (glfwCreateWindowSurface(m_instance_, m_window, nullptr, &m_surface) != VK_SUCCESS)
 		{
-			LOG_ERROR("glfwCreateWindowSurface failed!");
+			SPDLOG_ERROR("glfwCreateWindowSurface failed!");
 		}
 	}
 
@@ -845,7 +848,7 @@ namespace source_runtime
 		vkEnumeratePhysicalDevices(m_instance_, &physical_device_count, nullptr);
 		if (physical_device_count == 0)
 		{
-			LOG_ERROR("enumerate physical devices failed!");
+			SPDLOG_ERROR("enumerate physical devices failed!");
 		}
 		else
 		{
@@ -893,7 +896,7 @@ namespace source_runtime
 
 			if (m_physical_device == VK_NULL_HANDLE)
 			{
-				LOG_ERROR("failed to find suitable physical device");
+				SPDLOG_ERROR("failed to find suitable physical device");
 			}
 		}
 	}
@@ -944,28 +947,28 @@ namespace source_runtime
 		device_create_info.enabledLayerCount = 0;
 		if (vkCreateDevice(m_physical_device, &device_create_info, nullptr, &m_device) != VK_SUCCESS)
 		{
-			LOG_ERROR("vk create device");
+			SPDLOG_ERROR("vk create device");
 		}
 
-		// ´ÓÂß¼­Éè±¸ÖĞ»ñÈ¡Ò»¸ö¿ÉÓÃµÄ¶ÓÁĞ£¬ÒÔ±ãºóĞøµÄÃüÁîÌá½»
+		// ä»é€»è¾‘è®¾å¤‡ä¸­è·å–ä¸€ä¸ªå¯ç”¨çš„é˜Ÿåˆ—ï¼Œä»¥ä¾¿åç»­çš„å‘½ä»¤æäº¤
 		VkQueue vk_graphics_queue;
 		vkGetDeviceQueue(m_device, m_queue_family_indices.graphics_family.value(), 0, &vk_graphics_queue);
-		m_graphics_queue = new vulkan_rhi_queue();
-		static_cast<vulkan_rhi_queue*>(m_graphics_queue)->set_resource(vk_graphics_queue);
+		m_graphics_queue = new source_runtime::vulkan_rhi_queue();
+		static_cast<source_runtime::vulkan_rhi_queue*>(m_graphics_queue)->set_resource(vk_graphics_queue);
 	}
 
-	void vulkan_rhi::destroy_image_view(rhi_image_view* image_view)
+	void vulkan_rhi::destroy_image_view(source_runtime::rhi_image_view* image_view)
 	{
-		vkDestroyImageView(m_device, static_cast<vulkan_rhi_image_view*>(image_view)->get_resource(), nullptr);
+		vkDestroyImageView(m_device, static_cast<source_runtime::vulkan_rhi_image_view*>(image_view)->get_resource(), nullptr);
 	}
 
 	bool vulkan_rhi::check_validation_layer_support() const
 	{
-		// ²éÑ¯¿ÉÓÃµÄÊµÀı²ãÊıÁ¿
+		// æŸ¥è¯¢å¯ç”¨çš„å®ä¾‹å±‚æ•°é‡
 		uint32_t layer_count;
 		vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
 
-		// ´´½¨Ò»¸öÊı×éÀ´´æ´¢ÊôĞÔ
+		// åˆ›å»ºä¸€ä¸ªæ•°ç»„æ¥å­˜å‚¨å±æ€§
 		std::vector<VkLayerProperties> available_layers(layer_count);
 		vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
 
@@ -1040,7 +1043,7 @@ namespace source_runtime
 		bool is_swap_chain_adequate = false;
 		if (const bool is_extensions_supported = check_device_extension_support(physical_device); is_extensions_supported)
 		{
-			swap_chain_support_details swap_chain_support_details = query_swap_chain_support(physical_device);
+			source_runtime::swap_chain_support_details swap_chain_support_details = query_swap_chain_support(physical_device);
 			is_swap_chain_adequate = !swap_chain_support_details.format.empty() && !swap_chain_support_details.present_mode.empty();
 		}
 
@@ -1054,11 +1057,11 @@ namespace source_runtime
 		return true;
 	}
 
-	swap_chain_support_details vulkan_rhi::query_swap_chain_support(VkPhysicalDevice physical_device) const
+	source_runtime::swap_chain_support_details vulkan_rhi::query_swap_chain_support(VkPhysicalDevice physical_device) const
 	{
-		swap_chain_support_details details;
+		source_runtime::swap_chain_support_details details;
 
-		// »ñÈ¡ÎïÀíÉè±¸±íÃæÖ§³ÖĞÅÏ¢
+		// è·å–ç‰©ç†è®¾å¤‡è¡¨é¢æ”¯æŒä¿¡æ¯
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, m_surface, &details.capabilities);
 
 		uint32_t format_count;
@@ -1079,9 +1082,9 @@ namespace source_runtime
 		return details;
 	}
 
-	queue_family_indices vulkan_rhi::find_queue_families(const VkPhysicalDevice physical_device) const
+	source_runtime::queue_family_indices vulkan_rhi::find_queue_families(const VkPhysicalDevice physical_device) const
 	{
-		queue_family_indices indices;
+		source_runtime::queue_family_indices indices;
 		uint32_t queue_family_count = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_count, nullptr);
 		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
@@ -1090,12 +1093,12 @@ namespace source_runtime
 		int i = 0;
 		for (const auto& queue_family : queue_family_properties)
 		{
-			// Í¼ĞÎäÖÈ¾ºÍÏà¹Ø²Ù×÷
+			// å›¾å½¢æ¸²æŸ“å’Œç›¸å…³æ“ä½œ
 			if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 			{
 				indices.graphics_family = i;
 			}
-			// ¼ÆËãÈÎÎñºÍ¼ÆËã×ÅÉ«Æ÷
+			// è®¡ç®—ä»»åŠ¡å’Œè®¡ç®—ç€è‰²å™¨
 			if (queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT)
 			{
 				indices.compute_family = i;
@@ -1153,11 +1156,11 @@ namespace source_runtime
 		{
 			if (available_present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
 			{
-				// ÓÃÓÚµÍÑÓ³ÙºÍ¸ßÖ¡ÂÊµÄÓ¦ÓÃ£¬¿ÉÄÜ»áµ¼ÖÂËºÁÑ
+				// ç”¨äºä½å»¶è¿Ÿå’Œé«˜å¸§ç‡çš„åº”ç”¨ï¼Œå¯èƒ½ä¼šå¯¼è‡´æ’•è£‚
 				return VK_PRESENT_MODE_MAILBOX_KHR;
 			}
 		}
-		// ´¹Ö±Í¬²½Ä£Ê½£¬Í¼ÏñµÄ³ÇÏç»á±»ÏŞÖÆÔÚÏÔÊ¾Æ÷µÄË¢ĞÂÂÊÄÚ
+		// å‚ç›´åŒæ­¥æ¨¡å¼ï¼Œå›¾åƒçš„åŸä¹¡ä¼šè¢«é™åˆ¶åœ¨æ˜¾ç¤ºå™¨çš„åˆ·æ–°ç‡å†…
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 

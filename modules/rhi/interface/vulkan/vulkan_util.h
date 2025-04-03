@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 
+#include "vulkan_rhi_resource.h"
 #include "Modules/rhi/rhi_module.h"
 
 namespace source_runtime
@@ -26,7 +27,7 @@ namespace source_runtime
 			VkDeviceSize size,
 			const void* data = nullptr,
 			int data_size = 0);
-		static void copy_buffer(rhi* rhi, VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize src_offset, VkDeviceSize dst_offset, VkDeviceSize size);
+		static void copy_buffer(source_module::rhi::rhi* rhi, VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize src_offset, VkDeviceSize dst_offset, VkDeviceSize size);
 		static void create_image(VkPhysicalDevice physical_device, 
 			VkDevice device, 
 			uint32_t image_width, 
@@ -42,15 +43,15 @@ namespace source_runtime
 			uint32_t array_layers, 
 			uint32_t mip_levels);
 		static VkImageView create_image_view(VkDevice device, const VkImage& image, VkFormat format, VkImageAspectFlags image_aspect_flags, VkImageViewType view_type, uint32_t layout_count, uint32_t mip_levels);
-		static void create_global_image(rhi* rhi, VkImage& image, VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels,
-			rhi_format texture_image_format,
-			uint32_t mip_levels = 0);
-		static void create_cube_map(rhi* rhi, 
-			VkImage& image, 
-			VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels);
-		static void transition_image_layout(rhi* rhi, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t layer_count, uint32_t mip_levels, VkImageAspectFlags aspect_mask_bits);
-		static void copy_buffer_to_image(rhi* rhi, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count);
-		static void gen_mipmap_image(rhi* rhi, VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels);
+		static void create_global_image(source_module::rhi::rhi* rhi, VkImage& image, VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels,
+		                                rhi_format texture_image_format,
+		                                uint32_t mip_levels = 0);
+		static void create_cube_map(source_module::rhi::rhi* rhi, 
+		                            VkImage& image, 
+		                            VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels);
+		static void transition_image_layout(source_module::rhi::rhi* rhi, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t layer_count, uint32_t mip_levels, VkImageAspectFlags aspect_mask_bits);
+		static void copy_buffer_to_image(source_module::rhi::rhi* rhi, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count);
+		static void gen_mipmap_image(source_module::rhi::rhi* rhi, VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels);
 		static VkSampler get_or_create_mipmap_sampler(VkPhysicalDevice physical_device, VkDevice device, uint32_t width, uint32_t height);
 		static VkSampler get_or_create_nearest_sampler(VkPhysicalDevice physical_device, VkDevice device);
 		static VkSampler get_or_create_linear_sampler(VkPhysicalDevice physical_device, VkDevice device);

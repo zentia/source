@@ -1,10 +1,12 @@
-#pragma once
+ï»¿#pragma once
+#include <optional>
 #include <vulkan/vulkan_core.h>
 
 #include "Modules/render/render_type.h"
+#include <vector>
 
 
-#define RHI_RESOURCE_DECLARE(SELF, TYPE) \
+#define RHI_RESOURCE_DECLARE(SELF) \
 	class SELF \
 	{ \
 	} 
@@ -106,11 +108,11 @@ namespace source_runtime
 
 	struct swap_chain_support_details
 	{
-		// ±íÃæÄÜÁ¦£¬½»»»Á´ÖĞÍ¼ĞÎµÄ×îĞ¡×î´óÊıÁ¿£¬×îĞ¡×î´ó³ß´ç£¬Ã¿¸öÍ¼ÏñµÄ×î´ó²ãÊı
+		// è¡¨é¢èƒ½åŠ›ï¼Œäº¤æ¢é“¾ä¸­å›¾å½¢çš„æœ€å°æœ€å¤§æ•°é‡ï¼Œæœ€å°æœ€å¤§å°ºå¯¸ï¼Œæ¯ä¸ªå›¾åƒçš„æœ€å¤§å±‚æ•°
 		VkSurfaceCapabilitiesKHR capabilities;
-		// Í¼Ïñ¸ñÊ½ºÍÑÕÉ«¿Õ¼ä
+		// å›¾åƒæ ¼å¼å’Œé¢œè‰²ç©ºé—´
 		std::vector<VkSurfaceFormatKHR> format;
-		// ³ÊÏÖÄ£Ê½
+		// å‘ˆç°æ¨¡å¼
 		std::vector<VkPresentModeKHR> present_mode;
 	};
 
