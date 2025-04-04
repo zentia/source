@@ -6,9 +6,9 @@
 #include <glm/vec2.hpp>
 //#include <luisa/gui/imgui_window.h>
 
-namespace source_runtime
+namespace source_module::window
 {
-	struct WindowCreateInfo
+	struct window_create_info
 	{
 		int width{ 1280 };
 		int height{ 720 };
@@ -21,12 +21,14 @@ namespace source_runtime
 	public:
 		window_module(/*luisa::compute::Device &device, luisa::compute::Stream &stream*/);
 		~window_module();
-		void Initialize(WindowCreateInfo createInfo);
+		void initialize(window_create_info createInfo);
 		bool should_close() const;
 		void set_should_close(bool value) const;
 		void set_title(const char* title) const;
 		GLFWwindow* get_window() const;
 		glm::vec2 get_window_size() const;
+
+		static void poll_events();
 
 		typedef std::function<void()> OnResetFunc;
 		typedef std::function<void(int, int, int, int)> OnKeyFunc;

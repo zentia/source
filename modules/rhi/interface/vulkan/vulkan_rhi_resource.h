@@ -35,7 +35,7 @@
 		TYPE m_resource_ { nullptr }; \
 	} 
 
-namespace source_runtime
+namespace source_module::rhi
 {
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_buffer, vulkan_rhi_buffer, VkBuffer);
 	VULKAN_RHI_RESOURCE_DECLARE(rhi_buffer_view, vulkan_rhi_buffer_view, VkBufferView);

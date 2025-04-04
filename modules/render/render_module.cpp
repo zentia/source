@@ -1,17 +1,17 @@
 #include "render_module.h"
 
 #include "global_rendering.h"
-#include "render_swap_context.h"
 #include "Editor/base/Application/application.h"
 #include "Modules/asset/asset_module.h"
 #include "Modules/rhi/vulkan/vulkan_rhi.h"
 #include "resource/render_resource.h"
+#include "swap_context/render_swap_context.h"
 
 namespace source_module::render
 {
 	void render_module::initialize(const render_init_info& init_info)
 	{
-		const std::shared_ptr<source_runtime::config_module> config_module = get_application().m_config_module;
+		const std::shared_ptr<source_runtime::config_module> config_module = application::instance()->m_config_module;
 		assert(config_module);
 
 		// render context initialize
@@ -25,8 +25,8 @@ namespace source_module::render
 		const std::string& global_rendering_res_url = config_module->get_global_rendering_res_url();
 		const source_runtime::global_rendering_res global_rendering_res = source_runtime::asset_module::load_asset<source_runtime::global_rendering_res>(global_rendering_res_url);
 
-		// upload ilb, color grading textures
-		source_runtime::scene_resource_desc scene_resource_desc;
+		// upload ibl, color grading textures
+		scene_resource_desc scene_resource_desc;
 		scene_resource_desc.m_ibl_resource_desc.m_sky_box_irradiance_map = global_rendering_res.m_sky_box_irradiance_map;
 		scene_resource_desc.m_ibl_resource_desc.m_sky_box_specular_map = global_rendering_res.m_sky_box_specular_map;
 		scene_resource_desc.m_ibl_resource_desc.m_brdf_map = global_rendering_res.m_brdf_map;
@@ -36,13 +36,21 @@ namespace source_module::render
 
 	}
 
-	void render_module::tick(float delta_time)
+	void render_module::update()
 	{
-		
+		process_swap_data();
 	}
 
 	void render_module::process_swap_data()
 	{
+		if (m_render_pipeline_type_ == render_pipeline_type::deferred)
+		{
+			m_render_pipeline_base_->deferred_render(m_rhi_, m_render_resource_base_);
+		}
+		else if (m_render_pipeline_type_ == render_pipeline_type::forward)
+		{
+			m_render_pipeline_base_->forward_render(m_rhi_, m_render_resource_base_);
+		}
 		
 	}
 

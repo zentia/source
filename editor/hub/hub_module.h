@@ -1,8 +1,8 @@
 #pragma once
 #include "hub_panel.h"
-#include "Modules/ui/ui_module.h"
-#include "Modules/ui/canvas/canvas.h"
-#include "Modules/ui/panel/panel_window.h"
+#include "modules/ui/ui_module.h"
+#include "modules/ui/canvas/canvas.h"
+#include "modules/ui/panel/panel_window.h"
 
 namespace source_editor::hub
 {

@@ -1,17 +1,22 @@
 #include "ui_pass.h"
 
 #include "Editor/base/application/application.h"
-#include <imgui.h>
 
 namespace source_runtime::render
 {
 	void ui_pass::draw()
 	{
-		const application& application = get_application();
-		if (application.m_ui_module)
+		const application* application = application::instance();
+		if (application->m_ui_module)
 		{
 			
 		}
+	}
+
+	void ui_pass::initialize(const render_pass_init_info* init_info)
+	{
+		render_pass::initialize(nullptr);
+
 	}
 
 }

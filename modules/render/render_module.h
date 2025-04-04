@@ -10,17 +10,18 @@ namespace source_module::render
 {
 	struct render_init_info
 	{
-		std::shared_ptr<source_runtime::window_module> window_module;
+		std::shared_ptr<window::window_module> window_module;
 	};
 	class render_module
 	{
 	public:
 		void initialize(const render_init_info& init_info);
-		void tick(float delta_time);
+		void update();
 	private:
 		void process_swap_data();
-		std::shared_ptr<rhi::rhi> m_rhi_;
+		std::shared_ptr<rhi::rhi_module> m_rhi_;
 		std::shared_ptr<render_resource_base> m_render_resource_base_;
 		std::shared_ptr<render_pipeline_base> m_render_pipeline_base_;
+		render_pipeline_type m_render_pipeline_type_ {render_pipeline_type::deferred};
 	};
 }

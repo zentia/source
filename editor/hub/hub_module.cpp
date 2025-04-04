@@ -1,8 +1,8 @@
 #include "hub_module.h"
 
 #include "hub_panel.h"
-#include "Editor/base/application/application.h"
-#include "Modules/ui/widgets/button/button.h"
+#include "editor/base/application/application.h"
+#include "modules/ui/widgets/button/button.h"
 
 namespace source_editor::hub
 {
@@ -18,11 +18,14 @@ namespace source_editor::hub
 
     void hub_module::run()
     {
-        const auto window_module = get_application().m_window_module;
+        application* application = application::instance();
+        const auto window_module = application->m_window_module;
+        const auto render_module = application->m_render_module;
 	    while (!window_module->should_close())
 	    {
-            //window_module->prepare_frame();
-            //window_module->render_frame();
+            application->update();
+            source_module::window::window_module::poll_events();
+            render_module->update();
 		    if (!m_main_panel_->is_opened())
 		    {
                 window_module->set_should_close(true);

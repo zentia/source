@@ -6,7 +6,7 @@ namespace source_runtime
 	{
 	public:
 		void initialize();
-		void tick(float delta_time);
+		void update();
 	private:
 		bool m_is_world_loaded_{ false };
 	};

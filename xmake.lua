@@ -2,7 +2,7 @@ set_languages("cxx23")
 
 add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 
-add_requires("vulkan-memory-allocator", "eventpp", "vulkansdk")
+add_requires("eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
 
 includes("External/xmake.lua")
@@ -35,17 +35,17 @@ rule_end()
 
 target("source")
     set_kind("$(kind)")
-    add_packages("glad", "fmt", "volk", "vulkansdk", "vulkan-memory-allocator", "eventpp")
+    add_packages("glad", "fmt", "volk", "vulkansdk", "eventpp")
     add_headerfiles("editor/**.h")
-    add_files("Editor/**.cpp|Editor/Platform/Windows/entry_point/Main.cpp")
-    add_headerfiles("Runtime/**.h")
-    add_files("Runtime/**.cpp")
-    add_headerfiles("Modules/**.h")
-    add_files("Modules/**.cpp")
+    add_files("editor/**.cpp|editor/Platform/Windows/entry_point/Main.cpp")
+    add_headerfiles("runtime/**.h")
+    add_files("runtime/**.cpp")
+    add_headerfiles("modules/**.h")
+    add_files("modules/**.cpp")
     add_headerfiles("configuration/**.h")
-    add_headerfiles("Platforms/**.h")
-    add_headerfiles("Platforms/**.cpp")
-    add_cxxflags("gxx::-fexec-charset=GBK")
+    add_headerfiles("platforms/**.h")
+    add_headerfiles("platforms/**.cpp")
+    add_cxxflags("gxx::-fexec-charset=GBK", "/Zc:wchar_t")
     if is_mode("debug") then
         add_cxflags("-DDEBUG")
     end
@@ -63,12 +63,14 @@ target("source")
     add_defines("ENABLE_ASSERTIONS")
     set_pcxxheader("precompiled_header/source_prefix.h")
     add_deps(
+        "D3D12MemoryAllocator",
         "glfw",
         "glm",
         "imgui", 
         "reflect-cpp",
         "spdlog",
-        "spine-runtimes"
+        "spine-runtimes",
+        "VulkanMemoryAllocator"
     )
     add_rules("module")
     add_rules("c++.unity_build", {batchsize = 2})

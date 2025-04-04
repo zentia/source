@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include "Editor/base/Application/application.h"
+#include "editor/base/application/application.h"
 
 namespace source_editor
 {
@@ -13,7 +13,7 @@ namespace source_editor
 	}
 	void editor_ui::initialize(source_runtime::ui::window_ui_init_info init_info)
 	{
-		std::shared_ptr<source_runtime::config_module> config_module = get_application().m_config_module;
+		std::shared_ptr<source_runtime::config_module> config_module = application::instance()->m_config_module;
 		assert(config_module);
 
 		IMGUI_CHECKVERSION();

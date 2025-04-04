@@ -117,7 +117,7 @@ SOURCE_API int source_main(int argc, char** argv)
     std::filesystem::path executable_path(argv[0]);
     const std::filesystem::path config_file_path = executable_path.parent_path() / "source_editor.json";
     new application(argv[0]);
-    get_application().initialize(config_file_path.generic_string());
+    application::instance()->initialize(config_file_path.generic_string());
     source_editor::hub::hub_module hub;
     if (argc >= 2)
     {

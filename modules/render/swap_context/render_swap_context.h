@@ -1,14 +1,14 @@
 #pragma once
 #include <optional>
 
-#include "global_rendering.h"
+#include "modules/render/global_rendering.h"
 
-namespace source_runtime
+namespace source_module::render
 {
 	struct scene_ibl_resource_desc
 	{
-		sky_box_irradiance_map m_sky_box_irradiance_map;
-		sky_box_specular_map m_sky_box_specular_map;
+		source_runtime::sky_box_irradiance_map m_sky_box_irradiance_map;
+		source_runtime::sky_box_specular_map m_sky_box_specular_map;
 		std::string m_brdf_map;
 	};
 	struct scene_color_grading_resource_desc
@@ -27,6 +27,12 @@ namespace source_runtime
 	};
 	struct render_swap_data
 	{
+		
+	};
+
+	class render_swap_context
+	{
+	public:
 		
 	};
 }

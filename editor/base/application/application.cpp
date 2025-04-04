@@ -1,9 +1,9 @@
 #include "application.h"
 
-#include "Editor/ui/editor_ui.h"
-#include "Modules/render/render_module.h"
+#include "editor/ui/editor_ui.h"
+#include "modules/render/render_module.h"
 
-static application* gApp = nullptr;
+application* application::m_application_ = nullptr;
 
 application::application(const std::string&& exe_path)
 	: m_RecreateGfxDevice(false)
@@ -12,12 +12,12 @@ application::application(const std::string&& exe_path)
 {
 	//m_device = m_context.create_default_device();
 	//m_stream = m_device.create_stream(luisa::compute::StreamTag::GRAPHICS);
-	gApp = this;
+	m_application_ = this;
 }
 
 application::~application()
 {
-	gApp = nullptr;
+	m_application_ = nullptr;
 }
 
 
@@ -25,9 +25,9 @@ void application::initialize(const std::string& config_file_path)
 {
 	m_config_module = std::make_shared<source_runtime::config_module>();
 	m_config_module->initialize(config_file_path);
-	m_window_module = std::make_shared<source_runtime::window_module>(/*m_device, m_stream*/);
-	source_runtime::WindowCreateInfo windowCreateInfo;
-	m_window_module->Initialize(windowCreateInfo);
+	m_window_module = std::make_shared<source_module::window::window_module>(/*m_device, m_stream*/);
+	source_module::window::window_create_info windowCreateInfo;
+	m_window_module->initialize(windowCreateInfo);
 	m_render_module = std::make_shared<source_module::render::render_module>();
 	source_module::render::render_init_info render_init_info;
 	render_init_info.window_module = m_window_module;
@@ -46,6 +46,9 @@ void application::initialize(const std::string& config_file_path)
 		m_render_module
 	};
 	m_ui_module->initialize(ui_init_info);
+
+	m_time_module = std::make_shared<source_module::time::time_module>();
+	m_time_module->initialize();
 }
 
 void application::RequestRecreateGfxDevice()
@@ -58,12 +61,17 @@ void application::RequestLoadRenderDoc()
 	m_LoadRenderDoc = true;
 }
 
-application& get_application()
+void application::update() const
 {
-	return *gApp;
+	m_time_module->update();
 }
 
 void application::clear()
 {
 
+}
+
+application* application::instance()
+{
+	return m_application_;
 }

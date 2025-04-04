@@ -7,7 +7,7 @@ namespace source_runtime
 		m_is_world_loaded_ = false;
 	}
 
-	void world_module::tick(float delta_time)
+	void world_module::update()
 	{
 		
 	}

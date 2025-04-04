@@ -6,6 +6,6 @@ namespace source_editor
 	{
 	public:
 		void initialize();
-		void tick(float delta_time);
+		void update();
 	};
 }

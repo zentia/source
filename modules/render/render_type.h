@@ -1,6 +1,6 @@
 #pragma once
 
-namespace source_runtime
+namespace source_module::render
 {
 #define RHI_MAX_EXTENSION_NAME_SIZE 256u
 #define RHI_MAX_DESCRIPTION_SIZE 256u
@@ -134,12 +134,18 @@ namespace source_runtime
 		rhi_index_type_max_enum = 0x7fffffff,
 	};
 
-	enum rhi_image_tiling
+	enum class rhi_image_tiling
 	{
-		rhi_image_tiling_optimal = 0,
+		optimal = 0,
 		rhi_image_tiling_linear = 1,
 		rhi_image_tiling_drm_format_modifier_ext = 1000158000,
 		rhi_image_tiling_max_enum = 0x7fffffff
+	};
+
+	enum class render_pipeline_type : uint8_t
+	{
+		forward,
+		deferred
 	};
 	typedef uint32_t rhi_access_flags;
 	typedef uint32_t rhi_image_aspect_flags;

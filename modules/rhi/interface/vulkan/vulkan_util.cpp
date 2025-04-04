@@ -96,15 +96,15 @@ namespace source_runtime
 		}
 	}
 
-	void vulkan_util::copy_buffer(source_module::rhi::rhi* rhi, const VkBuffer src_buffer, const VkBuffer dst_buffer, const VkDeviceSize src_offset, const VkDeviceSize dst_offset, const VkDeviceSize size)
+	void vulkan_util::copy_buffer(source_module::rhi::rhi_module* rhi, const VkBuffer src_buffer, const VkBuffer dst_buffer, const VkDeviceSize src_offset, const VkDeviceSize dst_offset, const VkDeviceSize size)
 	{
 		if (rhi == nullptr)
 		{
 			SPDLOG_ERROR("rhi is nullptr");
 			return;
 		}
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
-		const VkCommandBuffer vk_command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
+		source_module::rhi::rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
+		const VkCommandBuffer vk_command_buffer = static_cast<source_module::rhi::vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		const VkBufferCopy vk_buffer_copy = { src_offset, dst_offset, size };
 		vkCmdCopyBuffer(vk_command_buffer, src_buffer, dst_buffer, 1, &vk_buffer_copy);
@@ -198,8 +198,8 @@ namespace source_runtime
 		return image_view;
 	}
 
-	void vulkan_util::create_global_image(source_module::rhi::rhi* rhi, 
-	                                      VkImage& image, VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
+	void vulkan_util::create_global_image(source_module::rhi::rhi_module* rhi, 
+	                                      VkImage& image, VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, source_module::render::rhi_format texture_image_format, uint32_t mip_levels)
 	{
 		if (!texture_image_pixels)
 		{
@@ -210,35 +210,35 @@ namespace source_runtime
 		VkFormat vulkan_image_format = VK_FORMAT_UNDEFINED;
 		switch (texture_image_format)
 		{
-		case rhi_format_r8g8b8_unorm:
+		case source_module::render::rhi_format_r8g8b8_unorm:
 			texture_byte_size = texture_image_width * texture_image_height * 3;
 			vulkan_image_format = VK_FORMAT_R8G8B8_UNORM;
 			break;
-		case rhi_format_r8g8b8_srgb:
+		case source_module::render::rhi_format_r8g8b8_srgb:
 			texture_byte_size = texture_image_width * texture_image_height * 3;
 			vulkan_image_format = VK_FORMAT_R8G8B8_SRGB;
 			break;
-		case rhi_format_r8g8b8a8_unorm:
+		case source_module::render::rhi_format_r8g8b8a8_unorm:
 			texture_byte_size = texture_image_width * texture_image_height * 4;
 			vulkan_image_format = VK_FORMAT_R8G8B8A8_UNORM;
 			break;
-		case rhi_format_r8g8b8a8_srgb:
+		case source_module::render::rhi_format_r8g8b8a8_srgb:
 			texture_byte_size = texture_image_width * texture_image_height * 4;
 			vulkan_image_format = VK_FORMAT_R8G8B8A8_SRGB;
 			break;
-		case rhi_format_r32_sfloat:
+		case source_module::render::rhi_format_r32_sfloat:
 			texture_byte_size = texture_image_width * texture_image_height * 4;
 			vulkan_image_format = VK_FORMAT_R32_SFLOAT;
 			break;
-		case rhi_format_r32g32_sfloat:
+		case source_module::render::rhi_format_r32g32_sfloat:
 			texture_byte_size = texture_image_width * texture_image_height * 4 * 2;
 			vulkan_image_format = VK_FORMAT_R32G32_SFLOAT;
 			break;
-		case rhi_format_r32g32b32_sfloat:
+		case source_module::render::rhi_format_r32g32b32_sfloat:
 			texture_byte_size = texture_image_width * texture_image_height * 4 * 3;
 			vulkan_image_format = VK_FORMAT_R32G32B32_SFLOAT;
 			break;
-		case rhi_format_r32g32b32a32_sfloat:
+		case source_module::render::rhi_format_r32g32b32a32_sfloat:
 			texture_byte_size = texture_image_width * texture_image_height * 4 * 4;
 			vulkan_image_format = VK_FORMAT_R32G32B32A32_SFLOAT;
 			break;
@@ -306,32 +306,32 @@ namespace source_runtime
 			mip_levels);
 	}
 
-	void vulkan_util::create_cube_map(source_module::rhi::rhi* rhi, 
+	void vulkan_util::create_cube_map(source_module::rhi::rhi_module* rhi, 
 	                                  VkImage& image, 
 	                                  VkImageView& image_view, 
-	                                  VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, rhi_format texture_image_format, uint32_t mip_levels)
+	                                  VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, source_module::render::rhi_format texture_image_format, uint32_t mip_levels)
 	{
 		VkDeviceSize texture_layer_byte_size;
 		VkDeviceSize cube_byte_size;
 		VkFormat vulkan_image_format;
 		switch (texture_image_format)
 		{
-		case rhi_format_r8g8b8_unorm:
+		case source_module::render::rhi_format_r8g8b8_unorm:
 			texture_layer_byte_size = texture_image_width * texture_image_height * 3;
 			vulkan_image_format = VK_FORMAT_R8G8B8_UNORM;
 			break;
-		case rhi_format_r8g8b8_srgb:
+		case source_module::render::rhi_format_r8g8b8_srgb:
 			texture_layer_byte_size = texture_image_width * texture_image_height * 3;
 			vulkan_image_format = VK_FORMAT_R8G8B8_SRGB;
 			break;
-		case rhi_format_r8g8b8a8_unorm:
+		case source_module::render::rhi_format_r8g8b8a8_unorm:
 			texture_layer_byte_size = texture_image_width * texture_image_height * 4;
 			vulkan_image_format = VK_FORMAT_R8G8B8A8_UNORM;
 			break;
 		}
 	}
 
-	void vulkan_util::transition_image_layout(source_module::rhi::rhi* rhi, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t layer_count, uint32_t mip_levels, VkImageAspectFlags aspect_mask_bits)
+	void vulkan_util::transition_image_layout(source_module::rhi::rhi_module* rhi, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t layer_count, uint32_t mip_levels, VkImageAspectFlags aspect_mask_bits)
 	{
 		if (rhi == nullptr)
 		{
@@ -339,8 +339,8 @@ namespace source_runtime
 			return;
 		}
 
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
-		VkCommandBuffer command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
+		source_module::rhi::rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
+		VkCommandBuffer command_buffer = static_cast<source_module::rhi::vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		VkImageMemoryBarrier barrier;
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -414,7 +414,7 @@ namespace source_runtime
 		dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
 	}
 
-	void vulkan_util::copy_buffer_to_image(source_module::rhi::rhi* rhi, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count)
+	void vulkan_util::copy_buffer_to_image(source_module::rhi::rhi_module* rhi, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count)
 	{
 		if (rhi == nullptr)
 		{
@@ -422,8 +422,8 @@ namespace source_runtime
 			return;
 		}
 
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
-		VkCommandBuffer command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
+		source_module::rhi::rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
+		VkCommandBuffer command_buffer = static_cast<source_module::rhi::vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		VkBufferImageCopy region;
 		region.bufferOffset = 0;
@@ -441,7 +441,7 @@ namespace source_runtime
 		dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->end_single_time_commands(rhi_command_buffer);
 	}
 
-	void vulkan_util::gen_mipmap_image(source_module::rhi::rhi* rhi, VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels)
+	void vulkan_util::gen_mipmap_image(source_module::rhi::rhi_module* rhi, VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels)
 	{
 		if (rhi == nullptr)
 		{
@@ -449,8 +449,8 @@ namespace source_runtime
 			return;
 		}
 
-		rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
-		VkCommandBuffer command_buffer = static_cast<vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
+		source_module::rhi::rhi_command_buffer* rhi_command_buffer = dynamic_cast<source_module::rhi::vulkan_rhi*>(rhi)->begin_single_time_commands();
+		VkCommandBuffer command_buffer = static_cast<source_module::rhi::vulkan_rhi_command_buffer*>(rhi_command_buffer)->get_resource();
 
 		for (uint32_t i = 0; i < mip_levels; ++i)
 		{

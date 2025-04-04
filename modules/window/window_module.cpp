@@ -1,8 +1,8 @@
 #include "window_module.h"
 
-//#include "spdlog/spdlog.h"
+#include "spdlog/spdlog.h"
 
-namespace source_runtime
+namespace source_module::window
 {
 	window_module::window_module(/*luisa::compute::Device& device, luisa::compute::Stream& stream*/) /*: ImGuiWindow(device, stream, "source")*/
 	{
@@ -15,11 +15,11 @@ namespace source_runtime
 		glfwTerminate();
 	}
 
-	void window_module::Initialize(WindowCreateInfo createInfo)
+	void window_module::initialize(window_create_info createInfo)
 	{
 		if (!glfwInit())
 		{
-			//SPDLOG_ERROR("failed to initialize GLFW");
+			SPDLOG_ERROR("failed to initialize GLFW");
 			return;
 		}
 
@@ -27,7 +27,7 @@ namespace source_runtime
 		m_window_ = glfwCreateWindow(createInfo.width, createInfo.height, createInfo.title, nullptr, nullptr);
 		if (!m_window_)
 		{
-			//SPDLOG_ERROR("failed to create window");
+			SPDLOG_ERROR("failed to create window");
 			glfwTerminate();
 			return;
 		}
@@ -60,6 +60,11 @@ namespace source_runtime
 	glm::vec2 window_module::get_window_size() const
 	{
 		return glm::vec2({m_width_, m_height_});
+	}
+
+	void window_module::poll_events()
+	{
+		glfwPollEvents();
 	}
 
 }
