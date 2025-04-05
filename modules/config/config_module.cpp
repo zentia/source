@@ -11,7 +11,7 @@ namespace source_runtime
 	{
 		if (exists(config_file_path))
 		{
-			m_config_ = asset_module::load_asset<config>(config_file_path.generic_string());
+			m_config_ = source_module::asset::asset_module::load_config<config>(config_file_path.generic_string());
 		}
 		m_config_.m_project_folder = config_file_path.parent_path();
 	}

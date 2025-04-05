@@ -7,7 +7,7 @@
 
 namespace source_runtime::ui
 {
-	void ui_module::render()
+	void ui_module::update()
 	{
 		if (m_canvas_)
 		{

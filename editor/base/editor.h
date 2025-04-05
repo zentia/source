@@ -19,7 +19,6 @@ namespace source_editor
 
 		void Run();
 	protected:
-		std::shared_ptr<editor_ui> m_editor_ui_;
 		source_runtime::source_engine* m_EngineRuntime{ nullptr };
 	};
 }

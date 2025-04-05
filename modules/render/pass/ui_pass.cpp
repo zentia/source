@@ -1,6 +1,6 @@
 #include "ui_pass.h"
 
-#include "Editor/base/application/application.h"
+#include "runtime/application/application.h"
 
 namespace source_runtime::render
 {

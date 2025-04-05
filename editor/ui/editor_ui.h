@@ -7,7 +7,7 @@ namespace source_editor
 	{
 	public:
 		void initialize(source_runtime::ui::window_ui_init_info init_info) override;
-		void render() override;
+		void update() override;
 	private:
 		void show_editor_ui();
 		void show_editor_menu(bool* open);

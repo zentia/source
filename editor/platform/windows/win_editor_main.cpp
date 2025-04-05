@@ -1,9 +1,6 @@
 #include "win_editor_main.h"
 
-#include "Editor/base/Application/application.h"
-
 #include <iostream>
-#include <Windows.h>
 
 #include "imgui.h"
 #include <d3d12.h>
@@ -13,6 +10,7 @@
 
 #include "Editor/base/Editor.h"
 #include "Editor/hub/hub_module.h"
+#include "runtime/application/application.h"
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
@@ -96,9 +94,7 @@ static ID3D12CommandQueue* g_pd3dCommandQueue = nullptr;
 static ID3D12GraphicsCommandList* g_pd3dCommandList = nullptr;
 static ID3D12Fence* g_fence = nullptr;
 static HANDLE g_fenceEvent = nullptr;
-static UINT64 g_fenceLastSignaledValue = 0;
 static IDXGISwapChain3* g_pSwapChain = nullptr;
-static bool g_SwapChainOccluded = false;
 static HANDLE g_hSwapChainWaitableObject = nullptr;
 static ID3D12Resource* g_mainRenderTargetResource[APP_NUM_BACK_BUFFERS] = {};
 static D3D12_CPU_DESCRIPTOR_HANDLE g_mainRenderTargetDescriptor[APP_NUM_BACK_BUFFERS] = {};
@@ -116,8 +112,8 @@ SOURCE_API int source_main(int argc, char** argv)
 {
     std::filesystem::path executable_path(argv[0]);
     const std::filesystem::path config_file_path = executable_path.parent_path() / "source_editor.json";
-    new application(argv[0]);
-    application::instance()->initialize(config_file_path.generic_string());
+    new source_runtime::application(argv[0]);
+    source_runtime::application::instance()->initialize(config_file_path.generic_string());
     source_editor::hub::hub_module hub;
     if (argc >= 2)
     {

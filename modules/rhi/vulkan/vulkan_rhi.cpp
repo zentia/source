@@ -2,13 +2,12 @@
 
 #include <iostream>
 
-#include "Editor/base/Application/application.h"
-#include "Editor/Platform/Windows/entry_point/WindowsIncludes.h"
 #include "Modules/rhi/rhi_module.h"
 #include "Modules/rhi/interface/vulkan/vulkan_rhi_resource.h"
 #include "Modules/rhi/interface/vulkan/vulkan_util.h"
 #include "spdlog/spdlog.h"
 #include <algorithm>
+#include <filesystem>
 
 namespace source_module::rhi
 {

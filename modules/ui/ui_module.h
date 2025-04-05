@@ -16,7 +16,7 @@ namespace source_runtime::ui
 	{
 	public:
 		virtual void initialize(window_ui_init_info init_info) = 0;
-		virtual void render();
+		virtual void update();
 	private:
 		canvas* m_canvas_{ nullptr };
 		std::shared_ptr<source_module::rhi::rhi_module> m_rhi_;

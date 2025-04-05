@@ -1,17 +1,18 @@
 #include "render_module.h"
 
 #include "global_rendering.h"
-#include "Editor/base/Application/application.h"
 #include "Modules/asset/asset_module.h"
+#include "modules/config/config_module.h"
 #include "Modules/rhi/vulkan/vulkan_rhi.h"
 #include "resource/render_resource.h"
+#include "runtime/application/application.h"
 #include "swap_context/render_swap_context.h"
 
 namespace source_module::render
 {
 	void render_module::initialize(const render_init_info& init_info)
 	{
-		const std::shared_ptr<source_runtime::config_module> config_module = application::instance()->m_config_module;
+		const std::shared_ptr<source_runtime::config_module> config_module = source_runtime::application::instance()->m_config_module;
 		assert(config_module);
 
 		// render context initialize
@@ -23,7 +24,7 @@ namespace source_module::render
 
 		// global rendering resource
 		const std::string& global_rendering_res_url = config_module->get_global_rendering_res_url();
-		const source_runtime::global_rendering_res global_rendering_res = source_runtime::asset_module::load_asset<source_runtime::global_rendering_res>(global_rendering_res_url);
+		const source_runtime::global_rendering_res global_rendering_res = source_runtime::application::instance()->m_asset_module->load_asset<source_runtime::global_rendering_res>(global_rendering_res_url);
 
 		// upload ibl, color grading textures
 		scene_resource_desc scene_resource_desc;

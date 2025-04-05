@@ -2,13 +2,16 @@
 
 #include <filesystem>
 
-#include "Editor/base/Application/application.h"
-
-namespace source_runtime
+namespace source_module::asset
 {
-	std::filesystem::path asset_module::get_full_path(const std::string& relative_path)
+	asset_module::asset_module(std::filesystem::path&& root_folder) 
 	{
-		return absolute(application::instance()->m_config_module->get_root_folder() / relative_path);
+		m_root_folder_ = std::move(root_folder);
+	}
+
+	std::filesystem::path asset_module::get_full_path(const std::string& relative_path) const
+	{
+		return absolute(m_root_folder_ / relative_path);
 	}
 
 }
