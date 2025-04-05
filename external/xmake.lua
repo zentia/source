@@ -4,7 +4,6 @@ includes(
     "glm/xmake.lua",
     "imgui/xmake.lua", 
     "reflect-cpp/xmake.lua",
-    "spdlog/xmake.lua",
     "spine-runtimes/xmake.lua",
     "VulkanMemoryAllocator/xmake.lua"
 )
