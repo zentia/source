@@ -13,6 +13,18 @@
 
 namespace source_module::rhi
 {
+	class rhi_resource
+	{
+	public:
+		
+	};
+
+	class rhi_uniform_buffer : public rhi_resource
+	{
+	public:
+		
+	};
+	
 	RHI_RESOURCE_DECLARE(rhi_buffer);
 	RHI_RESOURCE_DECLARE(rhi_buffer_view);
 	RHI_RESOURCE_DECLARE(rhi_command_buffer);

@@ -42,7 +42,9 @@ target("source")
     add_files("runtime/**.cpp")
     
     add_includedirs("external/taskflow/3rd-party")
+    add_includedirs("external/taskflow")
     add_headerfiles("external/taskflow/3rd-party/spdlog/**.h")
+    add_headerfiles("external/taskflow/taskflow/**.hpp")
 
     add_headerfiles("modules/**.h")
     add_files("modules/**.cpp")
