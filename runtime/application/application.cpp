@@ -1,5 +1,6 @@
 #include "application.h"
 
+#include "core_globals.h"
 #include "editor/ui/editor_ui.h"
 #include "module/render/render_module.h"
 
@@ -25,7 +26,8 @@ namespace source_runtime
 
 	void application::initialize(const std::string& config_file_path)
 	{
-		m_config_module = std::make_shared<source_runtime::config_module>();
+		core::initialize();
+		m_config_module = std::make_shared<config_module>();
 		m_config_module->initialize(config_file_path);
 
 		m_asset_module = std::make_shared<source_module::asset::asset_module>(m_config_module->get_root_folder());

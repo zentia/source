@@ -1,5 +1,10 @@
 #pragma once
+
 #include <vector>
+#include <array>
+
+#include "d3d12_device.h"
+#include "module/rhi/multi_gpu.h"
 
 namespace source_module::rhi
 {
@@ -14,5 +19,6 @@ namespace source_module::rhi
 	{
 	public:
 		std::vector<d3d12_viewport*> m_viewports{};
+		std::array<d3d12_device, max_num_gpu> m_devices{};
 	};
 }

@@ -5,9 +5,12 @@ add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 add_requires("eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
 
-includes("external/xmake.lua")
-includes("module/xmake.lua")
-includes("platform/xmake.lua")
+includes(
+    "external/xmake.lua",
+    "module/xmake.lua",
+    "platform/xmake.lua",
+    "runtime/xmake.lua"
+    )
 
 rule("module")
     on_load(function (target)
@@ -100,10 +103,12 @@ target("source")
         "imgui", 
         "reflect-cpp",
         "spine-runtimes",
-        "VulkanMemoryAllocator"
+        "VulkanMemoryAllocator",
+        "asset",
+        "windows",
+        "core"
     )
-    add_deps("asset")
-    add_deps("windows")
+    
     add_rules("module")
     add_rules("c++.unity_build", {batchsize = 2})
     after_build(function (target) 

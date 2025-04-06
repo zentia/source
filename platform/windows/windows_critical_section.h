@@ -1,10 +1,10 @@
-#pragma once
+ï»¿#pragma once
 
 #include <Windows.h>
 
 namespace source_platform::windows
 {
-	// ÁÙ½çÇø
+	// ä¸´ç•ŒåŒº
 	class windows_critical_section
 	{
 	public:

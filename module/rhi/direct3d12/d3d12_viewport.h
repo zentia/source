@@ -9,6 +9,8 @@ namespace source_module::rhi
 	{
 	public:
 		d3d12_viewport();
+		void initialize();
 		static critical_section m_dxgi_back_buffer_lock;
+		bool m_need_swap_chain{ false };
 	};
 }

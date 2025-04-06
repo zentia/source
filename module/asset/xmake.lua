@@ -1,4 +1,5 @@
 target("asset")
+    set_group("module")
     set_kind("$(kind)")
     add_includedirs("./", { public = true })
     add_includedirs("$(projectdir)/external/taskflow/3rd-party")
