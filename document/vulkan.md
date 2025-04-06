@@ -1,3 +1,18 @@
+# Instance
+全局实例，一般来说只有一个。
+# SurfaceKHR
+窗口
+# PhysicalDevice
+物理设备，实际的硬件，显卡、集成显卡
+# Device
+逻辑设备
+# Queue
+设备提供的队列，提交给硬件的命令，有的设备会有多个队列
+# CommandBuffer
+- 命令缓存区，DrawCall先提交到这里。
+- CommandPool时创建CommandBuffer的对象池，因为CommandBuffer创建销毁都比较耗。Pool需要绑定到DeviceFamily，所以多个设备的命令没法一起提交。
+- CommandBuffer先收集命令，然后用`vkQueueSubmit`提交给设备的Queue。
+- CommandBuffer可以创建多个，BeginRenderPass调用的时候穿的CommandBuffer一般是主CommandBuffer，没有传到RenderPass的都是子CommandBuffer，这样多个线程上可以分别处理自己的命令到自己的子CommandBuffer上，然后提交到主CommandBuffer。
 # Texture2D
 - 纹理在vulkan中并没有一个结构体来表示，只是一种概念，shader中，`sampler2D`表示一个二维纹理。
 
@@ -14,3 +29,15 @@
 
 # VkDeviceMemory
 - 设备的内存对象，用于存储`VkImage`或其他vulkan对象的实际内存。需要显示的为图像数据分配GPU内存，完成数据从CPU到GPU的写入，然后绑定到`VkImage`上。
+
+# Sampler
+采样器，就是数据的壳，告诉vulkan具体如何解读数据。但和ImageView不一样，不需要绑定到Image上。
+
+# DescriptorSet
+描述符集，shader没法直接访问资源，要通过DescriptorSet来访问，其实就是内存到Shader的映射。DX12叫DescriptorHeap。
+
+# FrameBuffer
+最后要画到屏幕上的RT。BeginRenderPass的时候，就要带上FrameBuffer这个参数，这样Vulkan才知道如何画。每个RenderPass都对应一个FrameBuffer，也就说可以创建多个FrameBuffer
+
+# Pipeline
+最外层的一个壳，分为图形管线和计算管线。计算管线只有一个阶段，图形管线有多个阶段。

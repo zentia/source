@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include "modules/config/config_module.h"
+#include "module/config/config_module.h"
 #include "runtime/application/application.h"
 
 namespace source_editor

@@ -1,5 +1,5 @@
 #pragma once
-#include "modules/ui/ui_module.h"
+#include "module/ui/ui_module.h"
 
 namespace source_editor
 {

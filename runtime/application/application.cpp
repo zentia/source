@@ -1,7 +1,7 @@
 #include "application.h"
 
 #include "editor/ui/editor_ui.h"
-#include "modules/render/render_module.h"
+#include "module/render/render_module.h"
 
 namespace source_runtime
 {

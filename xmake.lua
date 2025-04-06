@@ -6,6 +6,8 @@ add_requires("eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
 
 includes("external/xmake.lua")
+includes("module/xmake.lua")
+includes("platform/xmake.lua")
 
 rule("module")
     on_load(function (target)
@@ -41,17 +43,39 @@ target("source")
     add_headerfiles("runtime/**.h")
     add_files("runtime/**.cpp")
     
-    add_includedirs("external/taskflow/3rd-party")
-    add_includedirs("external/taskflow")
-    add_headerfiles("external/taskflow/3rd-party/spdlog/**.h")
-    add_headerfiles("external/taskflow/taskflow/**.hpp")
+    add_includedirs(
+        "external/taskflow/3rd-party",
+        "external/taskflow"
+        )
+    add_headerfiles(
+        "external/taskflow/3rd-party/spdlog/**.h",
+        "external/taskflow/taskflow/**.hpp"
+        )
 
-    add_headerfiles("modules/**.h")
-    add_files("modules/**.cpp")
+    add_headerfiles(
+        "module/camera/**.h",
+        "module/config/**.h",
+        "module/render/**.h",
+        "module/rhi/**.h",
+        "module/spine/**.h",
+        "module/time/**.h",
+        "module/ui/**.h",
+        "module/window/**.h",
+        "module/world/**.h"
+        )
+    add_files(
+        "module/camera/**.cpp",
+        "module/config/**.cpp",
+        "module/render/**.cpp",
+        "module/rhi/**.cpp",
+        "module/spine/**.cpp",
+        "module/time/**.cpp",
+        "module/ui/**.cpp",
+        "module/window/**.cpp",
+        "module/world/**.cpp"
+        )
 
     add_headerfiles("configuration/**.h")
-    add_headerfiles("platforms/**.h")
-    add_headerfiles("platforms/**.cpp")
     add_cxxflags("gxx::-fexec-charset=GBK", "/Zc:wchar_t")
     if is_mode("debug") then
         add_cxflags("-DDEBUG")
@@ -78,6 +102,8 @@ target("source")
         "spine-runtimes",
         "VulkanMemoryAllocator"
     )
+    add_deps("asset")
+    add_deps("windows")
     add_rules("module")
     add_rules("c++.unity_build", {batchsize = 2})
     after_build(function (target) 

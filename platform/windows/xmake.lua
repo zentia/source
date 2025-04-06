@@ -1,0 +1,5 @@
+target("windows")
+    set_kind("$(kind)")
+    add_includedirs("./", { public = true })
+    add_headerfiles("./*.h")
+    add_files("./*.cpp")

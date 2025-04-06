@@ -1,5 +1,5 @@
 #pragma once
-#include "modules/ui/panel/panel_window.h"
+#include "module/ui/panel/panel_window.h"
 
 namespace source_editor::hub
 {

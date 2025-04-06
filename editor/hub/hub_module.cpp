@@ -1,7 +1,7 @@
 #include "hub_module.h"
 
 #include "hub_panel.h"
-#include "modules/ui/widgets/button/button.h"
+#include "module/ui/widgets/button/button.h"
 #include "runtime/application/application.h"
 
 namespace source_editor::hub
