@@ -5,6 +5,10 @@ add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
 add_requires("eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
 
+global_headerfiles = {}
+global_files = {}
+global_deps = {}
+
 includes(
     "external/xmake.lua",
     "module/xmake.lua",
@@ -43,8 +47,6 @@ target("source")
     add_packages("glad", "fmt", "volk", "vulkansdk", "eventpp")
     add_headerfiles("editor/**.h")
     add_files("editor/**.cpp|editor/Platform/Windows/entry_point/Main.cpp")
-    add_headerfiles("runtime/**.h")
-    add_files("runtime/**.cpp")
     
     add_includedirs(
         "external/taskflow/3rd-party",
@@ -66,6 +68,7 @@ target("source")
         "module/window/**.h",
         "module/world/**.h"
         )
+    add_headerfiles(table.unpack(global_headerfiles))
     add_files(
         "module/camera/**.cpp",
         "module/config/**.cpp",
@@ -77,6 +80,7 @@ target("source")
         "module/window/**.cpp",
         "module/world/**.cpp"
         )
+    add_files(table.unpack(global_files))
 
     add_headerfiles("configuration/**.h")
     add_cxxflags("gxx::-fexec-charset=GBK", "/Zc:wchar_t")
@@ -103,11 +107,9 @@ target("source")
         "imgui", 
         "reflect-cpp",
         "spine-runtimes",
-        "VulkanMemoryAllocator",
-        "asset",
-        "windows",
-        "core"
+        "VulkanMemoryAllocator"
     )
+    add_deps(table.unpack(global_deps))
     
     add_rules("module")
     add_rules("c++.unity_build", {batchsize = 2})

@@ -7,16 +7,16 @@ namespace source_runtime
 	class camera_pose
 	{
 	public:
-		math::vector3 m_position;
-		math::vector3 m_target;
-		math::vector3 m_up;
+		math::vector3f m_position;
+		math::vector3f m_target;
+		math::vector3f m_up;
 	};
 
 	class camera_config
 	{
 	public:
 		camera_pose m_pose;
-		math::vector2 m_aspect;
+		math::vector2f m_aspect;
 		float m_z_far;
 		float m_z_near;
 	};

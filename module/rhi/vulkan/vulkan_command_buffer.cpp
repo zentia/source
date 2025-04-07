@@ -1,8 +1,8 @@
 #include "vulkan_command_buffer.h"
 
-#include <assert.h>
+#include <cassert>
 
-#include "runtime/utitlity/vector_extension.h"
+#include "runtime/utility/vector_extension.h"
 
 namespace source_module::rhi
 {

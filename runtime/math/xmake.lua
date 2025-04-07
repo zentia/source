@@ -1,0 +1,1 @@
+table.insert(global_headerfiles, "runtime/math/*.h")

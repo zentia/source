@@ -81,6 +81,11 @@ namespace source_runtime
 
 	}
 
+	void application::begin_frame_render_thread()
+	{
+		
+	}
+
 	application* application::instance()
 	{
 		return m_application_;

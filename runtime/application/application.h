@@ -32,6 +32,7 @@ namespace source_runtime
         std::shared_ptr<source_module::window::window_module>& get_window_system() { return m_window_module; }
         void update() const;
         void clear();
+        void begin_frame_render_thread();
 
         bool m_RecreateGfxDevice;
         bool m_LoadRenderDoc;

@@ -24,6 +24,11 @@ namespace source_module::rhi
 
 	};
 
+	class rhi_command_list : public rhi_compute_command_list
+	{
+	public:
+		
+	};
 	class rhi_command_base
 	{
 	public:
@@ -36,4 +41,19 @@ namespace source_module::rhi
 	public:
 		
 	};
+
+	class rhi_command_list_immediate : public rhi_command_list
+	{
+	public:
+		
+	};
+
+	class rhi_command_list_executor
+	{
+	public:
+		static rhi_command_list_immediate& get_immediate_command_list();
+		rhi_command_list_immediate m_command_list_immediate;
+	};
+
+	inline rhi_command_list_executor g_rhi_command_list_executor{};
 }

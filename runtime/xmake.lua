@@ -1,1 +1,7 @@
+includes("application/xmake.lua")
+includes("base_classes/xmake.lua")
 includes("core/xmake.lua")
+includes("engine/xmake.lua")
+includes("math/xmake.lua")
+includes("render_core/xmake.lua")
+includes("utility/xmake.lua")

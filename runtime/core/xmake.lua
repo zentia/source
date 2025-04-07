@@ -5,3 +5,6 @@ target("core")
     add_headerfiles("./*.h")
     add_files("./*.cpp")
     add_deps("windows")
+target_end()
+
+table.insert(global_deps, "core")

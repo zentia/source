@@ -6,4 +6,6 @@ target("asset")
     add_headerfiles("asset_module.h")
     add_files("asset_module.cpp")
     add_deps("reflect-cpp")
+target_end()
 
+table.insert(global_deps, "asset")

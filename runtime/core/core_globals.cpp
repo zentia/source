@@ -17,5 +17,11 @@ namespace source_runtime::core
 		}
 		return true;
 	}
+
+	bool is_in_rendering_thread()
+	{
+		return render_thread_id == platform_tls::get_current_thread_id();
+	}
+
 }
 	

@@ -66,7 +66,29 @@ namespace source_module::rhi
 	RHI_RESOURCE_DECLARE(rhi_render_pass);
 	RHI_RESOURCE_DECLARE(rhi_sampler);
 	RHI_RESOURCE_DECLARE(rhi_semaphore);
-	
+
+	struct rhi_texture_desc
+	{
+		
+	};
+
+	struct rhi_texture_create_desc : rhi_texture_desc
+	{
+		
+	};
+
+	class rhi_viewable_resource
+	{
+	public:
+		
+	};
+
+	class rhi_texture : public rhi_viewable_resource
+	{
+	public:
+		rhi_texture_desc m_texture_desc;
+	};
+
 	struct rhi_memory_barrier
 	{
 		render::rhi_structure_type s_type;

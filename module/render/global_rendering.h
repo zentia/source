@@ -33,7 +33,7 @@ namespace source_runtime
 	class directional_light
 	{
 	public:
-		math::vector3 m_direction;
+		math::vector3f m_direction;
 		math::color m_color;
 	};
 
