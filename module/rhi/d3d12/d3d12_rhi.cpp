@@ -15,6 +15,16 @@ namespace source_module::rhi
 		return rhi_interface_type::d3d12;
 	}
 
+	std::shared_ptr<rhi_viewport> d3d12_rhi::create_viewport(void* window_handle, uint32_t size_x, uint32_t size_y, bool is_fullscreen, source_runtime::core::pixel_format pixel_format)
+	{
+		return nullptr;
+	}
+
+	d3d12_command_context* d3d12_rhi::create_command_context()
+	{
+		return nullptr;
+	}
+
 	void d3d12_rhi::find_adapter()
 	{
 		IDXGIFactory6* dxgi_factory6 = nullptr;

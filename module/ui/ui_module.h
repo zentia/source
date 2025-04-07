@@ -15,10 +15,11 @@ namespace source_runtime::ui
 	class ui_module
 	{
 	public:
-		virtual void initialize(window_ui_init_info init_info) = 0;
+		virtual void initialize(window_ui_init_info init_info);
 		virtual void update();
 	private:
 		canvas* m_canvas_{ nullptr };
 		std::shared_ptr<source_module::rhi::rhi_module> m_rhi_;
+		bool m_is_vulkan_{ false };
 	};
 }

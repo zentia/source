@@ -61,6 +61,7 @@ namespace source_module::rhi
 		bool create_render_pass() override;
 		bool create_sampler() override;
 		bool create_semaphore() override;
+		std::shared_ptr<rhi_viewport> create_viewport(void* window_handle, uint32_t size_x, uint32_t size_y, bool is_fullscreen, source_runtime::core::pixel_format pixel_format) override;
 
 		// command and command write
 		bool wait_for_fences(uint32_t fence_count, rhi_fence* const* fence, render::rhi_bool32 wait_all, uint64_t timeout) override;

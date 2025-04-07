@@ -23,4 +23,17 @@ namespace source_module::rhi
 	public:
 
 	};
+
+	class rhi_command_base
+	{
+	public:
+		rhi_command_base* m_next;
+		virtual void execute_and_destruct(rhi_command_list_base& command_list) = 0;
+	};
+
+	class rhi_lambda_command final : public rhi_command_base
+	{
+	public:
+		
+	};
 }

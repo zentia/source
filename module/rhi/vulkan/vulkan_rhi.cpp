@@ -491,6 +491,11 @@ namespace source_module::rhi
 		return false;
 	}
 
+	std::shared_ptr<rhi_viewport> vulkan_rhi::create_viewport(void* window_handle, uint32_t size_x, uint32_t size_y, bool is_fullscreen, source_runtime::core::pixel_format pixel_format)
+	{
+		return nullptr;
+	}
+
 	bool vulkan_rhi::wait_for_fences(uint32_t fence_count, rhi_fence* const* fence, render::rhi_bool32 wait_all, uint64_t timeout)
 	{
 		return false;

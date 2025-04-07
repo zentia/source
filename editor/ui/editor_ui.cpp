@@ -14,6 +14,7 @@ namespace source_editor
 	}
 	void editor_ui::initialize(source_runtime::ui::window_ui_init_info init_info)
 	{
+		ui_module::initialize(init_info);
 		std::shared_ptr<source_runtime::config_module> config_module = source_runtime::application::instance()->m_config_module;
 		assert(config_module);
 

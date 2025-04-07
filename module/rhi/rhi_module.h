@@ -4,6 +4,7 @@
 #include "module/window/window_module.h"
 #include <memory>
 
+#include "pixel_format.h"
 #include "rhi_define.h"
 #include "rhi_resources.h"
 
@@ -84,6 +85,7 @@ namespace source_module::rhi
 		virtual bool create_render_pass();
 		virtual bool create_sampler();
 		virtual bool create_semaphore();
+		virtual std::shared_ptr<rhi_viewport> create_viewport(void* window_handle, uint32_t size_x, uint32_t size_y, bool is_fullscreen, source_runtime::core::pixel_format pixel_format) = 0;
 
 		// command and command write
 		virtual bool wait_for_fences(uint32_t fence_count, rhi_fence* const* fence, render::rhi_bool32 wait_all, uint64_t timeout);

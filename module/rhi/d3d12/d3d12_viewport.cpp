@@ -10,7 +10,10 @@
 
 namespace source_module::rhi
 {
-	d3d12_viewport::d3d12_viewport(d3d12_adapter* parent, HWND window_handle, uint32_t size_x, uint32_t size_y, bool is_fullscreen) : d3d12_adapter_child(parent)
+	d3d12_viewport::d3d12_viewport(d3d12_adapter* parent, HWND window_handle, uint32_t size_x, uint32_t size_y, bool is_fullscreen, source_runtime::core::pixel_format pixel_format)
+		: d3d12_adapter_child(parent)
+		, m_window_handle_(window_handle)
+
 	{
 		assert(source_runtime::core::is_in_game_thread());
 		m_parent_adapter->m_viewports.push_back(this);
