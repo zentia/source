@@ -11,8 +11,7 @@
 #include "module/window/window_module.h"
 #include "module/world/world_module.h"
 #include "module/ui/ui_module.h"
-//#include "luisa/runtime/context.h"
-//#include "luisa/runtime/stream.h"
+
 namespace source_runtime
 {
     class application
@@ -20,7 +19,7 @@ namespace source_runtime
         double m_LaunchTime;
 
     public:
-        application(const std::string&& exe_path);
+        explicit application(const std::string&& exe_path);
         virtual ~application();
 
         void initialize(const std::string& config_file_path);
@@ -46,9 +45,7 @@ namespace source_runtime
         std::shared_ptr<source_runtime::ui::ui_module> m_ui_module;
         std::shared_ptr<source_module::time::time_module> m_time_module{ nullptr };
         std::shared_ptr<source_module::asset::asset_module> m_asset_module{ nullptr };
-        /*luisa::compute::Context m_context;
-        luisa::compute::Device m_device;
-        luisa::compute::Stream m_stream;*/
+        std::shared_ptr<source_module::rhi::rhi_module> m_rhi_module{ nullptr };
         static application* instance();
     private:
         static application* m_application_;

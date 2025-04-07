@@ -129,6 +129,7 @@ namespace source_module::rhi
 		rhi_semaphore*& get_texture_copy_semaphore(uint32_t index) override;
 
 		bool is_point_light_shadow_enabled() override;
+		rhi_interface_type get_interface_type() const override;
 		void create_instance();
 		void initialize_debug_messenger();
 		void create_window_surface();

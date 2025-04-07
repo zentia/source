@@ -2,8 +2,10 @@
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
+#include <imgui_impl_dx12.h>
 
 #include "imgui_impl_glfw.h"
+#include "runtime/application/application.h"
 
 namespace source_runtime::ui
 {
@@ -11,7 +13,14 @@ namespace source_runtime::ui
 	{
 		if (!m_panels_.empty())
 		{
-			ImGui_ImplVulkan_NewFrame();
+			if (application::instance()->m_rhi_module->get_interface_type() == source_module::rhi::rhi_interface_type::vulkan)
+			{
+				ImGui_ImplVulkan_NewFrame();
+			}
+			else
+			{
+				ImGui_ImplDX12_NewFrame();
+			}
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 			

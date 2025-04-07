@@ -779,6 +779,11 @@ namespace source_module::rhi
 		return false;
 	}
 
+	rhi_interface_type vulkan_rhi::get_interface_type() const
+	{
+		return rhi_interface_type::vulkan;
+	}
+
 	void vulkan_rhi::create_instance()
 	{
 		if (m_enable_validation_layers_ && !check_validation_layer_support())

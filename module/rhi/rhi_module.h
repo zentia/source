@@ -4,6 +4,7 @@
 #include "module/window/window_module.h"
 #include <memory>
 
+#include "rhi_define.h"
 #include "rhi_resources.h"
 
 namespace source_module::rhi
@@ -154,6 +155,8 @@ namespace source_module::rhi
 
 		// semaphores
 		virtual rhi_semaphore*& get_texture_copy_semaphore(uint32_t index);
+
+		virtual rhi_interface_type get_interface_type() const { return rhi_interface_type::hidden; }
 
 		GLFWwindow* m_window{ nullptr };
 		rhi_viewport m_viewport;

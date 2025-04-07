@@ -6,6 +6,7 @@
 #include "d3d12_submission.h"
 
 #include <array>
+#include <d3d12.h>
 
 namespace source_module::rhi
 {
@@ -21,6 +22,7 @@ namespace source_module::rhi
 	class d3d12_device final : public d3d12_single_node_gpu_object, public d3d12_adapter_child
 	{
 	public:
+		d3d12_device(d3d12_adapter* adapter);
 		std::array<d3d12_queue, static_cast<uint32_t>(d3d12_queue_type::count)> m_queues;
 	};
 

@@ -3,6 +3,7 @@
 #include "core_globals.h"
 #include "editor/ui/editor_ui.h"
 #include "module/render/render_module.h"
+#include "module/rhi/d3d12/d3d12_rhi.h"
 
 namespace source_runtime
 {
@@ -11,10 +12,7 @@ namespace source_runtime
 	application::application(const std::string&& exe_path)
 		: m_RecreateGfxDevice(false)
 		, m_LoadRenderDoc(false)
-		//, m_context(exe_path)
 	{
-		//m_device = m_context.create_default_device();
-		//m_stream = m_device.create_stream(luisa::compute::StreamTag::GRAPHICS);
 		m_application_ = this;
 	}
 
@@ -56,6 +54,10 @@ namespace source_runtime
 
 		m_time_module = std::make_shared<source_module::time::time_module>();
 		m_time_module->initialize();
+
+		const source_module::rhi::rhi_init_info rhi_init_info{};
+		m_rhi_module = std::make_shared<source_module::rhi::d3d12_rhi>();
+		m_rhi_module->initialize(rhi_init_info);
 	}
 
 	void application::RequestRecreateGfxDevice()
