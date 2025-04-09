@@ -3,11 +3,14 @@
 #include "pipeline/rhi_pipeline.h"
 #include <array>
 
+#include "taskflow/taskflow.hpp"
+
 namespace source_module::rhi
 {
 	class rhi_command_list_base
 	{
 	public:
+		rhi_pipeline_type switch_pipeline(rhi_pipeline_type type);
 	protected:
 		interface_command_context* m_graphics_context_{ nullptr };
 		interface_compute_context* m_compute_context_{ nullptr };
@@ -16,6 +19,9 @@ namespace source_module::rhi
 		uint32_t m_num_commands_{ 0 };
 		bool m_executing_{ false };
 		bool m_allow_parallel_translate_{ true };
+		rhi_pipeline_type m_pipeline_type_{ rhi_pipeline_type::none };
+	private:
+		void activate_pipelines(rhi_pipeline_type type);
 	};
 
 	class rhi_compute_command_list : public rhi_command_list_base
@@ -27,7 +33,7 @@ namespace source_module::rhi
 	class rhi_command_list : public rhi_compute_command_list
 	{
 	public:
-		
+
 	};
 	class rhi_command_base
 	{
@@ -39,21 +45,36 @@ namespace source_module::rhi
 	class rhi_lambda_command final : public rhi_command_base
 	{
 	public:
-		
+
 	};
 
 	class rhi_command_list_immediate : public rhi_command_list
 	{
 	public:
-		
+		void immediate_flush();
+		void initialize_immediate_contexts();
+	};
+
+	enum class rhi_submit_flags : uint8_t
+	{
+		none = 0,
+		submit_gpu = 1 << 0,
+		delete_resources = 1 << 1,
+		flush_rhi_thread = 1 << 2,
+		end_frame = 1 << 3,
 	};
 
 	class rhi_command_list_executor
 	{
 	public:
 		static rhi_command_list_immediate& get_immediate_command_list();
+		void latch_bypass();
+		std::shared_ptr<tf::Taskflow> submit(std::span<rhi_command_list_base*> additional_command_lists, rhi_submit_flags submit_flags);
 		rhi_command_list_immediate m_command_list_immediate;
+	private:
+		std::shared_ptr<tf::Taskflow> m_completion_event_{ nullptr };
 	};
 
 	inline rhi_command_list_executor g_rhi_command_list_executor{};
+
 }

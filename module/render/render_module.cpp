@@ -4,8 +4,8 @@
 #include "module/asset/asset_module.h"
 #include "module/config/config_module.h"
 #include "module/rhi/vulkan/vulkan_rhi.h"
-#include "resource/render_resource.h"
 #include "runtime/application/application.h"
+#include "runtime/render_core/render_resource.h"
 #include "swap_context/render_swap_context.h"
 
 namespace source_module::render
@@ -33,7 +33,6 @@ namespace source_module::render
 		scene_resource_desc.m_ibl_resource_desc.m_brdf_map = global_rendering_res.m_brdf_map;
 		scene_resource_desc.m_color_grading_resource_desc.m_color_grading_map = global_rendering_res.m_color_grading_map;
 
-		m_render_resource_base_ = std::make_shared<render_resource>();
 
 	}
 
