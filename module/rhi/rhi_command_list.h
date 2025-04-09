@@ -5,8 +5,34 @@
 
 #include "taskflow/taskflow.hpp"
 
+#define ALLOC_COMMAND(...) new ( alloc_command(sizeof(__VA_ARGS__), alignof(__VA_ARGS__)) ) __VA_ARGS__
+
 namespace source_module::rhi
 {
+	class rhi_command_list_base;
+
+	class rhi_command_base
+	{
+	public:
+		rhi_command_base* m_next;
+		virtual void execute_and_destruct(rhi_command_list_base& command_list) = 0;
+	};
+
+	template <typename RHICmdListType, typename Lambda>
+	class rhi_lambda_command final : public rhi_command_base
+	{
+	public:
+		rhi_lambda_command(Lambda&& lambda) : m_lambda(std::forward<Lambda>(lambda))
+		{
+			
+		}
+		void execute_and_destruct(rhi_command_list_base& command_list) override
+		{
+			m_lambda(*static_cast<RHICmdListType*>(&command_list));
+		}
+		Lambda m_lambda;
+	};
+
 	class rhi_command_list_base
 	{
 	public:
@@ -23,12 +49,17 @@ namespace source_module::rhi
 			{
 				lambda(*this);
 			}
+			else
+			{
+				ALLOC_COMMAND(rhi_lambda_command<rhi_command_list_base, Lambda>)(std::forward<Lambda>(lambda));
+			}
 		}
 	protected:
 		struct persistent_state
 		{
 			bool m_immediate{ true };
 		};
+		rhi_command_base** m_command_link_{ nullptr };
 		persistent_state m_persistent_state_{};
 		interface_command_context* m_graphics_context_{ nullptr };
 		interface_compute_context* m_compute_context_{ nullptr };
@@ -53,19 +84,7 @@ namespace source_module::rhi
 	public:
 
 	};
-	class rhi_command_base
-	{
-	public:
-		rhi_command_base* m_next;
-		virtual void execute_and_destruct(rhi_command_list_base& command_list) = 0;
-	};
-
-	class rhi_lambda_command final : public rhi_command_base
-	{
-	public:
-
-	};
-
+	
 	class rhi_command_list_immediate : public rhi_command_list
 	{
 	public:

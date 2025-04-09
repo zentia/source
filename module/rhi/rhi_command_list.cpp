@@ -1,13 +1,17 @@
 #include "rhi_command_list.h"
 
+#include "runtime/memory/memory.h"
 #include "runtime/render_core/render_thread.h"
 
 namespace source_module::rhi
 {
 	void* rhi_command_list_base::alloc_command(int32_t alloc_size, int32_t alignment)
 	{
-		//rhi_command_base* result = new rhi_command_base();
-		return nullptr;
+		rhi_command_base* result = static_cast<rhi_command_base*>(source_runtime::memory::allocator_allocate(alloc_size, alignment));
+		++m_num_commands_;
+		*m_command_link_ = result;
+		m_command_link_ = &result->m_next;
+		return result;
 	}
 
 	rhi_pipeline_type rhi_command_list_base::switch_pipeline(rhi_pipeline_type type)
@@ -40,7 +44,13 @@ namespace source_module::rhi
 	void rhi_command_list_base::activate_pipelines(rhi_pipeline_type type)
 	{
 		m_pipeline_type_ = type;
-		
+		enqueue_lambda([
+			new_pipeline = type
+		](rhi_command_list_base& executing_cmd_list)
+			{
+				executing_cmd_list.m_pipeline_type_ = new_pipeline;
+
+			});
 	}
 
 

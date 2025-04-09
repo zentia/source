@@ -1,7 +1,6 @@
 #include "memory.h"
 
 #include "EASTL/allocator.h"
-#include "EASTL/compare.h"
 
 namespace source_runtime::memory
 {

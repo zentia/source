@@ -1,4 +1,5 @@
 #pragma once
+#include "glm/ext/vector_integer.hpp"
 
 namespace source_module::rhi
 {
@@ -11,7 +12,10 @@ namespace source_module::rhi
 		all = graphic | async_compute,
 		num = 2,
 	};
-
+	constexpr bool is_single_rhi_pipeline(rhi_pipeline_type pipeline)
+	{
+		return pipeline != rhi_pipeline_type::none && glm::isPowerOfTwo(static_cast<uint8_t>(pipeline));
+	}
 	class interface_compute_context
 	{
 	public:
