@@ -10,8 +10,26 @@ namespace source_module::rhi
 	class rhi_command_list_base
 	{
 	public:
+		void* alloc_command(int32_t alloc_size, int32_t alignment);
 		rhi_pipeline_type switch_pipeline(rhi_pipeline_type type);
+		[[nodiscard]] bool is_immediate() const;
+		[[nodiscard]] bool is_executing() const;
+		[[nodiscard]] bool is_bottom_of_pipe() const;
+		[[nodiscard]] bool bypass() const;
+		template <typename Lambda>
+		void enqueue_lambda(Lambda&& lambda)
+		{
+			if (is_bottom_of_pipe())
+			{
+				lambda(*this);
+			}
+		}
 	protected:
+		struct persistent_state
+		{
+			bool m_immediate{ true };
+		};
+		persistent_state m_persistent_state_{};
 		interface_command_context* m_graphics_context_{ nullptr };
 		interface_compute_context* m_compute_context_{ nullptr };
 		interface_rhi_upload_context* m_upload_context_{ nullptr };
@@ -69,10 +87,12 @@ namespace source_module::rhi
 	public:
 		static rhi_command_list_immediate& get_immediate_command_list();
 		void latch_bypass();
+		bool bypass() const;
 		std::shared_ptr<tf::Taskflow> submit(std::span<rhi_command_list_base*> additional_command_lists, rhi_submit_flags submit_flags);
 		rhi_command_list_immediate m_command_list_immediate;
 	private:
 		std::shared_ptr<tf::Taskflow> m_completion_event_{ nullptr };
+		bool m_latched_bypass_{ false };
 	};
 
 	inline rhi_command_list_executor g_rhi_command_list_executor{};
