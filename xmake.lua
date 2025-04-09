@@ -99,6 +99,7 @@ target("source")
     end
     add_defines("SOURCE_EDITOR")
     add_defines("ENABLE_ASSERTIONS")
+    add_defines("EASTL_USER_DEFINED_ALLOCATOR=")
     set_pcxxheader("precompiled_header/source_prefix.h")
     add_deps(
         "D3D12MemoryAllocator",
@@ -131,9 +132,11 @@ target("source")
             print("dir " .. source_dir .. " does not exist.")
         end 
     end)
+target_end()
 
 target("source_editor")
     set_kind("binary")
     add_files("Editor/Platform/Windows/entry_point/main.cpp")
     add_deps("source")
     add_defines("SOURCE_EDITOR")
+target_end()
