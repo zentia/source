@@ -1205,4 +1205,9 @@ namespace source_module::rhi
 		return actual_extent;
 	}
 
+	rhi_compute_context* vulkan_rhi::rhi_get_command_context(rhi_pipeline_type pipeline, rhi_gpu_mask gpu_mask)
+	{
+		return nullptr;
+	}
+
 }

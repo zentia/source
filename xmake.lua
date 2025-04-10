@@ -1,6 +1,6 @@
 add_rules("mode.debug", "mode.release")
 
-set_languages("c++latest")
+set_languages("clatest", "cxxlatest")
 
 add_requires("eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
@@ -9,6 +9,7 @@ global_includedirs = {}
 global_headerfiles = {}
 global_files = {}
 global_deps = {}
+global_defines = {}
 
 includes(
     "external/xmake.lua",
@@ -49,15 +50,6 @@ target("source")
     add_headerfiles("editor/**.h")
     add_files("editor/**.cpp|editor/Platform/Windows/entry_point/Main.cpp")
     
-    add_includedirs(
-        "external/taskflow/3rd-party",
-        "external/taskflow"
-        )
-    add_headerfiles(
-        "external/taskflow/3rd-party/spdlog/**.h",
-        "external/taskflow/taskflow/**.hpp"
-        )
-
     add_headerfiles(
         "module/camera/**.h",
         "module/config/**.h",
@@ -105,14 +97,13 @@ target("source")
     add_deps(
         "D3D12MemoryAllocator",
         "glfw",
-        "glm",
         "imgui", 
         "reflect-cpp",
         "spine-runtimes",
         "VulkanMemoryAllocator"
     )
     add_deps(table.unpack(global_deps))
-    
+    add_defines(table.unpack(global_defines))
     add_rules("module")
     add_rules("c++.unity_build", {batchsize = 2})
     

@@ -2,10 +2,10 @@ includes(
     "D3D12MemoryAllocator/xmake.lua",
     "EASTL/xmake.lua",
     "glfw/xmake.lua",
-    "glm/xmake.lua",
     "imgui/xmake.lua", 
-    "mimalloc/xmake.lua",
+    "libcds/xmake.lua", 
     "reflect-cpp/xmake.lua",
     "spine-runtimes/xmake.lua",
+    "taskflow/xmake.lua",
     "VulkanMemoryAllocator/xmake.lua"
 )

@@ -131,6 +131,7 @@ namespace source_module::rhi
 
 		bool is_point_light_shadow_enabled() override;
 		rhi_interface_type get_interface_type() const override;
+		rhi_compute_context* rhi_get_command_context(rhi_pipeline_type pipeline, rhi_gpu_mask gpu_mask) override;
 		void create_instance();
 		void initialize_debug_messenger();
 		void create_window_surface();

@@ -3,7 +3,7 @@
 #include "pipeline/rhi_pipeline.h"
 #include <array>
 
-#include "taskflow/taskflow.hpp"
+#include "taskflow.hpp"
 
 #define ALLOC_COMMAND(...) new ( alloc_command(sizeof(__VA_ARGS__), alignof(__VA_ARGS__)) ) __VA_ARGS__
 

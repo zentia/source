@@ -22,7 +22,7 @@ namespace source_module::rhi
 
 	d3d12_command_context* d3d12_rhi::create_command_context(d3d12_device* parent, d3d12_queue_type queue_type, bool is_default_context)
 	{
-		return new d3d12_command_context();
+		return new d3d12_command_context(parent, queue_type, is_default_context);
 	}
 
 	void d3d12_rhi::find_adapter()
@@ -56,6 +56,7 @@ namespace source_module::rhi
 			//cmd_context = device->
 			break;
 		}
+		return nullptr;
 	}
 
 }
