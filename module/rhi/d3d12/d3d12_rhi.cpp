@@ -20,9 +20,9 @@ namespace source_module::rhi
 		return nullptr;
 	}
 
-	d3d12_command_context* d3d12_rhi::create_command_context()
+	d3d12_command_context* d3d12_rhi::create_command_context(d3d12_device* parent, d3d12_queue_type queue_type, bool is_default_context)
 	{
-		return nullptr;
+		return new d3d12_command_context();
 	}
 
 	void d3d12_rhi::find_adapter()
@@ -44,4 +44,18 @@ namespace source_module::rhi
 			}
 		}
 	}
+
+	rhi_compute_context* d3d12_rhi::rhi_get_command_context(rhi_pipeline_type pipeline, rhi_gpu_mask gpu_mask)
+	{
+		d3d12_device* device = m_chosen_adapters_[0]->m_devices[gpu_mask.m_gpu_mask];
+
+		d3d12_command_context* cmd_context;
+		switch (pipeline)
+		{
+		case rhi_pipeline_type::graphic:
+			//cmd_context = device->
+			break;
+		}
+	}
+
 }

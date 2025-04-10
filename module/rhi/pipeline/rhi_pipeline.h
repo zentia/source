@@ -11,12 +11,14 @@ namespace source_module::rhi
 		none = 0,
 		all = graphic | async_compute,
 		num = 2,
+
 	};
+
 	constexpr bool is_single_rhi_pipeline(rhi_pipeline_type pipeline)
 	{
 		return pipeline != rhi_pipeline_type::none && glm::isPowerOfTwo(static_cast<uint8_t>(pipeline));
 	}
-	class interface_compute_context
+	class rhi_compute_context
 	{
 	public:
 		virtual rhi_pipeline_type get_pipeline() const
@@ -25,7 +27,7 @@ namespace source_module::rhi
 		}
 	};
 
-	class interface_command_context : public interface_compute_context
+	class interface_command_context : public rhi_compute_context
 	{
 	public:
 		rhi_pipeline_type get_pipeline() const override;

@@ -1,10 +1,11 @@
-set_languages("cxx23")
+add_rules("mode.debug", "mode.release")
 
-add_rules("mode.debug","mode.releasedbg", "mode.release", "mode.minsizerel")
+set_languages("c++latest")
 
 add_requires("eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
 
+global_includedirs = {}
 global_headerfiles = {}
 global_files = {}
 global_deps = {}
@@ -83,11 +84,11 @@ target("source")
     add_files(table.unpack(global_files))
 
     add_headerfiles("configuration/**.h")
-    add_cxxflags("gxx::-fexec-charset=GBK", "/Zc:wchar_t")
     if is_mode("debug") then
         add_cxflags("-DDEBUG")
     end
     add_includedirs("./", {public = true})
+    add_includedirs(table.unpack(global_includedirs))
     if is_os("windows") then
         add_defines("PLATFORM_WIN")
         add_defines("__x86_64__")
@@ -114,6 +115,7 @@ target("source")
     
     add_rules("module")
     add_rules("c++.unity_build", {batchsize = 2})
+    
     after_build(function (target) 
         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
         local build_dir = os.projectdir() .. "\\" .. target:targetdir()

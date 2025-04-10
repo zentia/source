@@ -39,6 +39,7 @@ namespace source_module::rhi
 		void* alloc_command(int32_t alloc_size, int32_t alignment);
 		rhi_pipeline_type switch_pipeline(rhi_pipeline_type type);
 		[[nodiscard]] bool is_immediate() const;
+		[[nodiscard]] bool allow_parallel_translate() const;
 		[[nodiscard]] bool is_executing() const;
 		[[nodiscard]] bool is_bottom_of_pipe() const;
 		[[nodiscard]] bool bypass() const;
@@ -62,12 +63,16 @@ namespace source_module::rhi
 		rhi_command_base** m_command_link_{ nullptr };
 		persistent_state m_persistent_state_{};
 		interface_command_context* m_graphics_context_{ nullptr };
-		interface_compute_context* m_compute_context_{ nullptr };
+		rhi_compute_context* m_compute_context_{ nullptr };
 		interface_rhi_upload_context* m_upload_context_{ nullptr };
-		std::array<interface_compute_context*, 2> m_contexts_{};
+		std::array<rhi_compute_context*, 2> m_contexts_{};
 		uint32_t m_num_commands_{ 0 };
 		bool m_executing_{ false };
 		bool m_allow_parallel_translate_{ true };
+		bool m_use_set_tracked_access_{ false };
+		bool m_use_shader_bundles_{ false };
+		bool m_use_lock_fences_{ false };
+
 		rhi_pipeline_type m_pipeline_type_{ rhi_pipeline_type::none };
 	private:
 		void activate_pipelines(rhi_pipeline_type type);

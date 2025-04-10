@@ -11,7 +11,8 @@ namespace source_module::rhi
 		void initialize(rhi_init_info init_info) override;
 		rhi_interface_type get_interface_type() const override;
 		std::shared_ptr<rhi_viewport> create_viewport(void* window_handle, uint32_t size_x, uint32_t size_y, bool is_fullscreen, source_runtime::core::pixel_format pixel_format) override;
-		virtual d3d12_command_context* create_command_context();
+		virtual d3d12_command_context* create_command_context(d3d12_device* parent, d3d12_queue_type queue_type, bool is_default_context);
+		rhi_compute_context* rhi_get_command_context(rhi_pipeline_type pipeline, rhi_gpu_mask gpu_mask) override;
 		ID3D12GraphicsCommandList* m_graphics_command_list{ nullptr };
 	private:
 		void find_adapter();
