@@ -95,8 +95,6 @@ target("source")
     add_defines("EASTL_USER_DEFINED_ALLOCATOR=")
     set_pcxxheader("precompiled_header/source_prefix.h")
     add_deps(
-        "glfw",
-        "imgui", 
         "reflect-cpp",
         "spine-runtimes"
     )

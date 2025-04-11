@@ -1,3 +1,6 @@
+includes("EASTL/xmake.lua")
+includes("glfw/xmake.lua")
+includes("imgui/xmake.lua")
 includes("application/xmake.lua")
 includes("base_classes/xmake.lua")
 includes("core/xmake.lua")
