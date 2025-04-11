@@ -101,7 +101,7 @@ namespace source_module::rhi
 
 		// query
 		virtual void get_physical_device_properties(rhi_physical_device_properties* properties);
-		virtual [[nodiscard]] rhi_command_buffer* get_current_command_buffer() const;
+		virtual rhi_command_buffer* get_current_command_buffer() const;
 		virtual rhi_command_buffer* const* get_command_buffer_list() const;
 		virtual rhi_command_pool* get_command_pool() const;
 		virtual rhi_descriptor_pool* get_descriptor_pool() const;

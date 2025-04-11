@@ -4,6 +4,7 @@ set_languages("clatest", "cxxlatest")
 
 add_requires("eventpp", "vulkansdk")
 set_encodings("source:utf-8", "target:utf-8")
+set_toolchains("clang")
 
 global_includedirs = {}
 global_headerfiles = {}
@@ -101,7 +102,7 @@ target("source")
     add_deps(table.unpack(global_deps))
     add_defines(table.unpack(global_defines))
     add_rules("module")
-    add_rules("c++.unity_build", {batchsize = 2})
+    -- add_rules("c++.unity_build", {batchsize = 2})
     
     after_build(function (target) 
         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"

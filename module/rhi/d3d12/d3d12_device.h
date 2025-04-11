@@ -8,10 +8,10 @@
 #include <array>
 #include <d3d12.h>
 
-#include "d3d12_command_context.h"
-
 namespace source_module::rhi
 {
+	class d3d12_context_common;
+
 	class d3d12_queue final
 	{
 	public:

@@ -5,7 +5,7 @@ target("asset")
     add_includedirs("$(projectdir)/external/taskflow/3rd-party")
     add_headerfiles("asset_module.h")
     add_files("asset_module.cpp")
-    add_deps("reflect-cpp")
+    add_deps("reflect-cpp", "spdlog")
 target_end()
 
 table.insert(global_deps, "asset")

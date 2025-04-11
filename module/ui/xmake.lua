@@ -1,0 +1,1 @@
+table.insert(global_defines, "LUISA_PLATFORM_WINDOWS=1")

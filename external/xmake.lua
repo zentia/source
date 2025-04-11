@@ -6,5 +6,5 @@ includes(
     "reflect-cpp/xmake.lua",
     "spine-runtimes/xmake.lua",
     "taskflow/xmake.lua",
-    "VulkanMemoryAllocator/xmake.lua"
+    "magic_enum/xmake.lua"
 )
