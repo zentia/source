@@ -43,13 +43,6 @@ namespace source_runtime
 			uint32_t array_layers, 
 			uint32_t mip_levels);
 		static VkImageView create_image_view(VkDevice device, const VkImage& image, VkFormat format, VkImageAspectFlags image_aspect_flags, VkImageViewType view_type, uint32_t layout_count, uint32_t mip_levels);
-		static void create_global_image(
-			source_module::rhi::rhi_module* rhi, VkImage& image, VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels,
-		                                source_module::render::rhi_format texture_image_format,
-		                                uint32_t mip_levels = 0);
-		static void create_cube_map(source_module::rhi::rhi_module* rhi, 
-		                            VkImage& image, 
-		                            VkImageView& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, source_module::render::rhi_format texture_image_format, uint32_t mip_levels);
 		static void transition_image_layout(source_module::rhi::rhi_module* rhi, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t layer_count, uint32_t mip_levels, VkImageAspectFlags aspect_mask_bits);
 		static void copy_buffer_to_image(source_module::rhi::rhi_module* rhi, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layer_count);
 		static void gen_mipmap_image(source_module::rhi::rhi_module* rhi, VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels);

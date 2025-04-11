@@ -1,6 +1,5 @@
 #pragma once
 
-#include "vk_mem_alloc.h"
 #include "module/window/window_module.h"
 #include <memory>
 
@@ -44,12 +43,6 @@ namespace source_module::rhi
 		virtual void create_buffer(
 			render::rhi_device_size size,
 			render::rhi_buffer_usage_flags usage, render::rhi_memory_property_flags properties, rhi_buffer*& buffer, rhi_device_memory*& buffer_memory, void* data = nullptr, int data_size = 0);
-		virtual bool create_buffer_vma(
-			VmaAllocator allocator,
-			const rhi_buffer_create_info* buffer_create_info, const VmaAllocationCreateInfo* allocation_create_info, rhi_buffer*& buffer, VmaAllocation* allocation, VmaAllocationInfo* allocation_info);
-		virtual bool create_buffer_with_alignment_vma(VmaAllocator allocator,
-			const rhi_buffer_create_info* buffer_create_info, 
-			VmaAllocationCreateInfo* allocation_create_info, render::rhi_device_size min_alignment, rhi_buffer*& buffer, VmaAllocation* allocation, VmaAllocationInfo* allocation_info);
 		virtual void copy_buffer(rhi_buffer* src_buffer, rhi_buffer* dst_buffer, render::rhi_device_size src_offset, render::rhi_device_size dst_offset, render::rhi_device_size size);
 		virtual void create_image(
 			uint32_t image_width, uint32_t image_height, render::rhi_format format,
@@ -67,14 +60,6 @@ namespace source_module::rhi
 			render::rhi_image_aspect_flags image_aspect_flags,
 			render::rhi_image_view_type view_type, 
 			uint32_t layout_count, uint32_t mip_levels, rhi_image_view*& image_view);
-		virtual void create_global_image(
-			rhi_image*& image, 
-			rhi_image_view*& image_view, 
-			VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, render::rhi_format texture_image_format, uint32_t mip_levels = 0);
-		virtual void create_cube_map(
-			rhi_image*& image, 
-			rhi_image_view*& image_view, 
-			VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, render::rhi_format texture_image_format, uint32_t mip_levels);
 		virtual void create_command_pool();
 		virtual bool create_command_pool(const rhi_command_pool_create_info* create_info, rhi_command_pool*& command_pool);
 		virtual bool create_descriptor_pool(const rhi_descriptor_pool_create_info* create_info, rhi_descriptor_pool*& descriptor_pool);

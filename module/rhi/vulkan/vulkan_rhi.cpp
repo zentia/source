@@ -318,53 +318,6 @@ namespace source_module::rhi
 		static_cast<vulkan_rhi_device_memory*>(buffer_memory)->set_resource(vk_device_memory);
 	}
 
-	bool vulkan_rhi::create_buffer_vma(const VmaAllocator allocator,
-		const rhi_buffer_create_info* rhi_buffer_create_info,
-		const VmaAllocationCreateInfo* allocation_create_info,
-		rhi_buffer*& buffer,
-		VmaAllocation* allocation,
-		VmaAllocationInfo* allocation_info)
-	{
-		VkBuffer vk_buffer;
-		VkBufferCreateInfo buffer_create_info;
-		buffer_create_info.sType = static_cast<VkStructureType>(rhi_buffer_create_info->type);
-		buffer_create_info.pNext = static_cast<const void*>(rhi_buffer_create_info->next);
-		buffer_create_info.flags = static_cast<VkBufferCreateFlags>(rhi_buffer_create_info->flags);
-		buffer_create_info.size = static_cast<VkDeviceSize>(rhi_buffer_create_info->size);
-		buffer_create_info.usage = static_cast<VkBufferUsageFlags>(rhi_buffer_create_info->usage);
-		buffer_create_info.sharingMode = static_cast<VkSharingMode>(rhi_buffer_create_info->shading_mode);
-		buffer_create_info.queueFamilyIndexCount = rhi_buffer_create_info->queue_family_index_count;
-		buffer_create_info.pQueueFamilyIndices = static_cast<const uint32_t*>(rhi_buffer_create_info->queue_family_indices);
-
-		buffer = new vulkan_rhi_buffer;
-		const VkResult result = vmaCreateBuffer(allocator, &buffer_create_info, allocation_create_info, &vk_buffer, allocation, allocation_info);
-		static_cast<vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
-		return result == VK_SUCCESS;
-	}
-
-	bool vulkan_rhi::create_buffer_with_alignment_vma(
-		VmaAllocator allocator,
-		const rhi_buffer_create_info* rhi_buffer_create_info, VmaAllocationCreateInfo* allocation_create_info, render::rhi_device_size min_alignment,
-		rhi_buffer*& buffer, VmaAllocation* allocation, VmaAllocationInfo* allocation_info
-	)
-	{
-		VkBuffer vk_buffer;
-		VkBufferCreateInfo buffer_create_info;
-		buffer_create_info.sType = static_cast<VkStructureType>(rhi_buffer_create_info->type);
-		buffer_create_info.pNext = static_cast<const void*>(rhi_buffer_create_info->next);
-		buffer_create_info.flags = static_cast<VkBufferCreateFlags>(rhi_buffer_create_info->flags);
-		buffer_create_info.size = static_cast<VkDeviceSize>(rhi_buffer_create_info->size);
-		buffer_create_info.usage = static_cast<VkBufferUsageFlags>(rhi_buffer_create_info->usage);
-		buffer_create_info.sharingMode = static_cast<VkSharingMode>(rhi_buffer_create_info->shading_mode);
-		buffer_create_info.queueFamilyIndexCount = rhi_buffer_create_info->queue_family_index_count;
-		buffer_create_info.pQueueFamilyIndices = static_cast<const uint32_t*>(rhi_buffer_create_info->queue_family_indices);
-
-		buffer = new vulkan_rhi_buffer;
-		const VkResult result = vmaCreateBufferWithAlignment(allocator, &buffer_create_info, allocation_create_info, min_alignment, &vk_buffer, allocation, allocation_info);
-		static_cast<vulkan_rhi_buffer*>(buffer)->set_resource(vk_buffer);
-		return result == VK_SUCCESS;
-	}
-
 	void vulkan_rhi::copy_buffer(rhi_buffer* src_buffer, rhi_buffer* dst_buffer, const render::rhi_device_size src_offset, const render::rhi_device_size dst_offset, const render::rhi_device_size size)
 	{
 		const VkBuffer vk_src_buffer = static_cast<vulkan_rhi_buffer*>(src_buffer)->get_resource();
@@ -403,32 +356,6 @@ namespace source_module::rhi
 		VkImage vk_image = static_cast<vulkan_rhi_image*>(image)->get_resource();
 		const VkImageView vk_image_view = source_runtime::vulkan_util::create_image_view(m_device, vk_image, static_cast<VkFormat>(format), image_aspect_flags, static_cast<VkImageViewType>(view_type), layout_count, mip_levels);
 		static_cast<vulkan_rhi_image_view*>(image_view)->set_resource(vk_image_view);
-	}
-
-	void vulkan_rhi::create_global_image(
-		rhi_image*& image,
-		rhi_image_view*& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, render::rhi_format texture_image_format, uint32_t mip_levels)
-	{
-		VkImage vk_image;
-		VkImageView vk_image_view;
-
-		source_runtime::vulkan_util::create_global_image(this, vk_image, vk_image_view, image_allocation, texture_image_width, texture_image_height, texture_image_pixels, texture_image_format, mip_levels);
-
-		image = new vulkan_rhi_image;
-		image_view = new vulkan_rhi_image_view;
-		static_cast<vulkan_rhi_image*>(image)->set_resource(vk_image);
-		static_cast<vulkan_rhi_image_view*>(image_view)->set_resource(vk_image_view);
-	}
-
-	void vulkan_rhi::create_cube_map(
-		rhi_image*& image,
-		rhi_image_view*& image_view,
-		VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, render::rhi_format texture_image_format, uint32_t mip_levels)
-	{
-		VkImage vk_image;
-		VkImageView vk_image_view;
-
-
 	}
 
 	void vulkan_rhi::create_command_pool()

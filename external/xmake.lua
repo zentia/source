@@ -1,9 +1,8 @@
 includes(
-    "D3D12MemoryAllocator/xmake.lua",
-    "EASTL/xmake.lua",
     "glfw/xmake.lua",
     "imgui/xmake.lua", 
     "libcds/xmake.lua", 
+    "LuisaRender/xmake.lua",
     "reflect-cpp/xmake.lua",
     "spine-runtimes/xmake.lua",
     "taskflow/xmake.lua",

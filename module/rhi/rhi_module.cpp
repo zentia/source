@@ -70,18 +70,6 @@ namespace source_module::rhi
 		
 	}
 
-	bool rhi_module::create_buffer_vma(VmaAllocator allocator, const rhi_buffer_create_info* buffer_create_info, const VmaAllocationCreateInfo* allocation_create_info, rhi_buffer*& buffer, VmaAllocation* allocation, VmaAllocationInfo* allocation_info)
-	{
-		return false;
-	}
-
-	bool rhi_module::create_buffer_with_alignment_vma(
-		VmaAllocator allocator, 
-		const rhi_buffer_create_info* buffer_create_info, VmaAllocationCreateInfo* allocation_create_info, render::rhi_device_size min_alignment, rhi_buffer*& buffer, VmaAllocation* allocation, VmaAllocationInfo* allocation_info)
-	{
-		return false;
-	}
-
 	void rhi_module::copy_buffer(rhi_buffer* src_buffer, rhi_buffer* dst_buffer, render::rhi_device_size src_offset, render::rhi_device_size dst_offset, render::rhi_device_size size)
 	{
 		
@@ -97,19 +85,6 @@ namespace source_module::rhi
 
 	void rhi_module::create_image_view(
 		rhi_image* image, render::rhi_format format, render::rhi_image_aspect_flags image_aspect_flags, render::rhi_image_view_type view_type, uint32_t layout_count, uint32_t mip_levels, rhi_image_view*& image_view)
-	{
-		
-	}
-
-	void rhi_module::create_global_image(
-		rhi_image*& image, rhi_image_view*& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, void* texture_image_pixels, render::rhi_format texture_image_format, uint32_t mip_levels)
-	{
-		
-	}
-
-	void rhi_module::create_cube_map(
-		rhi_image*& image, 
-		rhi_image_view*& image_view, VmaAllocation& image_allocation, uint32_t texture_image_width, uint32_t texture_image_height, std::array<void*, 6> texture_image_pixels, render::rhi_format texture_image_format, uint32_t mip_levels)
 	{
 		
 	}
