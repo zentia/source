@@ -1,0 +1,143 @@
+\doxysection{Subflow Tasking}
+\hypertarget{_subflow_tasking}{}\label{_subflow_tasking}\index{Subflow Tasking@{Subflow Tasking}}
+It is very common for a parallel program to spawn task dependency graphs at runtime. In Taskflow, we call this {\itshape subflow tasking}.\hypertarget{_subflow_tasking_CreateASubflow}{}\doxysubsection{\texorpdfstring{Create a Subflow}{Create a Subflow}}\label{_subflow_tasking_CreateASubflow}
+Subflow tasks are those created during the execution of a graph. These tasks are spawned from a parent task and are grouped together to a {\itshape subflow} dependency graph. To create a subflow, emplace a callable that takes an argument of type \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow}. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow} object will be created and forwarded to the execution context of the task. All methods you find in \doxylink{classtf_1_1_taskflow}{tf\+::\+Taskflow} are applicable for \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ 2:\ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ 3:}
+\DoxyCodeLine{\ 4:\ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A"{}});\ \ \textcolor{comment}{//\ static\ task\ A}}
+\DoxyCodeLine{\ 5:\ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}C"{}});\ \ \textcolor{comment}{//\ static\ task\ C}}
+\DoxyCodeLine{\ 6:\ tf::Task\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}D"{}});\ \ \textcolor{comment}{//\ static\ task\ D}}
+\DoxyCodeLine{\ 7:}
+\DoxyCodeLine{\ 8:\ tf::Task\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ (tf::Subflow\&\ subflow)\ \{\ }
+\DoxyCodeLine{\ 9:\ \ \ tf::Task\ \mbox{\hyperlink{namespace_p_a104e30e1fb815af59069cc4567cb35ee}{B1}}\ =\ subflow.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B1"{}});\ \ \textcolor{comment}{//\ subflow\ task\ B1}}
+\DoxyCodeLine{10:\ \ \ tf::Task\ \mbox{\hyperlink{namespace_p_a58c370cdedae1bcbf19bcdc9d7a8d583}{B2}}\ =\ subflow.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B2"{}});\ \ \textcolor{comment}{//\ subflow\ task\ B2}}
+\DoxyCodeLine{11:\ \ \ tf::Task\ \mbox{\hyperlink{namespace_p_ab399e249b5a6d9c560c81efee6ab527a}{B3}}\ =\ subflow.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B3"{}});\ \ \textcolor{comment}{//\ subflow\ task\ B3}}
+\DoxyCodeLine{12:\ \ \ \mbox{\hyperlink{namespace_p_a104e30e1fb815af59069cc4567cb35ee}{B1}}.precede(B3);\ \ \textcolor{comment}{//\ B1\ runs\ before\ B3}}
+\DoxyCodeLine{13:\ \ \ \mbox{\hyperlink{namespace_p_a58c370cdedae1bcbf19bcdc9d7a8d583}{B2}}.precede(B3);\ \ \textcolor{comment}{//\ B2\ runs\ before\ B3}}
+\DoxyCodeLine{14:\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B"{}});}
+\DoxyCodeLine{15:}
+\DoxyCodeLine{16:\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.precede(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}});\ \ \textcolor{comment}{//\ B\ runs\ after\ A}}
+\DoxyCodeLine{17:\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.precede(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});\ \ \textcolor{comment}{//\ C\ runs\ after\ A}}
+\DoxyCodeLine{18:\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}.precede(\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}});\ \ \textcolor{comment}{//\ D\ runs\ after\ B}}
+\DoxyCodeLine{19:\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}.precede(\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}});\ \ \textcolor{comment}{//\ D\ runs\ after\ C}}
+\DoxyCodeLine{20:}
+\DoxyCodeLine{21:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).get();\ \ \textcolor{comment}{//\ execute\ the\ graph\ to\ spawn\ the\ subflow}}
+\DoxyCodeLine{22:\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);\ \ \ \ \ \ \textcolor{comment}{//\ dump\ the\ taskflow\ to\ a\ DOT\ format}}
+
+\end{DoxyCode}
+
+
+
+
+Debrief\+: \begin{DoxyItemize}
+\item Lines 1-\/2 create a taskflow and an executor \item Lines 4-\/6 create three tasks, \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}, C, and D \item Lines 8-\/14 create a task \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B} that spawns a task dependency graph of three tasks B1, B2, and B3 \item Lines 16-\/19 add dependencies among \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}, \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}, C, and D \item Line 21 submits the graph to an executor and waits until it finishes \item Line 22 dumps the entire task dependency graph\end{DoxyItemize}
+Lines 8-\/14 are the main block to enable subflow tasking at task \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}. The runtime will create a \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow} passing it to task \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}, and spawn a dependency graph as described by the associated callable. This new subflow graph will be added to the topology of its parent task \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}. Due to the property of subflow tasking, we cannot dump its structure before execution. We will need to run the graph first to spawn the graph and then call \doxylink{classtf_1_1_taskflow_ac433018262e44b12c4cc9f0c4748d758}{tf\+::\+Taskflow\+::dump}.\hypertarget{_subflow_tasking_JoinASubflow}{}\doxysubsection{\texorpdfstring{Join a Subflow}{Join a Subflow}}\label{_subflow_tasking_JoinASubflow}
+By default, a subflow joins its parent task when the program leaves its execution context. All nodes of zero outgoing edges in the subflow precede its parent task. You can explicitly join a subflow within its execution context to carry out recursive patterns. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} famous implementation is fibonacci recursion.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\ \mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ <\ 2)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ res1,\ res2;}
+\DoxyCodeLine{\ \ sbf.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([\&res1,\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]\ (\mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf)\ \{\ res1\ =\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ -\/\ 1,\ sbf);\ \}\ );}
+\DoxyCodeLine{\ \ sbf.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([\&res2,\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]\ (\mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf)\ \{\ res2\ =\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ -\/\ 2,\ sbf);\ \}\ );}
+\DoxyCodeLine{\ \ sbf.\mbox{\hyperlink{classtf_1_1_subflow_a59fcac1323e70d920088dd37bd0be245}{join}}();\ \ \ \ \textcolor{comment}{//\ join\ to\ materialize\ the\ subflow\ immediately}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ res1\ +\ res2;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&\mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}]\ (tf::Subflow\&\ sbf)\ \{\ }
+\DoxyCodeLine{\ \ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}\ =\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(5,\ sbf);\ \ }
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+The code above computes the fifth fibonacci number using recursive subflow. Calling \doxylink{classtf_1_1_subflow_a59fcac1323e70d920088dd37bd0be245}{tf\+::\+Subflow\+::join} {\itshape immediately} materializes the subflow by executing all associated tasks to recursively compute fibonacci numbers. The taskflow graph is shown below\+:
+
+Our implementation to join subflows is {\itshape recursive} in order to preserve the thread context in each subflow task. Having a deep recursion of subflows may cause stack overflow.\hypertarget{_subflow_tasking_DetachASubflow}{}\doxysubsection{\texorpdfstring{Detach a Subflow}{Detach a Subflow}}\label{_subflow_tasking_DetachASubflow}
+In contract to joined subflow, you can detach a subflow from its parent task, allowing its execution to flow independently.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ 2:}
+\DoxyCodeLine{\ 3:\ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A"{}});\ \ \textcolor{comment}{//\ static\ task\ A}}
+\DoxyCodeLine{\ 4:\ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}C"{}});\ \ \textcolor{comment}{//\ static\ task\ C}}
+\DoxyCodeLine{\ 5:\ tf::Task\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}D"{}});\ \ \textcolor{comment}{//\ static\ task\ D}}
+\DoxyCodeLine{\ 6:}
+\DoxyCodeLine{\ 7:\ tf::Task\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ (tf::Subflow\&\ subflow)\ \{\ }
+\DoxyCodeLine{\ 8:\ \ \ tf::Task\ \mbox{\hyperlink{namespace_p_a104e30e1fb815af59069cc4567cb35ee}{B1}}\ =\ subflow.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B1"{}});\ \ \textcolor{comment}{//\ static\ task\ B1}}
+\DoxyCodeLine{\ 9:\ \ \ tf::Task\ \mbox{\hyperlink{namespace_p_a58c370cdedae1bcbf19bcdc9d7a8d583}{B2}}\ =\ subflow.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B2"{}});\ \ \textcolor{comment}{//\ static\ task\ B2}}
+\DoxyCodeLine{10:\ \ \ tf::Task\ \mbox{\hyperlink{namespace_p_ab399e249b5a6d9c560c81efee6ab527a}{B3}}\ =\ subflow.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B3"{}});\ \ \textcolor{comment}{//\ static\ task\ B3}}
+\DoxyCodeLine{11:\ \ \ \mbox{\hyperlink{namespace_p_a104e30e1fb815af59069cc4567cb35ee}{B1}}.precede(B3);\ \ \ \ \textcolor{comment}{//\ B1\ runs\ before\ B3}}
+\DoxyCodeLine{12:\ \ \ \mbox{\hyperlink{namespace_p_a58c370cdedae1bcbf19bcdc9d7a8d583}{B2}}.precede(B3);\ \ \ \ \textcolor{comment}{//\ B2\ runs\ before\ B3}}
+\DoxyCodeLine{13:\ \ \ subflow.\mbox{\hyperlink{classtf_1_1_subflow_acfdedc7e9676126e9a38ecf7b5a37864}{detach}}();\ \ \textcolor{comment}{//\ detach\ this\ subflow}}
+\DoxyCodeLine{14:\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B"{}});}
+\DoxyCodeLine{15:}
+\DoxyCodeLine{16:\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.precede(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}});\ \ \textcolor{comment}{//\ B\ runs\ after\ A}}
+\DoxyCodeLine{17:\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.precede(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});\ \ \textcolor{comment}{//\ C\ runs\ after\ A}}
+\DoxyCodeLine{18:\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}.precede(\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}});\ \ \textcolor{comment}{//\ D\ runs\ after\ B}}
+\DoxyCodeLine{19:\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}.precede(\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}});\ \ \textcolor{comment}{//\ D\ runs\ after\ C}}
+\DoxyCodeLine{20:}
+\DoxyCodeLine{21:\ tf::Executor\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{22:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();\ \ \ \ \ \ \ \textcolor{comment}{//\ execute\ the\ graph\ to\ spawn\ the\ subflow}}
+\DoxyCodeLine{22:\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dump\ the\ taskflow\ to\ DOT\ format}}
+
+\end{DoxyCode}
+
+
+The figure below demonstrates a detached subflow based on the previous example. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} detached subflow will eventually join the topology of its parent task.
+
+Detached subflow becomes an independent graph attached to the top-\/most taskflow. Running a taskflow multiple times will accumulate all detached tasks in the graph. For example, running the above taskflow 5 times results in a total of 19 tasks.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run\_n(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}},\ 5).wait();}
+\DoxyCodeLine{assert(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.num\_tasks()\ ==\ 19);}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+
+\end{DoxyCode}
+
+
+The dumped graph is shown as follows\+:\hypertarget{_subflow_tasking_CreateANestedSubflow}{}\doxysubsection{\texorpdfstring{Create a Nested Subflow}{Create a Nested Subflow}}\label{_subflow_tasking_CreateANestedSubflow}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} subflow can be nested or recursive. You can create another subflow from the execution of a subflow and so on.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ 2:}
+\DoxyCodeLine{\ 3:\ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ (\mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf)\{}
+\DoxyCodeLine{\ 4:\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}A\ spawns\ A1\ \&\ subflow\ A2\(\backslash\)n"{}};}
+\DoxyCodeLine{\ 5:\ \ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ A1\ =\ sbf.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{}
+\DoxyCodeLine{\ 6:\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}subtask\ A1\(\backslash\)n"{}};}
+\DoxyCodeLine{\ 7:\ \ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A1"{}});}
+\DoxyCodeLine{\ 8:}
+\DoxyCodeLine{\ 9:\ \ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ A2\ =\ sbf.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ (\mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf2)\{}
+\DoxyCodeLine{10:\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}A2\ spawns\ A2\_1\ \&\ A2\_2\(\backslash\)n"{}};}
+\DoxyCodeLine{11:\ \ \ \ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ A2\_1\ =\ sbf2.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{}
+\DoxyCodeLine{12:\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}subtask\ A2\_1\(\backslash\)n"{}};}
+\DoxyCodeLine{13:\ \ \ \ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A2\_1"{}});}
+\DoxyCodeLine{14:\ \ \ \ \ tf::Task\ A2\_2\ =\ sbf2.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]\ ()\ \{}
+\DoxyCodeLine{15:\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}subtask\ A2\_2\(\backslash\)n"{}};}
+\DoxyCodeLine{16:\ \ \ \ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A2\_2"{}});}
+\DoxyCodeLine{17:\ \ \ \ \ A2\_1.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(A2\_2);}
+\DoxyCodeLine{18:\ \ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A2"{}});}
+\DoxyCodeLine{19:\ \ \ \mbox{\hyperlink{namespace_p_ad8e5e0856b9136906a0cfc4a369e77ee}{A1}}.precede(A2);}
+\DoxyCodeLine{20:\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A"{}});}
+\DoxyCodeLine{21:}
+\DoxyCodeLine{22:\ \textcolor{comment}{//\ execute\ the\ graph\ to\ spawn\ the\ subflow}}
+\DoxyCodeLine{23:\ tf::Executor().run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).get();}
+\DoxyCodeLine{24:\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+
+\end{DoxyCode}
+
+
+Debrief\+: \begin{DoxyItemize}
+\item Line 1 creates a taskflow object \item Lines 3-\/20 create a task to spawn a subflow of two tasks A1 and A2 \item Lines 9-\/18 spawn another subflow of two tasks A2\+\_\+1 and A2\+\_\+2 out of its parent task A2 \item Lines 23-\/24 runs the graph asynchronously and dump its structure when it finishes\end{DoxyItemize}
+Similarly, you can detach a nested subflow from its parent subflow. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} detached subflow will run independently and eventually join the topology of its parent subflow. 

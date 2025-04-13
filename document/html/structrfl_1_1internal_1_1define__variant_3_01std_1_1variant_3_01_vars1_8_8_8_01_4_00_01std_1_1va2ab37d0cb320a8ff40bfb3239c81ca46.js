@@ -1,0 +1,4 @@
+var structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars1_8_8_8_01_4_00_01std_1_1va2ab37d0cb320a8ff40bfb3239c81ca46 =
+[
+    [ "type", "structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars1_8_8_8_01_4_00_01std_1_1va2ab37d0cb320a8ff40bfb3239c81ca46.html#afbb25bb197a2ead9a7bec8cb01b961da", null ]
+];

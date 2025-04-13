@@ -1,0 +1,28 @@
+var atomic__macros__xor__fetch_8h =
+[
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQ_REL_128", "atomic__macros__xor__fetch_8h.html#a0ae0d1e51c8b22ac1d0cc28fde417473", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQ_REL_16", "atomic__macros__xor__fetch_8h.html#accd78e9f5d73e6d0db0a7048fb372548", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQ_REL_32", "atomic__macros__xor__fetch_8h.html#a8d141ae077acfe9dc47d571938cb4114", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQ_REL_64", "atomic__macros__xor__fetch_8h.html#a72f3c9bd9ed14e24228dab493555c9b1", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQ_REL_8", "atomic__macros__xor__fetch_8h.html#a762dc2bd494d09003d2c4306b577a2fc", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQUIRE_128", "atomic__macros__xor__fetch_8h.html#a42e36ead7dc06df8f2d3e9cc9f050ffd", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQUIRE_16", "atomic__macros__xor__fetch_8h.html#a1e44a3d53de9c72ca86699e69eefa5a9", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQUIRE_32", "atomic__macros__xor__fetch_8h.html#aa8d449a6660b68b44820f0defbcb260b", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQUIRE_64", "atomic__macros__xor__fetch_8h.html#aa259f76d5b3f1aec3f93db7e75f8e6c3", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_ACQUIRE_8", "atomic__macros__xor__fetch_8h.html#a1a0950289e37008746234d7643f94f59", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELAXED_128", "atomic__macros__xor__fetch_8h.html#af9b46189aea9cc301f4f27dbbfd6d627", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELAXED_16", "atomic__macros__xor__fetch_8h.html#a7fe5413afe2f01d3f4e760e7bdc366a0", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELAXED_32", "atomic__macros__xor__fetch_8h.html#a16b1bb607f8ec916ef48c01d3f597728", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELAXED_64", "atomic__macros__xor__fetch_8h.html#ad3306ebba851f94bfa038bd5d2d4e5d3", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELAXED_8", "atomic__macros__xor__fetch_8h.html#a4f3b6e1ecc953f486417ee7df2074ad0", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELEASE_128", "atomic__macros__xor__fetch_8h.html#a1cb77832dd8c9901b4c1b166f8e15a01", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELEASE_16", "atomic__macros__xor__fetch_8h.html#a69ee1eae517e1ed29547762687c2fd0f", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELEASE_32", "atomic__macros__xor__fetch_8h.html#ae2107b265517fba1808a9635f665e68c", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELEASE_64", "atomic__macros__xor__fetch_8h.html#ab2b5e30069862ac2af96f47be60a8982", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_RELEASE_8", "atomic__macros__xor__fetch_8h.html#a26bbb89f1ea03d148d90eb531641f77d", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_SEQ_CST_128", "atomic__macros__xor__fetch_8h.html#a30b5967ad86b22b29d2fc930c4f15b66", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_SEQ_CST_16", "atomic__macros__xor__fetch_8h.html#a886aa93a1fadb582fc655db202e2e6f3", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_SEQ_CST_32", "atomic__macros__xor__fetch_8h.html#aae7a9bf0b103818b192792849aea576f", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_SEQ_CST_64", "atomic__macros__xor__fetch_8h.html#ab42e8648007b7573c313b9a32fafc6f1", null ],
+    [ "EASTL_ATOMIC_XOR_FETCH_SEQ_CST_8", "atomic__macros__xor__fetch_8h.html#a68b8dab9f90faee9f4eab8884eada20b", null ]
+];

@@ -1,0 +1,4 @@
+var structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1traits___ellen_bin_tree_set__stat__hp =
+[
+    [ "update_desc_allocator", "structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1traits___ellen_bin_tree_set__stat__hp.html#a357850d6800b2c2566f954a253262144", null ]
+];

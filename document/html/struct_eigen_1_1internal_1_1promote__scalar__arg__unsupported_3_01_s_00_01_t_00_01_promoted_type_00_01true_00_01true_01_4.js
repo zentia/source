@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1promote__scalar__arg__unsupported_3_01_s_00_01_t_00_01_promoted_type_00_01true_00_01true_01_4 =
+[
+    [ "type", "struct_eigen_1_1internal_1_1promote__scalar__arg__unsupported_3_01_s_00_01_t_00_01_promoted_type_00_01true_00_01true_01_4.html#a64364a92b21177220b54217e88f1703d", null ]
+];

@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1eval_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4 =
+[
+    [ "type", "struct_eigen_1_1internal_1_1eval_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4.html#adf7bbb0f84d9d9266e14b0ad534f5db1", null ]
+];

@@ -1,0 +1,5 @@
+var struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements_3_01_multiply_00_01sub6a817ae4e5806a51bb78ea524863d341 =
+[
+    [ "type", "struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements.html#a90b6b7f2fdc81f9dad51ecb3cfea26fc", null ],
+    [ "type", "struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements_3_01_multiply_00_01sub6a817ae4e5806a51bb78ea524863d341.html#a52dff4181bccb385044a19c7fcb0b8e3", null ]
+];

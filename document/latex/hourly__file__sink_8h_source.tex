@@ -1,0 +1,199 @@
+\doxysection{hourly\+\_\+file\+\_\+sink.\+h}
+\hypertarget{hourly__file__sink_8h_source}{}\label{hourly__file__sink_8h_source}\index{runtime/spdlog/include/spdlog/sinks/hourly\_file\_sink.h@{runtime/spdlog/include/spdlog/sinks/hourly\_file\_sink.h}}
+\mbox{\hyperlink{hourly__file__sink_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright(c)\ 2015-\/present,\ Gabi\ Melman\ \&\ spdlog\ contributors.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Distributed\ under\ the\ MIT\ License\ (http://opensource.org/licenses/MIT)}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{common_8h}{spdlog/common.h}}>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{circular__q_8h}{spdlog/details/circular\_q.h}}>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{file__helper_8h}{spdlog/details/file\_helper.h}}>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{null__mutex_8h}{spdlog/details/null\_mutex.h}}>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{details_2os_8h}{spdlog/details/os.h}}>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{synchronous__factory_8h}{spdlog/details/synchronous\_factory.h}}>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{fmt_8h}{spdlog/fmt/fmt.h}}>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{base__sink_8h}{spdlog/sinks/base\_sink.h}}>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <chrono>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <ctime>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog}{spdlog}}\ \{}
+\DoxyCodeLine{00022\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog_1_1sinks}{sinks}}\ \{}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ Generator\ of\ Hourly\ log\ file\ names\ in\ format\ basename.YYYY-\/MM-\/DD-\/HH.ext}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00027\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structspdlog_1_1sinks_1_1hourly__filename__calculator}{hourly\_filename\_calculator}}\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{comment}{//\ Create\ filename\ for\ the\ form\ basename.YYYY-\/MM-\/DD-\/H}}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1hourly__filename__calculator_a4c6f2322ff6e60f3f0b7b2e1eba7e5db}{calc\_filename}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename,\ \textcolor{keyword}{const}\ tm\ \&now\_tm)\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ basename,\ ext;}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ std::tie(basename,\ ext)\ =\ \mbox{\hyperlink{classspdlog_1_1details_1_1file__helper_a8e8a852ddd73ca81061a62a9c1ca51c5}{details::file\_helper::split\_by\_extension}}(filename);}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ fmt\_lib::format(\mbox{\hyperlink{common_8h_a63d60ea1c1a925d3db13864d37bd2da2}{SPDLOG\_FILENAME\_T}}(\textcolor{stringliteral}{"{}\{\}\_\{:04d\}-\/\{:02d\}-\/\{:02d\}\_\{:02d\}\{\}"{}}),\ basename,}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ now\_tm.tm\_year\ +\ 1900,\ now\_tm.tm\_mon\ +\ 1,\ now\_tm.tm\_mday,}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ now\_tm.tm\_hour,\ ext);}
+\DoxyCodeLine{00035\ \ \ \ \ \}}
+\DoxyCodeLine{00036\ \};}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *\ Rotating\ file\ sink\ based\ on\ time.}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *\ If\ truncate\ !=\ false\ ,\ the\ created\ file\ will\ be\ truncated.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ *\ If\ max\_files\ >\ 0,\ retain\ only\ the\ last\ max\_files\ and\ delete\ previous.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *\ Note\ that\ old\ log\ files\ from\ previous\ executions\ will\ not\ be\ deleted\ by\ this\ class,}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ *\ rotation\ and\ deletion\ is\ only\ applied\ while\ the\ program\ is\ running.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Mutex,\ \textcolor{keyword}{typename}\ FileNameCalc\ =\ hourly\_filename\_calculator>}
+\DoxyCodeLine{00046\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a0f10b4ef56f2ccfdcc53366c0fde167a}{hourly\_file\_sink}}\ final\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1base__sink_a0a4c703dc54edfbd0d3817770e36f3f7}{base\_sink}}<Mutex>\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ create\ hourly\ file\ sink\ which\ rotates\ on\ given\ time}}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a0f10b4ef56f2ccfdcc53366c0fde167a}{hourly\_file\_sink}}(\mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ base\_filename,}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ truncate\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}\ max\_files\ =\ 0,}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structspdlog_1_1file__event__handlers}{file\_event\_handlers}}\ \&event\_handlers\ =\ \{\})}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab06edd26986df81223ad00d2636737b4}{base\_filename\_}}(\mbox{\hyperlink{namespacestd}{std}}::move(base\_filename)),}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}\{event\_handlers\},}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_acf2e86c6cd38397f3342934114be1d4b}{truncate\_}}(truncate),}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ac287fecaa4876a5d0bfbabadba33de83}{max\_files\_}}(max\_files),}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}()\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ now\ =\ log\_clock::now();}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}}\ =\ FileNameCalc::calc\_filename(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab06edd26986df81223ad00d2636737b4}{base\_filename\_}},\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a1ce83481758c53df3e8c8ba900652c03}{now\_tm}}(now));}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.\mbox{\hyperlink{classspdlog_1_1details_1_1file__helper_aecf4df8af7f7bd49ce59986d412ce74a}{open}}(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}},\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_acf2e86c6cd38397f3342934114be1d4b}{truncate\_}});}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a2da3f187c2114e3b82a2d5596c02c3f0}{remove\_init\_file\_}}\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.\mbox{\hyperlink{classspdlog_1_1details_1_1file__helper_a3811a1dab9dee7435b60eb474d2cc347}{size}}()\ ==\ 0;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a10b0409577769966cb64c232f5fc18d5}{rotation\_tp\_}}\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab5f62cbef1b10c7b92a079b75479efd4}{next\_rotation\_tp\_}}();}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ac287fecaa4876a5d0bfbabadba33de83}{max\_files\_}}\ >\ 0)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a937f8426a390749f2d8b18ad0324860d}{init\_filenames\_q\_}}();}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}}()\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ std::lock\_guard<Mutex>\ lock(\mbox{\hyperlink{classspdlog_1_1sinks_1_1base__sink_a929422554ce18d8bffd9b4d75cc7acf3}{base\_sink<Mutex>::mutex\_}});}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.filename();}
+\DoxyCodeLine{00072\ \ \ \ \ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ac026c947b46698cb137f068899046a49}{sink\_it\_}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structspdlog_1_1details_1_1log__msg}{details::log\_msg}}\ \&msg)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ time\ =\ msg.\mbox{\hyperlink{structspdlog_1_1details_1_1log__msg_a25fadb26e6ce94657af5475d4a581313}{time}};}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ should\_rotate\ =\ time\ >=\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a10b0409577769966cb64c232f5fc18d5}{rotation\_tp\_}};}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (should\_rotate)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a2da3f187c2114e3b82a2d5596c02c3f0}{remove\_init\_file\_}})\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.close();}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a4ef47eb60fab317f746fd6c8a2bc30c2}{details::os::remove}}(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.filename());}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}}\ =\ FileNameCalc::calc\_filename(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab06edd26986df81223ad00d2636737b4}{base\_filename\_}},\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a1ce83481758c53df3e8c8ba900652c03}{now\_tm}}(time));}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.open(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}},\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_acf2e86c6cd38397f3342934114be1d4b}{truncate\_}});}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a10b0409577769966cb64c232f5fc18d5}{rotation\_tp\_}}\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab5f62cbef1b10c7b92a079b75479efd4}{next\_rotation\_tp\_}}();}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a2da3f187c2114e3b82a2d5596c02c3f0}{remove\_init\_file\_}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_a9ae6875ab28ec95e33921c45ae451633}{memory\_buf\_t}}\ formatted;}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1base__sink_a2db2479b1d1aed70f55c08a9392b5a42}{base\_sink<Mutex>::formatter\_}}-\/>format(msg,\ formatted);}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.write(formatted);}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ the\ cleaning\ only\ at\ the\ end\ because\ it\ might\ throw\ on\ failure.}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (should\_rotate\ \&\&\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ac287fecaa4876a5d0bfbabadba33de83}{max\_files\_}}\ >\ 0)\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a8487e7d3af2153d1e4b8dcb7c4242675}{delete\_old\_}}();}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7d02d54deffa957b251ef195266a9e8c}{flush\_}}()\textcolor{keyword}{\ override\ }\{\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.flush();\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a937f8426a390749f2d8b18ad0324860d}{init\_filenames\_q\_}}()\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adf9dc0aae835a2e5e3076f3582a42868}{details::os::path\_exists}};}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}\ =\ \mbox{\hyperlink{classspdlog_1_1details_1_1circular__q}{details::circular\_q<filename\_t>}}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ac287fecaa4876a5d0bfbabadba33de83}{max\_files\_}}));}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ std::vector<filename\_t>\ filenames;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ now\ =\ log\_clock::now();}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (filenames.size()\ <\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ac287fecaa4876a5d0bfbabadba33de83}{max\_files\_}})\ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}}\ =\ FileNameCalc::calc\_filename(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab06edd26986df81223ad00d2636737b4}{base\_filename\_}},\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a1ce83481758c53df3e8c8ba900652c03}{now\_tm}}(now));}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{test__create__dir_8cpp_adf9dc0aae835a2e5e3076f3582a42868}{path\_exists}}(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}}))\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ filenames.emplace\_back(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a7a03bd50240a17f644e76603aae905bb}{filename}});}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ now\ -\/=\ std::chrono::hours(1);}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ iter\ =\ filenames.rbegin();\ iter\ !=\ filenames.rend();\ ++iter)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}.push\_back(std::move(*iter));}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \ \ tm\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a1ce83481758c53df3e8c8ba900652c03}{now\_tm}}(log\_clock::time\_point\ tp)\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ time\_t\ tnow\ =\ log\_clock::to\_time\_t(tp);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ab090524da42b398917c5f90b3919599a}{spdlog::details::os::localtime}}(tnow);}
+\DoxyCodeLine{00123\ \ \ \ \ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ log\_clock::time\_point\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab5f62cbef1b10c7b92a079b75479efd4}{next\_rotation\_tp\_}}()\ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ now\ =\ log\_clock::now();}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ tm\ date\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a1ce83481758c53df3e8c8ba900652c03}{now\_tm}}(now);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ date.tm\_min\ =\ 0;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ date.tm\_sec\ =\ 0;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ rotation\_time\ =\ log\_clock::from\_time\_t(std::mktime(\&date));}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rotation\_time\ >\ now)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ rotation\_time;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{rotation\_time\ +\ std::chrono::hours(1)\};}
+\DoxyCodeLine{00135\ \ \ \ \ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{comment}{//\ Delete\ the\ file\ N\ rotations\ ago.}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ Throw\ spdlog\_ex\ on\ failure\ to\ delete\ the\ old\ file.}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a8487e7d3af2153d1e4b8dcb7c4242675}{delete\_old\_}}()\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a1b7269cc914fd057cc37f936c5b1bf9c}{details::os::filename\_to\_str}};}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a357d8489221eb20991038b1ecd00e186}{details::os::remove\_if\_exists}};}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ current\_file\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}}.filename();}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}.full())\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ old\_filename\ =\ std::move(\mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}.front());}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}.pop\_front();}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{testhelper_8h_a047ea0d874e6802b9b6d08f6b50248e5}{ok}}\ =\ remove\_if\_exists(old\_filename)\ ==\ 0;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{testhelper_8h_a047ea0d874e6802b9b6d08f6b50248e5}{ok}})\ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}.push\_back(std::move(current\_file));}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{common_8h_aa76fb2104dcc305c2a25b6b052fc0b79}{SPDLOG\_THROW}}(\mbox{\hyperlink{classspdlog_1_1spdlog__ex}{spdlog\_ex}}(}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Failed\ removing\ hourly\ file\ "{}}\ +\ filename\_to\_str(old\_filename),\ errno));}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}}.push\_back(std::move(current\_file));}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ab06edd26986df81223ad00d2636737b4}{base\_filename\_}};}
+\DoxyCodeLine{00158\ \ \ \ \ log\_clock::time\_point\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a10b0409577769966cb64c232f5fc18d5}{rotation\_tp\_}};}
+\DoxyCodeLine{00159\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1file__helper}{details::file\_helper}}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a93c09557503d7f14c59fbc7a4f876401}{file\_helper\_}};}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_acf2e86c6cd38397f3342934114be1d4b}{truncate\_}};}
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{eabase_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_ac287fecaa4876a5d0bfbabadba33de83}{max\_files\_}};}
+\DoxyCodeLine{00162\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1circular__q}{details::circular\_q<filename\_t>}}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a6c1c1878e9f2acc90414b2f9b6bfe320}{filenames\_q\_}};}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink_a2da3f187c2114e3b82a2d5596c02c3f0}{remove\_init\_file\_}};}
+\DoxyCodeLine{00164\ \};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_1_1sinks_a569819cc4f1a50c6d6f9e1f323cded8e}{hourly\_file\_sink\_mt}}\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink}{hourly\_file\_sink<std::mutex>}};}
+\DoxyCodeLine{00167\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_1_1sinks_a9af602a5a9e01b612004ae30db60204f}{hourly\_file\_sink\_st}}\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1hourly__file__sink}{hourly\_file\_sink<details::null\_mutex>}};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \}\ \ \textcolor{comment}{//\ namespace\ sinks}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{comment}{//}}
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ factory\ functions}}
+\DoxyCodeLine{00173\ \textcolor{comment}{//}}
+\DoxyCodeLine{00174\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Factory\ =\ spdlog::synchronous\_factory>}
+\DoxyCodeLine{00175\ \textcolor{keyword}{inline}\ std::shared\_ptr<logger>\ \mbox{\hyperlink{namespacespdlog_af895bbb97e7104f4bc7f6ca5f1333d30}{hourly\_logger\_mt}}(\textcolor{keyword}{const}\ std::string\ \&logger\_name,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename,}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ truncate\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}\ max\_files\ =\ 0,}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structspdlog_1_1file__event__handlers}{file\_event\_handlers}}\ \&event\_handlers\ =\ \{\})\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keywordflow}{return}\ Factory::template\ \mbox{\hyperlink{namespacespdlog_a564c2ba1d44b490a1b77f69f3c94d2e5}{create<sinks::hourly\_file\_sink\_mt>}}(logger\_name,\ filename,\ truncate,}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ max\_files,\ event\_handlers);}
+\DoxyCodeLine{00182\ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Factory\ =\ spdlog::synchronous\_factory>}
+\DoxyCodeLine{00185\ \textcolor{keyword}{inline}\ std::shared\_ptr<logger>\ \mbox{\hyperlink{namespacespdlog_ae3927806345c2426fd6295199d48899d}{hourly\_logger\_st}}(\textcolor{keyword}{const}\ std::string\ \&logger\_name,}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename,}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ truncate\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_a273cf69d639a59973b6019625df33e30}{uint16\_t}}\ max\_files\ =\ 0,}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structspdlog_1_1file__event__handlers}{file\_event\_handlers}}\ \&event\_handlers\ =\ \{\})\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordflow}{return}\ Factory::template\ \mbox{\hyperlink{namespacespdlog_a564c2ba1d44b490a1b77f69f3c94d2e5}{create<sinks::hourly\_file\_sink\_st>}}(logger\_name,\ filename,\ truncate,}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ max\_files,\ event\_handlers);}
+\DoxyCodeLine{00192\ \}}
+\DoxyCodeLine{00193\ \}\ \ \textcolor{comment}{//\ namespace\ spdlog}}
+
+\end{DoxyCode}

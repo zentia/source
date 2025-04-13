@@ -1,0 +1,27 @@
+var example_8cpp =
+[
+    [ "my_type", "structmy__type.html", "structmy__type" ],
+    [ "fmt::formatter< my_type >", "structfmt_1_1formatter_3_01my__type_01_4.html", "structfmt_1_1formatter_3_01my__type_01_4" ],
+    [ "my_formatter_flag", "classmy__formatter__flag.html", "classmy__formatter__flag" ],
+    [ "async_example", "example_8cpp.html#ae8d0f84d4a432e50029e22d447a32399", null ],
+    [ "basic_example", "example_8cpp.html#a710876da410305e94b723096ba130cbe", null ],
+    [ "binary_example", "example_8cpp.html#a2e05f77fb3f2674bac54750230c694dd", null ],
+    [ "callback_example", "example_8cpp.html#a63ae698191f5cccdcc76d602d3cb8504", null ],
+    [ "custom_flags_example", "example_8cpp.html#a8b1d6bfbbce5e841c25bc101eec1941d", null ],
+    [ "daily_example", "example_8cpp.html#a00a5dfe5cfe9f422089e2a2d4054ccee", null ],
+    [ "err_handler_example", "example_8cpp.html#afdb3d98f0ed84d35fc4f67ee6cc6abf8", null ],
+    [ "file_events_example", "example_8cpp.html#a5b8d4db7f3e5f91d059eb7129b177882", null ],
+    [ "load_levels_example", "example_8cpp.html#a72c67d3a161868530b6752857f333db1", null ],
+    [ "main", "example_8cpp.html#a81ce304348a420752ee080480d2b3095", null ],
+    [ "mdc_example", "example_8cpp.html#aff48573362948ade6d4c8f3d15221558", null ],
+    [ "multi_sink_example", "example_8cpp.html#acf743b98048151a5d21ef9e18f0476ae", null ],
+    [ "replace_default_logger_example", "example_8cpp.html#aa7d694c645ee3f7e187f49b678db790a", null ],
+    [ "rotating_example", "example_8cpp.html#a4635fb794f9d22fbafe3b8a72de49647", null ],
+    [ "stdout_logger_example", "example_8cpp.html#a31e12ea4ab151b49ba889a37e323937f", null ],
+    [ "stopwatch_example", "example_8cpp.html#a3c13407aa8d9fd57dbf4846273fc3a5f", null ],
+    [ "syslog_example", "example_8cpp.html#a69b2ee4500d328523456430bbd94bce6", null ],
+    [ "trace_example", "example_8cpp.html#a533bc5d6714f6c6f08a2a9396b5f37cf", null ],
+    [ "udp_example", "example_8cpp.html#a8fe5ee46918025fafb628aaa56b1f47f", null ],
+    [ "user_defined_example", "example_8cpp.html#a33e5031a84de450b97c6baa66a88d234", null ],
+    [ "vector_example", "example_8cpp.html#ac09bf6f6dcb9bbd52d2672727fccec05", null ]
+];

@@ -82,7 +82,7 @@ struct DeviceConfig {
     mutable luisa::unique_ptr<DeviceConfigExt> extension;
     const BinaryIO *binary_io{nullptr};
     Profiler *profiler{nullptr};
-    size_t device_index{std::numeric_limits<size_t>::max()};
+    size_t device_index{(std::numeric_limits<size_t>::max)()};
     bool inqueue_buffer_limit{true};
     bool headless{false};
 };

@@ -1,0 +1,176 @@
+\doxysection{harness\+\_\+concurrency\+\_\+tracker.\+h}
+\hypertarget{harness__concurrency__tracker_8h_source}{}\label{harness__concurrency__tracker_8h_source}\index{external/taskflow/3rd-\/party/tbb/src/test/harness\_concurrency\_tracker.h@{external/taskflow/3rd-\/party/tbb/src/test/harness\_concurrency\_tracker.h}}
+\mbox{\hyperlink{harness__concurrency__tracker_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ \ Copyright\ (c)\ 2005-\/2020\ Intel\ Corporation}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ \ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ \ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ \ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#ifndef\ tbb\_tests\_harness\_concurrency\_tracker\_H}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#define\ tbb\_tests\_harness\_concurrency\_tracker\_H}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{harness__assert_8h}{harness\_assert.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{harness__barrier_8h}{harness\_barrier.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2include_2tbb_2atomic_8h}{tbb/atomic.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tls_8h}{../tbb/tls.h}}"{}}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ Note:\ This\ file\ is\ used\ by\ RML\ tests\ which\ do\ not\ link\ TBB.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ Functionality\ that\ requires\ TBB\ binaries\ must\ be\ guarded\ by\ !\_\_TBB\_NO\_IMPLICIT\_LINKAGE}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#if\ !defined(\_\_TBB\_NO\_IMPLICIT\_LINKAGE)}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mutex_8h}{tbb/mutex.h}}"{}}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{task_8h}{tbb/task.h}}"{}}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{combinable_8h}{tbb/combinable.h}}"{}}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ "{}tbb/parallel\_for.h"{}}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <functional>}\ \textcolor{comment}{//\ for\ std::plus}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{harness_8h}{harness.h}}"{}}\ \textcolor{comment}{//\ for\ Harness::NoCopy}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_harness}{Harness}}\ \{}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{static}\ tbb::atomic<unsigned>\ \mbox{\hyperlink{namespace_harness_a775ba1fea9e071f6824763d28e1d69dd}{ctInstantParallelism}};}
+\DoxyCodeLine{00038\ \textcolor{keyword}{static}\ tbb::atomic<unsigned>\ \mbox{\hyperlink{namespace_harness_aef1edc92f306c2d41ae41b9090f28391}{ctPeakParallelism}};}
+\DoxyCodeLine{00039\ \textcolor{keyword}{static}\ \mbox{\hyperlink{classtbb_1_1internal_1_1tls}{tbb::internal::tls<uintptr\_t>}}\ \ \mbox{\hyperlink{namespace_harness_a7e84078cdb68b96a6e7d42e6203d312c}{ctNested}};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a7088f4dcc3403e51502ea607a2feb2d8}{ConcurrencyTracker}}\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a8a3ad212164927fc24ac6cee08ded4cd}{m\_Outer}};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_ae09a004a9d0f87781e953fc2eb590ea4}{Started}}\ ()\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ ++\mbox{\hyperlink{namespace_harness_a775ba1fea9e071f6824763d28e1d69dd}{ctInstantParallelism}};}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{som__graph_8cpp_ae900b2add8deca663438fb20de69acce}{q}}\ =\ \mbox{\hyperlink{namespace_harness_aef1edc92f306c2d41ae41b9090f28391}{ctPeakParallelism}};}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\ \mbox{\hyperlink{som__graph_8cpp_ae900b2add8deca663438fb20de69acce}{q}}<\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{som__graph_8cpp_ae900b2add8deca663438fb20de69acce}{q}}\ =\ \mbox{\hyperlink{namespace_harness_aef1edc92f306c2d41ae41b9090f28391}{ctPeakParallelism}}.compare\_and\_swap(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\mbox{\hyperlink{som__graph_8cpp_ae900b2add8deca663438fb20de69acce}{q}});}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a605acd292cdc000ac2e7078da4e39cda}{Stopped}}\ ()\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}\ (\ \mbox{\hyperlink{namespace_harness_a775ba1fea9e071f6824763d28e1d69dd}{ctInstantParallelism}}\ >\ 0,\ \textcolor{stringliteral}{"{}Mismatched\ call\ to\ ConcurrencyTracker::Stopped()"{}}\ );}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ -\/-\/\mbox{\hyperlink{namespace_harness_a775ba1fea9e071f6824763d28e1d69dd}{ctInstantParallelism}};}
+\DoxyCodeLine{00055\ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a7088f4dcc3403e51502ea607a2feb2d8}{ConcurrencyTracker}}()\ :\ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a8a3ad212164927fc24ac6cee08ded4cd}{m\_Outer}}(\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}})\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ uintptr\_t\ nested\ =\ \mbox{\hyperlink{namespace_harness_a7e84078cdb68b96a6e7d42e6203d312c}{ctNested}};}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}\ (nested\ ==\ 0\ ||\ nested\ ==\ 1,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{namespace_harness_a7e84078cdb68b96a6e7d42e6203d312c}{ctNested}}\ )\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_ae09a004a9d0f87781e953fc2eb590ea4}{Started}}();}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a8a3ad212164927fc24ac6cee08ded4cd}{m\_Outer}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_harness_a7e84078cdb68b96a6e7d42e6203d312c}{ctNested}}\ =\ 1;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a224446c939ec597813863ff1a8ab0cde}{\string~ConcurrencyTracker}}()\ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a8a3ad212164927fc24ac6cee08ded4cd}{m\_Outer}}\ )\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a605acd292cdc000ac2e7078da4e39cda}{Stopped}}();}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_harness_a7e84078cdb68b96a6e7d42e6203d312c}{ctNested}}\ =\ 0;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ \ \ \ \ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_ab30286b932e0856c8329a059b3875b38}{PeakParallelism}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_harness_aef1edc92f306c2d41ae41b9090f28391}{ctPeakParallelism}};\ \}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_ad84970a85fe942c5cda5380fd09dee34}{InstantParallelism}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_harness_a775ba1fea9e071f6824763d28e1d69dd}{ctInstantParallelism}};\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_harness_1_1_concurrency_tracker_a246884e98e5a47fe34ec60da871fb43b}{Reset}}()\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}\ (\mbox{\hyperlink{namespace_harness_a775ba1fea9e071f6824763d28e1d69dd}{ctInstantParallelism}}\ ==\ 0,\ \textcolor{stringliteral}{"{}Reset\ cannot\ be\ called\ when\ concurrency\ tracking\ is\ underway"{}});}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_harness_a775ba1fea9e071f6824763d28e1d69dd}{ctInstantParallelism}}\ =\ \mbox{\hyperlink{namespace_harness_aef1edc92f306c2d41ae41b9090f28391}{ctPeakParallelism}}\ =\ 0;}
+\DoxyCodeLine{00079\ \ \ \ \ \}}
+\DoxyCodeLine{00080\ \};\ \textcolor{comment}{//\ ConcurrencyTracker}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#if\ !defined(\_\_TBB\_NO\_IMPLICIT\_LINKAGE)}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a45c6759f54bb48d6eed323751840a1c8}{ExactConcurrencyLevel}}\ :\ \mbox{\hyperlink{class_no_copy_a495bdeffea1eda9d33e338e5b5cd2313}{NoCopy}}\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classtbb_1_1combinable}{tbb::combinable<size\_t>}}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a23406194bfe2866b2c2bf1e08967c0ae}{Combinable}};}
+\DoxyCodeLine{00085\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00086\ \ \ \ \ \mbox{\hyperlink{class_harness_1_1_spin_barrier}{Harness::SpinBarrier}}\ \ \ \ \ \ \ *\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a3bf0a111bef70f5acf3c21f37b3f16de}{myBarrier}};}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ count\ unique\ worker\ threads}}
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a23406194bfe2866b2c2bf1e08967c0ae}{Combinable}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ad05fdc40488b3db3f00ff28725a6deef}{myUniqueThreads}};}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{mutable}\ tbb::atomic<size\_t>\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_af860a54ef6035ffee729b7e402329c37}{myActiveBodyCnt}};}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{comment}{//\ output\ parameter\ for\ parallel\_for\ body\ to\ report\ that\ max\ is\ reached}}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keyword}{mutable}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a7acba8c93e7585ced733605278173f50}{myReachedMax}};}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{comment}{//\ zero\ timeout\ means\ no\ barrier\ is\ used\ during\ concurrency\ level\ detection}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1f73736f5dd04c09b8d9f658e1459f18}{myTimeout}};}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_acfc336b2d373bb1e5bfbb93ba2479d00}{myConcLevel}};}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1b32ee3b55a2d6583269ce774cf4f9e2}{myCrashOnFail}};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{static}\ tbb::mutex\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a073a1971acdc0bea3ed12bc005d6ac5b}{global\_mutex}};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a45c6759f54bb48d6eed323751840a1c8}{ExactConcurrencyLevel}}(\textcolor{keywordtype}{double}\ timeout,\ \textcolor{keywordtype}{size\_t}\ concLevel,\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a23406194bfe2866b2c2bf1e08967c0ae}{Combinable}}\ *uniq,\ \textcolor{keywordtype}{bool}\ crashOnFail)\ :}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a3bf0a111bef70f5acf3c21f37b3f16de}{myBarrier}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ad05fdc40488b3db3f00ff28725a6deef}{myUniqueThreads}}(uniq),\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a7acba8c93e7585ced733605278173f50}{myReachedMax}}(\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}),}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1f73736f5dd04c09b8d9f658e1459f18}{myTimeout}}(timeout),\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_acfc336b2d373bb1e5bfbb93ba2479d00}{myConcLevel}}(concLevel),\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1b32ee3b55a2d6583269ce774cf4f9e2}{myCrashOnFail}}(crashOnFail)\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_af860a54ef6035ffee729b7e402329c37}{myActiveBodyCnt}}\ =\ 0;}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a810ffdb6d0d17aa00e18a4d8d7b8336d}{run}}()\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ LOOP\_ITERS\ =\ 100;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1combinable}{tbb::combinable<size\_t>}}\ uniq;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_harness_1_1_spin_barrier}{Harness::SpinBarrier}}\ \mbox{\hyperlink{test__condition__variable_8h_a66a856f373cb24d6a669f2635ce27f18}{barrier}}((\textcolor{keywordtype}{unsigned})\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_acfc336b2d373bb1e5bfbb93ba2479d00}{myConcLevel}},\ \textcolor{comment}{/*throwaway=*/}\textcolor{keyword}{true});}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1f73736f5dd04c09b8d9f658e1459f18}{myTimeout}}\ !=\ 0.)}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a3bf0a111bef70f5acf3c21f37b3f16de}{myBarrier}}\ =\ \&\mbox{\hyperlink{test__condition__variable_8h_a66a856f373cb24d6a669f2635ce27f18}{barrier}};}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ad05fdc40488b3db3f00ff28725a6deef}{myUniqueThreads}})}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ad05fdc40488b3db3f00ff28725a6deef}{myUniqueThreads}}\ =\ \&uniq;}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__algorithms_gaa8444c29dc4d2e527a1036717d109aef}{tbb::parallel\_for}}((\textcolor{keywordtype}{size\_t})0,\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_acfc336b2d373bb1e5bfbb93ba2479d00}{myConcLevel}}*LOOP\_ITERS,\ *\textcolor{keyword}{this},\ tbb::simple\_partitioner());}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a7acba8c93e7585ced733605278173f50}{myReachedMax}};}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1426f5b5e7248288505f1cac4a3c6ee1}{operator()}}(\textcolor{keywordtype}{size\_t})\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}\ =\ ++\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_af860a54ef6035ffee729b7e402329c37}{myActiveBodyCnt}};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}(\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}\ <=\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_acfc336b2d373bb1e5bfbb93ba2479d00}{myConcLevel}},\ \textcolor{stringliteral}{"{}Number\ of\ active\ bodies\ is\ too\ high."{}});}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}\ ==\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_acfc336b2d373bb1e5bfbb93ba2479d00}{myConcLevel}})\ \textcolor{comment}{//\ record\ that\ the\ max\ expected\ concurrency\ was\ observed}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a7acba8c93e7585ced733605278173f50}{myReachedMax}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ try\ to\ get\ barrier\ when\ 1st\ time\ in\ the\ thread}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a3bf0a111bef70f5acf3c21f37b3f16de}{myBarrier}}\ \&\&\ !\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a3bf0a111bef70f5acf3c21f37b3f16de}{myBarrier}}-\/>timed\_wait\_noerror(\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1f73736f5dd04c09b8d9f658e1459f18}{myTimeout}}))}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}(!\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a1b32ee3b55a2d6583269ce774cf4f9e2}{myCrashOnFail}},\ \textcolor{stringliteral}{"{}Timeout\ was\ detected."{}});}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ad05fdc40488b3db3f00ff28725a6deef}{myUniqueThreads}}-\/>local()\ =\ 1;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<100;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gcc__arm_8h_abd96ed348e35a9a25fc356a0b3029584}{\_\_TBB\_Pause}}(1);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ -\/-\/\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_af860a54ef6035ffee729b7e402329c37}{myActiveBodyCnt}};}
+\DoxyCodeLine{00129\ \ \ \ \ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ac07cfd2813deacfb11a32ab14c1f3e35}{Mode}}\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ac07cfd2813deacfb11a32ab14c1f3e35ad7baca13f62cbbaf088e1218de09255d}{None}},}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ multiple\ blocking\ checks\ are\ performed,\ there\ might\ be\ not\ enough}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ concurrency\ for\ all\ of\ them.\ Serialize\ check()\ calls.}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ac07cfd2813deacfb11a32ab14c1f3e35ae9b410ff8b8e447c1bee0184f5517b77}{Serialize}}}
+\DoxyCodeLine{00136\ \ \ \ \ \};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ check\ that\ we\ have\ never\ got\ more\ than\ concLevel\ threads,}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ and\ that\ in\ some\ moment\ we\ saw\ exactly\ concLevel\ threads}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a3dfe426d066a1d935718f9e2ec382196}{check}}(\textcolor{keywordtype}{size\_t}\ concLevel,\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ac07cfd2813deacfb11a32ab14c1f3e35}{Mode}}\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}\ =\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ac07cfd2813deacfb11a32ab14c1f3e35ad7baca13f62cbbaf088e1218de09255d}{None}})\ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a45c6759f54bb48d6eed323751840a1c8}{ExactConcurrencyLevel}}\ o(30.,\ concLevel,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{comment}{/*crashOnFail=*/}\textcolor{keyword}{true});}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ tbb::mutex::scoped\_lock\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}};}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}\ ==\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_ac07cfd2813deacfb11a32ab14c1f3e35ae9b410ff8b8e447c1bee0184f5517b77}{Serialize}})}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}.acquire(\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a073a1971acdc0bea3ed12bc005d6ac5b}{global\_mutex}});}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{testhelper_8h_a047ea0d874e6802b9b6d08f6b50248e5}{ok}}\ =\ o.\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a810ffdb6d0d17aa00e18a4d8d7b8336d}{run}}();}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}(\mbox{\hyperlink{testhelper_8h_a047ea0d874e6802b9b6d08f6b50248e5}{ok}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_acea632c08bb27620aaac74395ac1695e}{isEqual}}(\textcolor{keywordtype}{size\_t}\ concLevel)\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a45c6759f54bb48d6eed323751840a1c8}{ExactConcurrencyLevel}}\ o(3.,\ concLevel,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{comment}{/*crashOnFail=*/}\textcolor{keyword}{false});}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ o.\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a810ffdb6d0d17aa00e18a4d8d7b8336d}{run}}();}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a65603501cfcbd82f6590d9ecac969698}{checkLessOrEqual}}(\textcolor{keywordtype}{size\_t}\ concLevel,\ \mbox{\hyperlink{classtbb_1_1combinable}{tbb::combinable<size\_t>}}\ *unique)\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a45c6759f54bb48d6eed323751840a1c8}{ExactConcurrencyLevel}}\ o(0.,\ concLevel,\ unique,\ \textcolor{comment}{/*crashOnFail=*/}\textcolor{keyword}{true});}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ o.\mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a810ffdb6d0d17aa00e18a4d8d7b8336d}{run}}();\ \textcolor{comment}{//\ ignore\ result,\ as\ without\ a\ barrier\ it\ is\ not\ reliable}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\ =\ unique-\/>combine(std::plus<size\_t>());}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}(num<=concLevel,\ \textcolor{stringliteral}{"{}Too\ many\ workers\ observed."{}});}
+\DoxyCodeLine{00161\ \ \ \ \ \}}
+\DoxyCodeLine{00162\ \};}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ tbb::mutex\ \mbox{\hyperlink{struct_harness_1_1_exact_concurrency_level_a073a1971acdc0bea3ed12bc005d6ac5b}{ExactConcurrencyLevel::global\_mutex}};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ !defined(\_\_TBB\_NO\_IMPLICIT\_LINKAGE)\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \}\ \textcolor{comment}{//\ namespace\ Harness}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ tbb\_tests\_harness\_concurrency\_tracker\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

@@ -1,0 +1,911 @@
+\doxysection{etw.\+h}
+\hypertarget{etw_8h_source}{}\label{etw_8h_source}\index{runtime/EASTL/packages/mimalloc/src/prim/windows/etw.h@{runtime/EASTL/packages/mimalloc/src/prim/windows/etw.h}}
+\mbox{\hyperlink{etw_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//**********************************************************************`}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//*\ This\ is\ an\ include\ file\ generated\ by\ Message\ Compiler.\ \ \ \ \ \ \ \ \ \ \ \ \ *`}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *`}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//*\ Copyright\ (c)\ Microsoft\ Corporation.\ All\ Rights\ Reserved.\ \ \ \ \ \ \ \ \ \ *`}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//**********************************************************************`}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//*****************************************************************************}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Notes\ on\ the\ ETW\ event\ code\ generated\ by\ MC:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ -\/\ Structures\ and\ arrays\ of\ structures\ are\ treated\ as\ an\ opaque\ binary\ blob.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ The\ caller\ is\ responsible\ for\ packing\ the\ data\ for\ the\ structure\ into\ a}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ \ single\ region\ of\ memory,\ with\ no\ padding\ between\ values.\ The\ macro\ will}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ have\ an\ extra\ parameter\ for\ the\ length\ of\ the\ blob.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ -\/\ Arrays\ of\ nul-\/terminated\ strings\ must\ be\ packed\ by\ the\ caller\ into\ a}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ single\ binary\ blob\ containing\ the\ correct\ number\ of\ strings,\ with\ a\ nul}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ after\ each\ string.\ The\ size\ of\ the\ blob\ is\ specified\ in\ characters,\ and}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ includes\ the\ final\ nul.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ -\/\ Arrays\ of\ SID\ are\ treated\ as\ a\ single\ binary\ blob.\ The\ caller\ is}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ \ responsible\ for\ packing\ the\ SID\ values\ into\ a\ single\ region\ of\ memory\ with}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ no\ padding.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ -\/\ The\ length\ attribute\ on\ the\ data\ element\ in\ the\ manifest\ is\ significant}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ for\ values\ with\ intype\ win:UnicodeString,\ win:AnsiString,\ or\ win:Binary.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ The\ length\ attribute\ must\ be\ specified\ for\ win:Binary,\ and\ is\ optional\ for}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ win:UnicodeString\ and\ win:AnsiString\ (if\ no\ length\ is\ given,\ the\ strings}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ \ are\ assumed\ to\ be\ nul-\/terminated).\ For\ win:UnicodeString,\ the\ length\ is}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ measured\ in\ characters,\ not\ bytes.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ -\/\ For\ an\ array\ of\ win:UnicodeString,\ win:AnsiString,\ or\ win:Binary,\ the}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ length\ attribute\ applies\ to\ every\ value\ in\ the\ array,\ so\ every\ value\ in}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ the\ array\ must\ have\ the\ same\ length.\ The\ values\ in\ the\ array\ are\ provided}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ to\ the\ macro\ via\ a\ single\ pointer\ -\/-\/\ the\ caller\ is\ responsible\ for\ packing}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ all\ of\ the\ values\ into\ a\ single\ region\ of\ memory\ with\ no\ padding\ between}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ values.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ -\/\ Values\ of\ type\ win:CountedUnicodeString,\ win:CountedAnsiString,\ and}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ \ win:CountedBinary\ can\ be\ generated\ and\ collected\ on\ Vista\ or\ later.}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ However,\ they\ may\ not\ decode\ properly\ without\ the\ Windows\ 10\ 2018\ Fall}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ Update.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ -\/\ Arrays\ of\ type\ win:CountedUnicodeString,\ win:CountedAnsiString,\ and}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ win:CountedBinary\ must\ be\ packed\ by\ the\ caller\ into\ a\ single\ region\ of}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ memory.\ The\ format\ for\ each\ item\ is\ a\ UINT16\ byte-\/count\ followed\ by\ that}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ many\ bytes\ of\ data.\ When\ providing\ the\ array\ to\ the\ generated\ macro,\ you}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ must\ provide\ the\ total\ size\ of\ the\ packed\ array\ data,\ including\ the\ UINT16}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ sizes\ for\ each\ item.\ In\ the\ case\ of\ win:CountedUnicodeString,\ the\ data}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ size\ is\ specified\ in\ WCHAR\ (16-\/bit)\ units.\ In\ the\ case\ of}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ win:CountedAnsiString\ and\ win:CountedBinary,\ the\ data\ size\ is\ specified\ in}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ bytes.}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//*****************************************************************************}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <wmistr.h>}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#include\ <evntrace.h>}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ <evntprov.h>}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#ifndef\ ETW\_INLINE}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\ \ \#ifdef\ \_ETW\_KM\_}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ In\ kernel\ mode,\ save\ stack\ space\ by\ never\ inlining\ templates.}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \ \ \#define\ ETW\_INLINE\ DECLSPEC\_NOINLINE\ \_\_inline}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ In\ user\ mode,\ save\ code\ size\ by\ inlining\ templates\ as\ appropriate.}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\ \ \ \ \#define\ ETW\_INLINE\ \_\_inline}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ ETW\_INLINE}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00066\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{comment}{//}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION\ macro:}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ Define\ this\ macro\ to\ have\ the\ compiler\ skip\ the\ generated\ functions\ in\ this}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ header.}}
+\DoxyCodeLine{00073\ \textcolor{comment}{//}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{comment}{//}}
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ MCGEN\_USE\_KERNEL\_MODE\_APIS\ macro:}}
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ Controls\ whether\ the\ generated\ code\ uses\ kernel-\/mode\ or\ user-\/mode\ APIs.}}
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ -\/\ Set\ to\ 0\ to\ use\ Windows\ user-\/mode\ APIs\ such\ as\ EventRegister.}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ -\/\ Set\ to\ 1\ to\ use\ Windows\ kernel-\/mode\ APIs\ such\ as\ EtwRegister.}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ Default\ is\ based\ on\ whether\ the\ \_ETW\_KM\_\ macro\ is\ defined\ (i.e.\ by\ wdm.h).}}
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ Note\ that\ the\ APIs\ can\ also\ be\ overridden\ directly,\ e.g.\ by\ setting\ the}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ MCGEN\_EVENTWRITETRANSFER\ or\ MCGEN\_EVENTREGISTER\ macros.}}
+\DoxyCodeLine{00084\ \textcolor{comment}{//}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_USE\_KERNEL\_MODE\_APIS}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\ \ \#ifdef\ \_ETW\_KM\_}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_USE\_KERNEL\_MODE\_APIS\ 1}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_USE\_KERNEL\_MODE\_APIS\ 0}}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_USE\_KERNEL\_MODE\_APIS}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{comment}{//}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ MCGEN\_HAVE\_EVENTSETINFORMATION\ macro:}}
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ Controls\ how\ McGenEventSetInformation\ uses\ the\ EventSetInformation\ API.}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ -\/\ Set\ to\ 0\ to\ disable\ the\ use\ of\ EventSetInformation}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ \ \ (McGenEventSetInformation\ will\ always\ return\ an\ error).}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ -\/\ Set\ to\ 1\ to\ directly\ invoke\ MCGEN\_EVENTSETINFORMATION.}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ -\/\ Set\ to\ 2\ to\ to\ locate\ EventSetInformation\ at\ runtime\ via\ GetProcAddress}}
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ \ \ (user-\/mode)\ or\ MmGetSystemRoutineAddress\ (kernel-\/mode).}}
+\DoxyCodeLine{00101\ \textcolor{comment}{//\ Default\ is\ determined\ as\ follows:}}
+\DoxyCodeLine{00102\ \textcolor{comment}{//\ -\/\ If\ MCGEN\_EVENTSETINFORMATION\ has\ been\ customized,\ set\ to\ 1}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ \ \ (i.e.\ use\ MCGEN\_EVENTSETINFORMATION).}}
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ -\/\ Else\ if\ the\ target\ OS\ version\ has\ EventSetInformation,\ set\ to\ 1}}
+\DoxyCodeLine{00105\ \textcolor{comment}{//\ \ \ (i.e.\ use\ MCGEN\_EVENTSETINFORMATION).}}
+\DoxyCodeLine{00106\ \textcolor{comment}{//\ -\/\ Else\ set\ to\ 2\ (i.e.\ try\ to\ dynamically\ locate\ EventSetInformation).}}
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ Note\ that\ an\ McGenEventSetInformation\ function\ will\ only\ be\ generated\ if\ one}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ or\ more\ provider\ in\ a\ manifest\ has\ provider\ traits.}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_HAVE\_EVENTSETINFORMATION}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\ \ \#ifdef\ MCGEN\_EVENTSETINFORMATION\ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ if\ MCGEN\_EVENTSETINFORMATION\ has\ been\ customized,}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_HAVE\_EVENTSETINFORMATION\ \ \ 1\ }\textcolor{comment}{//\ \ \ directly\ invoke\ MCGEN\_EVENTSETINFORMATION(...).}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\ \ \#elif\ MCGEN\_USE\_KERNEL\_MODE\_APIS\ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ else\ if\ using\ kernel-\/mode\ APIs,}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\ \ \ \ \#if\ NTDDI\_VERSION\ >=\ 0x06040000\ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ \ \ if\ target\ OS\ is\ Windows\ 10\ or\ later,}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ MCGEN\_HAVE\_EVENTSETINFORMATION\ 1\ }\textcolor{comment}{//\ \ \ \ \ directly\ invoke\ MCGEN\_EVENTSETINFORMATION(...).}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\ \ \ \ \#else\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ \ \ else}}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ MCGEN\_HAVE\_EVENTSETINFORMATION\ 2\ }\textcolor{comment}{//\ \ \ \ \ find\ "{}EtwSetInformation"{}\ via\ MmGetSystemRoutineAddress.}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \ \ \#endif\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ else\ (using\ user-\/mode\ APIs)}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\ \ \#else\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ \ \ if\ target\ OS\ and\ SDK\ is\ Windows\ 8\ or\ later,}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\ \ \ \ \#if\ WINVER\ >=\ 0x0602\ \&\&\ defined(EVENT\_FILTER\_TYPE\_SCHEMATIZED)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ MCGEN\_HAVE\_EVENTSETINFORMATION\ 1\ }\textcolor{comment}{//\ \ \ \ \ directly\ invoke\ MCGEN\_EVENTSETINFORMATION(...).}}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\ \ \ \ \#else\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ \ \ else}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ MCGEN\_HAVE\_EVENTSETINFORMATION\ 2\ }\textcolor{comment}{//\ \ \ \ \ find\ "{}EventSetInformation"{}\ via\ GetModuleHandleExW/GetProcAddress.}}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_HAVE\_EVENTSETINFORMATION}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{comment}{//}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ MCGEN\ Override\ Macros}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ The\ following\ override\ macros\ may\ be\ defined\ before\ including\ this\ header}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ to\ control\ the\ APIs\ used\ by\ this\ header:}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ -\/\ MCGEN\_EVENTREGISTER}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ -\/\ MCGEN\_EVENTUNREGISTER}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//\ -\/\ MCGEN\_EVENTSETINFORMATION}}
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ -\/\ MCGEN\_EVENTWRITETRANSFER}}
+\DoxyCodeLine{00138\ \textcolor{comment}{//}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ If\ the\ the\ macro\ is\ undefined,\ the\ MC\ implementation\ will\ default\ to\ the}}
+\DoxyCodeLine{00140\ \textcolor{comment}{//\ corresponding\ ETW\ APIs.\ For\ example,\ if\ the\ MCGEN\_EVENTREGISTER\ macro\ is}}
+\DoxyCodeLine{00141\ \textcolor{comment}{//\ undefined,\ the\ EventRegister[MyProviderName]\ macro\ will\ use\ EventRegister}}
+\DoxyCodeLine{00142\ \textcolor{comment}{//\ in\ user\ mode\ and\ will\ use\ EtwRegister\ in\ kernel\ mode.}}
+\DoxyCodeLine{00143\ \textcolor{comment}{//}}
+\DoxyCodeLine{00144\ \textcolor{comment}{//\ To\ prevent\ issues\ from\ conflicting\ definitions\ of\ these\ macros,\ the\ value}}
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ of\ the\ override\ macro\ will\ be\ used\ as\ a\ suffix\ in\ certain\ internal\ function}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//\ names.\ Because\ of\ this,\ the\ override\ macros\ must\ follow\ certain\ rules:}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ -\/\ The\ macro\ must\ be\ defined\ before\ any\ MC-\/generated\ header\ is\ included\ and}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ \ \ must\ not\ be\ undefined\ or\ redefined\ after\ any\ MC-\/generated\ header\ is}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ \ \ included.\ Different\ translation\ units\ (i.e.\ different\ .c\ or\ .cpp\ files)}}
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ \ \ may\ set\ the\ macros\ to\ different\ values,\ but\ within\ a\ translation\ unit}}
+\DoxyCodeLine{00152\ \textcolor{comment}{//\ \ \ (within\ a\ single\ .c\ or\ .cpp\ file),\ the\ macro\ must\ be\ set\ once\ and\ not}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ \ \ changed.}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//\ -\/\ The\ override\ must\ be\ an\ object-\/like\ macro,\ not\ a\ function-\/like\ macro}}
+\DoxyCodeLine{00155\ \textcolor{comment}{//\ \ \ (i.e.\ the\ override\ macro\ must\ not\ have\ a\ parameter\ list).}}
+\DoxyCodeLine{00156\ \textcolor{comment}{//\ -\/\ The\ override\ macro's\ value\ must\ be\ a\ simple\ identifier,\ i.e.\ must\ be}}
+\DoxyCodeLine{00157\ \textcolor{comment}{//\ \ \ something\ that\ starts\ with\ a\ letter\ or\ '\_'\ and\ contains\ only\ letters,}}
+\DoxyCodeLine{00158\ \textcolor{comment}{//\ \ \ numbers,\ and\ '\_'\ characters.}}
+\DoxyCodeLine{00159\ \textcolor{comment}{//\ -\/\ If\ the\ override\ macro's\ value\ is\ the\ name\ of\ a\ second\ object-\/like\ macro,}}
+\DoxyCodeLine{00160\ \textcolor{comment}{//\ \ \ the\ second\ object-\/like\ macro\ must\ follow\ the\ same\ rules.\ (The\ override}}
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ \ \ macro's\ value\ can\ also\ be\ the\ name\ of\ a\ function-\/like\ macro,\ in\ which}}
+\DoxyCodeLine{00162\ \textcolor{comment}{//\ \ \ case\ the\ function-\/like\ macro\ does\ not\ need\ to\ follow\ the\ same\ rules.)}}
+\DoxyCodeLine{00163\ \textcolor{comment}{//}}
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ For\ example,\ the\ following\ will\ cause\ compile\ errors:}}
+\DoxyCodeLine{00165\ \textcolor{comment}{//}}
+\DoxyCodeLine{00166\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ MyNamespace::MyClass::MyFunction\ //\ Value\ has\ non-\/identifier\ characters\ (colon).}}
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ GetEventWriteFunctionPointer(7)\ \ //\ Value\ has\ non-\/identifier\ characters\ (parentheses).}}
+\DoxyCodeLine{00168\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER(h,e,a,r,c,d)\ EventWrite(h,e,c,d)\ //\ Override\ is\ defined\ as\ a\ function-\/like\ macro.}}
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ \ \ \#define\ MY\_OBJECT\_LIKE\_MACRO\ \ \ \ \ MyNamespace::MyClass::MyEventWriteFunction}}
+\DoxyCodeLine{00170\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ MY\_OBJECT\_LIKE\_MACRO\ //\ Evaluates\ to\ something\ with\ non-\/identifier\ characters\ (colon).}}
+\DoxyCodeLine{00171\ \textcolor{comment}{//}}
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ The\ following\ would\ be\ ok:}}
+\DoxyCodeLine{00173\ \textcolor{comment}{//}}
+\DoxyCodeLine{00174\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ \ MyEventWriteFunction1\ \ //\ OK,\ suffix\ will\ be\ "{}MyEventWriteFunction1"{}.}}
+\DoxyCodeLine{00175\ \textcolor{comment}{//\ \ \ \#define\ MY\_OBJECT\_LIKE\_MACRO\ \ \ \ \ \ MyEventWriteFunction2}}
+\DoxyCodeLine{00176\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ \ MY\_OBJECT\_LIKE\_MACRO\ \ \ //\ OK,\ suffix\ will\ be\ "{}MyEventWriteFunction2"{}.}}
+\DoxyCodeLine{00177\ \textcolor{comment}{//\ \ \ \#define\ MY\_FUNCTION\_LIKE\_MACRO(h,e,a,r,c,d)\ MyNamespace::MyClass::MyEventWriteFunction3(h,e,c,d)}}
+\DoxyCodeLine{00178\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ \ MY\_FUNCTION\_LIKE\_MACRO\ //\ OK,\ suffix\ will\ be\ "{}MY\_FUNCTION\_LIKE\_MACRO"{}.}}
+\DoxyCodeLine{00179\ \textcolor{comment}{//}}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_EVENTREGISTER}}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\ \ \#if\ MCGEN\_USE\_KERNEL\_MODE\_APIS}}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTREGISTER\ \ \ \ \ \ \ \ EtwRegister}}
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTREGISTER\ \ \ \ \ \ \ \ EventRegister}}
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00186\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_EVENTREGISTER}}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_EVENTUNREGISTER}}
+\DoxyCodeLine{00188\ \textcolor{preprocessor}{\ \ \#if\ MCGEN\_USE\_KERNEL\_MODE\_APIS}}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTUNREGISTER\ \ \ \ \ \ EtwUnregister}}
+\DoxyCodeLine{00190\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTUNREGISTER\ \ \ \ \ \ EventUnregister}}
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_EVENTUNREGISTER}}
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_EVENTSETINFORMATION}}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\ \ \#if\ MCGEN\_USE\_KERNEL\_MODE\_APIS}}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTSETINFORMATION\ \ EtwSetInformation}}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTSETINFORMATION\ \ EventSetInformation}}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_EVENTSETINFORMATION}}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_EVENTWRITETRANSFER}}
+\DoxyCodeLine{00202\ \textcolor{preprocessor}{\ \ \#if\ MCGEN\_USE\_KERNEL\_MODE\_APIS}}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ \ \ EtwWriteTransfer}}
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\ \ \ \ \#define\ MCGEN\_EVENTWRITETRANSFER\ \ \ EventWriteTransfer}}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_EVENTWRITETRANSFER}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{comment}{//}}
+\DoxyCodeLine{00210\ \textcolor{comment}{//\ MCGEN\_EVENT\_ENABLED\ macro:}}
+\DoxyCodeLine{00211\ \textcolor{comment}{//\ Override\ to\ control\ how\ the\ EventWrite[EventName]\ macros\ determine\ whether}}
+\DoxyCodeLine{00212\ \textcolor{comment}{//\ an\ event\ is\ enabled.\ The\ default\ behavior\ is\ for\ EventWrite[EventName]\ to}}
+\DoxyCodeLine{00213\ \textcolor{comment}{//\ use\ the\ EventEnabled[EventName]\ macros.}}
+\DoxyCodeLine{00214\ \textcolor{comment}{//}}
+\DoxyCodeLine{00215\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_EVENT\_ENABLED}}
+\DoxyCodeLine{00216\ \textcolor{preprocessor}{\#define\ MCGEN\_EVENT\_ENABLED(EventName)\ EventEnabled\#\#EventName()}}
+\DoxyCodeLine{00217\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \textcolor{comment}{//}}
+\DoxyCodeLine{00220\ \textcolor{comment}{//\ MCGEN\_EVENT\_ENABLED\_FORCONTEXT\ macro:}}
+\DoxyCodeLine{00221\ \textcolor{comment}{//\ Override\ to\ control\ how\ the\ EventWrite[EventName]\_ForContext\ macros}}
+\DoxyCodeLine{00222\ \textcolor{comment}{//\ determine\ whether\ an\ event\ is\ enabled.\ The\ default\ behavior\ is\ for}}
+\DoxyCodeLine{00223\ \textcolor{comment}{//\ EventWrite[EventName]\_ForContext\ to\ use\ the}}
+\DoxyCodeLine{00224\ \textcolor{comment}{//\ EventEnabled[EventName]\_ForContext\ macros.}}
+\DoxyCodeLine{00225\ \textcolor{comment}{//}}
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_EVENT\_ENABLED\_FORCONTEXT}}
+\DoxyCodeLine{00227\ \textcolor{preprocessor}{\#define\ MCGEN\_EVENT\_ENABLED\_FORCONTEXT(pContext,\ EventName)\ EventEnabled\#\#EventName\#\#\_ForContext(pContext)}}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \textcolor{comment}{//}}
+\DoxyCodeLine{00231\ \textcolor{comment}{//\ MCGEN\_ENABLE\_CHECK\ macro:}}
+\DoxyCodeLine{00232\ \textcolor{comment}{//\ Determines\ whether\ the\ specified\ event\ would\ be\ considered\ as\ enabled}}
+\DoxyCodeLine{00233\ \textcolor{comment}{//\ based\ on\ the\ state\ of\ the\ specified\ context.\ Slightly\ faster\ than\ calling}}
+\DoxyCodeLine{00234\ \textcolor{comment}{//\ McGenEventEnabled\ directly.}}
+\DoxyCodeLine{00235\ \textcolor{comment}{//}}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_ENABLE\_CHECK}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\#define\ MCGEN\_ENABLE\_CHECK(Context,\ Descriptor)\ (Context.IsEnabled\ \&\&\ McGenEventEnabled(\&Context,\ \&Descriptor))}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#if\ !defined(MCGEN\_TRACE\_CONTEXT\_DEF)}}
+\DoxyCodeLine{00241\ \textcolor{preprocessor}{\#define\ MCGEN\_TRACE\_CONTEXT\_DEF}}
+\DoxyCodeLine{00242\ \textcolor{comment}{//\ This\ structure\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00243\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t}{\_MCGEN\_TRACE\_CONTEXT}}}
+\DoxyCodeLine{00244\ \{}
+\DoxyCodeLine{00245\ \ \ \ \ TRACEHANDLE\ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_aa26bbe0e7bc6be730758abd9aaa070d7}{RegistrationHandle}};}
+\DoxyCodeLine{00246\ \ \ \ \ TRACEHANDLE\ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_aa2aeacab5485bb0a1df133ecbdbbceba}{Logger}};\ \ \ \ \ \ \textcolor{comment}{//\ Used\ as\ pointer\ to\ provider\ traits.}}
+\DoxyCodeLine{00247\ \ \ \ \ ULONGLONG\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_aabc1bd05a40f40c22a89516f07c5aba7}{MatchAnyKeyword}};}
+\DoxyCodeLine{00248\ \ \ \ \ ULONGLONG\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a70984ffc5abe78a6174ab3d4eb0ed16a}{MatchAllKeyword}};}
+\DoxyCodeLine{00249\ \ \ \ \ ULONG\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a33b0ef4bf488c5d56d3af4f44300bbd8}{Flags}};}
+\DoxyCodeLine{00250\ \ \ \ \ ULONG\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a68adabb33f304ef0c39843cf33c5d2b7}{IsEnabled}};}
+\DoxyCodeLine{00251\ \ \ \ \ UCHAR\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a392aa7dcf21ba0d5aa288e85870975cb}{Level}};}
+\DoxyCodeLine{00252\ \ \ \ \ UCHAR\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a2566005442564d6f9e17236999b6c7f4}{Reserve}};}
+\DoxyCodeLine{00253\ \ \ \ \ USHORT\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_afc1bd0669742d79ec14b52b6cd07579c}{EnableBitsCount}};}
+\DoxyCodeLine{00254\ \ \ \ \ PULONG\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a87e12975d2b50db2acceec889354e8af}{EnableBitMask}};}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keyword}{const}\ ULONGLONG*\ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a6fbca3ab5d1c44ca993652efbd0fac38}{EnableKeyWords}};}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keyword}{const}\ UCHAR*\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_ae9ce6873a2eba0f1edcc7ffb7f0743f6}{EnableLevel}};}
+\DoxyCodeLine{00257\ \}\ \mbox{\hyperlink{etw_8h_a8746f43ab73c92cbef97da300333215e}{MCGEN\_TRACE\_CONTEXT}},\ *\mbox{\hyperlink{etw_8h_a48cc448736d2968f83e9ae07fd1b6c3e}{PMCGEN\_TRACE\_CONTEXT}};}
+\DoxyCodeLine{00258\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_TRACE\_CONTEXT\_DEF}}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\#if\ !defined(MCGEN\_LEVEL\_KEYWORD\_ENABLED\_DEF)}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#define\ MCGEN\_LEVEL\_KEYWORD\_ENABLED\_DEF}}
+\DoxyCodeLine{00262\ \textcolor{comment}{//}}
+\DoxyCodeLine{00263\ \textcolor{comment}{//\ Determines\ whether\ an\ event\ with\ a\ given\ Level\ and\ Keyword\ would\ be}}
+\DoxyCodeLine{00264\ \textcolor{comment}{//\ considered\ as\ enabled\ based\ on\ the\ state\ of\ the\ specified\ context.}}
+\DoxyCodeLine{00265\ \textcolor{comment}{//\ Note\ that\ you\ may\ want\ to\ use\ MCGEN\_ENABLE\_CHECK\ instead\ of\ calling\ this}}
+\DoxyCodeLine{00266\ \textcolor{comment}{//\ function\ directly.}}
+\DoxyCodeLine{00267\ \textcolor{comment}{//}}
+\DoxyCodeLine{00268\ FORCEINLINE}
+\DoxyCodeLine{00269\ BOOLEAN}
+\DoxyCodeLine{00270\ \mbox{\hyperlink{etw_8h_a3e2463822037d3829cfdda3000c08339}{McGenLevelKeywordEnabled}}(}
+\DoxyCodeLine{00271\ \ \ \ \ \_In\_\ \mbox{\hyperlink{etw_8h_a48cc448736d2968f83e9ae07fd1b6c3e}{PMCGEN\_TRACE\_CONTEXT}}\ EnableInfo,}
+\DoxyCodeLine{00272\ \ \ \ \ \_In\_\ UCHAR\ Level,}
+\DoxyCodeLine{00273\ \ \ \ \ \_In\_\ ULONGLONG\ Keyword}
+\DoxyCodeLine{00274\ \ \ \ \ )}
+\DoxyCodeLine{00275\ \{}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{comment}{//\ Check\ if\ the\ event\ Level\ is\ lower\ than\ the\ level\ at\ which}}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{comment}{//\ the\ channel\ is\ enabled.}}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{comment}{//\ If\ the\ event\ Level\ is\ 0\ or\ the\ channel\ is\ enabled\ at\ level\ 0,}}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{comment}{//\ all\ levels\ are\ enabled.}}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keywordflow}{if}\ ((Level\ <=\ EnableInfo-\/>Level)\ ||\ \textcolor{comment}{//\ This\ also\ covers\ the\ case\ of\ Level\ ==\ 0.}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ (EnableInfo-\/>Level\ ==\ 0))\ \{}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ Keyword\ is\ enabled}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((Keyword\ ==\ (ULONGLONG)0)\ ||}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ ((Keyword\ \&\ EnableInfo-\/>MatchAnyKeyword)\ \&\&}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ ((Keyword\ \&\ EnableInfo-\/>MatchAllKeyword)\ ==\ EnableInfo-\/>MatchAllKeyword)))\ \{}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{tinycthread_8c_aa8cecfc5c5c054d2875c03e77b7be15d}{TRUE}};}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00295\ \ \ \ \ \}}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{tinycthread_8c_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}};}
+\DoxyCodeLine{00298\ \}}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_LEVEL\_KEYWORD\_ENABLED\_DEF}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{preprocessor}{\#if\ !defined(MCGEN\_EVENT\_ENABLED\_DEF)}}
+\DoxyCodeLine{00302\ \textcolor{preprocessor}{\#define\ MCGEN\_EVENT\_ENABLED\_DEF}}
+\DoxyCodeLine{00303\ \textcolor{comment}{//}}
+\DoxyCodeLine{00304\ \textcolor{comment}{//\ Determines\ whether\ the\ specified\ event\ would\ be\ considered\ as\ enabled\ based}}
+\DoxyCodeLine{00305\ \textcolor{comment}{//\ on\ the\ state\ of\ the\ specified\ context.\ Note\ that\ you\ may\ want\ to\ use}}
+\DoxyCodeLine{00306\ \textcolor{comment}{//\ MCGEN\_ENABLE\_CHECK\ instead\ of\ calling\ this\ function\ directly.}}
+\DoxyCodeLine{00307\ \textcolor{comment}{//}}
+\DoxyCodeLine{00308\ FORCEINLINE}
+\DoxyCodeLine{00309\ BOOLEAN}
+\DoxyCodeLine{00310\ \mbox{\hyperlink{etw_8h_a414337fd24b318f38575e142c81ab750}{McGenEventEnabled}}(}
+\DoxyCodeLine{00311\ \ \ \ \ \_In\_\ \mbox{\hyperlink{etw_8h_a48cc448736d2968f83e9ae07fd1b6c3e}{PMCGEN\_TRACE\_CONTEXT}}\ EnableInfo,}
+\DoxyCodeLine{00312\ \ \ \ \ \_In\_\ PCEVENT\_DESCRIPTOR\ EventDescriptor}
+\DoxyCodeLine{00313\ \ \ \ \ )}
+\DoxyCodeLine{00314\ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{etw_8h_a3e2463822037d3829cfdda3000c08339}{McGenLevelKeywordEnabled}}(EnableInfo,\ EventDescriptor-\/>Level,\ EventDescriptor-\/>Keyword);}
+\DoxyCodeLine{00316\ \}}
+\DoxyCodeLine{00317\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_EVENT\_ENABLED\_DEF}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \textcolor{preprocessor}{\#if\ !defined(MCGEN\_CONTROL\_CALLBACK)}}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\#define\ MCGEN\_CONTROL\_CALLBACK}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \textcolor{comment}{//\ This\ function\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00323\ DECLSPEC\_NOINLINE\ \_\_inline}
+\DoxyCodeLine{00324\ VOID}
+\DoxyCodeLine{00325\ \_\_stdcall}
+\DoxyCodeLine{00326\ \mbox{\hyperlink{etw_8h_a4f9fd98bad487529d17c95cb90891baf}{McGenControlCallbackV2}}(}
+\DoxyCodeLine{00327\ \ \ \ \ \_In\_\ LPCGUID\ SourceId,}
+\DoxyCodeLine{00328\ \ \ \ \ \_In\_\ ULONG\ ControlCode,}
+\DoxyCodeLine{00329\ \ \ \ \ \_In\_\ UCHAR\ Level,}
+\DoxyCodeLine{00330\ \ \ \ \ \_In\_\ ULONGLONG\ MatchAnyKeyword,}
+\DoxyCodeLine{00331\ \ \ \ \ \_In\_\ ULONGLONG\ MatchAllKeyword,}
+\DoxyCodeLine{00332\ \ \ \ \ \_In\_opt\_\ PEVENT\_FILTER\_DESCRIPTOR\ FilterData,}
+\DoxyCodeLine{00333\ \ \ \ \ \_Inout\_opt\_\ PVOID\ CallbackContext}
+\DoxyCodeLine{00334\ \ \ \ \ )}
+\DoxyCodeLine{00335\ \textcolor{comment}{/*++}}
+\DoxyCodeLine{00336\ \textcolor{comment}{}}
+\DoxyCodeLine{00337\ \textcolor{comment}{Routine\ Description:}}
+\DoxyCodeLine{00338\ \textcolor{comment}{}}
+\DoxyCodeLine{00339\ \textcolor{comment}{\ \ \ \ This\ is\ the\ notification\ callback\ for\ Windows\ Vista\ and\ later.}}
+\DoxyCodeLine{00340\ \textcolor{comment}{}}
+\DoxyCodeLine{00341\ \textcolor{comment}{Arguments:}}
+\DoxyCodeLine{00342\ \textcolor{comment}{}}
+\DoxyCodeLine{00343\ \textcolor{comment}{\ \ \ \ SourceId\ -\/\ The\ GUID\ that\ identifies\ the\ session\ that\ enabled\ the\ provider.}}
+\DoxyCodeLine{00344\ \textcolor{comment}{}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ \ \ ControlCode\ -\/\ The\ parameter\ indicates\ whether\ the\ provider}}
+\DoxyCodeLine{00346\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ is\ being\ enabled\ or\ disabled.}}
+\DoxyCodeLine{00347\ \textcolor{comment}{}}
+\DoxyCodeLine{00348\ \textcolor{comment}{\ \ \ \ Level\ -\/\ The\ level\ at\ which\ the\ event\ is\ enabled.}}
+\DoxyCodeLine{00349\ \textcolor{comment}{}}
+\DoxyCodeLine{00350\ \textcolor{comment}{\ \ \ \ MatchAnyKeyword\ -\/\ The\ bitmask\ of\ keywords\ that\ the\ provider\ uses\ to}}
+\DoxyCodeLine{00351\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ determine\ the\ category\ of\ events\ that\ it\ writes.}}
+\DoxyCodeLine{00352\ \textcolor{comment}{}}
+\DoxyCodeLine{00353\ \textcolor{comment}{\ \ \ \ MatchAllKeyword\ -\/\ This\ bitmask\ additionally\ restricts\ the\ category}}
+\DoxyCodeLine{00354\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ of\ events\ that\ the\ provider\ writes.}}
+\DoxyCodeLine{00355\ \textcolor{comment}{}}
+\DoxyCodeLine{00356\ \textcolor{comment}{\ \ \ \ FilterData\ -\/\ The\ provider-\/defined\ data.}}
+\DoxyCodeLine{00357\ \textcolor{comment}{}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ \ \ CallbackContext\ -\/\ The\ context\ of\ the\ callback\ that\ is\ defined\ when\ the\ provider}}
+\DoxyCodeLine{00359\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ called\ EtwRegister\ to\ register\ itself.}}
+\DoxyCodeLine{00360\ \textcolor{comment}{}}
+\DoxyCodeLine{00361\ \textcolor{comment}{Remarks:}}
+\DoxyCodeLine{00362\ \textcolor{comment}{}}
+\DoxyCodeLine{00363\ \textcolor{comment}{\ \ \ \ ETW\ calls\ this\ function\ to\ notify\ provider\ of\ enable/disable}}
+\DoxyCodeLine{00364\ \textcolor{comment}{}}
+\DoxyCodeLine{00365\ \textcolor{comment}{-\/-\/*/}}
+\DoxyCodeLine{00366\ \{}
+\DoxyCodeLine{00367\ \ \ \ \ \mbox{\hyperlink{etw_8h_a48cc448736d2968f83e9ae07fd1b6c3e}{PMCGEN\_TRACE\_CONTEXT}}\ Ctx\ =\ (\mbox{\hyperlink{etw_8h_a48cc448736d2968f83e9ae07fd1b6c3e}{PMCGEN\_TRACE\_CONTEXT}})CallbackContext;}
+\DoxyCodeLine{00368\ \ \ \ \ ULONG\ Ix;}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_PRIVATE\_ENABLE\_CALLBACK\_V2}}
+\DoxyCodeLine{00370\ \ \ \ \ UNREFERENCED\_PARAMETER(SourceId);}
+\DoxyCodeLine{00371\ \ \ \ \ UNREFERENCED\_PARAMETER(FilterData);}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordflow}{if}\ (Ctx\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00376\ \ \ \ \ \}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordflow}{switch}\ (ControlCode)\ \{}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EVENT\_CONTROL\_CODE\_ENABLE\_PROVIDER:}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a392aa7dcf21ba0d5aa288e85870975cb}{Level}}\ =\ Level;}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_aabc1bd05a40f40c22a89516f07c5aba7}{MatchAnyKeyword}}\ =\ MatchAnyKeyword;}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a70984ffc5abe78a6174ab3d4eb0ed16a}{MatchAllKeyword}}\ =\ MatchAllKeyword;}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a68adabb33f304ef0c39843cf33c5d2b7}{IsEnabled}}\ =\ EVENT\_CONTROL\_CODE\_ENABLE\_PROVIDER;}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (Ix\ =\ 0;\ Ix\ <\ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_afc1bd0669742d79ec14b52b6cd07579c}{EnableBitsCount}};\ Ix\ +=\ 1)\ \{}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{etw_8h_a3e2463822037d3829cfdda3000c08339}{McGenLevelKeywordEnabled}}(Ctx,\ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_ae9ce6873a2eba0f1edcc7ffb7f0743f6}{EnableLevel}}[Ix],\ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a6fbca3ab5d1c44ca993652efbd0fac38}{EnableKeyWords}}[Ix])\ !=\ \mbox{\hyperlink{tinycthread_8c_aa93f0eb578d23995850d61f7d61c55c1}{FALSE}})\ \{}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a87e12975d2b50db2acceec889354e8af}{EnableBitMask}}[Ix\ >>\ 5]\ |=\ (1\ <<\ (Ix\ \%\ 32));}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a87e12975d2b50db2acceec889354e8af}{EnableBitMask}}[Ix\ >>\ 5]\ \&=\ \string~(1\ <<\ (Ix\ \%\ 32));}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ EVENT\_CONTROL\_CODE\_DISABLE\_PROVIDER:}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a68adabb33f304ef0c39843cf33c5d2b7}{IsEnabled}}\ =\ EVENT\_CONTROL\_CODE\_DISABLE\_PROVIDER;}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a392aa7dcf21ba0d5aa288e85870975cb}{Level}}\ =\ 0;}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_aabc1bd05a40f40c22a89516f07c5aba7}{MatchAnyKeyword}}\ =\ 0;}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a70984ffc5abe78a6174ab3d4eb0ed16a}{MatchAllKeyword}}\ =\ 0;}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_afc1bd0669742d79ec14b52b6cd07579c}{EnableBitsCount}}\ >\ 0)\ \{}
+\DoxyCodeLine{00401\ \textcolor{preprocessor}{\#pragma\ warning(suppress:\ 26451)\ }\textcolor{comment}{//\ Arithmetic\ overflow\ cannot\ occur,\ no\ matter\ the\ value\ of\ EnableBitCount}}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RtlZeroMemory(Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_a87e12975d2b50db2acceec889354e8af}{EnableBitMask}},\ (((Ctx-\/>\mbox{\hyperlink{struct___m_c_g_e_n___t_r_a_c_e___c_o_n_t_e_x_t_afc1bd0669742d79ec14b52b6cd07579c}{EnableBitsCount}}\ -\/\ 1)\ /\ 32)\ +\ 1)\ *\ \textcolor{keyword}{sizeof}(ULONG));}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00408\ \ \ \ \ \}}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \textcolor{preprocessor}{\#ifdef\ MCGEN\_PRIVATE\_ENABLE\_CALLBACK\_V2}}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{comment}{//\ Call\ user\ defined\ callback}}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00414\ \ \ \ \ MCGEN\_PRIVATE\_ENABLE\_CALLBACK\_V2(}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ SourceId,}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ ControlCode,}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ Level,}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ MatchAnyKeyword,}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ MatchAllKeyword,}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ FilterData,}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ CallbackContext}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00423\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_PRIVATE\_ENABLE\_CALLBACK\_V2}}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00426\ \}}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_CONTROL\_CALLBACK}}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \textcolor{preprocessor}{\#ifndef\ \_mcgen\_PENABLECALLBACK}}
+\DoxyCodeLine{00431\ \textcolor{preprocessor}{\ \ \#if\ MCGEN\_USE\_KERNEL\_MODE\_APIS}}
+\DoxyCodeLine{00432\ \textcolor{preprocessor}{\ \ \ \ \#define\ \_mcgen\_PENABLECALLBACK\ \ \ \ \ \ PETWENABLECALLBACK}}
+\DoxyCodeLine{00433\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00434\ \textcolor{preprocessor}{\ \ \ \ \#define\ \_mcgen\_PENABLECALLBACK\ \ \ \ \ \ PENABLECALLBACK}}
+\DoxyCodeLine{00435\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00436\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_mcgen\_PENABLECALLBACK}}
+\DoxyCodeLine{00437\ }
+\DoxyCodeLine{00438\ \textcolor{preprocessor}{\#if\ !defined(\_mcgen\_PASTE2)}}
+\DoxyCodeLine{00439\ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00440\ \textcolor{preprocessor}{\#define\ \_mcgen\_PASTE2(a,\ b)\ \_mcgen\_PASTE2\_imp(a,\ b)}}
+\DoxyCodeLine{00441\ \textcolor{preprocessor}{\#define\ \_mcgen\_PASTE2\_imp(a,\ b)\ a\#\#b}}
+\DoxyCodeLine{00442\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_mcgen\_PASTE2}}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \textcolor{preprocessor}{\#if\ !defined(\_mcgen\_PASTE3)}}
+\DoxyCodeLine{00445\ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00446\ \textcolor{preprocessor}{\#define\ \_mcgen\_PASTE3(a,\ b,\ c)\ \_mcgen\_PASTE3\_imp(a,\ b,\ c)}}
+\DoxyCodeLine{00447\ \textcolor{preprocessor}{\#define\ \_mcgen\_PASTE3\_imp(a,\ b,\ c)\ a\#\#b\#\#\_\#\#c}}
+\DoxyCodeLine{00448\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_mcgen\_PASTE3}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \textcolor{comment}{//}}
+\DoxyCodeLine{00451\ \textcolor{comment}{//\ Macro\ validation}}
+\DoxyCodeLine{00452\ \textcolor{comment}{//}}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \textcolor{comment}{//\ Validate\ MCGEN\_EVENTREGISTER:}}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTREGISTER\ is\ not\ an\ unqualified\ (simple)\ identifier:}}
+\DoxyCodeLine{00457\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTREGISTER\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_a028109b0db370ee0394fda0ea65767c1}{MCGEN\_EVENTREGISTER}});}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTREGISTER\ is\ redefined:}}
+\DoxyCodeLine{00460\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTREGISTER\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_a028109b0db370ee0394fda0ea65767c1}{MCGEN\_EVENTREGISTER}})}
+\DoxyCodeLine{00461\ \ \ \ \ MCGEN\_EVENTREGISTER\_must\_not\_be\_redefined\_between\_headers;}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTREGISTER\ is\ defined\ as\ a\ function-\/like\ macro:}}
+\DoxyCodeLine{00464\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{etw_8h_ab5c03ed1355acf7e041a168caaf065a7}{MCGEN\_EVENTREGISTER\_must\_not\_be\_a\_functionLike\_macro\_MCGEN\_EVENTREGISTER}};}
+\DoxyCodeLine{00465\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTREGISTER\_must\_not\_be\_a\_functionLike\_macro\_,\ \mbox{\hyperlink{etw_8h_a028109b0db370ee0394fda0ea65767c1}{MCGEN\_EVENTREGISTER}});}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \textcolor{comment}{//\ Validate\ MCGEN\_EVENTUNREGISTER:}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTUNREGISTER\ is\ not\ an\ unqualified\ (simple)\ identifier:}}
+\DoxyCodeLine{00470\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTUNREGISTER\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_a7e5e4122cbe5a828c4bd5a2d187afb54}{MCGEN\_EVENTUNREGISTER}});}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTUNREGISTER\ is\ redefined:}}
+\DoxyCodeLine{00473\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTUNREGISTER\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_a7e5e4122cbe5a828c4bd5a2d187afb54}{MCGEN\_EVENTUNREGISTER}})}
+\DoxyCodeLine{00474\ \ \ \ \ MCGEN\_EVENTUNREGISTER\_must\_not\_be\_redefined\_between\_headers;}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTUNREGISTER\ is\ defined\ as\ a\ function-\/like\ macro:}}
+\DoxyCodeLine{00477\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{etw_8h_a52b63ae23d74da1eae1ceefc34f8080b}{MCGEN\_EVENTUNREGISTER\_must\_not\_be\_a\_functionLike\_macro\_MCGEN\_EVENTUNREGISTER}};}
+\DoxyCodeLine{00478\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTUNREGISTER\_must\_not\_be\_a\_functionLike\_macro\_,\ \mbox{\hyperlink{etw_8h_a7e5e4122cbe5a828c4bd5a2d187afb54}{MCGEN\_EVENTUNREGISTER}});}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \textcolor{comment}{//\ Validate\ MCGEN\_EVENTSETINFORMATION:}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTSETINFORMATION\ is\ not\ an\ unqualified\ (simple)\ identifier:}}
+\DoxyCodeLine{00483\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTSETINFORMATION\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_a77c144f773a84c66fb5af1267ebb6dab}{MCGEN\_EVENTSETINFORMATION}});}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTSETINFORMATION\ is\ redefined:}}
+\DoxyCodeLine{00486\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTSETINFORMATION\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_a77c144f773a84c66fb5af1267ebb6dab}{MCGEN\_EVENTSETINFORMATION}})}
+\DoxyCodeLine{00487\ \ \ \ \ MCGEN\_EVENTSETINFORMATION\_must\_not\_be\_redefined\_between\_headers;}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTSETINFORMATION\ is\ defined\ as\ a\ function-\/like\ macro:}}
+\DoxyCodeLine{00490\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{etw_8h_ae2aeefe55c42d43d1d0af70981ebfd06}{MCGEN\_EVENTSETINFORMATION\_must\_not\_be\_a\_functionLike\_macro\_MCGEN\_EVENTSETINFORMATION}};}
+\DoxyCodeLine{00491\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTSETINFORMATION\_must\_not\_be\_a\_functionLike\_macro\_,\ \mbox{\hyperlink{etw_8h_a77c144f773a84c66fb5af1267ebb6dab}{MCGEN\_EVENTSETINFORMATION}});}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ \textcolor{comment}{//\ Validate\ MCGEN\_EVENTWRITETRANSFER:}}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTWRITETRANSFER\ is\ not\ an\ unqualified\ (simple)\ identifier:}}
+\DoxyCodeLine{00496\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTWRITETRANSFER\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_afbda8ff20366df3e0cfb0d5e6579e447}{MCGEN\_EVENTWRITETRANSFER}});}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTWRITETRANSFER\ is\ redefined:}}
+\DoxyCodeLine{00499\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTWRITETRANSFER\_definition\_must\_be\_an\_unqualified\_identifier\_,\ \mbox{\hyperlink{etw_8h_afbda8ff20366df3e0cfb0d5e6579e447}{MCGEN\_EVENTWRITETRANSFER}})}
+\DoxyCodeLine{00500\ \ \ \ \ MCGEN\_EVENTWRITETRANSFER\_must\_not\_be\_redefined\_between\_headers;;}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \textcolor{comment}{//\ Trigger\ an\ error\ if\ MCGEN\_EVENTWRITETRANSFER\ is\ defined\ as\ a\ function-\/like\ macro:}}
+\DoxyCodeLine{00503\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{etw_8h_a8fa7151fdb8775d161c0b5fb1caf63ad}{MCGEN\_EVENTWRITETRANSFER\_must\_not\_be\_a\_functionLike\_macro\_MCGEN\_EVENTWRITETRANSFER}};}
+\DoxyCodeLine{00504\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(MCGEN\_EVENTWRITETRANSFER\_must\_not\_be\_a\_functionLike\_macro\_,\ \mbox{\hyperlink{etw_8h_afbda8ff20366df3e0cfb0d5e6579e447}{MCGEN\_EVENTWRITETRANSFER}});}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \textcolor{preprocessor}{\#ifndef\ McGenEventWrite\_def}}
+\DoxyCodeLine{00507\ \textcolor{preprocessor}{\#define\ McGenEventWrite\_def}}
+\DoxyCodeLine{00508\ }
+\DoxyCodeLine{00509\ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00510\ \textcolor{preprocessor}{\#define\ McGenEventWrite\ \_mcgen\_PASTE2(McGenEventWrite\_,\ MCGEN\_EVENTWRITETRANSFER)}}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ \textcolor{comment}{//\ This\ function\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00513\ DECLSPEC\_NOINLINE\ \_\_inline}
+\DoxyCodeLine{00514\ ULONG\ \_\_stdcall}
+\DoxyCodeLine{00515\ \mbox{\hyperlink{etw_8h_ab8c95d3c2e1bb9b326ed5cafd65efff4}{McGenEventWrite}}(}
+\DoxyCodeLine{00516\ \ \ \ \ \_In\_\ \mbox{\hyperlink{etw_8h_a48cc448736d2968f83e9ae07fd1b6c3e}{PMCGEN\_TRACE\_CONTEXT}}\ Context,}
+\DoxyCodeLine{00517\ \ \ \ \ \_In\_\ PCEVENT\_DESCRIPTOR\ \mbox{\hyperlink{etw_8h_aa520bbdaf4ace9111f92fb6d00cefa1d}{Descriptor}},}
+\DoxyCodeLine{00518\ \ \ \ \ \_In\_opt\_\ LPCGUID\ ActivityId,}
+\DoxyCodeLine{00519\ \ \ \ \ \_In\_range\_(1,\ 128)\ ULONG\ EventDataCount,}
+\DoxyCodeLine{00520\ \ \ \ \ \_Pre\_cap\_(EventDataCount)\ EVENT\_DATA\_DESCRIPTOR*\ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}}
+\DoxyCodeLine{00521\ \ \ \ \ )}
+\DoxyCodeLine{00522\ \{}
+\DoxyCodeLine{00523\ \ \ \ \ \textcolor{keyword}{const}\ USHORT\ UNALIGNED*\ Traits;}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{comment}{//\ Some\ customized\ MCGEN\_EVENTWRITETRANSFER\ macros\ might\ ignore\ ActivityId.}}
+\DoxyCodeLine{00526\ \ \ \ \ UNREFERENCED\_PARAMETER(ActivityId);}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \ \ \ \ Traits\ =\ (\textcolor{keyword}{const}\ USHORT\ UNALIGNED*)(UINT\_PTR)Context-\/>Logger;}
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keywordflow}{if}\ (Traits\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[0].Ptr\ =\ 0;}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[0].Size\ =\ 0;}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[0].Reserved\ =\ 0;}
+\DoxyCodeLine{00534\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[0].Ptr\ =\ (ULONG\_PTR)Traits;}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[0].Size\ =\ *Traits;}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[0].Reserved\ =\ 2;\ \textcolor{comment}{//\ EVENT\_DATA\_DESCRIPTOR\_TYPE\_PROVIDER\_METADATA}}
+\DoxyCodeLine{00538\ \ \ \ \ \}}
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00540\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{etw_8h_afbda8ff20366df3e0cfb0d5e6579e447}{MCGEN\_EVENTWRITETRANSFER}}(}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ Context-\/>RegistrationHandle,}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_aa520bbdaf4ace9111f92fb6d00cefa1d}{Descriptor}},}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ ActivityId,}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ EventDataCount,}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}});}
+\DoxyCodeLine{00547\ \}}
+\DoxyCodeLine{00548\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ McGenEventWrite\_def}}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{\#if\ !defined(McGenEventRegisterUnregister)}}
+\DoxyCodeLine{00551\ \textcolor{preprocessor}{\#define\ McGenEventRegisterUnregister}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00554\ \textcolor{preprocessor}{\#define\ McGenEventRegister\ \_mcgen\_PASTE2(McGenEventRegister\_,\ MCGEN\_EVENTREGISTER)}}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \textcolor{preprocessor}{\#pragma\ warning(push)}}
+\DoxyCodeLine{00557\ \textcolor{preprocessor}{\#pragma\ warning(disable:6103)}}
+\DoxyCodeLine{00558\ \textcolor{comment}{//\ This\ function\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00559\ DECLSPEC\_NOINLINE\ \_\_inline}
+\DoxyCodeLine{00560\ ULONG\ \_\_stdcall}
+\DoxyCodeLine{00561\ \mbox{\hyperlink{etw_8h_ae076ee27b2fe89258b6a562c08dd5a13}{McGenEventRegister}}(}
+\DoxyCodeLine{00562\ \ \ \ \ \_In\_\ LPCGUID\ ProviderId,}
+\DoxyCodeLine{00563\ \ \ \ \ \_In\_opt\_\ \mbox{\hyperlink{etw_8h_aff5cebe1a1eb836453a31b6b23a28ea1}{\_mcgen\_PENABLECALLBACK}}\ EnableCallback,}
+\DoxyCodeLine{00564\ \ \ \ \ \_In\_opt\_\ PVOID\ CallbackContext,}
+\DoxyCodeLine{00565\ \ \ \ \ \_Inout\_\ PREGHANDLE\ RegHandle}
+\DoxyCodeLine{00566\ \ \ \ \ )}
+\DoxyCodeLine{00567\ \textcolor{comment}{/*++}}
+\DoxyCodeLine{00568\ \textcolor{comment}{}}
+\DoxyCodeLine{00569\ \textcolor{comment}{Routine\ Description:}}
+\DoxyCodeLine{00570\ \textcolor{comment}{}}
+\DoxyCodeLine{00571\ \textcolor{comment}{\ \ \ \ This\ function\ registers\ the\ provider\ with\ ETW.}}
+\DoxyCodeLine{00572\ \textcolor{comment}{}}
+\DoxyCodeLine{00573\ \textcolor{comment}{Arguments:}}
+\DoxyCodeLine{00574\ \textcolor{comment}{}}
+\DoxyCodeLine{00575\ \textcolor{comment}{\ \ \ \ ProviderId\ -\/\ Provider\ ID\ to\ register\ with\ ETW.}}
+\DoxyCodeLine{00576\ \textcolor{comment}{}}
+\DoxyCodeLine{00577\ \textcolor{comment}{\ \ \ \ EnableCallback\ -\/\ Callback\ to\ be\ used.}}
+\DoxyCodeLine{00578\ \textcolor{comment}{}}
+\DoxyCodeLine{00579\ \textcolor{comment}{\ \ \ \ CallbackContext\ -\/\ Context\ for\ the\ callback.}}
+\DoxyCodeLine{00580\ \textcolor{comment}{}}
+\DoxyCodeLine{00581\ \textcolor{comment}{\ \ \ \ RegHandle\ -\/\ Pointer\ to\ registration\ handle.}}
+\DoxyCodeLine{00582\ \textcolor{comment}{}}
+\DoxyCodeLine{00583\ \textcolor{comment}{Remarks:}}
+\DoxyCodeLine{00584\ \textcolor{comment}{}}
+\DoxyCodeLine{00585\ \textcolor{comment}{\ \ \ \ Should\ not\ be\ called\ if\ the\ provider\ is\ already\ registered\ (i.e.\ should\ not}}
+\DoxyCodeLine{00586\ \textcolor{comment}{\ \ \ \ be\ called\ if\ *RegHandle\ !=\ 0).\ Repeatedly\ registering\ a\ provider\ is\ a\ bug}}
+\DoxyCodeLine{00587\ \textcolor{comment}{\ \ \ \ and\ may\ indicate\ a\ race\ condition.\ However,\ for\ compatibility\ with\ previous}}
+\DoxyCodeLine{00588\ \textcolor{comment}{\ \ \ \ behavior,\ this\ function\ will\ return\ SUCCESS\ in\ this\ case.}}
+\DoxyCodeLine{00589\ \textcolor{comment}{}}
+\DoxyCodeLine{00590\ \textcolor{comment}{-\/-\/*/}}
+\DoxyCodeLine{00591\ \{}
+\DoxyCodeLine{00592\ \ \ \ \ ULONG\ Error;}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keywordflow}{if}\ (*RegHandle\ !=\ 0)}
+\DoxyCodeLine{00595\ \ \ \ \ \{}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ Error\ =\ 0;\ \textcolor{comment}{//\ ERROR\_SUCCESS}}
+\DoxyCodeLine{00597\ \ \ \ \ \}}
+\DoxyCodeLine{00598\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00599\ \ \ \ \ \{}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ Error\ =\ \mbox{\hyperlink{etw_8h_a028109b0db370ee0394fda0ea65767c1}{MCGEN\_EVENTREGISTER}}(ProviderId,\ EnableCallback,\ CallbackContext,\ RegHandle);}
+\DoxyCodeLine{00601\ \ \ \ \ \}}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \ \ \textcolor{keywordflow}{return}\ Error;}
+\DoxyCodeLine{00604\ \}}
+\DoxyCodeLine{00605\ \textcolor{preprocessor}{\#pragma\ warning(pop)}}
+\DoxyCodeLine{00606\ }
+\DoxyCodeLine{00607\ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00608\ \textcolor{preprocessor}{\#define\ McGenEventUnregister\ \_mcgen\_PASTE2(McGenEventUnregister\_,\ MCGEN\_EVENTUNREGISTER)}}
+\DoxyCodeLine{00609\ }
+\DoxyCodeLine{00610\ \textcolor{comment}{//\ This\ function\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00611\ DECLSPEC\_NOINLINE\ \_\_inline}
+\DoxyCodeLine{00612\ ULONG\ \_\_stdcall}
+\DoxyCodeLine{00613\ \mbox{\hyperlink{etw_8h_a037bc705ecb931daa9479e3860ee2152}{McGenEventUnregister}}(\_Inout\_\ PREGHANDLE\ RegHandle)}
+\DoxyCodeLine{00614\ \textcolor{comment}{/*++}}
+\DoxyCodeLine{00615\ \textcolor{comment}{}}
+\DoxyCodeLine{00616\ \textcolor{comment}{Routine\ Description:}}
+\DoxyCodeLine{00617\ \textcolor{comment}{}}
+\DoxyCodeLine{00618\ \textcolor{comment}{\ \ \ \ Unregister\ from\ ETW\ and\ set\ *RegHandle\ =\ 0.}}
+\DoxyCodeLine{00619\ \textcolor{comment}{}}
+\DoxyCodeLine{00620\ \textcolor{comment}{Arguments:}}
+\DoxyCodeLine{00621\ \textcolor{comment}{}}
+\DoxyCodeLine{00622\ \textcolor{comment}{\ \ \ \ RegHandle\ -\/\ the\ pointer\ to\ the\ provider\ registration\ handle}}
+\DoxyCodeLine{00623\ \textcolor{comment}{}}
+\DoxyCodeLine{00624\ \textcolor{comment}{Remarks:}}
+\DoxyCodeLine{00625\ \textcolor{comment}{}}
+\DoxyCodeLine{00626\ \textcolor{comment}{\ \ \ \ If\ provider\ has\ not\ been\ registered\ (i.e.\ if\ *RegHandle\ ==\ 0),}}
+\DoxyCodeLine{00627\ \textcolor{comment}{\ \ \ \ return\ SUCCESS.\ It\ is\ safe\ to\ call\ McGenEventUnregister\ even\ if\ the}}
+\DoxyCodeLine{00628\ \textcolor{comment}{\ \ \ \ call\ to\ McGenEventRegister\ returned\ an\ error.}}
+\DoxyCodeLine{00629\ \textcolor{comment}{}}
+\DoxyCodeLine{00630\ \textcolor{comment}{-\/-\/*/}}
+\DoxyCodeLine{00631\ \{}
+\DoxyCodeLine{00632\ \ \ \ \ ULONG\ Error;}
+\DoxyCodeLine{00633\ }
+\DoxyCodeLine{00634\ \ \ \ \ \textcolor{keywordflow}{if}(*RegHandle\ ==\ 0)}
+\DoxyCodeLine{00635\ \ \ \ \ \{}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ Error\ =\ 0;\ \textcolor{comment}{//\ ERROR\_SUCCESS}}
+\DoxyCodeLine{00637\ \ \ \ \ \}}
+\DoxyCodeLine{00638\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00639\ \ \ \ \ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ Error\ =\ \mbox{\hyperlink{etw_8h_a7e5e4122cbe5a828c4bd5a2d187afb54}{MCGEN\_EVENTUNREGISTER}}(*RegHandle);}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ *RegHandle\ =\ (REGHANDLE)0;}
+\DoxyCodeLine{00642\ \ \ \ \ \}}
+\DoxyCodeLine{00643\ }
+\DoxyCodeLine{00644\ \ \ \ \ \textcolor{keywordflow}{return}\ Error;}
+\DoxyCodeLine{00645\ \}}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ McGenEventRegisterUnregister}}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \textcolor{preprocessor}{\#ifndef\ \_mcgen\_EVENT\_BIT\_SET}}
+\DoxyCodeLine{00650\ \textcolor{preprocessor}{\ \ \#if\ defined(\_M\_IX86)\ ||\ defined(\_M\_X64)}}
+\DoxyCodeLine{00651\ \ \ \ \ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00652\ \textcolor{preprocessor}{\ \ \ \ \#define\ \_mcgen\_EVENT\_BIT\_SET(EnableBits,\ BitPosition)\ ((((const\ unsigned\ char*)EnableBits)[BitPosition\ >>\ 3]\ \&\ (1u\ <<\ (BitPosition\ \&\ 7)))\ !=\ 0)}}
+\DoxyCodeLine{00653\ \textcolor{preprocessor}{\ \ \#else\ }\textcolor{comment}{//\ CPU\ type}}
+\DoxyCodeLine{00654\ \ \ \ \ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00655\ \textcolor{preprocessor}{\ \ \ \ \#define\ \_mcgen\_EVENT\_BIT\_SET(EnableBits,\ BitPosition)\ ((EnableBits[BitPosition\ >>\ 5]\ \&\ (1u\ <<\ (BitPosition\ \&\ 31)))\ !=\ 0)}}
+\DoxyCodeLine{00656\ \textcolor{preprocessor}{\ \ \#endif\ }\textcolor{comment}{//\ CPU\ type}}
+\DoxyCodeLine{00657\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_mcgen\_EVENT\_BIT\_SET}}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00659\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION}}
+\DoxyCodeLine{00660\ }
+\DoxyCodeLine{00661\ \textcolor{comment}{//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++}}
+\DoxyCodeLine{00662\ \textcolor{comment}{//\ Provider\ "{}microsoft-\/windows-\/mimalloc"{}\ event\ count\ 2}}
+\DoxyCodeLine{00663\ \textcolor{comment}{//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++}}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \textcolor{comment}{//\ Provider\ GUID\ =\ 138f4dbb-\/ee04-\/4899-\/aa0a-\/572ad4475779}}
+\DoxyCodeLine{00666\ EXTERN\_C\ \mbox{\hyperlink{etw_8h_aa2cfaf13e297017861f3769e3eb87cae}{\_\_declspec}}(selectany)\ \textcolor{keyword}{const}\ GUID\ ETW\_MI\_Provider\ =\ \{0x138f4dbb,\ 0xee04,\ 0x4899,\ \{0xaa,\ 0x0a,\ 0x57,\ 0x2a,\ 0xd4,\ 0x47,\ 0x57,\ 0x79\}\};}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \textcolor{preprocessor}{\#ifndef\ ETW\_MI\_Provider\_Traits}}
+\DoxyCodeLine{00669\ \textcolor{preprocessor}{\#define\ ETW\_MI\_Provider\_Traits\ NULL}}
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ ETW\_MI\_Provider\_Traits}}
+\DoxyCodeLine{00671\ }
+\DoxyCodeLine{00672\ \textcolor{comment}{//}}
+\DoxyCodeLine{00673\ \textcolor{comment}{//\ Event\ Descriptors}}
+\DoxyCodeLine{00674\ \textcolor{comment}{//}}
+\DoxyCodeLine{00675\ EXTERN\_C\ \mbox{\hyperlink{etw_8h_aa2cfaf13e297017861f3769e3eb87cae}{\_\_declspec}}(selectany)\ \textcolor{keyword}{const}\ EVENT\_DESCRIPTOR\ ETW\_MI\_ALLOC\ =\ \{0x64,\ 0x1,\ 0x0,\ 0x4,\ 0x0,\ 0x0,\ 0x0\};}
+\DoxyCodeLine{00676\ \textcolor{preprocessor}{\#define\ ETW\_MI\_ALLOC\_value\ 0x64}}
+\DoxyCodeLine{00677\ EXTERN\_C\ \mbox{\hyperlink{etw_8h_aa2cfaf13e297017861f3769e3eb87cae}{\_\_declspec}}(selectany)\ \textcolor{keyword}{const}\ EVENT\_DESCRIPTOR\ ETW\_MI\_FREE\ =\ \{0x65,\ 0x1,\ 0x0,\ 0x4,\ 0x0,\ 0x0,\ 0x0\};}
+\DoxyCodeLine{00678\ \textcolor{preprocessor}{\#define\ ETW\_MI\_FREE\_value\ 0x65}}
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ \textcolor{comment}{//}}
+\DoxyCodeLine{00681\ \textcolor{comment}{//\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION\ macro:}}
+\DoxyCodeLine{00682\ \textcolor{comment}{//\ Define\ this\ macro\ to\ have\ the\ compiler\ skip\ the\ generated\ functions\ in\ this}}
+\DoxyCodeLine{00683\ \textcolor{comment}{//\ header.}}
+\DoxyCodeLine{00684\ \textcolor{comment}{//}}
+\DoxyCodeLine{00685\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION}}
+\DoxyCodeLine{00686\ }
+\DoxyCodeLine{00687\ \textcolor{comment}{//}}
+\DoxyCodeLine{00688\ \textcolor{comment}{//\ Event\ Enablement\ Bits}}
+\DoxyCodeLine{00689\ \textcolor{comment}{//\ These\ variables\ are\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00690\ \textcolor{comment}{//}}
+\DoxyCodeLine{00691\ EXTERN\_C\ \mbox{\hyperlink{etw_8h_aa2cfaf13e297017861f3769e3eb87cae}{\_\_declspec}}(selectany)\ DECLSPEC\_CACHEALIGN\ ULONG\ microsoft\_windows\_mimallocEnableBits[1];}
+\DoxyCodeLine{00692\ EXTERN\_C\ \mbox{\hyperlink{etw_8h_aa2cfaf13e297017861f3769e3eb87cae}{\_\_declspec}}(selectany)\ \textcolor{keyword}{const}\ ULONGLONG\ microsoft\_windows\_mimallocKeywords[1]\ =\ \{0x0\};}
+\DoxyCodeLine{00693\ EXTERN\_C\ \mbox{\hyperlink{etw_8h_aa2cfaf13e297017861f3769e3eb87cae}{\_\_declspec}}(selectany)\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ microsoft\_windows\_mimallocLevels[1]\ =\ \{4\};}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \textcolor{comment}{//}}
+\DoxyCodeLine{00696\ \textcolor{comment}{//\ Provider\ context}}
+\DoxyCodeLine{00697\ \textcolor{comment}{//}}
+\DoxyCodeLine{00698\ EXTERN\_C\ \mbox{\hyperlink{etw_8h_aa2cfaf13e297017861f3769e3eb87cae}{\_\_declspec}}(selectany)\ \mbox{\hyperlink{etw_8h_a8746f43ab73c92cbef97da300333215e}{MCGEN\_TRACE\_CONTEXT}}\ ETW\_MI\_Provider\_Context\ =\ \{0,\ (ULONG\_PTR)\mbox{\hyperlink{etw_8h_a8c0b4a3f70dd55e01d118000bda4fab7}{ETW\_MI\_Provider\_Traits}},\ 0,\ 0,\ 0,\ 0,\ 0,\ 0,\ 1,\ microsoft\_windows\_mimallocEnableBits,\ microsoft\_windows\_mimallocKeywords,\ microsoft\_windows\_mimallocLevels\};}
+\DoxyCodeLine{00699\ }
+\DoxyCodeLine{00700\ \textcolor{comment}{//}}
+\DoxyCodeLine{00701\ \textcolor{comment}{//\ Provider\ REGHANDLE}}
+\DoxyCodeLine{00702\ \textcolor{comment}{//}}
+\DoxyCodeLine{00703\ \textcolor{preprocessor}{\#define\ microsoft\_windows\_mimallocHandle\ (ETW\_MI\_Provider\_Context.RegistrationHandle)}}
+\DoxyCodeLine{00704\ }
+\DoxyCodeLine{00705\ \textcolor{comment}{//}}
+\DoxyCodeLine{00706\ \textcolor{comment}{//\ This\ macro\ is\ set\ to\ 0,\ indicating\ that\ the\ EventWrite[Name]\ macros\ do\ not}}
+\DoxyCodeLine{00707\ \textcolor{comment}{//\ have\ an\ Activity\ parameter.\ This\ is\ controlled\ by\ the\ -\/km\ and\ -\/um\ options.}}
+\DoxyCodeLine{00708\ \textcolor{comment}{//}}
+\DoxyCodeLine{00709\ \textcolor{preprocessor}{\#define\ ETW\_MI\_Provider\_EventWriteActivity\ 0}}
+\DoxyCodeLine{00710\ }
+\DoxyCodeLine{00711\ \textcolor{comment}{//}}
+\DoxyCodeLine{00712\ \textcolor{comment}{//\ Register\ with\ ETW\ using\ the\ control\ GUID\ specified\ in\ the\ manifest.}}
+\DoxyCodeLine{00713\ \textcolor{comment}{//\ Invoke\ this\ macro\ during\ module\ initialization\ (i.e.\ program\ startup,}}
+\DoxyCodeLine{00714\ \textcolor{comment}{//\ DLL\ process\ attach,\ or\ driver\ load)\ to\ initialize\ the\ provider.}}
+\DoxyCodeLine{00715\ \textcolor{comment}{//\ Note\ that\ if\ this\ function\ returns\ an\ error,\ the\ error\ means\ that}}
+\DoxyCodeLine{00716\ \textcolor{comment}{//\ will\ not\ work,\ but\ no\ action\ needs\ to\ be\ taken\ -\/-\/\ even\ if\ EventRegister}}
+\DoxyCodeLine{00717\ \textcolor{comment}{//\ returns\ an\ error,\ it\ is\ generally\ safe\ to\ use\ EventWrite\ and}}
+\DoxyCodeLine{00718\ \textcolor{comment}{//\ EventUnregister\ macros\ (they\ will\ be\ no-\/ops\ if\ EventRegister\ failed).}}
+\DoxyCodeLine{00719\ \textcolor{comment}{//}}
+\DoxyCodeLine{00720\ \textcolor{preprocessor}{\#ifndef\ EventRegistermicrosoft\_windows\_mimalloc}}
+\DoxyCodeLine{00721\ \textcolor{preprocessor}{\#define\ EventRegistermicrosoft\_windows\_mimalloc()\ McGenEventRegister(\&ETW\_MI\_Provider,\ McGenControlCallbackV2,\ \&ETW\_MI\_Provider\_Context,\ \&microsoft\_windows\_mimallocHandle)}}
+\DoxyCodeLine{00722\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00723\ }
+\DoxyCodeLine{00724\ \textcolor{comment}{//}}
+\DoxyCodeLine{00725\ \textcolor{comment}{//\ Register\ with\ ETW\ using\ a\ specific\ control\ GUID\ (i.e.\ a\ GUID\ other\ than\ what}}
+\DoxyCodeLine{00726\ \textcolor{comment}{//\ is\ specified\ in\ the\ manifest).\ Advanced\ scenarios\ only.}}
+\DoxyCodeLine{00727\ \textcolor{comment}{//}}
+\DoxyCodeLine{00728\ \textcolor{preprocessor}{\#ifndef\ EventRegisterByGuidmicrosoft\_windows\_mimalloc}}
+\DoxyCodeLine{00729\ \textcolor{preprocessor}{\#define\ EventRegisterByGuidmicrosoft\_windows\_mimalloc(Guid)\ McGenEventRegister(\&(Guid),\ McGenControlCallbackV2,\ \&ETW\_MI\_Provider\_Context,\ \&microsoft\_windows\_mimallocHandle)}}
+\DoxyCodeLine{00730\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00731\ }
+\DoxyCodeLine{00732\ \textcolor{comment}{//}}
+\DoxyCodeLine{00733\ \textcolor{comment}{//\ Unregister\ with\ ETW\ and\ close\ the\ provider.}}
+\DoxyCodeLine{00734\ \textcolor{comment}{//\ Invoke\ this\ macro\ during\ module\ shutdown\ (i.e.\ program\ exit,\ DLL\ process}}
+\DoxyCodeLine{00735\ \textcolor{comment}{//\ detach,\ or\ driver\ unload)\ to\ unregister\ the\ provider.}}
+\DoxyCodeLine{00736\ \textcolor{comment}{//\ Note\ that\ you\ MUST\ call\ EventUnregister\ before\ DLL\ or\ driver\ unload}}
+\DoxyCodeLine{00737\ \textcolor{comment}{//\ (not\ optional):\ failure\ to\ unregister\ a\ provider\ before\ DLL\ or\ driver\ unload}}
+\DoxyCodeLine{00738\ \textcolor{comment}{//\ will\ result\ in\ crashes.}}
+\DoxyCodeLine{00739\ \textcolor{comment}{//}}
+\DoxyCodeLine{00740\ \textcolor{preprocessor}{\#ifndef\ EventUnregistermicrosoft\_windows\_mimalloc}}
+\DoxyCodeLine{00741\ \textcolor{preprocessor}{\#define\ EventUnregistermicrosoft\_windows\_mimalloc()\ McGenEventUnregister(\&microsoft\_windows\_mimallocHandle)}}
+\DoxyCodeLine{00742\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00743\ }
+\DoxyCodeLine{00744\ \textcolor{comment}{//}}
+\DoxyCodeLine{00745\ \textcolor{comment}{//\ MCGEN\_ENABLE\_FORCONTEXT\_CODE\_GENERATION\ macro:}}
+\DoxyCodeLine{00746\ \textcolor{comment}{//\ Define\ this\ macro\ to\ enable\ support\ for\ caller-\/allocated\ provider\ context.}}
+\DoxyCodeLine{00747\ \textcolor{comment}{//}}
+\DoxyCodeLine{00748\ \textcolor{preprocessor}{\#ifdef\ MCGEN\_ENABLE\_FORCONTEXT\_CODE\_GENERATION}}
+\DoxyCodeLine{00749\ }
+\DoxyCodeLine{00750\ \textcolor{comment}{//}}
+\DoxyCodeLine{00751\ \textcolor{comment}{//\ Advanced\ scenarios:\ Caller-\/allocated\ provider\ context.}}
+\DoxyCodeLine{00752\ \textcolor{comment}{//\ Use\ when\ multiple\ differently-\/configured\ provider\ handles\ are\ needed,}}
+\DoxyCodeLine{00753\ \textcolor{comment}{//\ e.g.\ for\ container-\/aware\ drivers,\ one\ context\ per\ container.}}
+\DoxyCodeLine{00754\ \textcolor{comment}{//}}
+\DoxyCodeLine{00755\ \textcolor{comment}{//\ Usage:}}
+\DoxyCodeLine{00756\ \textcolor{comment}{//}}
+\DoxyCodeLine{00757\ \textcolor{comment}{//\ -\/\ Caller\ enables\ the\ feature\ before\ including\ this\ header,\ e.g.}}
+\DoxyCodeLine{00758\ \textcolor{comment}{//\ \ \ \#define\ MCGEN\_ENABLE\_FORCONTEXT\_CODE\_GENERATION\ 1}}
+\DoxyCodeLine{00759\ \textcolor{comment}{//\ -\/\ Caller\ allocates\ memory,\ e.g.\ pContext\ =\ malloc(sizeof(McGenContext\_microsoft\_windows\_mimalloc));}}
+\DoxyCodeLine{00760\ \textcolor{comment}{//\ -\/\ Caller\ registers\ the\ provider,\ e.g.\ EventRegistermicrosoft\_windows\_mimalloc\_ForContext(pContext);}}
+\DoxyCodeLine{00761\ \textcolor{comment}{//\ -\/\ Caller\ writes\ events,\ e.g.\ EventWriteMyEvent\_ForContext(pContext,\ ...);}}
+\DoxyCodeLine{00762\ \textcolor{comment}{//\ -\/\ Caller\ unregisters,\ e.g.\ EventUnregistermicrosoft\_windows\_mimalloc\_ForContext(pContext);}}
+\DoxyCodeLine{00763\ \textcolor{comment}{//\ -\/\ Caller\ frees\ memory,\ e.g.\ free(pContext);}}
+\DoxyCodeLine{00764\ \textcolor{comment}{//}}
+\DoxyCodeLine{00765\ }
+\DoxyCodeLine{00766\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }tagMcGenContext\_microsoft\_windows\_mimalloc\ \{}
+\DoxyCodeLine{00767\ \ \ \ \ \textcolor{comment}{//\ The\ fields\ of\ this\ structure\ are\ subject\ to\ change\ and\ should}}
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{comment}{//\ not\ be\ accessed\ directly.\ To\ access\ the\ provider's\ REGHANDLE,}}
+\DoxyCodeLine{00769\ \ \ \ \ \textcolor{comment}{//\ use\ microsoft\_windows\_mimallocHandle\_ForContext(pContext).}}
+\DoxyCodeLine{00770\ \ \ \ \ \mbox{\hyperlink{etw_8h_a8746f43ab73c92cbef97da300333215e}{MCGEN\_TRACE\_CONTEXT}}\ Context;}
+\DoxyCodeLine{00771\ \ \ \ \ ULONG\ EnableBits[1];}
+\DoxyCodeLine{00772\ \}\ McGenContext\_microsoft\_windows\_mimalloc;}
+\DoxyCodeLine{00773\ }
+\DoxyCodeLine{00774\ \textcolor{preprocessor}{\#define\ EventRegistermicrosoft\_windows\_mimalloc\_ForContext(pContext)\ \ \ \ \ \ \ \ \ \ \ \ \ \_mcgen\_PASTE2(\_mcgen\_RegisterForContext\_microsoft\_windows\_mimalloc\_,\ MCGEN\_EVENTREGISTER)(\&ETW\_MI\_Provider,\ pContext)}}
+\DoxyCodeLine{00775\ \textcolor{preprocessor}{\#define\ EventRegisterByGuidmicrosoft\_windows\_mimalloc\_ForContext(Guid,\ pContext)\ \_mcgen\_PASTE2(\_mcgen\_RegisterForContext\_microsoft\_windows\_mimalloc\_,\ MCGEN\_EVENTREGISTER)(\&(Guid),\ pContext)}}
+\DoxyCodeLine{00776\ \textcolor{preprocessor}{\#define\ EventUnregistermicrosoft\_windows\_mimalloc\_ForContext(pContext)\ \ \ \ \ \ \ \ \ \ \ McGenEventUnregister(\&(pContext)-\/>Context.RegistrationHandle)}}
+\DoxyCodeLine{00777\ }
+\DoxyCodeLine{00778\ \textcolor{comment}{//}}
+\DoxyCodeLine{00779\ \textcolor{comment}{//\ Provider\ REGHANDLE\ for\ caller-\/allocated\ context.}}
+\DoxyCodeLine{00780\ \textcolor{comment}{//}}
+\DoxyCodeLine{00781\ \textcolor{preprocessor}{\#define\ microsoft\_windows\_mimallocHandle\_ForContext(pContext)\ ((pContext)-\/>Context.RegistrationHandle)}}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \textcolor{comment}{//\ This\ function\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00784\ \textcolor{comment}{//\ Initialize\ and\ register\ the\ caller-\/allocated\ context.}}
+\DoxyCodeLine{00785\ \_\_inline}
+\DoxyCodeLine{00786\ ULONG\ \_\_stdcall}
+\DoxyCodeLine{00787\ \mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(\_mcgen\_RegisterForContext\_microsoft\_windows\_mimalloc\_,\ \mbox{\hyperlink{etw_8h_a028109b0db370ee0394fda0ea65767c1}{MCGEN\_EVENTREGISTER}})(}
+\DoxyCodeLine{00788\ \ \ \ \ \_In\_\ LPCGUID\ pProviderId,}
+\DoxyCodeLine{00789\ \ \ \ \ \_Out\_\ McGenContext\_microsoft\_windows\_mimalloc*\ pContext)}
+\DoxyCodeLine{00790\ \{}
+\DoxyCodeLine{00791\ \ \ \ \ RtlZeroMemory(pContext,\ \textcolor{keyword}{sizeof}(*pContext));}
+\DoxyCodeLine{00792\ \ \ \ \ pContext-\/>Context.Logger\ =\ (ULONG\_PTR)\mbox{\hyperlink{etw_8h_a8c0b4a3f70dd55e01d118000bda4fab7}{ETW\_MI\_Provider\_Traits}};}
+\DoxyCodeLine{00793\ \ \ \ \ pContext-\/>Context.EnableBitsCount\ =\ 1;}
+\DoxyCodeLine{00794\ \ \ \ \ pContext-\/>Context.EnableBitMask\ =\ pContext-\/>EnableBits;}
+\DoxyCodeLine{00795\ \ \ \ \ pContext-\/>Context.EnableKeyWords\ =\ microsoft\_windows\_mimallocKeywords;}
+\DoxyCodeLine{00796\ \ \ \ \ pContext-\/>Context.EnableLevel\ =\ microsoft\_windows\_mimallocLevels;}
+\DoxyCodeLine{00797\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{etw_8h_ae076ee27b2fe89258b6a562c08dd5a13}{McGenEventRegister}}(}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ pProviderId,}
+\DoxyCodeLine{00799\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{etw_8h_a4f9fd98bad487529d17c95cb90891baf}{McGenControlCallbackV2}},}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \ \ \&pContext-\/>Context,}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ \&pContext-\/>Context.RegistrationHandle);}
+\DoxyCodeLine{00802\ \}}
+\DoxyCodeLine{00803\ }
+\DoxyCodeLine{00804\ \textcolor{comment}{//\ This\ function\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00805\ \textcolor{comment}{//\ Trigger\ a\ compile\ error\ if\ called\ with\ the\ wrong\ parameter\ type.}}
+\DoxyCodeLine{00806\ FORCEINLINE}
+\DoxyCodeLine{00807\ \_Ret\_\ McGenContext\_microsoft\_windows\_mimalloc*}
+\DoxyCodeLine{00808\ \_mcgen\_CheckContextType\_microsoft\_windows\_mimalloc(\_In\_\ McGenContext\_microsoft\_windows\_mimalloc*\ pContext)}
+\DoxyCodeLine{00809\ \{}
+\DoxyCodeLine{00810\ \ \ \ \ \textcolor{keywordflow}{return}\ pContext;}
+\DoxyCodeLine{00811\ \}}
+\DoxyCodeLine{00812\ }
+\DoxyCodeLine{00813\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_ENABLE\_FORCONTEXT\_CODE\_GENERATION}}
+\DoxyCodeLine{00814\ }
+\DoxyCodeLine{00815\ \textcolor{comment}{//}}
+\DoxyCodeLine{00816\ \textcolor{comment}{//\ Enablement\ check\ macro\ for\ event\ "{}ETW\_MI\_ALLOC"{}}}
+\DoxyCodeLine{00817\ \textcolor{comment}{//}}
+\DoxyCodeLine{00818\ \textcolor{preprocessor}{\#define\ EventEnabledETW\_MI\_ALLOC()\ \_mcgen\_EVENT\_BIT\_SET(microsoft\_windows\_mimallocEnableBits,\ 0)}}
+\DoxyCodeLine{00819\ \textcolor{preprocessor}{\#define\ EventEnabledETW\_MI\_ALLOC\_ForContext(pContext)\ \_mcgen\_EVENT\_BIT\_SET(\_mcgen\_CheckContextType\_microsoft\_windows\_mimalloc(pContext)-\/>EnableBits,\ 0)}}
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ \textcolor{comment}{//}}
+\DoxyCodeLine{00822\ \textcolor{comment}{//\ Event\ write\ macros\ for\ event\ "{}ETW\_MI\_ALLOC"{}}}
+\DoxyCodeLine{00823\ \textcolor{comment}{//}}
+\DoxyCodeLine{00824\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_ALLOC(Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00825\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ MCGEN\_EVENT\_ENABLED(ETW\_MI\_ALLOC)\ \(\backslash\)}}
+\DoxyCodeLine{00826\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ?\ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_ALLOC(\&ETW\_MI\_Provider\_Context,\ \&ETW\_MI\_ALLOC,\ Address,\ Size)\ :\ 0}}
+\DoxyCodeLine{00827\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_ALLOC\_AssumeEnabled(Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00828\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_ALLOC(\&ETW\_MI\_Provider\_Context,\ \&ETW\_MI\_ALLOC,\ Address,\ Size)}}
+\DoxyCodeLine{00829\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_ALLOC\_ForContext(pContext,\ Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00830\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ MCGEN\_EVENT\_ENABLED\_FORCONTEXT(pContext,\ ETW\_MI\_ALLOC)\ \(\backslash\)}}
+\DoxyCodeLine{00831\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ?\ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_ALLOC(\&(pContext)-\/>Context,\ \&ETW\_MI\_ALLOC,\ Address,\ Size)\ :\ 0}}
+\DoxyCodeLine{00832\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_ALLOC\_ForContextAssumeEnabled(pContext,\ Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00833\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_ALLOC(\&\_mcgen\_CheckContextType\_microsoft\_windows\_mimalloc(pContext)-\/>Context,\ \&ETW\_MI\_ALLOC,\ Address,\ Size)}}
+\DoxyCodeLine{00834\ }
+\DoxyCodeLine{00835\ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00836\ \textcolor{preprocessor}{\#define\ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_ALLOC\ \_mcgen\_PASTE2(McTemplateU0xx\_,\ MCGEN\_EVENTWRITETRANSFER)}}
+\DoxyCodeLine{00837\ }
+\DoxyCodeLine{00838\ \textcolor{comment}{//}}
+\DoxyCodeLine{00839\ \textcolor{comment}{//\ Enablement\ check\ macro\ for\ event\ "{}ETW\_MI\_FREE"{}}}
+\DoxyCodeLine{00840\ \textcolor{comment}{//}}
+\DoxyCodeLine{00841\ \textcolor{preprocessor}{\#define\ EventEnabledETW\_MI\_FREE()\ \_mcgen\_EVENT\_BIT\_SET(microsoft\_windows\_mimallocEnableBits,\ 0)}}
+\DoxyCodeLine{00842\ \textcolor{preprocessor}{\#define\ EventEnabledETW\_MI\_FREE\_ForContext(pContext)\ \_mcgen\_EVENT\_BIT\_SET(\_mcgen\_CheckContextType\_microsoft\_windows\_mimalloc(pContext)-\/>EnableBits,\ 0)}}
+\DoxyCodeLine{00843\ }
+\DoxyCodeLine{00844\ \textcolor{comment}{//}}
+\DoxyCodeLine{00845\ \textcolor{comment}{//\ Event\ write\ macros\ for\ event\ "{}ETW\_MI\_FREE"{}}}
+\DoxyCodeLine{00846\ \textcolor{comment}{//}}
+\DoxyCodeLine{00847\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_FREE(Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00848\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ MCGEN\_EVENT\_ENABLED(ETW\_MI\_FREE)\ \(\backslash\)}}
+\DoxyCodeLine{00849\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ?\ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_FREE(\&ETW\_MI\_Provider\_Context,\ \&ETW\_MI\_FREE,\ Address,\ Size)\ :\ 0}}
+\DoxyCodeLine{00850\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_FREE\_AssumeEnabled(Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00851\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_FREE(\&ETW\_MI\_Provider\_Context,\ \&ETW\_MI\_FREE,\ Address,\ Size)}}
+\DoxyCodeLine{00852\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_FREE\_ForContext(pContext,\ Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00853\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ MCGEN\_EVENT\_ENABLED\_FORCONTEXT(pContext,\ ETW\_MI\_FREE)\ \(\backslash\)}}
+\DoxyCodeLine{00854\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ?\ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_FREE(\&(pContext)-\/>Context,\ \&ETW\_MI\_FREE,\ Address,\ Size)\ :\ 0}}
+\DoxyCodeLine{00855\ \textcolor{preprocessor}{\#define\ EventWriteETW\_MI\_FREE\_ForContextAssumeEnabled(pContext,\ Address,\ Size)\ \(\backslash\)}}
+\DoxyCodeLine{00856\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_FREE(\&\_mcgen\_CheckContextType\_microsoft\_windows\_mimalloc(pContext)-\/>Context,\ \&ETW\_MI\_FREE,\ Address,\ Size)}}
+\DoxyCodeLine{00857\ }
+\DoxyCodeLine{00858\ \textcolor{comment}{//\ This\ macro\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00859\ \textcolor{preprocessor}{\#define\ \_mcgen\_TEMPLATE\_FOR\_ETW\_MI\_FREE\ \_mcgen\_PASTE2(McTemplateU0xx\_,\ MCGEN\_EVENTWRITETRANSFER)}}
+\DoxyCodeLine{00860\ }
+\DoxyCodeLine{00861\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION}}
+\DoxyCodeLine{00862\ }
+\DoxyCodeLine{00863\ \textcolor{comment}{//}}
+\DoxyCodeLine{00864\ \textcolor{comment}{//\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION\ macro:}}
+\DoxyCodeLine{00865\ \textcolor{comment}{//\ Define\ this\ macro\ to\ have\ the\ compiler\ skip\ the\ generated\ functions\ in\ this}}
+\DoxyCodeLine{00866\ \textcolor{comment}{//\ header.}}
+\DoxyCodeLine{00867\ \textcolor{comment}{//}}
+\DoxyCodeLine{00868\ \textcolor{preprocessor}{\#ifndef\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION}}
+\DoxyCodeLine{00869\ }
+\DoxyCodeLine{00870\ \textcolor{comment}{//}}
+\DoxyCodeLine{00871\ \textcolor{comment}{//\ Template\ Functions}}
+\DoxyCodeLine{00872\ \textcolor{comment}{//}}
+\DoxyCodeLine{00873\ }
+\DoxyCodeLine{00874\ \textcolor{comment}{//}}
+\DoxyCodeLine{00875\ \textcolor{comment}{//\ Function\ for\ template\ "{}ETW\_CUSTOM\_HEAP\_ALLOC\_DATA"{}\ (and\ possibly\ others).}}
+\DoxyCodeLine{00876\ \textcolor{comment}{//\ This\ function\ is\ for\ use\ by\ MC-\/generated\ code\ and\ should\ not\ be\ used\ directly.}}
+\DoxyCodeLine{00877\ \textcolor{comment}{//}}
+\DoxyCodeLine{00878\ \textcolor{preprocessor}{\#ifndef\ McTemplateU0xx\_def}}
+\DoxyCodeLine{00879\ \textcolor{preprocessor}{\#define\ McTemplateU0xx\_def}}
+\DoxyCodeLine{00880\ \mbox{\hyperlink{etw_8h_a7883baad4998c366e556d31ca1424bcd}{ETW\_INLINE}}}
+\DoxyCodeLine{00881\ ULONG}
+\DoxyCodeLine{00882\ \mbox{\hyperlink{etw_8h_a9222daf2cc31d8496172e725df7f36fc}{\_mcgen\_PASTE2}}(McTemplateU0xx\_,\ \mbox{\hyperlink{etw_8h_afbda8ff20366df3e0cfb0d5e6579e447}{MCGEN\_EVENTWRITETRANSFER}})(}
+\DoxyCodeLine{00883\ \ \ \ \ \_In\_\ \mbox{\hyperlink{etw_8h_a48cc448736d2968f83e9ae07fd1b6c3e}{PMCGEN\_TRACE\_CONTEXT}}\ Context,}
+\DoxyCodeLine{00884\ \ \ \ \ \_In\_\ PCEVENT\_DESCRIPTOR\ \mbox{\hyperlink{etw_8h_aa520bbdaf4ace9111f92fb6d00cefa1d}{Descriptor}},}
+\DoxyCodeLine{00885\ \ \ \ \ \_In\_\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_\_int64\ \ \mbox{\hyperlink{etw_8h_a41256ff1ba1af4cd780e68046f403033}{\_Arg0}},}
+\DoxyCodeLine{00886\ \ \ \ \ \_In\_\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_\_int64\ \ \mbox{\hyperlink{etw_8h_a3a897f1e818dd434b404c5ab72b580f5}{\_Arg1}}}
+\DoxyCodeLine{00887\ \ \ \ \ )}
+\DoxyCodeLine{00888\ \{}
+\DoxyCodeLine{00889\ \textcolor{preprocessor}{\#define\ McTemplateU0xx\_ARGCOUNT\ 2}}
+\DoxyCodeLine{00890\ }
+\DoxyCodeLine{00891\ \ \ \ \ EVENT\_DATA\_DESCRIPTOR\ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[\mbox{\hyperlink{etw_8h_aee3097653acf82ad4c5808b50a551c42}{McTemplateU0xx\_ARGCOUNT}}\ +\ 1];}
+\DoxyCodeLine{00892\ }
+\DoxyCodeLine{00893\ \ \ \ \ EventDataDescCreate(\&\mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[1],\&\mbox{\hyperlink{etw_8h_a41256ff1ba1af4cd780e68046f403033}{\_Arg0}},\ \textcolor{keyword}{sizeof}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_\_int64)\ \ );}
+\DoxyCodeLine{00894\ }
+\DoxyCodeLine{00895\ \ \ \ \ EventDataDescCreate(\&\mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}}[2],\&\mbox{\hyperlink{etw_8h_a3a897f1e818dd434b404c5ab72b580f5}{\_Arg1}},\ \textcolor{keyword}{sizeof}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \_\_int64)\ \ );}
+\DoxyCodeLine{00896\ }
+\DoxyCodeLine{00897\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{etw_8h_ab8c95d3c2e1bb9b326ed5cafd65efff4}{McGenEventWrite}}(Context,\ \mbox{\hyperlink{etw_8h_aa520bbdaf4ace9111f92fb6d00cefa1d}{Descriptor}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{etw_8h_aee3097653acf82ad4c5808b50a551c42}{McTemplateU0xx\_ARGCOUNT}}\ +\ 1,\ \mbox{\hyperlink{etw_8h_a1150dca5d1943d5e54ad4071d4aa36b9}{EventData}});}
+\DoxyCodeLine{00898\ \}}
+\DoxyCodeLine{00899\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ McTemplateU0xx\_def}}
+\DoxyCodeLine{00900\ }
+\DoxyCodeLine{00901\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MCGEN\_DISABLE\_PROVIDER\_CODE\_GENERATION}}
+\DoxyCodeLine{00902\ }
+\DoxyCodeLine{00903\ \textcolor{preprocessor}{\#if\ defined(\_\_cplusplus)}}
+\DoxyCodeLine{00904\ \}}
+\DoxyCodeLine{00905\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

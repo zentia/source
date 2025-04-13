@@ -1,0 +1,147 @@
+\chapter{Avro}
+\hypertarget{md_external_2reflect-cpp_2docs_2supported__formats_2avro}{}\label{md_external_2reflect-cpp_2docs_2supported__formats_2avro}\index{Avro@{Avro}}
+\label{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md632}%
+\Hypertarget{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md632}%
+
+
+For Avro support, you must also include the header {\ttfamily \texorpdfstring{$<$}{<}\doxylink{avro_8hpp}{rfl/avro.\+hpp}\texorpdfstring{$>$}{>}} and link to the \href{https://avro.apache.org/docs/1.11.1/api/c/}{\texttt{ avro-\/c}} library. Furthermore, when compiling reflect-\/cpp, you need to pass {\ttfamily -\/DREFLECTCPP\+\_\+\+AVRO=ON} to cmake.
+
+Avro is a schemaful binary format. This sets it apart from most other formats supported by reflect-\/cpp, which are schemaless.\hypertarget{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md633}{}\doxysection{\texorpdfstring{Reading and writing}{Reading and writing}}\label{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md633}
+Suppose you have a struct like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Person\ \{}
+\DoxyCodeLine{\ \ \ \ std::string\ first\_name;}
+\DoxyCodeLine{\ \ \ \ std::string\ last\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Timestamp<\textcolor{stringliteral}{"{}\%Y-\/\%m-\/\%d"{}}>\ birthday;}
+\DoxyCodeLine{\ \ \ \ std::vector<Person>\ children;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} {\ttfamily Person} struct can be serialized to a bytes vector like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ person\ =\ Person\{...\};}
+\DoxyCodeLine{\textcolor{keyword}{const}\ std::vector<char>\ \mbox{\hyperlink{structbytes}{bytes}}\ =\ \mbox{\hyperlink{namespacerfl_1_1avro_a35363ef7356277226dac5c8cb4fb6b4a}{rfl::avro::write}}(person);}
+
+\end{DoxyCode}
+
+
+You can parse bytes like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{classrfl_1_1_result}{rfl::Result<Person>}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{namespacerfl_1_1avro_aea11cfdc519efbaee04bd766ce499db1}{rfl::avro::read<Person>}}(\mbox{\hyperlink{structbytes}{bytes}});}
+
+\end{DoxyCode}
+\hypertarget{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md634}{}\doxysection{\texorpdfstring{The schema}{The schema}}\label{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md634}
+However, Avro is a schemaful format, so before you serialize or deserialize, you have to declare a schema. In the two function calls above, this is abstracted away.
+
+But if you are repeatedly serializing or deserializing the same struct, it is more efficient to generate the schema explicitly\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ schema\ =\ \mbox{\hyperlink{namespacerfl_1_1avro_ab4e4299e148b02882cde0a081a19d533}{rfl::avro::to\_schema<Person>}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ person\ =\ Person\{...\};}
+\DoxyCodeLine{\textcolor{keyword}{const}\ std::vector<char>\ \mbox{\hyperlink{structbytes}{bytes}}\ =\ \mbox{\hyperlink{namespacerfl_1_1avro_a35363ef7356277226dac5c8cb4fb6b4a}{rfl::avro::write}}(person,\ schema);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{classrfl_1_1_result}{rfl::Result<Person>}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{namespacerfl_1_1avro_aea11cfdc519efbaee04bd766ce499db1}{rfl::avro::read<Person>}}(\mbox{\hyperlink{structbytes}{bytes}},\ schema);}
+
+\end{DoxyCode}
+
+
+Avro schemas are created using a JSON-\/based schema language. You can retrieve the JSON representation like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Both\ calls\ are\ equivalent.}}
+\DoxyCodeLine{schema.json\_str();}
+\DoxyCodeLine{schema.str();}
+
+\end{DoxyCode}
+
+
+In this case, the resulting JSON schema representation looks like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{"{}type"{}:"{}record"{},"{}name"{}:"{}Person"{},"{}fields"{}:[\{"{}name"{}:"{}first\_name"{},"{}type"{}:\{"{}type"{}:"{}string"{}\}\},\{"{}name"{}:"{}last\_name"{},"{}type"{}:\{"{}type"{}:"{}string"{}\}\},\{"{}name"{}:"{}birthday"{},"{}type"{}:\{"{}type"{}:"{}string"{}\}\},\{"{}name"{}:"{}children"{},"{}type"{}:\{"{}type"{}:"{}array"{},"{}items"{}:\{"{}type"{}:"{}Person"{}\},"{}default"{}:[]\}\}]\}}
+
+\end{DoxyCode}
+\hypertarget{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md635}{}\doxysection{\texorpdfstring{Loading and saving}{Loading and saving}}\label{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md635}
+You can also load and save to disc using a very similar syntax\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{classrfl_1_1_result}{rfl::Result<Person>}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{namespacerfl_1_1avro_a4be4d6284b774eb98e95ffb8f735be75}{rfl::avro::load<Person>}}(\textcolor{stringliteral}{"{}/path/to/file.avro"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ person\ =\ Person\{...\};}
+\DoxyCodeLine{\mbox{\hyperlink{namespacerfl_1_1avro_af2b461dd4d9fd0ac9d46ddc06007864f}{rfl::avro::save}}(\textcolor{stringliteral}{"{}/path/to/file.avro"{}},\ person);}
+
+\end{DoxyCode}
+\hypertarget{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md636}{}\doxysection{\texorpdfstring{Reading from and writing into streams}{Reading from and writing into streams}}\label{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md636}
+You can also read from and write into any {\ttfamily std\+::istream} and {\ttfamily std\+::ostream} respectively.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{classrfl_1_1_result}{rfl::Result<Person>}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{namespacerfl_1_1avro_aea11cfdc519efbaee04bd766ce499db1}{rfl::avro::read<Person>}}(my\_istream);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ person\ =\ Person\{...\};}
+\DoxyCodeLine{\mbox{\hyperlink{namespacerfl_1_1avro_a35363ef7356277226dac5c8cb4fb6b4a}{rfl::avro::write}}(person,\ my\_ostream);}
+
+\end{DoxyCode}
+
+
+Note that {\ttfamily std\+::cout} is also an ostream, so this works as well\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespacerfl_1_1avro_a35363ef7356277226dac5c8cb4fb6b4a}{rfl::avro::write}}(person,\ std::cout)\ <<\ std::endl;}
+
+\end{DoxyCode}
+
+
+(Since Avro is a binary format, the readability of this will be limited, but it might be useful for debugging).\hypertarget{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md637}{}\doxysection{\texorpdfstring{Custom constructors}{Custom constructors}}\label{md_external_2reflect-cpp_2docs_2supported__formats_2avro_autotoc_md637}
+One of the great things about C++ is that it gives you control over when and how you code is compiled.
+
+For large and complex systems of structs, it is often a good idea to split up your code into smaller compilation units. You can do so using custom constructors.
+
+For the Avro format, these must be a static function on your struct or class called {\ttfamily from\+\_\+avro} that take a {\ttfamily \doxylink{structrfl_1_1avro_1_1_reader_ae67566ca289350e6b97ae98e6f4240a0}{rfl\+::avro\+::\+Reader\+::\+Input\+Var\+Type}} as input and return the class or the class wrapped in {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}}.
+
+In your header file you can write something like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Person\ \{}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}firstName"{}},\ std::string>\ first\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}lastName"{}},\ std::string>\ last\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Timestamp<\textcolor{stringliteral}{"{}\%Y-\/\%m-\/\%d"{}}>\ birthday;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacerfl_1_1avro_a1b87f8b534d31b79c6cdcb844cc0ff8f}{InputVarType}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structrfl_1_1avro_1_1_reader_ae67566ca289350e6b97ae98e6f4240a0}{rfl::avro::Reader::InputVarType}};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ rfl::Result<Person>\ from\_avro(\textcolor{keyword}{const}\ InputVarType\&\ \_obj);}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+And in your source file, you implement {\ttfamily from\+\_\+avro} as follows\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classrfl_1_1_result}{rfl::Result<Person>}}\ Person::from\_avro(\textcolor{keyword}{const}\ InputVarType\&\ \_obj)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ from\_nt\ =\ [](\textcolor{keyword}{auto}\&\&\ \_nt)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacerfl_a5acb20e6bf6611a2a9f26931513b29f7}{rfl::from\_named\_tuple<Person>}}(std::move(\_nt));}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacerfl_1_1avro_aea11cfdc519efbaee04bd766ce499db1}{rfl::avro::read<rfl::named\_tuple\_t<Person>}}>(\_obj)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ .\mbox{\hyperlink{sycl__algorithms_8cpp_abe0cf4a907cfd4631a4d7c7647692a0a}{transform}}(from\_nt);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+This will force the compiler to only compile the Avro parsing when the source file is compiled. 

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "multi_gpu.h"
-#include "pixel_format.h"
+#include "runtime/core/pixel_format.h"
 #include "rhi_define.h"
 #include "rhi_resources.h"
 #include "pipeline/rhi_pipeline.h"

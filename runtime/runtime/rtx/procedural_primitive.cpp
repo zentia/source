@@ -1,5 +1,5 @@
-#include <luisa/core/logging.h>
-#include <luisa/runtime/rtx/procedural_primitive.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/rtx/procedural_primitive.h>
 
 namespace luisa::compute {
 

@@ -1,0 +1,28 @@
+var classrepara_1_1rprkernels_1_1_kernel =
+[
+    [ "RPR_measures_vector", "classrepara_1_1rprkernels_1_1_kernel.html#ad45a335b01f417babf0163158e942908", null ],
+    [ "selector", "classrepara_1_1rprkernels_1_1_kernel.html#a6106e97efe9cb2e7f2264270d6eaabf4", null ],
+    [ "Kernel", "classrepara_1_1rprkernels_1_1_kernel.html#aebf286ead9e328c05b580b496fc582bb", null ],
+    [ "Kernel", "classrepara_1_1rprkernels_1_1_kernel.html#a46707a44b8557bf9c01a264bc86f0cd9", null ],
+    [ "Kernel", "classrepara_1_1rprkernels_1_1_kernel.html#a2bac2ab9bcdf119067f52628f9983794", null ],
+    [ "Kernel", "classrepara_1_1rprkernels_1_1_kernel.html#a12f697d64bd736bca30583999743d389", null ],
+    [ "~Kernel", "classrepara_1_1rprkernels_1_1_kernel.html#a5a0ef98a41b417d9e8187028c1624d69", null ],
+    [ "addNode", "classrepara_1_1rprkernels_1_1_kernel.html#a04e9bb0eb63791f9d661d50c3c05cb9c", null ],
+    [ "addNode", "classrepara_1_1rprkernels_1_1_kernel.html#a0ffd863c9f999f4a97c70ff0edf84132", null ],
+    [ "get_my_id", "classrepara_1_1rprkernels_1_1_kernel.html#a9b535dceeab6a20bce8412868ffc4b0e", null ],
+    [ "getDeviceID", "classrepara_1_1rprkernels_1_1_kernel.html#a2475841f4fe5514843d8d028c508b741", null ],
+    [ "getScheduleID", "classrepara_1_1rprkernels_1_1_kernel.html#abc7669600afbc7c155f1a5f4141bb7d9", null ],
+    [ "nodeEnd", "classrepara_1_1rprkernels_1_1_kernel.html#a90245cc82007f1ae353689f7e9fb2548", null ],
+    [ "nodeInit", "classrepara_1_1rprkernels_1_1_kernel.html#afd0cea775f322f6ba7ac7b0a237a7612", null ],
+    [ "rpr_get_measures", "classrepara_1_1rprkernels_1_1_kernel.html#a9dd493b5e1056dd10fef850c5b590009", null ],
+    [ "run", "classrepara_1_1rprkernels_1_1_kernel.html#abea1f2e38e6828e02bf2b8f99de1ef13", null ],
+    [ "run_and_wait_end", "classrepara_1_1rprkernels_1_1_kernel.html#a1f57fa4e54d5f8bb8b73140b56d5b420", null ],
+    [ "svc", "classrepara_1_1rprkernels_1_1_kernel.html#ab5769510e94f28c73d1936b5c27a08cd", null ],
+    [ "wait", "classrepara_1_1rprkernels_1_1_kernel.html#af18ea79004db149d869454186deb2e54", null ],
+    [ "kernel2node", "classrepara_1_1rprkernels_1_1_kernel.html#a2054c1313ec0a878fa784c9902be0a21", null ],
+    [ "kernel_id", "classrepara_1_1rprkernels_1_1_kernel.html#aacfc456b79e19f5f25a5f1092fbdc305", null ],
+    [ "problemSize_F", "classrepara_1_1rprkernels_1_1_kernel.html#a6c6c58cf782f541e848379ce21cd6a49", null ],
+    [ "pw", "classrepara_1_1rprkernels_1_1_kernel.html#ac0382efd5f4ebae9c4b641fd0e7524a9", null ],
+    [ "statusStr", "classrepara_1_1rprkernels_1_1_kernel.html#a5432f9f37e17fdf36d7b39c5e4b451ea", null ],
+    [ "Task", "classrepara_1_1rprkernels_1_1_kernel.html#ae240499548674dbc5f14907bd14bdde5", null ]
+];

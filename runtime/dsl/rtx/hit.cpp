@@ -1,6 +1,6 @@
-#include <luisa/dsl/builtin.h>
-#include <luisa/dsl/stmt.h>
-#include <luisa/dsl/rtx/hit.h>
+#include <runtime/dsl/builtin.h>
+#include <runtime/dsl/stmt.h>
+#include <runtime/dsl/rtx/hit.h>
 
 namespace luisa::compute {
 

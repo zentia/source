@@ -1,0 +1,61 @@
+\doxysection{Fibonacci Number}
+\hypertarget{fibonacci}{}\label{fibonacci}\index{Fibonacci Number@{Fibonacci Number}}
+We study the classic problem, {\itshape Fibonacci \doxylink{test__concurrent__vector__v2_8cpp_a36bc74cc1ee36b525959509e2a81c81e}{Number}}, to demonstrate the use of recursive task parallelism.\hypertarget{fibonacci_FibonacciNumberProblem}{}\doxysubsection{\texorpdfstring{Problem Formulation}{Problem Formulation}}\label{fibonacci_FibonacciNumberProblem}
+In mathematics, the Fibonacci numbers, commonly denoted {\ttfamily \doxylink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F(n)}}, form a sequence such that each number is the sum of the two preceding ones, starting from 0 and 1.
+
+{\ttfamily 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ...}
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} common solution for computing fibonacci numbers is {\itshape recursion}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ fib(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}})\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ <\ 2)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ fib(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/1)\ +\ fib(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/2);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\hypertarget{fibonacci_RecursiveFibonacciParallelism}{}\doxysubsection{\texorpdfstring{Recursive Fibonacci Parallelism}{Recursive Fibonacci Parallelism}}\label{fibonacci_RecursiveFibonacciParallelism}
+We use \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow} to recursively compute fibonacci numbers in parallel.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_8hpp}{taskflow/taskflow.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\ \mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ <\ 2)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ res1,\ res2;}
+\DoxyCodeLine{\ \ sbf.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([\&res1,\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]\ (\mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf)\ \{\ res1\ =\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ -\/\ 1,\ sbf);\ \}\ )}
+\DoxyCodeLine{\ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(std::to\_string(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/1));\ \ }
+\DoxyCodeLine{\ \ sbf.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([\&res2,\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]\ (\mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ sbf)\ \{\ res2\ =\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ -\/\ 2,\ sbf);\ \}\ )}
+\DoxyCodeLine{\ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(std::to\_string(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/2));}
+\DoxyCodeLine{\ \ sbf.\mbox{\hyperlink{classtf_1_1_subflow_a59fcac1323e70d920088dd37bd0be245}{join}}();}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ res1\ +\ res2;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}*\ argv[])\ \{}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 5;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Executor\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ \ tf::Taskflow\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}fibonacci"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&\mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}},\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}]\ (tf::Subflow\&\ sbf)\ \{\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}\ =\ \mbox{\hyperlink{test__scalable__pipelines_8cpp_a28d67ed972e7388aae4da7bffe20d7b2}{spawn}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ sbf);\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(std::to\_string(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Fib["{}}\ <<\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ <<\ \textcolor{stringliteral}{"{}]:\ "{}}\ <<\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}\ <<\ std::endl;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The spawned taskflow graph for computing up to the fifth fibonacci number is shown below\+:
+
+Even if recursive dynamic tasking or subflows are possible, the recursion depth may not be too deep or it can cause stack overflow. 

@@ -1,0 +1,641 @@
+\doxysection{any.\+h}
+\hypertarget{any_8h_source}{}\label{any_8h_source}\index{runtime/EASTL/include/EASTL/any.h@{runtime/EASTL/include/EASTL/any.h}}
+\mbox{\hyperlink{any_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (c)\ Electronic\ Arts\ Inc.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ file\ implements\ the\ eastl::any\ which\ is\ part\ of\ the\ C++\ standard\ STL}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ library\ specification.\ \ }}
+\DoxyCodeLine{00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ eastl::any\ is\ a\ type-\/safe\ container\ for\ single\ values\ of\ any\ type.\ \ Our}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ implementation\ makes\ use\ of\ the\ "{}small\ local\ buffer"{}\ optimization\ to\ avoid}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ unnecessary\ dynamic\ memory\ allocation\ if\ the\ specified\ type\ is\ eligible\ to}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ be\ stored\ in\ its\ local\ buffer.\ \ The\ user\ type\ must\ satisfy\ the\ size}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ requirements\ and\ must\ be\ no-\/throw\ move-\/constructible\ to\ qualify\ for\ the\ local}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ buffer\ optimization.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ To\ consider:\ \ Implement\ a\ fixed\_any<SIZE>\ variant\ to\ allow\ users\ to\ customize}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ the\ size\ of\ the\ "{}small\ local\ buffer"{}\ optimization.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ http://en.cppreference.com/w/cpp/utility/any}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#ifndef\ EASTL\_ANY\_H}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#define\ EASTL\_ANY\_H}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#if\ defined(EA\_PRAGMA\_ONCE\_SUPPORTED)}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ once\ }\textcolor{comment}{//\ Some\ compilers\ (e.g.\ VC++)\ benefit\ significantly\ from\ using\ this.\ We've\ measured\ 3-\/4\%\ build\ speed\ improvements\ in\ apps\ as\ a\ result.}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{config_8h}{EASTL/internal/config.h}}>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{in__place__t_8h}{EASTL/internal/in\_place\_t.h}}>}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#if\ EASTL\_RTTI\_ENABLED}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\ \ \ \ \#include\ <typeinfo>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#if\ EASTL\_EXCEPTIONS\_ENABLED}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \ \ \#include\ <exception>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl}{eastl}}}
+\DoxyCodeLine{00042\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ bad\_any\_cast}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ The\ type\ thrown\ by\ any\_cast\ on\ failure.}}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ http://en.cppreference.com/w/cpp/utility/any/bad\_any\_cast}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ \#if\ EASTL\_EXCEPTIONS\_ENABLED}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{struct\ }bad\_cast\ :\ std::exception}
+\DoxyCodeLine{00052\ \ \ \ \ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ what()\ const\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ \mbox{\hyperlink{eacompilertraits_8h_abf58932cfcddb7d841a21f974bc8378a}{EA\_OVERRIDE}}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}bad\ cast"{}};\ \}}
+\DoxyCodeLine{00055\ \ \ \ \ \};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{struct\ }bad\_any\_cast\ :\ \textcolor{keyword}{public}\ bad\_cast\ }
+\DoxyCodeLine{00058\ \ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ what()\ const\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ \mbox{\hyperlink{eacompilertraits_8h_abf58932cfcddb7d841a21f974bc8378a}{EA\_OVERRIDE}}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}bad\_any\_cast"{}};\ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \};}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}}
+\DoxyCodeLine{00065\ \ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ utility\ to\ switch\ between\ exceptions\ and\ asserts}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_1_1_internal_a270b74fde2fd97d4c41d86caef182d62}{DoBadAnyCast}}()}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#if\ EASTL\_EXCEPTIONS\_ENABLED}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ bad\_any\_cast();}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_af531f85cde2302db5b0c4dd02d58b87a}{EASTL\_ASSERT\_MSG}}(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}bad\_any\_cast\(\backslash\)n"{}});}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE(rparolin):\ CRASH!}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ You\ crashed\ here\ because\ you\ requested\ a\ type\ that\ was\ not\ contained\ in\ the\ object.}}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ choose\ to\ intentionally\ crash\ here\ instead\ of\ returning\ invalid\ data\ to\ the\ calling\ }}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ code\ which\ could\ cause\ hard\ to\ track\ down\ bugs.\ }}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *((\textcolor{keyword}{volatile}\ \textcolor{keywordtype}{int}*)0)\ =\ 0xDEADC0DE;}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespaceeastl_1_1_internal_a24ebce54979f0ce08e5052b7092bb7c2}{DefaultConstruct}}(Args\&\&...\ args)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ pMem\ =\ \mbox{\hyperlink{config_8h_a79ea8987523756a9fc60f848b676227b}{EASTLAllocatorDefault}}()-\/>allocate(\textcolor{keyword}{sizeof}(T),\ \textcolor{keyword}{alignof}(T),\ 0);}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ return\ ::new(pMem)\ T(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_1_1_internal_a2be0c92e17ee762c1f619cac8ac7f351}{DefaultDestroy}}(T*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}-\/>\string~T();}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_a79ea8987523756a9fc60f848b676227b}{EASTLAllocatorDefault}}()-\/>deallocate(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}),\ \textcolor{keyword}{sizeof}(T));}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ 20.7.3,\ class\ any}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}}
+\DoxyCodeLine{00104\ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ storage\_operation\ }}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ operations\ supported\ by\ the\ storage\ handler\ }}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keyword}{enum\ class}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617}{storage\_operation}}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7528035a93ee69cedb1dbddb2f0bfcc8}{GET}},}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617ac39aa6dbe619bb8ef8187b00b686df6a}{DESTROY}},}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617ae8606d021da140a92c7eba8d9b8af84f}{COPY}},}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{MOVE}},}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7b190727339b095151ba82c559551b77}{TYPE\_INFO}}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ storage\ }}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ underlying\ storage\ type\ which\ enables\ the\ switching\ between\ objects\ stored\ in}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ heap\ and\ objects\ stored\ within\ the\ any\ type.}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keyword}{union\ }\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceeastl_a0ab69af3fd99602533adaa5292eb784e}{aligned\_storage\_t}}<4\ *\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*),\ alignment\_of<void*>::value>\ \mbox{\hyperlink{unioneastl_1_1any_1_1storage_ae8b84030db8da0130345378d5efc6328}{internal\_storage\_t}};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{unioneastl_1_1any_1_1storage_a24b2ce13d12f3ff1364b966d78878cfe}{external\_storage}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unioneastl_1_1any_1_1storage_ae8b84030db8da0130345378d5efc6328}{internal\_storage\_t}}\ \mbox{\hyperlink{unioneastl_1_1any_1_1storage_ad3808fb00a413a64d493e51d085db9a9}{internal\_storage}};}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ use\_internal\_storage\ }}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ determines\ when\ the\ "{}local\ buffer\ optimization"{}\ is\ used\ }}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classeastl_1_1any_a002e9b25c79b939a2299031423ff22fc}{use\_internal\_storage}}\ =\ \mbox{\hyperlink{namespaceeastl_a04fa12a74504ec0c5e9e99a7302da83e}{bool\_constant}}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ <}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1is__nothrow__move__constructible}{is\_nothrow\_move\_constructible<T>::value}}\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (\textcolor{keyword}{sizeof}(T)\ <=\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}))\ \&\&}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ (alignment\_of<storage>::value\ \%\ alignment\_of<T>::value\ ==\ 0)\ \ }
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ >;}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ non-\/member\ friend\ functions\ \ }}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>\ \textcolor{keyword}{friend}\ \textcolor{keyword}{const}\ ValueType*\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}};}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>\ \textcolor{keyword}{friend}\ ValueType*\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}};\ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>\ \textcolor{keyword}{friend}\ ValueType\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ operand);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>\ \textcolor{keyword}{friend}\ ValueType\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ operand);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>\ \textcolor{keyword}{friend}\ ValueType\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\&\ operand);}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Adding\ Unsafe\ any\ cast\ operations}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>\ \textcolor{keyword}{friend}\ \textcolor{keyword}{const}\ ValueType*\ \mbox{\hyperlink{classeastl_1_1any_aa7f8d834ae3c47883505d03c944c3fb4}{unsafe\_any\_cast}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}};}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>\ \textcolor{keyword}{friend}\ ValueType*\ \mbox{\hyperlink{classeastl_1_1any_aa7f8d834ae3c47883505d03c944c3fb4}{unsafe\_any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}};}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ internal\ storage\ handler}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal}{storage\_handler\_internal}}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_a35cf9b261ac4f143c1d5d91fff3b36bd}{construct}}(\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ V\&\&\ v)}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ::new(\&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.internal\_storage)\ T(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<V>}}(v));}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_aaf8d6dd6aca50cfac08a7ad1ce607084}{construct\_inplace}}(\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ Args...\ args)}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ::new(\&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.internal\_storage)\ T(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }NT,\ \textcolor{keyword}{class\ }U,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_a652e40bde77996bd6e362f374c64105d}{construct\_inplace}}(\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<U>}}\ il,\ Args\&\&...\ args)}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ::new(\&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.internal\_storage)\ NT(il,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_a52c0c31301d2d3e50a88257c19519f99}{destroy}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ refAny)}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ T\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ *\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\&refAny.\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_ad3808fb00a413a64d493e51d085db9a9}{internal\_storage}}));}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eacompilertraits_8h_a1a84092aab75b9b6504b0b0c01044dbf}{EA\_UNUSED}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.\string~T();}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ refAny.\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_af0b6ff70265382774540c9b8a54b9867}{handler\_func}}(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617}{storage\_operation}}\ op,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pThis,\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pOther)}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (op)}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7528035a93ee69cedb1dbddb2f0bfcc8}{storage\_operation::GET}}:}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{void}*)(\&pThis-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_ad3808fb00a413a64d493e51d085db9a9}{internal\_storage}});}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617ac39aa6dbe619bb8ef8187b00b686df6a}{storage\_operation::DESTROY}}:}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_a52c0c31301d2d3e50a88257c19519f99}{destroy}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\textcolor{keyword}{>}(*pThis));}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617ae8606d021da140a92c7eba8d9b8af84f}{storage\_operation::COPY}}:}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pOther);}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_a35cf9b261ac4f143c1d5d91fff3b36bd}{construct}}(pOther-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ *(T*)(\&pThis-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_ad3808fb00a413a64d493e51d085db9a9}{internal\_storage}}));}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}}:}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pOther);}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_a35cf9b261ac4f143c1d5d91fff3b36bd}{construct}}(pOther-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(*(T*)(\&pThis-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_ad3808fb00a413a64d493e51d085db9a9}{internal\_storage}})));}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal_a52c0c31301d2d3e50a88257c19519f99}{destroy}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\textcolor{keyword}{>}(*pThis));}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7b190727339b095151ba82c559551b77}{storage\_operation::TYPE\_INFO}}:}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00233\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#if\ EASTL\_RTTI\_ENABLED}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{void}*)\&\textcolor{keyword}{typeid}(T);}
+\DoxyCodeLine{00235\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_af531f85cde2302db5b0c4dd02d58b87a}{EASTL\_ASSERT\_MSG}}(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}unknown\ storage\ operation\(\backslash\)n"{}});}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ external\ storage\ handler}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external}{storage\_handler\_external}}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ V>}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_afe94b420d8e44ac8442d4fe627e521fd}{construct}}(\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ V\&\&\ v)\ }
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.external\_storage\ =\ \mbox{\hyperlink{namespaceeastl_1_1_internal_a24ebce54979f0ce08e5052b7092bb7c2}{Internal::DefaultConstruct<T>}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<V>}}(v));}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_aa137e928f721f7b4a988f0edb1532d2a}{construct\_inplace}}(\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ Args...\ args)}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.external\_storage\ =\ \mbox{\hyperlink{namespaceeastl_1_1_internal_a24ebce54979f0ce08e5052b7092bb7c2}{Internal::DefaultConstruct<T>}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }NT,\ \textcolor{keyword}{class\ }U,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_a5c992bea9a08369ed787d5655b9bc3db}{construct\_inplace}}(\mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<U>}}\ il,\ Args\&\&...\ args)}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.external\_storage\ =\ \mbox{\hyperlink{namespaceeastl_1_1_internal_a24ebce54979f0ce08e5052b7092bb7c2}{Internal::DefaultConstruct<NT>}}(il,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_ada60ff255da403c71df26a14de1bb7cc}{destroy}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ refAny)}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_1_1_internal_a2be0c92e17ee762c1f619cac8ac7f351}{Internal::DefaultDestroy}}(\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(refAny.\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_a24b2ce13d12f3ff1364b966d78878cfe}{external\_storage}}));}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ refAny.\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_a6d42edebea3606d7332677dd86fa561b}{handler\_func}}(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617}{storage\_operation}}\ op,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pThis,\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pOther)}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (op)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7528035a93ee69cedb1dbddb2f0bfcc8}{storage\_operation::GET}}:}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_a24b2ce13d12f3ff1364b966d78878cfe}{external\_storage}});}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(pThis-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_a24b2ce13d12f3ff1364b966d78878cfe}{external\_storage}});}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617ac39aa6dbe619bb8ef8187b00b686df6a}{storage\_operation::DESTROY}}:}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_ada60ff255da403c71df26a14de1bb7cc}{destroy}}(*\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\textcolor{keyword}{>}(pThis));}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617ae8606d021da140a92c7eba8d9b8af84f}{storage\_operation::COPY}}:}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pOther);}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_afe94b420d8e44ac8442d4fe627e521fd}{construct}}(pOther-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ *\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(pThis-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_a24b2ce13d12f3ff1364b966d78878cfe}{external\_storage}}));}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}}:}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pThis);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(pOther);}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_afe94b420d8e44ac8442d4fe627e521fd}{construct}}(pOther-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(*(T*)(pThis-\/>\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}.\mbox{\hyperlink{unioneastl_1_1any_1_1storage_a24b2ce13d12f3ff1364b966d78878cfe}{external\_storage}})));}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external_ada60ff255da403c71df26a14de1bb7cc}{destroy}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\textcolor{keyword}{>}(*pThis));}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7b190727339b095151ba82c559551b77}{storage\_operation::TYPE\_INFO}}:}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00321\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#if\ EASTL\_RTTI\_ENABLED}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{void}*)\&\textcolor{keyword}{typeid}(T);}
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_af531f85cde2302db5b0c4dd02d58b87a}{EASTL\_ASSERT\_MSG}}(\textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}unknown\ storage\ operation\(\backslash\)n"{}});}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ storage\_handler\_ptr\ }}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ defines\ the\ function\ signature\ of\ the\ storage\ handler\ that\ both\ the\ internal\ and}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ external\ storage\ handlers\ must\ implement\ to\ retrieve\ the\ underlying\ type\ of\ the\ any}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ object.}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classeastl_1_1any_ad36489bf357b62a0e7668a889c83263a}{storage\_handler\_ptr}}\ =\ \textcolor{keywordtype}{void}*\ (*)(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617}{storage\_operation}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*,\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*);}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ storage\_handler\ }}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ based\ on\ the\ specified\ type\ T\ we\ select\ the\ appropriate\ underlying\ storage\ handler}}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ based\ on\ the\ 'use\_internal\_storage'\ trait.}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{storage\_handler}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1conditional}{conditional<use\_internal\_storage<T>::value}},}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__internal}{storage\_handler\_internal<T>}},}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1any_1_1storage__handler__external}{storage\_handler\_external<T>}}>\mbox{\hyperlink{structeastl_1_1make__unsigned}{::type}};}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ data\ layout}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unioneastl_1_1any_1_1storage}{storage}}\ \mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}};}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_ad36489bf357b62a0e7668a889c83263a}{storage\_handler\_ptr}}\ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}};}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#ifndef\ EA\_COMPILER\_GNUC}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO(rparolin):\ \ renable\ constexpr\ for\ GCC}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ }
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}()\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ }
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}}(),\ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(\textcolor{keywordtype}{nullptr})\ \{\}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a3b39fc4138e39d466bbed184e2af7fd6}{any}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ other)\ :\ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(nullptr)}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (other.\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}})}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE(rparolin):\ You\ can\ not\ simply\ copy\ the\ underlying}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ storage\ because\ it\ could\ hold\ a\ pointer\ to\ an\ object\ on\ the}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ heap\ which\ breaks\ the\ copy\ semantics\ of\ the\ language.\ }}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.m\_handler(storage\_operation::COPY,\ \&other,\ this);}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_handler\ =\ other.m\_handler;}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a4834ad204057c8ba7acc776e3b555668}{any}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\&\ other)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ :\ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(\textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \{\ }
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(other.m\_handler)}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE(rparolin):\ You\ can\ not\ simply\ move\ the\ underlying}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ storage\ because\ because\ the\ storage\ class\ has\ effectively}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ type\ erased\ user\ type\ so\ we\ have\ to\ defer\ to\ the\ handler}}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ function\ to\ get\ the\ type\ back\ and\ pass\ on\ the\ move\ request.}}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(other.m\_handler);}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.m\_handler(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}},\ \&other,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a68a5482669df7bc773419e7631dfe5b4}{\string~any}}()\ \{\ \mbox{\hyperlink{classeastl_1_1any_a11c8a2797975bf007e9710c0952d04fb}{reset}}();\ \}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_ac638ce40302dfd0c64687b5953599fbc}{any}}(ValueType\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1enable__if}{eastl::enable\_if}}<!\mbox{\hyperlink{structeastl_1_1is__same}{eastl::is\_same}}<\textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1decay_aca23b43b6dff5a04b06fc5ef2c4bfc00}{eastl::decay<ValueType>::type}},\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}}>\mbox{\hyperlink{structeastl_1_1make__unsigned}{::type}}*\ =\ 0)}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceeastl_a7fbbd5775a0ec737bf75394390f12364}{decay\_t<ValueType>}}\ DecayedValueType;}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{structeastl_1_1is__copy__constructible}{is\_copy\_constructible<DecayedValueType>::value}},\ \textcolor{stringliteral}{"{}ValueType\ must\ be\ copy-\/constructible"{}});}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{storage\_handler<DecayedValueType>::construct}}(\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \&\mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{storage\_handler<DecayedValueType>::handler\_func}};}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }T,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classeastl_1_1any_a4d3ffccf026d4c073c48819f499f1185}{any}}(\mbox{\hyperlink{namespaceeastl_aeb59be9fa322de73300209f7deadb0d7}{in\_place\_type\_t<T>}},\ Args\&\&...\ args)\ }
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{storage\_handler<decay\_t<T>}}>\ StorageHandlerT;}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{structeastl_1_1is__constructible}{eastl::is\_constructible}}<T,\ Args...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},\ \textcolor{stringliteral}{"{}T\ must\ be\ constructible\ with\ Args..."{}});}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ StorageHandlerT::construct\_inplace(\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \&StorageHandlerT::handler\_func;}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }T,\ \textcolor{keyword}{class\ }U,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classeastl_1_1any_aa59bef52e81adf8d470ca82819c0a551}{any}}(\mbox{\hyperlink{namespaceeastl_aeb59be9fa322de73300209f7deadb0d7}{in\_place\_type\_t<T>}},}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<U>}}\ il,}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Args\&\&...\ args,}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1enable__if}{eastl::enable\_if}}<\mbox{\hyperlink{structeastl_1_1is__constructible}{eastl::is\_constructible}}<T,\ \mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<U>}}\&,\ Args...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}>\mbox{\hyperlink{structeastl_1_1make__unsigned}{::type}}*\ =\ 0)}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{storage\_handler<decay\_t<T>}}>\ StorageHandlerT;}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ StorageHandlerT::construct\_inplace(\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ il,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \&StorageHandlerT::handler\_func;}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 20.7.3.2,\ assignments}}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ \mbox{\hyperlink{classeastl_1_1any_a13b0877c7e72d86c06996ff72236284e}{operator=}}(ValueType\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{structeastl_1_1is__copy__constructible}{is\_copy\_constructible<decay\_t<ValueType>}}>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},\ \textcolor{stringliteral}{"{}ValueType\ must\ be\ copy-\/constructible"{}});}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})).\mbox{\hyperlink{classeastl_1_1any_ae0e5bd0a23b1e8381553daf2ec17cd13}{swap}}(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ \mbox{\hyperlink{classeastl_1_1any_acdf330ac374a719166f8fa4a4170e9dc}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ other)\ }
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \{\ }
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}(other).\mbox{\hyperlink{classeastl_1_1any_ae0e5bd0a23b1e8381553daf2ec17cd13}{swap}}(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ }
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ \mbox{\hyperlink{classeastl_1_1any_ac7b034a6f78e32488378cd0900e3233b}{operator=}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\&\ other)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ }
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \{\ }
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}(\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(other)).swap(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ }
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 20.7.3.3,\ modifiers}}
+\DoxyCodeLine{00457\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ EASTL\_VARIADIC\_TEMPLATES\_ENABLED}}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }T,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ emplace(Args\&\&...\ args)}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{storage\_handler<decay\_t<T>}}>\ StorageHandlerT;}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{structeastl_1_1is__constructible}{eastl::is\_constructible}}<T,\ Args...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},\ \textcolor{stringliteral}{"{}T\ must\ be\ constructible\ with\ Args..."{}});}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a11c8a2797975bf007e9710c0952d04fb}{reset}}();}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ StorageHandlerT::construct\_inplace(\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \&StorageHandlerT::handler\_func;}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }NT,\ \textcolor{keyword}{class\ }U,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1enable__if}{eastl::enable\_if<eastl::is\_constructible<NT,\ std::initializer\_list<U>}}\&,\ Args...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},\ \textcolor{keywordtype}{void}>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ emplace(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<U>}}\ il,\ Args\&\&...\ args)}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{storage\_handler<decay\_t<NT>}}>\ StorageHandlerT;}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a11c8a2797975bf007e9710c0952d04fb}{reset}}();}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ StorageHandlerT::construct\_inplace(\mbox{\hyperlink{classeastl_1_1any_a18826337fe7c25aca2b19804ad76312d}{m\_storage}},\ il,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ \&StorageHandlerT::handler\_func;}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00479\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1any_a11c8a2797975bf007e9710c0952d04fb}{reset}}()\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ }
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}})}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617ac39aa6dbe619bb8ef8187b00b686df6a}{storage\_operation::DESTROY}},\ \textcolor{keyword}{this},\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1any_ae0e5bd0a23b1e8381553daf2ec17cd13}{swap}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ other)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ }
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\textcolor{keyword}{this}\ ==\ \&other)}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ \&\&\ other.m\_handler)}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\ tmp;}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmp.\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ other.m\_handler;}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.m\_handler(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}},\ \&other,\ \&tmp);}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.m\_handler\ =\ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}};}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}},\ \textcolor{keyword}{this},\ \&other);}
+\DoxyCodeLine{00500\ }
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ =\ tmp.\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}};}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmp.\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}},\ \&tmp,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ ==\ \textcolor{keyword}{nullptr}\ \&\&\ other.m\_handler)}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{eastl::swap}}(\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}},\ other.m\_handler);}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}},\ \&other,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ \&\&\ other.m\_handler\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{eastl::swap}}(\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}},\ other.m\_handler);}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other.m\_handler(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617af7f93635f8e193a924ae4a691bb66b8f}{storage\_operation::MOVE}},\ \textcolor{keyword}{this},\ \&other);}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//else\ if\ (m\_handler\ ==\ nullptr\ \&\&\ other.m\_handler\ ==\ nullptr)}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\{}}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ //\ nothing\ to\ swap\ }}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 20.7.3.4,\ observers}}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1any_a9095e4a2a069487b23dc4ae00f506d94}{has\_value}}()\ const\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}\ !=\ \textcolor{keyword}{nullptr};\ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ EASTL\_RTTI\_ENABLED}}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ std::type\_info\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}}()\ const\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ }
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}})}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ pTypeInfo\ =\ \mbox{\hyperlink{classeastl_1_1any_a9a6c5b31fb829395ad044feda83e9a22}{m\_handler}}(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7b190727339b095151ba82c559551b77}{storage\_operation::TYPE\_INFO}},\ \textcolor{keyword}{this},\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }std::type\_info*\textcolor{keyword}{>}(pTypeInfo);}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{typeid}(\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}});}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00536\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00537\ \ \ \ \ \};}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00542\ \ \ \ \ \textcolor{comment}{//\ 20.7.4,\ non-\/member\ functions}}
+\DoxyCodeLine{00543\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00544\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(\mbox{\hyperlink{classeastl_1_1any}{any}}\&\ rhs,\ \mbox{\hyperlink{classeastl_1_1any}{any}}\&\ lhs)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}\ \{\ rhs.swap(lhs);\ \}}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00548\ \ \ \ \ \textcolor{comment}{//\ 20.7.4,\ The\ non-\/member\ any\_cast\ functions\ provide\ type-\/safe\ access\ to\ the\ contained\ object.}}
+\DoxyCodeLine{00549\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00550\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00551\ \ \ \ \ \textcolor{keyword}{inline}\ ValueType\ \mbox{\hyperlink{namespaceeastl_aa824fdaaba24b3e0dd95ae95a5e2ed84}{any\_cast}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ operand)}
+\DoxyCodeLine{00552\ \ \ \ \ \{}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{structeastl_1_1integral__constant_a74f99d2733b525ae17416a1812d2a3a6}{eastl::is\_reference<ValueType>::value}}\ ||\ \mbox{\hyperlink{structeastl_1_1is__copy__constructible}{eastl::is\_copy\_constructible<ValueType>::value}},}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}ValueType\ must\ be\ a\ reference\ or\ copy\ constructible"{}});}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast<typename\ add\_const<typename\ remove\_reference<ValueType>::type}}>\mbox{\hyperlink{structeastl_1_1make__unsigned}{::type}}>(\&operand);}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_1_1_internal_a270b74fde2fd97d4c41d86caef182d62}{Internal::DoBadAnyCast}}();}
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}};}
+\DoxyCodeLine{00562\ \ \ \ \ \}}
+\DoxyCodeLine{00563\ }
+\DoxyCodeLine{00564\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{keyword}{inline}\ ValueType\ \mbox{\hyperlink{namespaceeastl_aa824fdaaba24b3e0dd95ae95a5e2ed84}{any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\ operand)}
+\DoxyCodeLine{00566\ \ \ \ \ \{}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{structeastl_1_1integral__constant_a74f99d2733b525ae17416a1812d2a3a6}{eastl::is\_reference<ValueType>::value}}\ ||\ \mbox{\hyperlink{structeastl_1_1is__copy__constructible}{eastl::is\_copy\_constructible<ValueType>::value}},}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}ValueType\ must\ be\ a\ reference\ or\ copy\ constructible"{}});}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast<typename\ remove\_reference<ValueType>::type}}>(\&operand);}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_1_1_internal_a270b74fde2fd97d4c41d86caef182d62}{Internal::DoBadAnyCast}}();}
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}};}
+\DoxyCodeLine{00576\ \ \ \ \ \}}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{keyword}{inline}\ ValueType\ \mbox{\hyperlink{namespaceeastl_aa824fdaaba24b3e0dd95ae95a5e2ed84}{any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}\&\&\ operand)}
+\DoxyCodeLine{00580\ \ \ \ \ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{structeastl_1_1integral__constant_a74f99d2733b525ae17416a1812d2a3a6}{eastl::is\_reference<ValueType>::value}}\ ||\ \mbox{\hyperlink{structeastl_1_1is__copy__constructible}{eastl::is\_copy\_constructible<ValueType>::value}},}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}ValueType\ must\ be\ a\ reference\ or\ copy\ constructible"{}});}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ \mbox{\hyperlink{classeastl_1_1any_a4d5a1cc7611cfc071cdcc3b76debabf4}{any\_cast<typename\ remove\_reference<ValueType>::type}}>(\&operand);}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ ==\ \textcolor{keyword}{nullptr})}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_1_1_internal_a270b74fde2fd97d4c41d86caef182d62}{Internal::DoBadAnyCast}}();}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}};}
+\DoxyCodeLine{00590\ \ \ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \ \ \ \ \textcolor{comment}{//\ NOTE(rparolin):\ The\ runtime\ type\ check\ was\ commented\ out\ because\ in\ DLL\ builds\ the\ templated\ function\ pointer}}
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{comment}{//\ value\ will\ be\ different\ -\/-\/\ completely\ breaking\ the\ validation\ mechanism.\ \ Due\ to\ the\ fact\ that\ eastl::any\ uses}}
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{comment}{//\ type\ erasure\ we\ can't\ refresh\ (on\ copy/move)\ the\ cached\ function\ pointer\ to\ the\ internal\ handler\ function\ because}}
+\DoxyCodeLine{00595\ \ \ \ \ \textcolor{comment}{//\ we\ don't\ statically\ know\ the\ type.}}
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00597\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ ValueType*\ \mbox{\hyperlink{namespaceeastl_aa824fdaaba24b3e0dd95ae95a5e2ed84}{any\_cast}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}}
+\DoxyCodeLine{00598\ \ \ \ \ \{}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pAny\ \&\&\ pAny-\/>m\_handler\ \mbox{\hyperlink{config_8h_a673373fbf3c04dfe3e100f013979570b}{EASTL\_IF\_NOT\_DLL}}(==\ \&\mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{any::storage\_handler}}<\mbox{\hyperlink{namespaceeastl_a7fbbd5775a0ec737bf75394390f12364}{decay\_t<ValueType>}}>::handler\_func)}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#\textcolor{keywordflow}{if}\ \mbox{\hyperlink{config_8h_a9bfd5f8f1cbd734ed611e96e9d2f48ac}{EASTL\_RTTI\_ENABLED}}}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ pAny-\/>type()\ ==\ \textcolor{keyword}{typeid}(\textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1remove__reference_a26e4c14b1a5ecd35b8609da9172ba7ff}{remove\_reference<ValueType>::type}})}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )\ ?}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }ValueType*\textcolor{keyword}{>}(pAny-\/>m\_handler(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7528035a93ee69cedb1dbddb2f0bfcc8}{any::storage\_operation::GET}},\ pAny,\ \textcolor{keyword}{nullptr}))\ :}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00606\ \ \ \ \ \}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00609\ \ \ \ \ \textcolor{keyword}{inline}\ ValueType*\ \mbox{\hyperlink{namespaceeastl_aa824fdaaba24b3e0dd95ae95a5e2ed84}{any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}}
+\DoxyCodeLine{00610\ \ \ \ \ \{}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pAny\ \&\&\ pAny-\/>m\_handler\ \mbox{\hyperlink{config_8h_a673373fbf3c04dfe3e100f013979570b}{EASTL\_IF\_NOT\_DLL}}(==\ \&\mbox{\hyperlink{classeastl_1_1any_a54c7eddcfaa3f89b8aa5ffb96f53cb3c}{any::storage\_handler}}<\mbox{\hyperlink{namespaceeastl_a7fbbd5775a0ec737bf75394390f12364}{decay\_t<ValueType>}}>::handler\_func)}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#\textcolor{keywordflow}{if}\ \mbox{\hyperlink{config_8h_a9bfd5f8f1cbd734ed611e96e9d2f48ac}{EASTL\_RTTI\_ENABLED}}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ pAny-\/>type()\ ==\ \textcolor{keyword}{typeid}(\textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1remove__reference_a26e4c14b1a5ecd35b8609da9172ba7ff}{remove\_reference<ValueType>::type}})}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#endif}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )\ ?}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}ValueType*\textcolor{keyword}{>}(pAny-\/>m\_handler(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7528035a93ee69cedb1dbddb2f0bfcc8}{any::storage\_operation::GET}},\ pAny,\ \textcolor{keyword}{nullptr}))\ :}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00618\ \ \ \ \ \}}
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \ \ \ \ \textcolor{comment}{//Unsafe\ operations\ -\/\ use\ with\ caution}}
+\DoxyCodeLine{00621\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00622\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ ValueType*\ \mbox{\hyperlink{namespaceeastl_aff07296d9820cb47145f610881c70cc3}{unsafe\_any\_cast}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}}
+\DoxyCodeLine{00623\ \ \ \ \ \{}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_aff07296d9820cb47145f610881c70cc3}{unsafe\_any\_cast<ValueType>}}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\textcolor{keyword}{>}(pAny));}
+\DoxyCodeLine{00625\ \ \ \ \ \}}
+\DoxyCodeLine{00626\ }
+\DoxyCodeLine{00627\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ ValueType>}
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{keyword}{inline}\ ValueType*\ \mbox{\hyperlink{namespaceeastl_aff07296d9820cb47145f610881c70cc3}{unsafe\_any\_cast}}(\mbox{\hyperlink{classeastl_1_1any_afc695a058deefa15cac7a9c5444ab4ca}{any}}*\ pAny)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}}
+\DoxyCodeLine{00629\ \ \ \ \ \{}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}ValueType*\textcolor{keyword}{>}(pAny-\/>m\_handler(\mbox{\hyperlink{classeastl_1_1any_a5f44df1f31d2d82b2b0c65f954530617a7528035a93ee69cedb1dbddb2f0bfcc8}{any::storage\_operation::GET}},\ pAny,\ \textcolor{keyword}{nullptr}));}
+\DoxyCodeLine{00631\ \ \ \ \ \}}
+\DoxyCodeLine{00632\ }
+\DoxyCodeLine{00634\ \ \ \ \ \textcolor{comment}{//\ make\_any}}
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00636\ \textcolor{preprocessor}{\ \ \ \ \#if\ EASTL\_VARIADIC\_TEMPLATES\_ENABLED}}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }T,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1any}{any}}\ make\_any(Args\&\&...\ args)}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1any}{any}}(\mbox{\hyperlink{namespaceeastl_a6301d4d34a07e2549c881dd18f95dd38}{eastl::in\_place<T>}},\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00642\ }
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }T,\ \textcolor{keyword}{class\ }U,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ any\ make\_any(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<U>}}\ il,\ Args\&\&...\ args)}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ any(\mbox{\hyperlink{namespaceeastl_a6301d4d34a07e2549c881dd18f95dd38}{eastl::in\_place<T>}},\ il,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00648\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00649\ }
+\DoxyCodeLine{00650\ \}\ \textcolor{comment}{//\ namespace\ eastl}}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EASTL\_ANY\_H}}
+
+\end{DoxyCode}

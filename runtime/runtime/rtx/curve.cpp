@@ -1,5 +1,5 @@
-#include <luisa/core/logging.h>
-#include <luisa/runtime/rtx/curve.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/rtx/curve.h>
 
 namespace luisa::compute {
 

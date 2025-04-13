@@ -1,0 +1,156 @@
+\doxysection{Graph Traversal}
+\hypertarget{graphtraversal}{}\label{graphtraversal}\index{Graph Traversal@{Graph Traversal}}
+We study the graph traversal problem by visiting each vertex in parallel following their edge dependencies. Traversing a graph is a fundamental building block of many graph applications especially for large-\/scale graph analytics.\hypertarget{graphtraversal_GraphTraversalProblemFormulation}{}\doxysubsection{\texorpdfstring{Problem Formulation}{Problem Formulation}}\label{graphtraversal_GraphTraversalProblemFormulation}
+Given a directed acyclic graph (DAG), i.\+e., a graph that has no cycles, we would like to traverse each vertex in order without breaking dependency constraints defined by edges. The following figure shows a graph of six vertices and seven edges. Each vertex represents a particular task and each edge represents a task dependency between two tasks.
+
+Traversing the above graph in parallel, the maximum parallelism we can acquire is three. When Task1 finishes, we can run Task2, Task3, and Task4 in parallel.\hypertarget{graphtraversal_GraphTraversalGraphRepresentation}{}\doxysubsection{\texorpdfstring{Graph Representation}{Graph Representation}}\label{graphtraversal_GraphTraversalGraphRepresentation}
+We define the data structure of our graph. The graph is represented by an array of nodes of the following structure\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }\mbox{\hyperlink{classtf_1_1_node}{Node}}\ \{}
+\DoxyCodeLine{\ \ std::string\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{size\_t}\ idx;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ index\ of\ the\ node\ in\ a\ array}}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{bool}\ visited\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ std::atomic<size\_t>\ dependents\ \{0\};\ \ \textcolor{comment}{//\ number\ of\ incoming\ edges}}
+\DoxyCodeLine{\ \ std::vector<Node*>\ successors;\ \ \ \ \ \ \ \textcolor{comment}{//\ number\ of\ outgoing\ edges}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{void}\ precede(\mbox{\hyperlink{classtf_1_1_node_aebc4701caf53db89d260c75fba0e5050}{Node}}\&\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}})\ \{}
+\DoxyCodeLine{\ \ \ \ successors.emplace\_back(\&\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}.dependents\ ++;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+Based on the data structure, we randomly generate a DAG using ordered edges.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::unique\_ptr<Node[]>\ \mbox{\hyperlink{test__traversals_8cpp_a0bf9df55f04d479e4d1359a01a54e312}{make\_dag}}(\textcolor{keywordtype}{size\_t}\ num\_nodes,\ \textcolor{keywordtype}{size\_t}\ max\_degree)\ \{}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ std::unique\_ptr<Node[]>\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}(\textcolor{keyword}{new}\ \mbox{\hyperlink{classtf_1_1_node}{Node}}[num\_nodes]);}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ Make\ sure\ nodes\ are\ in\ clean\ state}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_nodes;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].idx\ =\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}};}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].name\ =\ std::to\_string(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ Create\ a\ DAG\ by\ randomly\ insert\ ordered\ edges}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_nodes;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{size\_t}\ degree\ \{0\};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}=\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}<num\_nodes\ \&\&\ degree\ <\ max\_degree;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordflow}{if}(std::rand()\ \%\ 2\ ==\ 1)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].precede(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ degree\ ++;}
+\DoxyCodeLine{\ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}};}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The function, {\ttfamily make\+\_\+dag}, accepts two arguments, {\ttfamily num\+\_\+nodes} and {\ttfamily max\+\_\+degree}, to restrict the number of nodes in the graph and the maximum number of outgoing edges of every node.\hypertarget{graphtraversal_GraphTraversalStaticTraversal}{}\doxysubsection{\texorpdfstring{Static Traversal}{Static Traversal}}\label{graphtraversal_GraphTraversalStaticTraversal}
+We create a taskflow to traverse the graph using static tasks (see \doxylink{StaticTasking}{Static Tasking}). Each task does nothing but marks {\ttfamily visited} to {\ttfamily true} and subtracts {\ttfamily dependents} from one, both of which are used for validation after the graph is traversed. In practice, this computation may be replaced with a heavy function.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::unique\_ptr<Node[]>\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}\ =\ \mbox{\hyperlink{test__traversals_8cpp_a0bf9df55f04d479e4d1359a01a54e312}{make\_dag}}(100000,\ 4);}
+\DoxyCodeLine{std::vector<tf::Task>\ tasks;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ the\ traversal\ task\ for\ each\ node}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_nodes;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}=\&(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}])]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}-\/>visited\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}=0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}<\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}-\/>successors.size();\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}-\/>successors[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]-\/>dependents.fetch\_sub(1);}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tasks.push\_back(\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ the\ dependency\ between\ nodes\ on\ top\ of\ the\ graph\ structure}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_nodes;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}=0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}<\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].successors.size();\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\ \{}
+\DoxyCodeLine{\ \ \ \ tasks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].precede(tasks[\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].successors[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]-\/>idx]);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ after\ the\ graph\ is\ traversed,\ all\ nodes\ must\ be\ visited\ with\ no\ dependents}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_nodes;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].visited);}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].dependents\ ==\ 0);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The code above has two parts to construct the parallel graph traversal. First, it iterates each node and constructs a traversal task for that node. Second, it iterates each outgoing edge of a node and creates a dependency between the node and the other end (successor) of that edge. The resulting taskflow structure is topologically equivalent to the given graph.
+
+With task parallelism, we flow computation naturally with the graph structure. The runtime autonomously distributes tasks across processor cores to obtain maximum task parallelism. You do not need to worry about details of scheduling.\hypertarget{graphtraversal_GraphTraversalDynamicTraversal}{}\doxysubsection{\texorpdfstring{Dynamic Traversal}{Dynamic Traversal}}\label{graphtraversal_GraphTraversalDynamicTraversal}
+We can traverse the graph dynamically using \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow} (see \doxylink{SubflowTasking}{Subflow Tasking}). We start from the source nodes of zero incoming edges and recursively spawn subflows whenever the dependency of a node is meet. Since we are creating tasks from the execution context of another task, we need to store the task callable in advance.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ task\ callable\ of\ traversing\ a\ node\ using\ subflow}}
+\DoxyCodeLine{std::function<\mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}}(\mbox{\hyperlink{classtf_1_1_node}{Node}}*,\ \mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&)>\ traverse;}
+\DoxyCodeLine{}
+\DoxyCodeLine{traverse\ =\ [\&]\ (\mbox{\hyperlink{classtf_1_1_node}{Node}}*\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\ \mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\&\ subflow)\ \{}
+\DoxyCodeLine{\ \ assert(!\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/>visited);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/>visited\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/>successors.size();\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/>successors[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]-\/>dependents.fetch\_sub(1)\ ==\ 1)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ subflow.emplace([\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}=\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/>successors[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}],\ \&traverse](\mbox{\hyperlink{classtf_1_1_subflow}{tf::Subflow}}\ \&subflow)\{\ }
+\DoxyCodeLine{\ \ \ \ \ \ \ \ traverse(s,\ subflow);\ }
+\DoxyCodeLine{\ \ \ \ \ \ \}).name(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/>name);}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ graph}}
+\DoxyCodeLine{std::unique\_ptr<Node[]>\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}\ =\ \mbox{\hyperlink{test__traversals_8cpp_a0bf9df55f04d479e4d1359a01a54e312}{make\_dag}}(100000,\ 4);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ find\ the\ source\ nodes\ (no\ incoming\ edges)}}
+\DoxyCodeLine{std::vector<Node*>\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}};}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_nodes;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].dependents\ ==\ 0)\ \{\ }
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.emplace\_back(\&(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]));}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ only\ tasks\ for\ source\ nodes}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.size();\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}=\mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}],\ \&traverse](tf::Subflow\&\ subflow)\{\ }
+\DoxyCodeLine{\ \ \ \ traverse(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ subflow);\ }
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ after\ the\ graph\ is\ traversed,\ all\ nodes\ must\ be\ visited\ with\ no\ dependents}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_nodes;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].visited);}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].dependents\ ==\ 0);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} partial graph is shown as follows\+:
+
+In general, the dynamic version of graph traversal is slower than the static version due to the overhead incurred by spawning subflows. However, it may be useful for the situation where the graph structure is unknown at once but being partially explored during the traversal. 

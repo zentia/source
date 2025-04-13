@@ -1,0 +1,212 @@
+\doxysection{nanovdb\+\_\+accessor.\+h}
+\hypertarget{nanovdb__accessor_8h_source}{}\label{nanovdb__accessor_8h_source}\index{runtime/dsl/ext/nanovdb\_accessor.h@{runtime/dsl/ext/nanovdb\_accessor.h}}
+\mbox{\hyperlink{nanovdb__accessor_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <luisa/luisa-\/compute.h>}\textcolor{comment}{//\ FIXME:\ do\ not\ include\ the\ universal\ header\ in\ public\ headers}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ From\ NanoVDB.h}}
+\DoxyCodeLine{00005\ \textcolor{comment}{}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ Memory\ layout:}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ \ Notation:\ "{}]-\/-\/-\/["{}\ implies\ it\ has\ optional\ padding,\ and\ "{}]["{}\ implies\ zero\ padding}}
+\DoxyCodeLine{00009\ \textcolor{comment}{}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ [GridData(672B)][TreeData(64B)]-\/-\/-\/[RootData][N\ x\ Root::Tile]-\/-\/-\/[NodeData<5>]-\/-\/-\/[ModeData<4>]-\/-\/-\/[LeafData<3>]-\/-\/-\/[BLINDMETA...]-\/-\/-\/[BLIND0]-\/-\/-\/[BLIND1]-\/-\/-\/etc.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ \ \string^\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \string^\ \ \ \ \ \ \ \ \ \string^\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \string^\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \string^\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \string^}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ +-\/-\/\ Start\ of\ 32B\ aligned\ buffer\ \ \ |\ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +-\/-\/\ Node0::DataType*\ leafData}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ \ \ \ \ GridType::DataType*\ gridData\ \ |\ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +-\/-\/\ Node1::DataType*\ lowerData}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ \ \ \ \ \ \ RootType::DataType*\ rootData\ -\/-\/+\ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +-\/-\/\ Node2::DataType*\ upperData}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +-\/-\/\ RootType::DataType::Tile*\ tile}}
+\DoxyCodeLine{00020\ \textcolor{comment}{}}
+\DoxyCodeLine{00021\ \textcolor{comment}{}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ \ \ It's\ important\ to\ emphasize\ that\ all\ the\ grid\ data\ (defined\ below)\ are\ explicitly\ 32\ byte}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ \ \ aligned,\ which\ implies\ that\ any\ memory\ buffer\ that\ contains\ a\ NanoVDB\ grid\ must\ also\ be\ at}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ \ \ 32\ byte\ aligned.\ That\ is,\ the\ memory\ address\ of\ the\ beginning\ of\ a\ buffer\ (see\ ascii\ diagram\ below)}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ \ \ must\ be\ divisible\ by\ 32,\ i.e.\ uintptr\_t(\&buffer)\%32\ ==\ 0!\ If\ this\ is\ not\ the\ case,\ the\ C++\ standard}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ \ \ says\ the\ behaviour\ is\ undefined!\ Normally\ this\ is\ not\ a\ concerns\ on\ GPUs,\ because\ they\ use\ 256\ byte}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ \ \ aligned\ allocations,\ but\ the\ same\ cannot\ be\ said\ about\ the\ CPU.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ \ \ GridData\ is\ always\ at\ the\ very\ beginning\ of\ the\ buffer\ immediately\ followed\ by\ TreeData!}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ \ \ The\ remaining\ nodes\ and\ blind-\/data\ are\ allowed\ to\ be\ scattered\ throughout\ the\ buffer,}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ \ \ though\ in\ practice\ they\ are\ arranged\ as:}}
+\DoxyCodeLine{00032\ \textcolor{comment}{}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ \ \ GridData:\ 672\ bytes\ (e.g.\ magic,\ checksum,\ major,\ flags,\ index,\ count,\ size,\ name,\ map,\ world\ bbox,\ voxel\ size,\ class,\ type,\ offset,\ count)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ \ \ TreeData:\ 64\ bytes\ (node\ counts\ and\ byte\ offsets)}}
+\DoxyCodeLine{00036\ \textcolor{comment}{}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ \ \ ...\ optional\ padding\ ...}}
+\DoxyCodeLine{00038\ \textcolor{comment}{}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ \ \ RootData:\ size\ depends\ on\ ValueType\ (index\ bbox,\ voxel\ count,\ tile\ count,\ min/max/avg/standard\ deviation)}}
+\DoxyCodeLine{00040\ \textcolor{comment}{}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ \ \ Array\ of:\ RootData::Tile}}
+\DoxyCodeLine{00042\ \textcolor{comment}{}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ \ \ ...\ optional\ padding\ ...}}
+\DoxyCodeLine{00044\ \textcolor{comment}{}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ \ \ Array\ of:\ Upper\ InternalNodes\ of\ size\ 32\string^3:\ \ bbox,\ two\ bit\ masks,\ 32768\ tile\ values,\ and\ min/max/avg/standard\ deviation\ values}}
+\DoxyCodeLine{00046\ \textcolor{comment}{}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ \ \ ...\ optional\ padding\ ...}}
+\DoxyCodeLine{00048\ \textcolor{comment}{}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ \ \ Array\ of:\ Lower\ InternalNodes\ of\ size\ 16\string^3:\ \ bbox,\ two\ bit\ masks,\ 4096\ tile\ values,\ and\ min/max/avg/standard\ deviation\ values}}
+\DoxyCodeLine{00050\ \textcolor{comment}{}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ \ \ ...\ optional\ padding\ ...}}
+\DoxyCodeLine{00052\ \textcolor{comment}{}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ \ \ Array\ of:\ LeafNodes\ of\ size\ 8\string^3:\ bbox,\ bit\ masks,\ 512\ voxel\ values,\ and\ min/max/avg/standard\ deviation\ values}}
+\DoxyCodeLine{00054\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00055\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceluisa}{luisa}}}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceluisa_1_1compute}{compute}}}
+\DoxyCodeLine{00058\ \ \ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a9510b5db530e078a95b19327ea6818dd}{NanovdbAccessor}}}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_a6a8778f280d74a5b949d56b11c5438f0}{UInt2}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a9e204ccc7e06214094338bb4296c005c}{coord\_to\_key}}(\mbox{\hyperlink{namespaceluisa_1_1compute_a36cc521c7712bfba503585d635dad2c1}{Int3}}\ coord)}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ iu\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a931fab64c20c67d9e21765ff1161ac3c}{cast<uint>}}(coord[0])\ >>\ 12u;}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ju\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a931fab64c20c67d9e21765ff1161ac3c}{cast<uint>}}(coord[1])\ >>\ 12u;}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ku\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a931fab64c20c67d9e21765ff1161ac3c}{cast<uint>}}(coord[2])\ >>\ 12u;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ make\_uint2(ku\ |\ (ju\ <<\ 21),\ (iu\ <<\ 10)\ |\ (ju\ >>\ 11));}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_afd836508ef5e46e75bf632f8a485f789}{upper\_coord\_to\_offset}}(\mbox{\hyperlink{namespaceluisa_1_1compute_a36cc521c7712bfba503585d635dad2c1}{Int3}}\ c)}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (((c[0]\ \&\ 4095)\ >>\ 7)\ <<\ (2\ *\ 5))\ +}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (((c[1]\ \&\ 4095)\ >>\ 7)\ <<\ (5))\ +}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((c[2]\ \&\ 4095)\ >>\ 7);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_acd74ab472b6b28016c3a0de9d848342e}{Bool}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ad9a8f62e3681b2da247325c63063270a}{upper\_child\_mask}}(\mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ child\_offset,\ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ n)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<luisa::uint2>(child\_offset\ +\ 32\ +\ 4096\ +\ (n\ >>\ 6)\ *\ 8);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ compareBit\ =\ n\ \&\ 63;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a9ff4de02f2642f90436a61d301113899}{ite}}(compareBit\ >\ 31,\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.y\ \&\ (1U\ <<\ (n\ \&\ compareBit\ -\/\ 32)))\ >\ 0,\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.x\ \&\ (1U\ <<\ (n\ \&\ compareBit)))\ >\ 0);}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a817e8be02eeb2fc8dc56642f0a4641f6}{upper\_get\_value}}(\mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ child\_offset,\ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ n)}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<\textcolor{keywordtype}{float}>(child\_offset\ +\ 8256\ +\ n\ *\ 8);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ac53bc2071617077ba16f84545d4632a3}{lower\_coord\_to\_offset}}(\mbox{\hyperlink{namespaceluisa_1_1compute_a36cc521c7712bfba503585d635dad2c1}{Int3}}\ c)}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (((c[0]\ \&\ 127)\ >>\ 3)\ <<\ (2\ *\ 4))\ +}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (((c[1]\ \&\ 127)\ >>\ 3)\ <<\ (4))\ +}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((c[2]\ \&\ 127)\ >>\ 3);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_acd74ab472b6b28016c3a0de9d848342e}{Bool}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a22c0922188275a6e445ec54c07773548}{lower\_child\_mask}}(\mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ child\_offset,\ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ n)}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<luisa::uint2>(child\_offset\ +\ 32\ +\ 512\ +\ (n\ >>\ 6)\ *\ 8);}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ compareBit\ =\ n\ \&\ 63;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a9ff4de02f2642f90436a61d301113899}{ite}}(compareBit\ >\ 31,\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.y\ \&\ (1U\ <<\ (n\ \&\ compareBit\ -\/\ 32)))\ >\ 0,\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.x\ \&\ (1U\ <<\ (n\ \&\ compareBit)))\ >\ 0);}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_af8b0290e7c9b9b3dec36b9b8fc71f230}{lower\_get\_value}}(\mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ child\_offset,\ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ n)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<\textcolor{keywordtype}{float}>(child\_offset\ +\ 1088\ +\ n\ *\ 8);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ac491c0cdbdcfc54f18fc23ec8e82ec1f}{leaf\_coord\_to\_offset}}(\mbox{\hyperlink{namespaceluisa_1_1compute_a36cc521c7712bfba503585d635dad2c1}{Int3}}\ c)}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (((c[0]\ \&\ 7)\ >>\ 0)\ <<\ (2\ *\ 3))\ +}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (((c[1]\ \&\ 7)\ >>\ 0)\ <<\ (3))\ +}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((c[2]\ \&\ 7)\ >>\ 0);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a5b143078b875dc792c2b17442015fb2a}{leaf\_get\_value}}(\mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ child\_offset,\ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ n)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//offset\ by\ 96\ bytes}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<\textcolor{keywordtype}{float}>(child\_offset\ +\ 96\ +\ 4\ *\ n);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_a70f466a8a407b18f0870c81f4bd3bf66}{uint}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a047263824c4ad97d122a867a6d084018}{tableSize}}\ =\ 8;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ detail::BindlessByteAddressBuffer\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a9510b5db530e078a95b19327ea6818dd}{NanovdbAccessor}}(\textcolor{keyword}{const}\ detail::BindlessByteAddressBuffer\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}},\ \mbox{\hyperlink{namespaceluisa_a70f466a8a407b18f0870c81f4bd3bf66}{uint}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a047263824c4ad97d122a867a6d084018}{tableSize}})}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}\{\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}\ \},\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a047263824c4ad97d122a867a6d084018}{tableSize}}\{\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a047263824c4ad97d122a867a6d084018}{tableSize}}\ \}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_aab9716e796d1a06783c255888a4ebaeb}{get\_bounds}}(\mbox{\hyperlink{namespaceluisa_1_1compute_a36cc521c7712bfba503585d635dad2c1}{Int3}}\ \&lower,\ \mbox{\hyperlink{namespaceluisa_1_1compute_a36cc521c7712bfba503585d635dad2c1}{Int3}}\ \&upper)}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ b0\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}-\/>read<luisa::int2>(736);}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ b1\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}-\/>read<luisa::int2>(736\ +\ 8);}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ b2\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}-\/>read<luisa::int2>(736\ +\ 16);}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lower\ =\ make\_int3(b0.x,\ b0.y,\ b1.x);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ upper\ =\ make\_int3(b1.y,\ b2.x,\ b2.y);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ad7d6093e0d0a08735cf82736a2c7c0a4}{get\_value}}(\mbox{\hyperlink{namespaceluisa_1_1compute_a36cc521c7712bfba503585d635dad2c1}{Int3}}\ coord)}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ad62d08ae54e65286f1b8d5dd6cf8f00c}{UInt}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ 736\ +\ 64;\textcolor{comment}{//tile\ offset}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_a16c6ce6efee477d6d4c5bf82fdc07738}{Int}}\ tileId\ =\ -\/1;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a9e204ccc7e06214094338bb4296c005c}{coord\_to\_key}}(coord);}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$for(i,\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a047263824c4ad97d122a867a6d084018}{tableSize}})}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ o\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ +\ 32\ *\ i;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tileKey\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<\mbox{\hyperlink{sugar_8h_a558ad5a0d5b02f1f24be1ae49b492a73}{uint2}}>(o);}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$if(\mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_ae5db65f9ff867d3db72125685acd2fa1}{all}}(tileKey\ ==\ \mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}))}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tileId\ =\ i;}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$break;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ 0.f;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$if(tileId\ >\ -\/1)}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ child\_offset\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<luisa::uint2>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ +\ 32\ *\ tileId\ +\ 8).\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};\textcolor{comment}{//lower\ bits\ of\ ulong}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$if(child\_offset\ >\ 0)}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ 736\ +\ child\_offset;\textcolor{comment}{//offset\ from\ root}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ n\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_afd836508ef5e46e75bf632f8a485f789}{upper\_coord\_to\_offset}}(coord);}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$if(\mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ad9a8f62e3681b2da247325c63063270a}{upper\_child\_mask}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ n))}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ child\_offset\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<luisa::uint2>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ +\ 8256\ +\ 8\ *\ n).\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ +=\ child\_offset;}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ n\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ac53bc2071617077ba16f84545d4632a3}{lower\_coord\_to\_offset}}(coord);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$if(\mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a22c0922188275a6e445ec54c07773548}{lower\_child\_mask}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ n))}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ child\_offset\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<luisa::uint2>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ +\ 1088\ +\ 8\ *\ n).\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ +=\ child\_offset;}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ n\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ac491c0cdbdcfc54f18fc23ec8e82ec1f}{leaf\_coord\_to\_offset}}(coord);}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a5b143078b875dc792c2b17442015fb2a}{leaf\_get\_value}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ n);}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$else}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_af8b0290e7c9b9b3dec36b9b8fc71f230}{lower\_get\_value}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},n);}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$else}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a817e8be02eeb2fc8dc56642f0a4641f6}{upper\_get\_value}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ n);}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$else}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7f7c8d0d2bcba057e97962bfb0ef4e48}{buffer}}.read<\textcolor{keywordtype}{float}>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ +\ 32\ *\ tileId\ +\ 20);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//Trilinear\ interpolated\ sample}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_a7165d468dbb49cb9245a8f2bd4432df6}{get\_value}}(\mbox{\hyperlink{namespaceluisa_1_1compute_ab2c2c57322f2cea78ea22771bf7e8160}{Float3}}\ coord)}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ posi\ =\ make\_int3((\mbox{\hyperlink{namespaceluisa_1_1compute_a16c6ce6efee477d6d4c5bf82fdc07738}{Int}})coord[0],\ (\mbox{\hyperlink{namespaceluisa_1_1compute_a16c6ce6efee477d6d4c5bf82fdc07738}{Int}})coord[1],\ (\mbox{\hyperlink{namespaceluisa_1_1compute_a16c6ce6efee477d6d4c5bf82fdc07738}{Int}})coord[2]);}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ d\ =\ coord\ -\/\ make\_float3(\mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}(posi.x),\ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}(posi.y),\ \mbox{\hyperlink{namespaceluisa_1_1compute_ac013705403b90137a36612320e8b0a09}{Float}}(posi.z));}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceluisa_1_1compute_a5c6ee2f53a87cfbbc0f45341e98a5144}{ArrayFloat<8>}}\ results\{\};}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \$for(i,\ 8)}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ results[i]\ =\ \mbox{\hyperlink{classluisa_1_1compute_1_1_nanovdb_accessor_ad7d6093e0d0a08735cf82736a2c7c0a4}{get\_value}}(posi\ +\ make\_int3(i\ \%\ 2,\ (i\ >>\ 1)\ \%\ 2,\ (i\ >>\ 2)\ \%\ 2));}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ d00\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a2568e5256b48e9da1b2b4336cd5cd4b9}{lerp}}(results[0],\ results[1],\ d.x);}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ d10\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a2568e5256b48e9da1b2b4336cd5cd4b9}{lerp}}(results[2],\ results[3],\ d.x);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ d01\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a2568e5256b48e9da1b2b4336cd5cd4b9}{lerp}}(results[4],\ results[5],\ d.x);}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ d11\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a2568e5256b48e9da1b2b4336cd5cd4b9}{lerp}}(results[6],\ results[7],\ d.x);}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ d0\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a2568e5256b48e9da1b2b4336cd5cd4b9}{lerp}}(d00,\ d10,\ d.y);}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ d1\ =\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a2568e5256b48e9da1b2b4336cd5cd4b9}{lerp}}(d01,\ d11,\ d.y);}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a2568e5256b48e9da1b2b4336cd5cd4b9}{lerp}}(d0,\ d1,\ d.z);}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00205\ \ \ \ \ \}}
+\DoxyCodeLine{00206\ \}}
+
+\end{DoxyCode}

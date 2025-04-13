@@ -1,0 +1,121 @@
+\doxysubsection{Using custom scalar types}
+\hypertarget{_topic_customizing__custom_scalar}{}\label{_topic_customizing__custom_scalar}\index{Using custom scalar types@{Using custom scalar types}}
+\label{_topic_customizing__custom_scalar_user_defined_scalars}%
+\Hypertarget{_topic_customizing__custom_scalar_user_defined_scalars}%
+ By default, \doxylink{namespace_eigen}{Eigen} currently supports standard floating-\/point types ({\ttfamily float}, {\ttfamily double}, {\ttfamily std\+::complex$<$float$>$}, {\ttfamily std\+::complex$<$double$>$}, {\ttfamily long} {\ttfamily double}), as well as all native integer types (e.\+g., {\ttfamily int}, {\ttfamily unsigned} {\ttfamily int}, {\ttfamily short}, etc.), and {\ttfamily bool}. On x86-\/64 systems, {\ttfamily long} {\ttfamily double} permits to locally enforces the use of x87 registers with extended accuracy (in comparison to SSE).
+
+In order to add support for a custom type {\ttfamily T} you need\+:
+\begin{DoxyEnumerate}
+\item make sure the common operator (+,-\/,\texorpdfstring{$\ast$}{*},/,etc.) are supported by the type {\ttfamily T} 
+\item add a specialization of struct \doxylink{struct_eigen_1_1_num_traits}{Eigen\+::\+Num\+Traits$<$\+T$>$} (see \doxylink{struct_eigen_1_1_num_traits}{Num\+Traits})
+\item define the math functions that makes sense for your type. This includes standard ones like sqrt, pow, sin, tan, conj, real, imag, etc, as well as abs2 which is \doxylink{namespace_eigen}{Eigen} specific. (see the file \doxylink{_eigen_2src_2_core_2_math_functions_8h}{Eigen/src/\+Core/\+Math\+Functions.\+h})
+\end{DoxyEnumerate}
+
+The math function should be defined in the same namespace than {\ttfamily T}, or in the {\ttfamily std} namespace though that second approach is not recommended.
+
+Here is a concrete example adding support for the Adolc\textquotesingle{}s {\ttfamily adouble} type. \href{https://projects.coin-or.org/ADOL-C}{\texttt{ Adolc}} is an automatic differentiation library. The type {\ttfamily adouble} is basically a real value tracking the values of any number of partial derivatives.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#ifndef\ ADOLCSUPPORT\_H}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ ADOLCSUPPORT\_H}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ ADOLC\_TAPELESS}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <adolc/adouble.h>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <Eigen/Core>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1_num_traits}{NumTraits}}<adtl::adouble>}
+\DoxyCodeLine{\ :\ \mbox{\hyperlink{struct_eigen_1_1_num_traits}{NumTraits}}<double>\ \textcolor{comment}{//\ permits\ to\ get\ the\ epsilon,\ dummy\_precision,\ lowest,\ highest\ functions}}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{typedef}\ adtl::adouble\ \mbox{\hyperlink{struct_eigen_1_1_num_traits}{Real}};}
+\DoxyCodeLine{\ \ \textcolor{keyword}{typedef}\ adtl::adouble\ \mbox{\hyperlink{struct_eigen_1_1_num_traits}{NonInteger}};}
+\DoxyCodeLine{\ \ \textcolor{keyword}{typedef}\ adtl::adouble\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_aefd66e49b40a2fa27f5644bf284af611}{Nested}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2eigen-3_83_87_2blas_2common_8h_aa430eede2197cbd34a7082f8fca83cd4a66d6dc5b929fc072f7dce7fdab0ee378}{IsComplex}}\ =\ 0,}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3eac6ad7c56a5615fa21f43bc69540334f7}{IsInteger}}\ =\ 0,}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea4d05bdd1a23e7fab4c689cd233a7cc84}{IsSigned}}\ =\ 1,}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{RequireInitialization}}\ =\ 1,}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea525a27cb23b875d4d2326804e0ea998a}{ReadCost}}\ =\ 1,}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea79172abdc42e530a0bafa06c331cb828}{AddCost}}\ =\ 3,}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3eaedddb713cb504f0be1eabe3aa0918665}{MulCost}}\ =\ 3}
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{namespace\ }adtl\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ adouble\&\ \mbox{\hyperlink{exceptions_8cpp_a75f785bf0f51cbc94279c80d143642ae}{conj}}(\textcolor{keyword}{const}\ adouble\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})\ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};\ \}}
+\DoxyCodeLine{\textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ adouble\&\ \mbox{\hyperlink{datatypes_8h_a1bb7bda9eb99a2427c358ecb686be221}{real}}(\textcolor{keyword}{const}\ adouble\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})\ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};\ \}}
+\DoxyCodeLine{\textcolor{keyword}{inline}\ adouble\ \mbox{\hyperlink{_common_cwise_unary_ops_8h_a8cc3d2f4413a156b2ec6a3097efd3aa4}{imag}}(\textcolor{keyword}{const}\ adouble\&)\ \ \ \ \{\ \textcolor{keywordflow}{return}\ 0.;\ \}}
+\DoxyCodeLine{\textcolor{keyword}{inline}\ adouble\ \mbox{\hyperlink{datatypes_8h_a3aa069ac3980707dae1e0530f50d59e4}{abs}}(\textcolor{keyword}{const}\ adouble\&\ \ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})\ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacehalf__float_a078a815c019e2647bb1eb4229440583b}{fabs}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});\ \}}
+\DoxyCodeLine{\textcolor{keyword}{inline}\ adouble\ \mbox{\hyperlink{_array_cwise_unary_ops_8h_a4921dbe62d034394f6fa7810e8711356}{abs2}}(\textcolor{keyword}{const}\ adouble\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})\ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}*\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};\ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ ADOLCSUPPORT\_H}}
+
+\end{DoxyCode}
+
+
+This other example adds support for the {\ttfamily mpq\+\_\+class} type from \href{https://gmplib.org/}{\texttt{ GMP}}. It shows in particular how to change the way \doxylink{namespace_eigen}{Eigen} picks the best pivot during LU factorization. It selects the coefficient with the highest score, where the score is by default the absolute value of a number, but we can define a different score, for instance to prefer pivots with a more compact representation (this is an example, not a recommendation). Note that the scores should always be non-\/negative and only zero is allowed to have a score of zero. Also, this can interact badly with thresholds for inexact scalar types.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <gmpxx.h>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <Eigen/Core>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <boost/operators.hpp>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1_num_traits}{NumTraits}}<mpq\_class>\ :\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits}{GenericNumTraits}}<mpq\_class>}
+\DoxyCodeLine{\ \ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{typedef}\ mpq\_class\ \mbox{\hyperlink{struct_eigen_1_1_num_traits}{Real}};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{typedef}\ mpq\_class\ \mbox{\hyperlink{struct_eigen_1_1_num_traits}{NonInteger}};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{typedef}\ mpq\_class\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_aefd66e49b40a2fa27f5644bf284af611}{Nested}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{struct_eigen_1_1_num_traits}{Real}}\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_aadcf7fa75b2bc9a0e461a3b851d836a7}{epsilon}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{boostmultiprec_8cpp_ad5abe8020ead32dcab5e3c15d6d7c30e}{Real}}\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a77dc085cf094c377faaf0c520e3e4efa}{dummy\_precision}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_abca8573812593670795c41f22aa9d5e2}{Real}}\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_abe786ad7f4af6e91e34fab4d888710b5}{digits10}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3eac6ad7c56a5615fa21f43bc69540334f7}{IsInteger}}\ =\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea4d05bdd1a23e7fab4c689cd233a7cc84}{IsSigned}}\ =\ 1,}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3eadf2f66fe13a7f838f9984a31fea52b61}{IsComplex}}\ =\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{RequireInitialization}}\ =\ 1,}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea525a27cb23b875d4d2326804e0ea998a}{ReadCost}}\ =\ 6,}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea79172abdc42e530a0bafa06c331cb828}{AddCost}}\ =\ 150,}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3eaedddb713cb504f0be1eabe3aa0918665}{MulCost}}\ =\ 100}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__score__coeff__op}{scalar\_score\_coeff\_op}}<mpq\_class>\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}\ :\ boost::totally\_ordered1<result\_type>\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ std::size\_t\ \mbox{\hyperlink{yyjson_8h_ac16e956eac9f5c3180afa8e80d4f098c}{len}};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0)\ :\ \mbox{\hyperlink{yyjson_8h_ac16e956eac9f5c3180afa8e80d4f098c}{len}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{\}\ \textcolor{comment}{//\ Eigen\ uses\ Score(0)\ and\ Score()}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}(mpq\_class\ \textcolor{keyword}{const}\&\ \mbox{\hyperlink{som__graph_8cpp_ae900b2add8deca663438fb20de69acce}{q}})\ :}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{yyjson_8h_ac16e956eac9f5c3180afa8e80d4f098c}{len}}(mpz\_size(\mbox{\hyperlink{som__graph_8cpp_ae900b2add8deca663438fb20de69acce}{q}}.get\_num\_mpz\_t())+}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ mpz\_size(\mbox{\hyperlink{som__graph_8cpp_ae900b2add8deca663438fb20de69acce}{q}}.get\_den\_mpz\_t())-\/1)\ \{\}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a414ae95233414eb56547f136bdc07ae6}{operator<}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3cc80fc03610837da180f7e6d8e7b3ec}{y}})\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 0\ is\ the\ worst\ possible\ pivot}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.len\ ==\ 0)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3cc80fc03610837da180f7e6d8e7b3ec}{y}}.len\ >\ 0;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespace_eigen_1_1internal_a3cc80fc03610837da180f7e6d8e7b3ec}{y}}.len\ ==\ 0)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Prefer\ a\ pivot\ with\ a\ small\ representation}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.len\ >\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3cc80fc03610837da180f7e6d8e7b3ec}{y}}.len;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ac7929a567cae4a032c9ccee84400ab8c}{operator==}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3cc80fc03610837da180f7e6d8e7b3ec}{y}})\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ used\ to\ test\ if\ the\ score\ is\ 0}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.len\ ==\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3cc80fc03610837da180f7e6d8e7b3ec}{y}}.len;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \ \ \};}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a0ba5cca2271250a406faf6f1ca904450}{result\_type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1scalar__abs__op_a2e1557e18aea6d7b6a9b4b2cead03037}{operator()}}(mpq\_class\ \textcolor{keyword}{const}\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};\ \}}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ 

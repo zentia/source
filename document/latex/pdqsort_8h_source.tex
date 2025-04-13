@@ -1,0 +1,594 @@
+\doxysection{pdqsort.\+h}
+\hypertarget{pdqsort_8h_source}{}\label{pdqsort_8h_source}\index{runtime/core/stl/pdqsort.h@{runtime/core/stl/pdqsort.h}}
+\mbox{\hyperlink{pdqsort_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ \ pdqsort.h\ -\/\ Pattern-\/defeating\ quicksort.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ Copyright\ (c)\ 2021\ Orson\ Peters}}
+\DoxyCodeLine{00005\ \textcolor{comment}{}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ This\ software\ is\ provided\ 'as-\/is',\ without\ any\ express\ or\ implied\ warranty.\ In\ no\ event\ will\ the}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ \ \ \ authors\ be\ held\ liable\ for\ any\ damages\ arising\ from\ the\ use\ of\ this\ software.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ \ \ \ Permission\ is\ granted\ to\ anyone\ to\ use\ this\ software\ for\ any\ purpose,\ including\ commercial}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ applications,\ and\ to\ alter\ it\ and\ redistribute\ it\ freely,\ subject\ to\ the\ following\ restrictions:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ 1.\ The\ origin\ of\ this\ software\ must\ not\ be\ misrepresented;\ you\ must\ not\ claim\ that\ you\ wrote\ the}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ \ \ \ original\ software.\ If\ you\ use\ this\ software\ in\ a\ product,\ an\ acknowledgment\ in\ the\ product}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ \ \ \ documentation\ would\ be\ appreciated\ but\ is\ not\ required.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ \ \ \ 2.\ Altered\ source\ versions\ must\ be\ plainly\ marked\ as\ such,\ and\ must\ not\ be\ misrepresented\ as}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ \ \ \ \ \ being\ the\ original\ software.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ \ \ 3.\ This\ notice\ may\ not\ be\ removed\ or\ altered\ from\ any\ source\ distribution.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifndef\ PDQSORT\_H}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ PDQSORT\_H}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <cstddef>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <iterator>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#if\ \_\_cplusplus\ >=\ 201103L}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#define\ PDQSORT\_PREFER\_MOVE(x)\ std::move(x)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#define\ PDQSORT\_PREFER\_MOVE(x)\ (x)}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacepdqsort__detail}{pdqsort\_detail}}\ \{}
+\DoxyCodeLine{00040\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{comment}{//\ Partitions\ below\ this\ size\ are\ sorted\ using\ insertion\ sort.}}
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a93aa19e909e1c9aac3476145eac01d08}{insertion\_sort\_threshold}}\ =\ 24,}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ Partitions\ above\ this\ size\ use\ Tukey's\ ninther\ to\ select\ the\ pivot.}}
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a2e33aab6bd526c39448030168613bb78}{ninther\_threshold}}\ =\ 128,}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ When\ we\ detect\ an\ already\ sorted\ partition,\ attempt\ an\ insertion\ sort\ that\ allows\ this}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ amount\ of\ element\ moves\ before\ giving\ up.}}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9aab89097901f2f898e6bb3c528cabc55a}{partial\_insertion\_sort\_limit}}\ =\ 8,}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ Must\ be\ multiple\ of\ 8\ due\ to\ loop\ unrolling,\ and\ <\ 256\ to\ fit\ in\ unsigned\ char.}}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a7a05f9a339ce440ec2bee00a69947e37}{block\_size}}\ =\ 64,}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ Cacheline\ size,\ assumes\ power\ of\ two.}}
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9ae9d9eaf23e2582ffabe6d5c94635932d}{cacheline\_size}}\ =\ 64}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#if\ \_\_cplusplus\ >=\ 201103L}}
+\DoxyCodeLine{00060\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00061\ \textcolor{keyword}{struct\ }is\_default\_compare\ :\ std::false\_type\ \{\};}
+\DoxyCodeLine{00062\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00063\ \textcolor{keyword}{struct\ }is\_default\_compare<std::less<T>>\ :\ std::true\_type\ \{\};}
+\DoxyCodeLine{00064\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00065\ \textcolor{keyword}{struct\ }is\_default\_compare<std::greater<T>>\ :\ std::true\_type\ \{\};}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ Returns\ floor(log2(n)),\ assumes\ n\ >\ 0.}}
+\DoxyCodeLine{00069\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00070\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacepdqsort__detail_a92efcfdf1e8d68b3874edff8b80076ed}{log2}}(T\ n)\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{int}\ log\ =\ 0;}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordflow}{while}\ (n\ >>=\ 1)\ ++log;}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{return}\ log;}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ Sorts\ [begin,\ end)\ using\ insertion\ sort\ with\ the\ given\ comparison\ function.}}
+\DoxyCodeLine{00077\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00078\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacepdqsort__detail_adc095280baf9194391b8fd781bf22c05}{insertion\_sort}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordflow}{if}\ (begin\ ==\ end)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{for}\ (Iter\ cur\ =\ begin\ +\ 1;\ cur\ !=\ end;\ ++cur)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ Iter\ sift\ =\ cur;}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ Iter\ sift\_1\ =\ cur\ -\/\ 1;}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Compare\ first\ so\ we\ can\ avoid\ 2\ moves\ for\ an\ element\ already\ positioned\ correctly.}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (comp(*sift,\ *sift\_1))\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ T\ tmp\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*sift);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{\ *sift-\/-\/\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*sift\_1);\ \}\ \textcolor{keywordflow}{while}\ (sift\ !=\ begin\ \&\&\ comp(tmp,\ *-\/-\/sift\_1));}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ *sift\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(tmp);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ Sorts\ [begin,\ end)\ using\ insertion\ sort\ with\ the\ given\ comparison\ function.\ Assumes}}
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ *(begin\ -\/\ 1)\ is\ an\ element\ smaller\ than\ or\ equal\ to\ any\ element\ in\ [begin,\ end).}}
+\DoxyCodeLine{00099\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00100\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacepdqsort__detail_a3f1c34cdc137010052833aa50f03950d}{unguarded\_insertion\_sort}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{if}\ (begin\ ==\ end)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{for}\ (Iter\ cur\ =\ begin\ +\ 1;\ cur\ !=\ end;\ ++cur)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ Iter\ sift\ =\ cur;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ Iter\ sift\_1\ =\ cur\ -\/\ 1;}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Compare\ first\ so\ we\ can\ avoid\ 2\ moves\ for\ an\ element\ already\ positioned\ correctly.}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (comp(*sift,\ *sift\_1))\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ T\ tmp\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*sift);}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{\ *sift-\/-\/\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*sift\_1);\ \}\ \textcolor{keywordflow}{while}\ (comp(tmp,\ *-\/-\/sift\_1));}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ *sift\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(tmp);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{comment}{//\ Attempts\ to\ use\ insertion\ sort\ on\ [begin,\ end).\ Will\ return\ false\ if\ more\ than}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ partial\_insertion\_sort\_limit\ elements\ were\ moved,\ and\ abort\ sorting.\ Otherwise\ it\ will}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ successfully\ sort\ and\ return\ true.}}
+\DoxyCodeLine{00122\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00123\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacepdqsort__detail_a01d434ba2a54a3abc238517e4cb7519a}{partial\_insertion\_sort}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{if}\ (begin\ ==\ end)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ std::size\_t\ limit\ =\ 0;}
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keywordflow}{for}\ (Iter\ cur\ =\ begin\ +\ 1;\ cur\ !=\ end;\ ++cur)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ Iter\ sift\ =\ cur;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ Iter\ sift\_1\ =\ cur\ -\/\ 1;}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Compare\ first\ so\ we\ can\ avoid\ 2\ moves\ for\ an\ element\ already\ positioned\ correctly.}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (comp(*sift,\ *sift\_1))\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ T\ tmp\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*sift);}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{\ *sift-\/-\/\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*sift\_1);\ \}\ \textcolor{keywordflow}{while}\ (sift\ !=\ begin\ \&\&\ comp(tmp,\ *-\/-\/sift\_1));}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ *sift\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(tmp);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ limit\ +=\ cur\ -\/\ sift;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (limit\ >\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9aab89097901f2f898e6bb3c528cabc55a}{partial\_insertion\_sort\_limit}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00149\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacepdqsort__detail_a3daafaa0f44a7507d138749b7311dcaa}{sort2}}(Iter\ a,\ Iter\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ Compare\ comp)\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordflow}{if}\ (comp(*\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ *a))\ std::iter\_swap(a,\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00151\ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ Sorts\ the\ elements\ *a,\ *b\ and\ *c\ using\ comparison\ function\ comp.}}
+\DoxyCodeLine{00154\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00155\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacepdqsort__detail_ae1afda154c9e98c0f24589f4aa5f703f}{sort3}}(Iter\ a,\ Iter\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ Iter\ c,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a3daafaa0f44a7507d138749b7311dcaa}{sort2}}(a,\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ comp);}
+\DoxyCodeLine{00157\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a3daafaa0f44a7507d138749b7311dcaa}{sort2}}(\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ c,\ comp);}
+\DoxyCodeLine{00158\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a3daafaa0f44a7507d138749b7311dcaa}{sort2}}(a,\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ comp);}
+\DoxyCodeLine{00159\ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00162\ \textcolor{keyword}{inline}\ T\ *\mbox{\hyperlink{namespacepdqsort__detail_a9c14c46c400c3d91db14fb6500d576a0}{align\_cacheline}}(T\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \{}
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#if\ defined(UINTPTR\_MAX)\ \&\&\ \_\_cplusplus\ >=\ 201103L}}
+\DoxyCodeLine{00164\ \ \ \ \ std::uintptr\_t\ ip\ =\ \textcolor{keyword}{reinterpret\_cast<}std::uintptr\_t\textcolor{keyword}{>}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00166\ \ \ \ \ std::size\_t\ ip\ =\ \textcolor{keyword}{reinterpret\_cast<}std::size\_t\textcolor{keyword}{>}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00168\ \ \ \ \ ip\ =\ (ip\ +\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9ae9d9eaf23e2582ffabe6d5c94635932d}{cacheline\_size}}\ -\/\ 1)\ \&\ -\/\mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9ae9d9eaf23e2582ffabe6d5c94635932d}{cacheline\_size}};}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}T\ *\textcolor{keyword}{>}(ip);}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter>}
+\DoxyCodeLine{00173\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacepdqsort__detail_a9fb8c4c6e7cae1781d127e70e47a8016}{swap\_offsets}}(Iter\ first,\ Iter\ last,}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *offsets\_l,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *offsets\_r,}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ num,\ \textcolor{keywordtype}{bool}\ use\_swaps)\ \{}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{if}\ (use\_swaps)\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ case\ is\ needed\ for\ the\ descending\ distribution,\ where\ we\ need}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ have\ proper\ swapping\ for\ pdqsort\ to\ remain\ O(n).}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ num;\ ++i)\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(first\ +\ offsets\_l[i],\ last\ -\/\ offsets\_r[i]);}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (num\ >\ 0)\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ Iter\ l\ =\ first\ +\ offsets\_l[0];}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ Iter\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ last\ -\/\ offsets\_r[0];}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ T\ tmp(\mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*l));}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ *l\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 1;\ i\ <\ num;\ ++i)\ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ l\ =\ first\ +\ offsets\_l[i];}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*l);}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ last\ -\/\ offsets\_r[i];}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ *l\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(tmp);}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{comment}{//\ Partitions\ [begin,\ end)\ around\ pivot\ *begin\ using\ comparison\ function\ comp.\ Elements\ equal}}
+\DoxyCodeLine{00199\ \textcolor{comment}{//\ to\ the\ pivot\ are\ put\ in\ the\ right-\/hand\ partition.\ Returns\ the\ position\ of\ the\ pivot\ after}}
+\DoxyCodeLine{00200\ \textcolor{comment}{//\ partitioning\ and\ whether\ the\ passed\ sequence\ already\ was\ correctly\ partitioned.\ Assumes\ the}}
+\DoxyCodeLine{00201\ \textcolor{comment}{//\ pivot\ is\ a\ median\ of\ at\ least\ 3\ elements\ and\ that\ [begin,\ end)\ is\ at\ least}}
+\DoxyCodeLine{00202\ \textcolor{comment}{//\ insertion\_sort\_threshold\ long.\ Uses\ branchless\ partitioning.}}
+\DoxyCodeLine{00203\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00204\ \textcolor{keyword}{inline}\ std::pair<Iter,\ bool>\ \mbox{\hyperlink{namespacepdqsort__detail_ae07c959114ecfa16ecafac5996f3ff26}{partition\_right\_branchless}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{comment}{//\ Move\ pivot\ into\ local\ for\ speed.}}
+\DoxyCodeLine{00208\ \ \ \ \ T\ pivot(\mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*begin));}
+\DoxyCodeLine{00209\ \ \ \ \ Iter\ first\ =\ begin;}
+\DoxyCodeLine{00210\ \ \ \ \ Iter\ last\ =\ end;}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ first\ element\ greater\ than\ or\ equal\ than\ the\ pivot\ (the\ median\ of\ 3\ guarantees}}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ this\ exists).}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{while}\ (comp(*++first,\ pivot))}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ first\ element\ strictly\ smaller\ than\ the\ pivot.\ We\ have\ to\ guard\ this\ search\ if}}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{//\ there\ was\ no\ element\ before\ *first.}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordflow}{if}\ (first\ -\/\ 1\ ==\ begin)}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (first\ <\ last\ \&\&\ !comp(*-\/-\/last,\ pivot))}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!comp(*-\/-\/last,\ pivot))}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ If\ the\ first\ pair\ of\ elements\ that\ should\ be\ swapped\ to\ partition\ are\ the\ same\ element,}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{//\ the\ passed\ in\ sequence\ already\ was\ correctly\ partitioned.}}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordtype}{bool}\ already\_partitioned\ =\ first\ >=\ last;}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{if}\ (!already\_partitioned)\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ std::iter\_swap(first,\ last);}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ following\ branchless\ partitioning\ is\ derived\ from\ "{}BlockQuicksort:\ How\ Branch}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mispredictions\ don’t\ affect\ Quicksort"{}\ by\ Stefan\ Edelkamp\ and\ Armin\ Weiss,\ but}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ heavily\ micro-\/optimized.}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ offsets\_l\_storage[\mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a7a05f9a339ce440ec2bee00a69947e37}{block\_size}}\ +\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9ae9d9eaf23e2582ffabe6d5c94635932d}{cacheline\_size}}];}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ offsets\_r\_storage[\mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a7a05f9a339ce440ec2bee00a69947e37}{block\_size}}\ +\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9ae9d9eaf23e2582ffabe6d5c94635932d}{cacheline\_size}}];}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *offsets\_l\ =\ \mbox{\hyperlink{namespacepdqsort__detail_a9c14c46c400c3d91db14fb6500d576a0}{align\_cacheline}}(offsets\_l\_storage);}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *offsets\_r\ =\ \mbox{\hyperlink{namespacepdqsort__detail_a9c14c46c400c3d91db14fb6500d576a0}{align\_cacheline}}(offsets\_r\_storage);}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ Iter\ offsets\_l\_base\ =\ first;}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ Iter\ offsets\_r\_base\ =\ last;}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ num\_l,\ num\_r,\ start\_l,\ start\_r;}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ num\_l\ =\ num\_r\ =\ start\_l\ =\ start\_r\ =\ 0;}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (first\ <\ last)\ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Fill\ up\ offset\ blocks\ with\ elements\ that\ are\ on\ the\ wrong\ side.}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ First\ we\ determine\ how\ much\ elements\ are\ considered\ for\ each\ offset\ block.}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ num\_unknown\ =\ last\ -\/\ first;}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ left\_split\ =\ num\_l\ ==\ 0\ ?\ (num\_r\ ==\ 0\ ?\ num\_unknown\ /\ 2\ :\ num\_unknown)\ :\ 0;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ right\_split\ =\ num\_r\ ==\ 0\ ?\ (num\_unknown\ -\/\ left\_split)\ :\ 0;}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Fill\ the\ offset\ blocks.}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (left\_split\ >=\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a7a05f9a339ce440ec2bee00a69947e37}{block\_size}})\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a7a05f9a339ce440ec2bee00a69947e37}{block\_size}};)\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ left\_split;)\ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l[num\_l]\ =\ i++;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ +=\ !comp(*first,\ pivot);}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (right\_split\ >=\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a7a05f9a339ce440ec2bee00a69947e37}{block\_size}})\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a7a05f9a339ce440ec2bee00a69947e37}{block\_size}};)\ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ right\_split;)\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r[num\_r]\ =\ ++i;}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ +=\ comp(*-\/-\/last,\ pivot);}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Swap\ elements\ and\ update\ block\ sizes\ and\ first/last\ boundaries.}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ num\ =\ (std::min)(num\_l,\ num\_r);}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a9fb8c4c6e7cae1781d127e70e47a8016}{swap\_offsets}}(offsets\_l\_base,\ offsets\_r\_base,}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l\ +\ start\_l,\ offsets\_r\ +\ start\_r,}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num,\ num\_l\ ==\ num\_r);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ num\_l\ -\/=\ num;}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ num\_r\ -\/=\ num;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ start\_l\ +=\ num;}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ start\_r\ +=\ num;}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_l\ ==\ 0)\ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\_l\ =\ 0;}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l\_base\ =\ first;}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_r\ ==\ 0)\ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ start\_r\ =\ 0;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r\_base\ =\ last;}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ now\ fully\ identified\ [first,\ last)'s\ proper\ position.\ Swap\ the\ last\ elements.}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_l)\ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_l\ +=\ start\_l;}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (num\_l-\/-\/)\ std::iter\_swap(offsets\_l\_base\ +\ offsets\_l[num\_l],\ -\/-\/last);}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ first\ =\ last;}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_r)\ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ offsets\_r\ +=\ start\_r;}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (num\_r-\/-\/)\ std::iter\_swap(offsets\_r\_base\ -\/\ offsets\_r[num\_r],\ first),\ ++first;}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ last\ =\ first;}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00347\ \ \ \ \ \}}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{comment}{//\ Put\ the\ pivot\ in\ the\ right\ place.}}
+\DoxyCodeLine{00350\ \ \ \ \ Iter\ pivot\_pos\ =\ first\ -\/\ 1;}
+\DoxyCodeLine{00351\ \ \ \ \ *begin\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*pivot\_pos);}
+\DoxyCodeLine{00352\ \ \ \ \ *pivot\_pos\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(pivot);}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(pivot\_pos,\ already\_partitioned);}
+\DoxyCodeLine{00355\ \}}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00357\ \textcolor{comment}{//\ Partitions\ [begin,\ end)\ around\ pivot\ *begin\ using\ comparison\ function\ comp.\ Elements\ equal}}
+\DoxyCodeLine{00358\ \textcolor{comment}{//\ to\ the\ pivot\ are\ put\ in\ the\ right-\/hand\ partition.\ Returns\ the\ position\ of\ the\ pivot\ after}}
+\DoxyCodeLine{00359\ \textcolor{comment}{//\ partitioning\ and\ whether\ the\ passed\ sequence\ already\ was\ correctly\ partitioned.\ Assumes\ the}}
+\DoxyCodeLine{00360\ \textcolor{comment}{//\ pivot\ is\ a\ median\ of\ at\ least\ 3\ elements\ and\ that\ [begin,\ end)\ is\ at\ least}}
+\DoxyCodeLine{00361\ \textcolor{comment}{//\ insertion\_sort\_threshold\ long.}}
+\DoxyCodeLine{00362\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00363\ \textcolor{keyword}{inline}\ std::pair<Iter,\ bool>\ \mbox{\hyperlink{namespacepdqsort__detail_a0a55eeeaaea5faef67766c6b65ccfd2e}{partition\_right}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ Move\ pivot\ into\ local\ for\ speed.}}
+\DoxyCodeLine{00367\ \ \ \ \ T\ pivot(\mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*begin));}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ Iter\ first\ =\ begin;}
+\DoxyCodeLine{00370\ \ \ \ \ Iter\ last\ =\ end;}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ first\ element\ greater\ than\ or\ equal\ than\ the\ pivot\ (the\ median\ of\ 3\ guarantees}}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{comment}{//\ this\ exists).}}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordflow}{while}\ (comp(*++first,\ pivot))}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{comment}{//\ Find\ the\ first\ element\ strictly\ smaller\ than\ the\ pivot.\ We\ have\ to\ guard\ this\ search\ if}}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{comment}{//\ there\ was\ no\ element\ before\ *first.}}
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordflow}{if}\ (first\ -\/\ 1\ ==\ begin)}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (first\ <\ last\ \&\&\ !comp(*-\/-\/last,\ pivot))}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00382\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!comp(*-\/-\/last,\ pivot))}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{comment}{//\ If\ the\ first\ pair\ of\ elements\ that\ should\ be\ swapped\ to\ partition\ are\ the\ same\ element,}}
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{comment}{//\ the\ passed\ in\ sequence\ already\ was\ correctly\ partitioned.}}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keywordtype}{bool}\ already\_partitioned\ =\ first\ >=\ last;}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{comment}{//\ Keep\ swapping\ pairs\ of\ elements\ that\ are\ on\ the\ wrong\ side\ of\ the\ pivot.\ Previously}}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{comment}{//\ swapped\ pairs\ guard\ the\ searches,\ which\ is\ why\ the\ first\ iteration\ is\ special-\/cased}}
+\DoxyCodeLine{00392\ \ \ \ \ \textcolor{comment}{//\ above.}}
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keywordflow}{while}\ (first\ <\ last)\ \{}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ std::iter\_swap(first,\ last);}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (comp(*++first,\ pivot))}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!comp(*-\/-\/last,\ pivot))}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00399\ \ \ \ \ \}}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ \ \ \textcolor{comment}{//\ Put\ the\ pivot\ in\ the\ right\ place.}}
+\DoxyCodeLine{00402\ \ \ \ \ Iter\ pivot\_pos\ =\ first\ -\/\ 1;}
+\DoxyCodeLine{00403\ \ \ \ \ *begin\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*pivot\_pos);}
+\DoxyCodeLine{00404\ \ \ \ \ *pivot\_pos\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(pivot);}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_pair(pivot\_pos,\ already\_partitioned);}
+\DoxyCodeLine{00407\ \}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \textcolor{comment}{//\ Similar\ function\ to\ the\ one\ above,\ except\ elements\ equal\ to\ the\ pivot\ are\ put\ to\ the\ left\ of}}
+\DoxyCodeLine{00410\ \textcolor{comment}{//\ the\ pivot\ and\ it\ doesn't\ check\ or\ return\ if\ the\ passed\ sequence\ already\ was\ partitioned.}}
+\DoxyCodeLine{00411\ \textcolor{comment}{//\ Since\ this\ is\ rarely\ used\ (the\ many\ equal\ case),\ and\ in\ that\ case\ pdqsort\ already\ has\ O(n)}}
+\DoxyCodeLine{00412\ \textcolor{comment}{//\ performance,\ no\ block\ quicksort\ is\ applied\ here\ for\ simplicity.}}
+\DoxyCodeLine{00413\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare>}
+\DoxyCodeLine{00414\ \textcolor{keyword}{inline}\ Iter\ \mbox{\hyperlink{namespacepdqsort__detail_af7961c01faadc35189ac84f9b03e837f}{partition\_left}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \ \ \ \ T\ pivot(\mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*begin));}
+\DoxyCodeLine{00418\ \ \ \ \ Iter\ first\ =\ begin;}
+\DoxyCodeLine{00419\ \ \ \ \ Iter\ last\ =\ end;}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keywordflow}{while}\ (comp(pivot,\ *-\/-\/last))}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{keywordflow}{if}\ (last\ +\ 1\ ==\ end)}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (first\ <\ last\ \&\&\ !comp(pivot,\ *++first))}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!comp(pivot,\ *++first))}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keywordflow}{while}\ (first\ <\ last)\ \{}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ std::iter\_swap(first,\ last);}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (comp(pivot,\ *-\/-\/last))}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!comp(pivot,\ *++first))}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ ;}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ Iter\ pivot\_pos\ =\ last;}
+\DoxyCodeLine{00440\ \ \ \ \ *begin\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(*pivot\_pos);}
+\DoxyCodeLine{00441\ \ \ \ \ *pivot\_pos\ =\ \mbox{\hyperlink{pdqsort_8h_a3de8fb7a53a7399f2b28c51e73b80dd0}{PDQSORT\_PREFER\_MOVE}}(pivot);}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordflow}{return}\ pivot\_pos;}
+\DoxyCodeLine{00444\ \}}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Iter,\ \textcolor{keyword}{class}\ Compare,\ \textcolor{keywordtype}{bool}\ Branchless>}
+\DoxyCodeLine{00447\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacepdqsort__detail_a2c5ecdf1abb3b6e3fc02cd157512ac11}{pdqsort\_loop}}(Iter\ begin,\ Iter\ end,\ Compare\ comp,\ \textcolor{keywordtype}{int}\ bad\_allowed,\ \textcolor{keywordtype}{bool}\ leftmost\ =\ \textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::difference\_type\ diff\_t;}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{comment}{//\ Use\ a\ while\ loop\ for\ tail\ recursion\ elimination.}}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ diff\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ =\ end\ -\/\ begin;}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Insertion\ sort\ is\ faster\ for\ small\ arrays.}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ <\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a93aa19e909e1c9aac3476145eac01d08}{insertion\_sort\_threshold}})\ \{}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (leftmost)}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_adc095280baf9194391b8fd781bf22c05}{insertion\_sort}}(begin,\ end,\ comp);}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a3f1c34cdc137010052833aa50f03950d}{unguarded\_insertion\_sort}}(begin,\ end,\ comp);}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Choose\ pivot\ as\ median\ of\ 3\ or\ pseudomedian\ of\ 9.}}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ diff\_t\ s2\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ /\ 2;}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ >\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a2e33aab6bd526c39448030168613bb78}{ninther\_threshold}})\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_ae1afda154c9e98c0f24589f4aa5f703f}{sort3}}(begin,\ begin\ +\ s2,\ end\ -\/\ 1,\ comp);}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_ae1afda154c9e98c0f24589f4aa5f703f}{sort3}}(begin\ +\ 1,\ begin\ +\ (s2\ -\/\ 1),\ end\ -\/\ 2,\ comp);}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_ae1afda154c9e98c0f24589f4aa5f703f}{sort3}}(begin\ +\ 2,\ begin\ +\ (s2\ +\ 1),\ end\ -\/\ 3,\ comp);}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_ae1afda154c9e98c0f24589f4aa5f703f}{sort3}}(begin\ +\ (s2\ -\/\ 1),\ begin\ +\ s2,\ begin\ +\ (s2\ +\ 1),\ comp);}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(begin,\ begin\ +\ s2);}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_ae1afda154c9e98c0f24589f4aa5f703f}{sort3}}(begin\ +\ s2,\ begin,\ end\ -\/\ 1,\ comp);}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ *(begin\ -\/\ 1)\ is\ the\ end\ of\ the\ right\ partition\ of\ a\ previous\ partition\ operation}}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ there\ is\ no\ element\ in\ [begin,\ end)\ that\ is\ smaller\ than\ *(begin\ -\/\ 1).\ Then\ if\ our}}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ pivot\ compares\ equal\ to\ *(begin\ -\/\ 1)\ we\ change\ strategy,\ putting\ equal\ elements\ in}}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ left\ partition,\ greater\ elements\ in\ the\ right\ partition.\ We\ do\ not\ have\ to}}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ recurse\ on\ the\ left\ partition,\ since\ it's\ sorted\ (all\ equal).}}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!leftmost\ \&\&\ !comp(*(begin\ -\/\ 1),\ *begin))\ \{}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ begin\ =\ \mbox{\hyperlink{namespacepdqsort__detail_af7961c01faadc35189ac84f9b03e837f}{partition\_left}}(begin,\ end,\ comp)\ +\ 1;}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Partition\ and\ get\ results.}}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ std::pair<Iter,\ bool>\ part\_result\ =}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ \ \ \ \ Branchless\ ?\ \mbox{\hyperlink{namespacepdqsort__detail_ae07c959114ecfa16ecafac5996f3ff26}{partition\_right\_branchless}}(begin,\ end,\ comp)\ :\ \mbox{\hyperlink{namespacepdqsort__detail_a0a55eeeaaea5faef67766c6b65ccfd2e}{partition\_right}}(begin,\ end,\ comp);}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ Iter\ pivot\_pos\ =\ part\_result.first;}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ already\_partitioned\ =\ part\_result.second;}
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ for\ a\ highly\ unbalanced\ partition.}}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ diff\_t\ l\_size\ =\ pivot\_pos\ -\/\ begin;}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ diff\_t\ r\_size\ =\ end\ -\/\ (pivot\_pos\ +\ 1);}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ highly\_unbalanced\ =\ l\_size\ <\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ /\ 8\ ||\ r\_size\ <\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ /\ 8;}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ got\ a\ highly\ unbalanced\ partition\ we\ shuffle\ elements\ to\ break\ many\ patterns.}}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (highly\_unbalanced)\ \{}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ had\ too\ many\ bad\ partitions,\ switch\ to\ heapsort\ to\ guarantee\ O(n\ log\ n).}}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (-\/-\/bad\_allowed\ ==\ 0)\ \{}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::make\_heap(begin,\ end,\ comp);}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::sort\_heap(begin,\ end,\ comp);}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (l\_size\ >=\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a93aa19e909e1c9aac3476145eac01d08}{insertion\_sort\_threshold}})\ \{}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(begin,\ begin\ +\ l\_size\ /\ 4);}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(pivot\_pos\ -\/\ 1,\ pivot\_pos\ -\/\ l\_size\ /\ 4);}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (l\_size\ >\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a2e33aab6bd526c39448030168613bb78}{ninther\_threshold}})\ \{}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(begin\ +\ 1,\ begin\ +\ (l\_size\ /\ 4\ +\ 1));}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(begin\ +\ 2,\ begin\ +\ (l\_size\ /\ 4\ +\ 2));}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(pivot\_pos\ -\/\ 2,\ pivot\_pos\ -\/\ (l\_size\ /\ 4\ +\ 1));}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(pivot\_pos\ -\/\ 3,\ pivot\_pos\ -\/\ (l\_size\ /\ 4\ +\ 2));}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\_size\ >=\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a93aa19e909e1c9aac3476145eac01d08}{insertion\_sort\_threshold}})\ \{}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(pivot\_pos\ +\ 1,\ pivot\_pos\ +\ (1\ +\ r\_size\ /\ 4));}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(end\ -\/\ 1,\ end\ -\/\ r\_size\ /\ 4);}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (r\_size\ >\ \mbox{\hyperlink{namespacepdqsort__detail_abfbc00e6203cfbb92f455f8cbf7835a9a2e33aab6bd526c39448030168613bb78}{ninther\_threshold}})\ \{}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(pivot\_pos\ +\ 2,\ pivot\_pos\ +\ (2\ +\ r\_size\ /\ 4));}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(pivot\_pos\ +\ 3,\ pivot\_pos\ +\ (3\ +\ r\_size\ /\ 4));}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(end\ -\/\ 2,\ end\ -\/\ (1\ +\ r\_size\ /\ 4));}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::iter\_swap(end\ -\/\ 3,\ end\ -\/\ (2\ +\ r\_size\ /\ 4));}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ were\ decently\ balanced\ and\ we\ tried\ to\ sort\ an\ already\ partitioned}}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ sequence\ try\ to\ use\ insertion\ sort.}}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (already\_partitioned\ \&\&\ \mbox{\hyperlink{namespacepdqsort__detail_a01d434ba2a54a3abc238517e4cb7519a}{partial\_insertion\_sort}}(begin,\ pivot\_pos,\ comp)\ \&\&\ \mbox{\hyperlink{namespacepdqsort__detail_a01d434ba2a54a3abc238517e4cb7519a}{partial\_insertion\_sort}}(pivot\_pos\ +\ 1,\ end,\ comp))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Sort\ the\ left\ partition\ first\ using\ recursion\ and\ do\ tail\ recursion\ elimination\ for}}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ right-\/hand\ partition.}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a2c5ecdf1abb3b6e3fc02cd157512ac11}{pdqsort\_loop<Iter,\ Compare,\ Branchless>}}(begin,\ pivot\_pos,\ comp,\ bad\_allowed,\ leftmost);}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ begin\ =\ pivot\_pos\ +\ 1;}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ leftmost\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00538\ \ \ \ \ \}}
+\DoxyCodeLine{00539\ \}}
+\DoxyCodeLine{00540\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Iter>}
+\DoxyCodeLine{00541\ \textcolor{keyword}{concept\ }\mbox{\hyperlink{conceptpdqsort__detail_1_1_linear_iterable}{LinearIterable}}\ =\ \textcolor{keyword}{requires}(Iter\ \&ite)\ \{}
+\DoxyCodeLine{00542\ \ \ \ \ ite\ -\/\ ite;}
+\DoxyCodeLine{00543\ \ \ \ \ ite\ +=\ 1;}
+\DoxyCodeLine{00544\ \ \ \ \ ite\ -\/=\ 1;}
+\DoxyCodeLine{00545\ \};}
+\DoxyCodeLine{00546\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Iter>}
+\DoxyCodeLine{00547\ \textcolor{keyword}{concept\ }\mbox{\hyperlink{conceptpdqsort__detail_1_1_compare_func}{CompareFunc}}\ =\ \textcolor{keyword}{requires}(Iter\&\ ite,\ T\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})\{}
+\DoxyCodeLine{00548\ \ \ \ \ std::is\_same\_v<\mbox{\hyperlink{sugar_8h_abb452686968e48b67397da5f97445f5b}{bool}},\ \textcolor{keyword}{decltype}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}(*ite,\ *ite))>;}
+\DoxyCodeLine{00549\ \};}
+\DoxyCodeLine{00550\ \}\textcolor{comment}{//\ namespace\ pdqsort\_detail}}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \textcolor{keyword}{template}<pdqsort\_detail::LinearIterable\ Iter,\ pdqsort\_detail::CompareFunc<Iter>\ Compare>}
+\DoxyCodeLine{00553\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{pdqsort_8h_a9a4675f3c4f61ef1aa7d808c984d5f35}{pdqsort}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00554\ \ \ \ \ \textcolor{keywordflow}{if}\ (begin\ ==\ end)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \textcolor{preprocessor}{\#if\ \_\_cplusplus\ >=\ 201103L}}
+\DoxyCodeLine{00557\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a2c5ecdf1abb3b6e3fc02cd157512ac11}{pdqsort\_detail::pdqsort\_loop}}<Iter,\ Compare,}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pdqsort\_detail::is\_default\_compare<typename\ std::decay<Compare>::type>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}}\ \&\&}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_arithmetic<typename\ std::iterator\_traits<Iter>::value\_type>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}}>(}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ begin,\ end,\ comp,\ \mbox{\hyperlink{namespacepdqsort__detail_a92efcfdf1e8d68b3874edff8b80076ed}{pdqsort\_detail::log2}}(end\ -\/\ begin));}
+\DoxyCodeLine{00561\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00562\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a2c5ecdf1abb3b6e3fc02cd157512ac11}{pdqsort\_detail::pdqsort\_loop<Iter,\ Compare,\ false>}}(}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ begin,\ end,\ comp,\ \mbox{\hyperlink{namespacepdqsort__detail_a92efcfdf1e8d68b3874edff8b80076ed}{pdqsort\_detail::log2}}(end\ -\/\ begin));}
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00565\ \}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \textcolor{keyword}{template}<pdqsort\_detail::LinearIterable\ Iter>}
+\DoxyCodeLine{00568\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{pdqsort_8h_a9a4675f3c4f61ef1aa7d808c984d5f35}{pdqsort}}(Iter\ begin,\ Iter\ end)\ \{}
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00570\ \ \ \ \ \mbox{\hyperlink{pdqsort_8h_a9a4675f3c4f61ef1aa7d808c984d5f35}{pdqsort}}(begin,\ end,\ std::less<T>());}
+\DoxyCodeLine{00571\ \}}
+\DoxyCodeLine{00572\ }
+\DoxyCodeLine{00573\ \textcolor{keyword}{template}<pdqsort\_detail::LinearIterable\ Iter,\ pdqsort\_detail::CompareFunc<Iter>\ Compare>}
+\DoxyCodeLine{00574\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{pdqsort_8h_a29ab6c05f20769083e8140b392c41189}{pdqsort\_branchless}}(Iter\ begin,\ Iter\ end,\ Compare\ comp)\ \{}
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keywordflow}{if}\ (begin\ ==\ end)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00576\ \ \ \ \ \mbox{\hyperlink{namespacepdqsort__detail_a2c5ecdf1abb3b6e3fc02cd157512ac11}{pdqsort\_detail::pdqsort\_loop<Iter,\ Compare,\ true>}}(}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ begin,\ end,\ comp,\ \mbox{\hyperlink{namespacepdqsort__detail_a92efcfdf1e8d68b3874edff8b80076ed}{pdqsort\_detail::log2}}(end\ -\/\ begin));}
+\DoxyCodeLine{00578\ \}}
+\DoxyCodeLine{00579\ }
+\DoxyCodeLine{00580\ \textcolor{keyword}{template}<pdqsort\_detail::LinearIterable\ Iter>}
+\DoxyCodeLine{00581\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{pdqsort_8h_a29ab6c05f20769083e8140b392c41189}{pdqsort\_branchless}}(Iter\ begin,\ Iter\ end)\ \{}
+\DoxyCodeLine{00582\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ std::iterator\_traits<Iter>::value\_type\ T;}
+\DoxyCodeLine{00583\ \ \ \ \ \mbox{\hyperlink{pdqsort_8h_a29ab6c05f20769083e8140b392c41189}{pdqsort\_branchless}}(begin,\ end,\ std::less<T>());}
+\DoxyCodeLine{00584\ \}}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \textcolor{preprocessor}{\#undef\ PDQSORT\_PREFER\_MOVE}}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

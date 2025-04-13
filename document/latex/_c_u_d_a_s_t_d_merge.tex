@@ -1,0 +1,119 @@
+\doxysection{Parallel Merge}
+\hypertarget{_c_u_d_a_s_t_d_merge}{}\label{_c_u_d_a_s_t_d_merge}\index{Parallel Merge@{Parallel Merge}}
+Taskflow provides standalone template methods for merging two sorted ranges of items into a sorted range of items.\hypertarget{_c_u_d_a_s_t_d_merge_CUDASTDMergeIncludeTheHeader}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_c_u_d_a_s_t_d_merge_CUDASTDMergeIncludeTheHeader}
+You need to include the header file, {\ttfamily taskflow/cuda/algorithm/merge.hpp}, for using the parallel-\/merge algorithm.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{merge_8hpp}{taskflow/cuda/algorithm/merge.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_c_u_d_a_s_t_d_merge_CUDASTDMergeItems}{}\doxysubsection{\texorpdfstring{Merge Two Sorted Ranges of Items}{Merge Two Sorted Ranges of Items}}\label{_c_u_d_a_s_t_d_merge_CUDASTDMergeItems}
+\doxylink{namespacetf_a37ec481149c2f01669353033d75ed72a}{tf\+::cuda\+\_\+merge} merges two sorted ranges of items into a sorted range. The following code merges two sorted arrays {\ttfamily input\+\_\+1} and {\ttfamily input\+\_\+2}, each of 1000 items, into a sorted array {\ttfamily output} of 2000 items.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 1000;}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ input\_1\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \ \ \textcolor{comment}{//\ input\ vector\ 1}}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ input\_2\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \ \ \textcolor{comment}{//\ input\ vector\ 2}}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}\ \ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(2*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \textcolor{comment}{//\ output\ vector}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ initializes\ the\ data}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ input\_1[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ rand()\%100;}
+\DoxyCodeLine{\ \ input\_2[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ rand()\%100;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{std::sort(input\_1,\ input1\ +\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{std::sort(input\_2,\ input2\ +\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ an\ execution\ policy}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy(stream);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ queries\ the\ required\ buffer\ size\ to\ merge\ two\ N-\/element\ sorted\ vectors}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{structbytes}{bytes}}\ \ =\ policy.merge\_bufsz(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<std::byte>}}(\mbox{\hyperlink{structbytes}{bytes}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ merge\ input\_1\ and\ input\_2\ to\ output}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a37ec481149c2f01669353033d75ed72a}{tf::cuda\_merge}}(policy,\ }
+\DoxyCodeLine{\ \ input\_1,\ input\_1\ +\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ input\_2,\ input\_2\ +\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ }
+\DoxyCodeLine{\ \ []\_\_device\_\_\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}\ <\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};\ \},\ \ \textcolor{comment}{//\ comparator}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ synchronizes\ the\ execution\ and\ verifies\ the\ result}}
+\DoxyCodeLine{stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ verify\ the\ result}}
+\DoxyCodeLine{assert(std::is\_sorted(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}\ +\ 2*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ delete\ the\ buffer}}
+\DoxyCodeLine{cudaFree(input1);}
+\DoxyCodeLine{cudaFree(input2);}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}});}
+
+\end{DoxyCode}
+
+
+The merge algorithm runs {\itshape asynchronously} through the stream specified in the execution policy. You need to synchronize the stream to obtain correct results. Since the GPU merge algorithm may require extra buffer to store the temporary results, you need to provide a buffer of size at least larger or equal to the value returned from {\ttfamily \doxylink{classtf_1_1cuda_execution_policy_a1febbe549d9cbe4502a5b66167ab9553}{tf\+::cuda\+Default\+Execution\+Policy\+::merge\+\_\+bufsz}}. The buffer size depends only on the two input vector sizes.
+
+\begin{DoxyAttention}{注意}
+You must keep the buffer alive before the merge call completes.
+\end{DoxyAttention}
+\hypertarget{_c_u_d_a_s_t_d_merge_CUDASTDMergeKeyValueItems}{}\doxysubsection{\texorpdfstring{Merge Two Sorted Ranges of Key-\/\+Value Items}{Merge Two Sorted Ranges of Key-\/\+Value Items}}\label{_c_u_d_a_s_t_d_merge_CUDASTDMergeKeyValueItems}
+\doxylink{namespacetf_aa84d4c68d2cbe9f6efc4a1eb1a115458}{tf\+::cuda\+\_\+merge\+\_\+by\+\_\+key} performs key-\/value merge over two sorted ranges in a similar way to \doxylink{namespacetf_a37ec481149c2f01669353033d75ed72a}{tf\+::cuda\+\_\+merge}; additionally, it copies elements from the two ranges of values associated with the two input keys, respectively. The following code performs key-\/value merge over {\ttfamily a} and {\ttfamily b\+:} 
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 2;}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ a\_keys\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ a\_vals\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ b\_keys\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ b\_vals\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ c\_keys\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(2*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ c\_vals\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(2*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ initializes\ the\ data}}
+\DoxyCodeLine{a\_keys[0]\ =\ 8,\ a\_keys[1]\ =\ 1;}
+\DoxyCodeLine{a\_vals[0]\ =\ 1,\ a\_vals[1]\ =\ 2;}
+\DoxyCodeLine{b\_keys[0]\ =\ 3,\ b\_keys[1]\ =\ 7;}
+\DoxyCodeLine{b\_vals[0]\ =\ 3,\ b\_vals[1]\ =\ 4;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ an\ execution\ policy}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy(stream);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ queries\ the\ required\ buffer\ size\ to\ merge\ two\ N-\/element\ sorted\ vectors\ by\ keys}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{structbytes}{bytes}}\ \ =\ policy.merge\_bufsz(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<std::byte>}}(\mbox{\hyperlink{structbytes}{bytes}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ merge\ keys\ and\ values\ of\ a\ and\ b\ to\ c}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_aa84d4c68d2cbe9f6efc4a1eb1a115458}{tf::cuda\_merge\_by\_key}}(}
+\DoxyCodeLine{\ \ policy,\ }
+\DoxyCodeLine{\ \ a\_keys,\ a\_keys+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ a\_vals,}
+\DoxyCodeLine{\ \ b\_keys,\ b\_keys+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ b\_vals,}
+\DoxyCodeLine{\ \ c\_keys,\ c\_vals,}
+\DoxyCodeLine{\ \ []\_\_device\_\_\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}\ <\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};\ \},\ \ \textcolor{comment}{//\ comparator}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ wait\ for\ the\ merge\ to\ complete}}
+\DoxyCodeLine{stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ now,\ c\_keys\ =\ \{1,\ 3,\ 7,\ 8\}}}
+\DoxyCodeLine{\textcolor{comment}{//\ now,\ c\_vals\ =\ \{2,\ 3,\ 4,\ 1\}}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ delete\ the\ device\ memory}}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}});}
+\DoxyCodeLine{cudaFree(a\_keys);}
+\DoxyCodeLine{cudaFree(b\_keys);}
+\DoxyCodeLine{cudaFree(c\_keys);}
+\DoxyCodeLine{cudaFree(a\_vals);}
+\DoxyCodeLine{cudaFree(b\_vals);}
+\DoxyCodeLine{cudaFree(c\_vals);}
+
+\end{DoxyCode}
+
+
+Since the GPU merge algorithm may require extra buffer to store the temporary results, you need to provide a buffer of size at least larger or equal to the value returned from {\ttfamily \doxylink{classtf_1_1cuda_execution_policy_a1febbe549d9cbe4502a5b66167ab9553}{tf\+::cuda\+Default\+Execution\+Policy\+::merge\+\_\+bufsz}}. The buffer size depends only on the two input vector sizes. 

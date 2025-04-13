@@ -1,0 +1,156 @@
+\doxysection{free\+\_\+list.\+h}
+\hypertarget{free__list_8h_source}{}\label{free__list_8h_source}\index{external/libcds/cds/intrusive/free\_list.h@{external/libcds/cds/intrusive/free\_list.h}}
+\mbox{\hyperlink{free__list_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright\ (c)\ 2006-\/2018\ Maxim\ Khizhinsky}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ Distributed\ under\ the\ Boost\ Software\ License,\ Version\ 1.0.\ (See\ accompanying}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ file\ LICENSE\ or\ copy\ at\ http://www.boost.org/LICENSE\_1\_0.txt)}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ CDSLIB\_INTRUSIVE\_FREE\_LIST\_H}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ CDSLIB\_INTRUSIVE\_FREE\_LIST\_H}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{external_2libcds_2cds_2algo_2atomic_8h}{cds/algo/atomic.h}}>}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacecds}{cds}}\ \{\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacecds_1_1intrusive}{intrusive}}\ \{}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_ab35055f90f0fc0146d73abb92e52253a}{FreeList}}}
+\DoxyCodeLine{00065\ \ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//@cond}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ atomics::atomic<uint32\_t>\ \ \ m\_freeListRefs;}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ atomics::atomic<node\ *>\ \ \ \ \ m\_freeListNext;}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}()}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_freeListRefs(\ 0\ )}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_freeListNext.store(\ \textcolor{keyword}{nullptr},\ atomics::memory\_order\_release\ );}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//@endcond}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_ab35055f90f0fc0146d73abb92e52253a}{FreeList}}()}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_Head(\ nullptr\ )}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a07216d37aebffae230561a72833ee220}{\string~FreeList}}()}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ assert(\ \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a237e46d094f0bb242175332d3b4457b2}{empty}}());}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a1817a151aa794f7b4208e4824793a96c}{put}}(\ \mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}\ *\ pNode\ )}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ know\ that\ the\ should-\/be-\/on-\/freelist\ bit\ is\ 0\ at\ this\ point,\ so\ it's\ safe\ to}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set\ it\ using\ a\ fetch\_add}}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pNode-\/>m\_freeListRefs.fetch\_add(\ c\_ShouldBeOnFreeList,\ atomics::memory\_order\_release\ )\ ==\ 0\ )\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Oh\ look!\ We\ were\ the\ last\ ones\ referencing\ this\ node,\ and\ we\ know}}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ want\ to\ add\ it\ to\ the\ free\ list,\ so\ let's\ do\ it!}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ add\_knowing\_refcount\_is\_zero(\ pNode\ );}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}\ *\ \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_acd3f6e0bbf4d5d0f5f8784f8d5743b99}{get}}()}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ =\ m\_Head.load(\ atomics::memory\_order\_acquire\ );}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ !=\ \textcolor{keyword}{nullptr}\ )\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ prevHead\ =\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}};}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ refs\ =\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}-\/>m\_freeListRefs.load(\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{compiler_2clang_2defs_8h_a228b254fc6a4fbb6a0912cd40f8a5327}{cds\_unlikely}}(\ (refs\ \&\ c\_RefsMask)\ ==\ 0\ ||\ !\mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}-\/>m\_freeListRefs.compare\_exchange\_strong(\ refs,\ refs\ +\ 1,}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ atomics::memory\_order\_acquire,\ atomics::memory\_order\_relaxed\ )))}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ =\ m\_Head.load(\ atomics::memory\_order\_acquire\ );}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Good,\ reference\ count\ has\ been\ incremented\ (it\ wasn't\ at\ zero),\ which\ means}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ can\ read\ the\ next\ and\ not\ worry\ about\ it\ changing\ between\ now\ and\ the\ time}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ do\ the\ CAS}}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}\ *\ next\ =\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}-\/>m\_freeListNext.load(\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{compiler_2clang_2defs_8h_a62e15ff96566acaad88f2eedc0b7675e}{cds\_likely}}(\ m\_Head.compare\_exchange\_strong(\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}},\ next,\ atomics::memory\_order\_acquire,\ atomics::memory\_order\_relaxed\ )))\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Yay,\ got\ the\ node.\ This\ means\ it\ was\ on\ the\ list,\ which\ means}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ shouldBeOnFreeList\ must\ be\ false\ no\ matter\ the\ refcount\ (because}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ nobody\ else\ knows\ it's\ been\ taken\ off\ yet,\ it\ can't\ have\ been\ put\ back\ on).}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert(\ (\mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}-\/>m\_freeListRefs.load(\ atomics::memory\_order\_relaxed\ )\ \&\ c\_ShouldBeOnFreeList)\ ==\ 0\ );}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Decrease\ refcount\ twice,\ once\ for\ our\ ref,\ and\ once\ for\ the\ list's\ ref}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}-\/>m\_freeListRefs.fetch\_sub(\ 2,\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}};}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ OK,\ the\ head\ must\ have\ changed\ on\ us,\ but\ we\ still\ need\ to\ decrease\ the\ refcount\ we}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ increased}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ refs\ =\ prevHead-\/>m\_freeListRefs.fetch\_sub(\ 1,\ atomics::memory\_order\_acq\_rel\ );}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ refs\ ==\ c\_ShouldBeOnFreeList\ +\ 1\ )}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ add\_knowing\_refcount\_is\_zero(\ prevHead\ );}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a237e46d094f0bb242175332d3b4457b2}{empty}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00152\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_Head.load(\ atomics::memory\_order\_relaxed\ )\ ==\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Disposer>}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a5fa9e87030b8fe35b2c05e2d71d89ae3}{clear}}(\ Disposer\ disp\ )}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}\ *\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ =\ m\_Head.load(\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ m\_Head.store(\ \textcolor{keyword}{nullptr},\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ )\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}\ *\ next\ =\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}-\/>m\_freeListNext.load(\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ disp(\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ );}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ =\ next;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{comment}{//@cond}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ add\_knowing\_refcount\_is\_zero(\ node\ *\ pNode\ )}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Since\ the\ refcount\ is\ zero,\ and\ nobody\ can\ increase\ it\ once\ it's\ zero\ (except\ us,\ and\ we}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ run\ only\ one\ copy\ of\ this\ method\ per\ node\ at\ a\ time,\ i.e.\ the\ single\ thread\ case),\ then\ we}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ know\ we\ can\ safely\ change\ the\ next\ pointer\ of\ the\ node;\ however,\ once\ the\ refcount\ is\ back}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ above\ zero,\ then\ other\ threads\ could\ increase\ it\ (happens\ under\ heavy\ contention,\ when\ the}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ refcount\ goes\ to\ zero\ in\ between\ a\ load\ and\ a\ refcount\ increment\ of\ a\ node\ in\ try\_get,\ then}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ back\ up\ to\ something\ non-\/zero,\ then\ the\ refcount\ increment\ is\ done\ by\ the\ other\ thread)\ -\/-\/}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ so,\ if\ the\ CAS\ to\ add\ the\ node\ to\ the\ actual\ list\ fails,\ decrease\ the\ refcount\ and\ leave}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ add\ operation\ to\ the\ next\ thread\ who\ puts\ the\ refcount\ back\ at\ zero\ (which\ could\ be\ us,}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ hence\ the\ loop).}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ node\ *\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ =\ m\_Head.load(\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\ \textcolor{keyword}{true}\ )\ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pNode-\/>m\_freeListNext.store(\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}},\ atomics::memory\_order\_relaxed\ );}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pNode-\/>m\_freeListRefs.store(\ 1,\ atomics::memory\_order\_release\ );}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{compiler_2clang_2defs_8h_a228b254fc6a4fbb6a0912cd40f8a5327}{cds\_unlikely}}(\ !m\_Head.compare\_exchange\_strong(\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}},\ pNode,\ atomics::memory\_order\_release,\ atomics::memory\_order\_relaxed\ )))\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Hmm,\ the\ add\ failed,\ but\ we\ can\ only\ try\ again\ when\ the\ refcount\ goes\ back\ to\ zero}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pNode-\/>m\_freeListRefs.fetch\_add(\ c\_ShouldBeOnFreeList\ -\/\ 1,\ atomics::memory\_order\_release\ )\ ==\ 1\ )}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{comment}{//@endcond}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{comment}{//@cond}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \textcolor{keyword}{const}\ c\_RefsMask\ =\ 0x7FFFFFFF;}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \textcolor{keyword}{const}\ c\_ShouldBeOnFreeList\ =\ 0x80000000;}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Implemented\ like\ a\ stack,\ but\ where\ node\ order\ doesn't\ matter\ (nodes\ are}}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ inserted\ out\ of\ order\ under\ contention)}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ atomics::atomic<node\ *>\ \ m\_Head;}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \textcolor{comment}{//@endcond}}
+\DoxyCodeLine{00217\ \ \ \ \ \};}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \}\}\ \textcolor{comment}{//\ namespace\ cds::intrusive}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ CDSLIB\_INTRUSIVE\_FREE\_LIST\_H}}
+
+\end{DoxyCode}

@@ -1,5 +1,5 @@
-#include <luisa/core/logging.h>
-#include <luisa/runtime/image.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/image.h>
 
 namespace luisa::compute ::detail {
 

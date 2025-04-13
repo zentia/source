@@ -1,0 +1,228 @@
+\doxysubsection{Writing Functions Taking Eigen Types as Parameters}
+\hypertarget{_topic_function_taking_eigen_types}{}\label{_topic_function_taking_eigen_types}\index{Writing Functions Taking \%Eigen Types as Parameters@{Writing Functions Taking \%Eigen Types as Parameters}}
+Eigen\textquotesingle{}s use of expression templates results in potentially every expression being of a different type. If you pass such an expression to a function taking a parameter of type \doxylink{class_eigen_1_1_matrix}{Matrix}, your expression will implicitly be evaluated into a temporary \doxylink{class_eigen_1_1_matrix}{Matrix}, which will then be passed to the function. This means that you lose the benefit of expression templates. Concretely, this has two drawbacks\+: \begin{DoxyItemize}
+\item The evaluation into a temporary may be useless and inefficient; \item This only allows the function to read from the expression, not to write to it.\end{DoxyItemize}
+Fortunately, all this myriad of expression types have in common that they all inherit a few common, templated base classes. By letting your function take templated parameters of these base types, you can let them play nicely with Eigen\textquotesingle{}s expression templates.
+
+\textbackslash{}eigen\+Auto\+Toc\hypertarget{_topic_function_taking_eigen_types_TopicFirstExamples}{}\doxysubsubsection{\texorpdfstring{Some First Examples}{Some First Examples}}\label{_topic_function_taking_eigen_types_TopicFirstExamples}
+This section will provide simple examples for different types of objects Eigen is offering. Before starting with the actual examples, we need to recapitulate which base objects we can work with (see also \doxylink{TopicClassHierarchy}{The class hierarchy}).
+
+\begin{DoxyItemize}
+\item \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base}\+: The common base class for all dense matrix expressions (as opposed to array expressions, as opposed to sparse and special matrix classes). Use it in functions that are meant to work only on dense matrices. \item \doxylink{class_eigen_1_1_array_base}{Array\+Base}\+: The common base class for all dense array expressions (as opposed to matrix expressions, etc). Use it in functions that are meant to work only on arrays. \item \doxylink{class_eigen_1_1_dense_base}{Dense\+Base}\+: The common base class for all dense matrix expression, that is, the base class for both {\ttfamily \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base}} and {\ttfamily \doxylink{class_eigen_1_1_array_base}{Array\+Base}}. It can be used in functions that are meant to work on both matrices and arrays. \item \doxylink{struct_eigen_1_1_eigen_base}{Eigen\+Base}\+: The base class unifying all types of objects that can be evaluated into dense matrices or arrays, for example special matrix classes such as diagonal matrices, permutation matrices, etc. It can be used in functions that are meant to work on any such general type.\end{DoxyItemize}
+{\bfseries{ Eigen\+Base Example }}~\newline
+~\newline
+ Prints the dimensions of the most generic object present in Eigen. It could be any matrix expressions, any dense or sparse matrix and any array. \tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endhead
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+  &
+\begin{DoxyVerbInclude}
+\end{DoxyVerbInclude}
+ \\\cline{1-2}
+\end{longtabu}
+{\bfseries{ Dense\+Base Example }}~\newline
+~\newline
+ Prints a sub-\/block of the dense expression. Accepts any dense matrix or array expression, but no sparse objects and no special matrix classes such as \doxylink{class_eigen_1_1_diagonal_matrix}{Diagonal\+Matrix}. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ print\_block(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_dense_base}{DenseBase<Derived>}}\&\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}block:\ "{}}\ <<\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}.block(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}},\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}})\ <<\ std::endl;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ {\bfseries{ Array\+Base Example }}~\newline
+~\newline
+ Prints the maximum coefficient of the array or array-\/expression. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ print\_max\_coeff(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_array_base}{ArrayBase<Derived>}}\ \&\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}max:\ "{}}\ <<\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}.maxCoeff()\ <<\ std::endl;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ {\bfseries{ Matrix\+Base Example }}~\newline
+~\newline
+ Prints the inverse condition number of the given matrix or matrix-\/expression. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ print\_inv\_cond(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<Derived>}}\&\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_jacobi_s_v_d_aa984693f000ee4bb8b97a8745ce4fc3f}{JacobiSVD<typename\ Derived::PlainObject>::SingularValuesType}}\&}
+\DoxyCodeLine{\ \ \ \ sing\_vals\ =\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}.jacobiSvd().singularValues();}
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}inv\ cond:\ "{}}\ <<\ sing\_vals(sing\_vals.size()-\/1)\ /\ sing\_vals(0)\ <<\ std::endl;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ {\bfseries{ Multiple templated arguments example }}~\newline
+~\newline
+ Calculate the Euclidean distance between two points. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ DerivedA,\textcolor{keyword}{typename}\ DerivedB>}
+\DoxyCodeLine{\textcolor{keyword}{typename}\ DerivedA::Scalar\ squaredist(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<DerivedA>}}\&\ \mbox{\hyperlink{_matrix_base__all_8cpp_acdff45bcf8497bafe04b93e4e704c57b}{p1}},\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<DerivedB>}}\&\ p2)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{_matrix_base__all_8cpp_acdff45bcf8497bafe04b93e4e704c57b}{p1}}-\/p2).squaredNorm();}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ Notice that we used two template parameters, one per argument. This permits the function to handle inputs of different types, e.\+g., 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{squaredist(\mbox{\hyperlink{_tutorial___reshape_mat2_vec_8cpp_a10bd710692c91bc238f2e1da77730678}{v1}},2*\mbox{\hyperlink{_tutorial___reshape_mat2_vec_8cpp_a3eb30a79de469336df46f4f5f0bfb84f}{v2}})}
+
+\end{DoxyCode}
+ where the first argument {\ttfamily v1} is a vector and the second argument {\ttfamily 2\texorpdfstring{$\ast$}{*}v2} is an expression. ~\newline
+~\newline
+
+
+These examples are just intended to give the reader a first impression of how functions can be written which take a plain and constant \doxylink{class_eigen_1_1_matrix}{Matrix} or \doxylink{class_eigen_1_1_array}{Array} argument. They are also intended to give the reader an idea about the most common base classes being the optimal candidates for functions. In the next section we will look in more detail at an example and the different ways it can be implemented, while discussing each implementation\textquotesingle{}s problems and advantages. For the discussion below, \doxylink{class_eigen_1_1_matrix}{Matrix} and \doxylink{class_eigen_1_1_array}{Array} as well as \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base} and \doxylink{class_eigen_1_1_array_base}{Array\+Base} can be exchanged and all arguments still hold.\hypertarget{_topic_function_taking_eigen_types_TopicUsingRefClass}{}\doxysubsubsection{\texorpdfstring{How to write generic, but non-\/templated function?}{How to write generic, but non-\/templated function?}}\label{_topic_function_taking_eigen_types_TopicUsingRefClass}
+In all the previous examples, the functions had to be template functions. This approach allows to write very generic code, but it is often desirable to write non templated function and still keep some level of genericity to avoid stupid copies of the arguments. The typical example is to write functions accepting both a Matrix\+Xf or a block of a Matrix\+Xf. This exactly the purpose of the \doxylink{class_eigen_1_1_ref}{Ref} class. Here is a simple example\+:
+
+\tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endhead
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+  &
+\begin{DoxyVerbInclude}
+\end{DoxyVerbInclude}
+ \\\cline{1-2}
+\end{longtabu}
+In the first two calls to inv\+\_\+cond, no copy occur because the memory layout of the arguments matches the memory layout accepted by \doxylink{class_eigen_1_1_ref}{Ref$<$\+Matrix\+Xf$>$}. However, in the last call, we have a generic expression that will be automatically evaluated into a temporary Matrix\+Xf by the \doxylink{class_eigen_1_1_ref}{Ref$<$$>$} object.
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} \doxylink{class_eigen_1_1_ref}{Ref} object can also be writable. Here is an example of a function computing the covariance matrix of two input matrices where each row is an observation\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ cov(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_ref}{Ref<const\ MatrixXf>}}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_ref}{Ref<const\ MatrixXf>}}\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\ \mbox{\hyperlink{class_eigen_1_1_ref}{Ref<MatrixXf>}}\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ num\_observations\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rows());}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorXf\ x\_mean\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorXf\ y\_mean\ =\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ (\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rowwise()\ -\/\ x\_mean).transpose()\ *\ (\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.rowwise()\ -\/\ y\_mean)\ /\ num\_observations;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ and here are two examples calling cov without any copy\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{MatrixXf\ \mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}},\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}},\ m3}
+\DoxyCodeLine{cov(\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}},\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}},\ m3);}
+\DoxyCodeLine{cov(\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.leftCols<3>(),\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}.leftCols<3>(),\ m3.topLeftCorner<3,3>());}
+
+\end{DoxyCode}
+ The \doxylink{class_eigen_1_1_ref}{Ref$<$$>$} class has two other optional template arguments allowing to control the kind of memory layout that can be accepted without any copy. See the class \doxylink{class_eigen_1_1_ref}{Ref} documentation for the details.\hypertarget{_topic_function_taking_eigen_types_TopicPlainFunctionsWorking}{}\doxysubsubsection{\texorpdfstring{In which cases do functions taking plain Matrix or Array arguments work?}{In which cases do functions taking plain Matrix or Array arguments work?}}\label{_topic_function_taking_eigen_types_TopicPlainFunctionsWorking}
+Without using template functions, and without the \doxylink{class_eigen_1_1_ref}{Ref} class, a naive implementation of the previous cov function might look like this 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{MatrixXf\ cov(\textcolor{keyword}{const}\ MatrixXf\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \textcolor{keyword}{const}\ MatrixXf\&\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ num\_observations\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rows());}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorXf\ x\_mean\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorXf\ y\_mean\ =\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rowwise()\ -\/\ x\_mean).transpose()\ *\ (\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.rowwise()\ -\/\ y\_mean)\ /\ num\_observations;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ and contrary to what one might think at first, this implementation is fine unless you require a generic implementation that works with double matrices too and unless you do not care about temporary objects. Why is that the case? Where are temporaries involved? How can code as given below compile? 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{MatrixXf\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},z;}
+\DoxyCodeLine{MatrixXf\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ cov(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}+z);}
+
+\end{DoxyCode}
+ In this special case, the example is fine and will be working because both parameters are declared as {\itshape const} references. The compiler creates a temporary and evaluates the expression x+z into this temporary. Once the function is processed, the temporary is released and the result is assigned to C.
+
+{\bfseries{Note\+:}} Functions taking {\itshape const} references to \doxylink{class_eigen_1_1_matrix}{Matrix} (or \doxylink{class_eigen_1_1_array}{Array}) can process expressions at the cost of temporaries.\hypertarget{_topic_function_taking_eigen_types_TopicPlainFunctionsFailing}{}\doxysubsubsection{\texorpdfstring{In which cases do functions taking a plain Matrix or Array argument fail?}{In which cases do functions taking a plain Matrix or Array argument fail?}}\label{_topic_function_taking_eigen_types_TopicPlainFunctionsFailing}
+Here, we consider a slightly modified version of the function given above. This time, we do not want to return the result but pass an additional non-\/const paramter which allows us to store the result. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} first naive implementation might look as follows. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Note:\ This\ code\ is\ flawed!}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ cov(\textcolor{keyword}{const}\ MatrixXf\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \textcolor{keyword}{const}\ MatrixXf\&\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\ MatrixXf\&\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ num\_observations\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rows());}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorXf\ x\_mean\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorXf\ y\_mean\ =\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ (\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rowwise()\ -\/\ x\_mean).transpose()\ *\ (\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.rowwise()\ -\/\ y\_mean)\ /\ num\_observations;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ When trying to execute the following code 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{MatrixXf\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ MatrixXf::Zero(3,6);}
+\DoxyCodeLine{cov(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}.block(0,0,3,3));}
+
+\end{DoxyCode}
+ the compiler will fail, because it is not possible to convert the expression returned by {\ttfamily Matrix\+Xf\+::block()} into a non-\/const {\ttfamily Matrix\+Xf\&}. This is the case because the compiler wants to protect you from writing your result to a temporary object. In this special case this protection is not intended -- we want to write to a temporary object. So how can we overcome this problem?
+
+The solution which is preferred at the moment is based on a little {\itshape hack}. One needs to pass a const reference to the matrix and internally the constness needs to be cast away. The correct implementation for C98 compliant compilers would be 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived,\ \textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ cov(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<Derived>}}\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<Derived>}}\&\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<OtherDerived>}}\ \textcolor{keyword}{const}\ \&\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Derived::Scalar\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}};}
+\DoxyCodeLine{\ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1plain__row__type_a46f848dfbee390d779e1e04070126d25}{internal::plain\_row\_type<Derived>::type}}\ RowVectorType;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ num\_observations\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rows());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorType\ x\_mean\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorType\ y\_mean\ =\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const\_cast<}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<OtherDerived>}}\&\ \textcolor{keyword}{>}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})\ =}
+\DoxyCodeLine{\ \ \ \ (\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rowwise()\ -\/\ x\_mean).\mbox{\hyperlink{class_eigen_1_1_dense_base_ac8952c19644a4ac7e41bea45c19b909c}{transpose}}()\ *\ (\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.rowwise()\ -\/\ y\_mean)\ /\ num\_observations;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ The implementation above does now not only work with temporary expressions but it also allows to use the function with matrices of arbitrary floating point scalar types.
+
+{\bfseries{Note\+:}} The const cast hack will only work with templated functions. It will not work with the Matrix\+Xf implementation because it is not possible to cast a \doxylink{class_eigen_1_1_block}{Block} expression to a \doxylink{class_eigen_1_1_matrix}{Matrix} reference!\hypertarget{_topic_function_taking_eigen_types_TopicResizingInGenericImplementations}{}\doxysubsubsection{\texorpdfstring{How to resize matrices in generic implementations?}{How to resize matrices in generic implementations?}}\label{_topic_function_taking_eigen_types_TopicResizingInGenericImplementations}
+One might think we are done now, right? This is not completely true because in order for our covariance function to be generically applicable, we want the follwing code to work 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{MatrixXf\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ MatrixXf::Random(100,3);}
+\DoxyCodeLine{MatrixXf\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}\ =\ MatrixXf::Random(100,3);}
+\DoxyCodeLine{MatrixXf\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}};}
+\DoxyCodeLine{cov(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});}
+
+\end{DoxyCode}
+ This is not the case anymore, when we are using an implementation taking \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base} as a parameter. In general, Eigen supports automatic resizing but it is not possible to do so on expressions. Why should resizing of a matrix \doxylink{class_eigen_1_1_block}{Block} be allowed? It is a reference to a sub-\/matrix and we definitely don\textquotesingle{}t want to resize that. So how can we incorporate resizing if we cannot resize on \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base}? The solution is to resize the derived object as in this implementation. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived,\ \textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ cov(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<Derived>}}\&\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<Derived>}}\&\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}},\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<OtherDerived>}}\ \textcolor{keyword}{const}\ \&\ C\_)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Derived::Scalar\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}};}
+\DoxyCodeLine{\ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1plain__row__type_a46f848dfbee390d779e1e04070126d25}{internal::plain\_row\_type<Derived>::type}}\ RowVectorType;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ num\_observations\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rows());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorType\ x\_mean\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ RowVectorType\ y\_mean\ =\ \mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.colwise().sum()\ /\ num\_observations;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<OtherDerived>}}\&\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \textcolor{keyword}{const\_cast<}\ \mbox{\hyperlink{class_eigen_1_1_matrix_base}{MatrixBase<OtherDerived>}}\&\ \textcolor{keyword}{>}(C\_);}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}.derived().resize(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.cols(),\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.cols());\ \textcolor{comment}{//\ resize\ the\ derived\ object}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ (\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.rowwise()\ -\/\ x\_mean).transpose()\ *\ (\mbox{\hyperlink{namespace_eigen_ae998329a5bd49a32b6048a27e1a232a0}{y}}.rowwise()\ -\/\ y\_mean)\ /\ num\_observations;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+ This implementation is now working for parameters being expressions and for parameters being matrices and having the wrong size. Resizing the expressions does not do any harm in this case unless they actually require resizing. That means, passing an expression with the wrong dimensions will result in a run-\/time error (in debug mode only) while passing expressions of the correct size will just work fine.
+
+{\bfseries{Note\+:}} In the above discussion the terms \doxylink{class_eigen_1_1_matrix}{Matrix} and \doxylink{class_eigen_1_1_array}{Array} and \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base} and \doxylink{class_eigen_1_1_array_base}{Array\+Base} can be exchanged and all arguments still hold.\hypertarget{_topic_function_taking_eigen_types_TopicSummary}{}\doxysubsubsection{\texorpdfstring{Summary}{Summary}}\label{_topic_function_taking_eigen_types_TopicSummary}
+
+\begin{DoxyItemize}
+\item To summarize, the implementation of functions taking non-\/writable (const referenced) objects is not a big issue and does not lead to problematic situations in terms of compiling and running your program. However, a naive implementation is likely to introduce unnecessary temporary objects in your code. In order to avoid evaluating parameters into temporaries, pass them as (const) references to \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base} or \doxylink{class_eigen_1_1_array_base}{Array\+Base} (so templatize your function).
+\item Functions taking writable (non-\/const) parameters must take const references and cast away constness within the function body.
+\item Functions that take as parameters \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base} (or \doxylink{class_eigen_1_1_array_base}{Array\+Base}) objects, and potentially need to resize them (in the case where they are resizable), must call \doxylink{_matrix__resize__int_8cpp_a768dd1b4259f262bcd4cab5e61afcea1}{resize()} on the derived class, as returned by derived(). 
+\end{DoxyItemize}

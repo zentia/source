@@ -1,0 +1,690 @@
+\doxysection{options.\+c}
+\hypertarget{options_8c_source}{}\label{options_8c_source}\index{runtime/EASTL/packages/mimalloc/src/options.c@{runtime/EASTL/packages/mimalloc/src/options.c}}
+\mbox{\hyperlink{options_8c}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{Copyright\ (c)\ 2018-\/2021,\ Microsoft\ Research,\ Daan\ Leijen}}
+\DoxyCodeLine{00003\ \textcolor{comment}{This\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it\ under\ the}}
+\DoxyCodeLine{00004\ \textcolor{comment}{terms\ of\ the\ MIT\ license.\ A\ copy\ of\ the\ license\ can\ be\ found\ in\ the\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{"{}LICENSE"{}\ at\ the\ root\ of\ this\ distribution.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mimalloc_8h}{mimalloc.h}}"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h}{mimalloc/internal.h}}"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h}{mimalloc/atomic.h}}"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{prim_8h}{mimalloc/prim.h}}"{}}\ \ \textcolor{comment}{//\ mi\_prim\_out\_stderr}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <stdio.h>}\ \ \ \ \ \ \textcolor{comment}{//\ stdin/stdout}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <stdlib.h>}\ \ \ \ \ \textcolor{comment}{//\ abort}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{options_8c_a61cbc33b6973cd7010ad895fcc076e7c}{mi\_max\_error\_count}}\ \ \ =\ 16;\ \textcolor{comment}{//\ stop\ outputting\ errors\ after\ this\ (use\ <\ 0\ for\ no\ limit)}}
+\DoxyCodeLine{00018\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{options_8c_ad25a46aef8dc7a9fc9cb43d581fb2d58}{mi\_max\_warning\_count}}\ =\ 16;\ \textcolor{comment}{//\ stop\ outputting\ warnings\ after\ this\ (use\ <\ 0\ for\ no\ limit)}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a4d5d24a76f5249135a37294c6ec577ff}{mi\_add\_stderr\_output}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{options_8c_ae9ddddcf14a58d0224ef3c8778e5b057}{mi\_version}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00023\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{mimalloc_8h_abe0901cff45b21c70ed5b3c45c4c2126}{MI\_MALLOC\_VERSION}};}
+\DoxyCodeLine{00024\ \}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ Options}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ These\ can\ be\ accessed\ by\ multiple\ threads\ and\ may\ be}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ concurrently\ initialized,\ but\ an\ initializing\ data\ race}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ is\ ok\ since\ they\ resolve\ to\ the\ same\ value.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00033\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7}{mi\_init\_e}}\ \{}
+\DoxyCodeLine{00034\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \ \ \ \ \ \ \textcolor{comment}{//\ not\ yet\ initialized}}
+\DoxyCodeLine{00035\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7abb6dddb31589dc7c021334aa53c472f1}{DEFAULTED}},\ \ \ \ \textcolor{comment}{//\ not\ found\ in\ the\ environment,\ use\ default\ value}}
+\DoxyCodeLine{00036\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7aa307353740245a4be434ad2ca7169232}{INITIALIZED}}\ \ \ \textcolor{comment}{//\ found\ in\ environment\ or\ set\ explicitly}}
+\DoxyCodeLine{00037\ \}\ \mbox{\hyperlink{options_8c_a6af04b1cfd6d66daa6cbfa67cacff266}{mi\_init\_t}};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structmi__option__desc__s}{mi\_option\_desc\_s}}\ \{}
+\DoxyCodeLine{00040\ \ \ \textcolor{keywordtype}{long}\ \ \ \ \ \ \ \ \mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}};\ \ \textcolor{comment}{//\ the\ value}}
+\DoxyCodeLine{00041\ \ \ \mbox{\hyperlink{options_8c_a6af04b1cfd6d66daa6cbfa67cacff266}{mi\_init\_t}}\ \ \ \mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}};\ \ \ \textcolor{comment}{//\ is\ it\ initialized\ yet?\ (from\ the\ environment)}}
+\DoxyCodeLine{00042\ \ \ \mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}};\ \textcolor{comment}{//\ for\ debugging:\ the\ option\ index\ should\ match\ the\ option}}
+\DoxyCodeLine{00043\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{structmi__option__desc__s_a2cb8daf0e200d31c92d219a7ed21dfd2}{name}};\ \ \ \textcolor{comment}{//\ option\ name\ without\ \`{}mimalloc\_`\ prefix}}
+\DoxyCodeLine{00044\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{structmi__option__desc__s_adfb21c3abacad426085ed29183882356}{legacy\_name}};\ \textcolor{comment}{//\ potential\ legacy\ option\ name}}
+\DoxyCodeLine{00045\ \}\ \mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ MI\_OPTION(opt)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mi\_option\_\#\#opt,\ \#opt,\ NULL}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ MI\_OPTION\_LEGACY(opt,legacy)\ \ \ \ mi\_option\_\#\#opt,\ \#opt,\ \#legacy}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ Some\ options\ can\ be\ set\ at\ build\ time\ for\ statically\ linked\ libraries}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ (use\ \`{}-\/DMI\_EXTRA\_CPPDEFS="{}opt1=val1;opt2=val2"{}`)}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ This\ is\ useful\ if\ we\ cannot\ pass\ them\ as\ environment\ variables}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ (and\ setting\ them\ programmatically\ would\ be\ too\ late)}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_VERBOSE}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_VERBOSE\ 0}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_EAGER\_COMMIT}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_EAGER\_COMMIT\ 1}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_ARENA\_EAGER\_COMMIT}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_ARENA\_EAGER\_COMMIT\ 2}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{comment}{//\ in\ KiB}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_ARENA\_RESERVE}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\ \#if\ (MI\_INTPTR\_SIZE>4)}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\ \ \#define\ MI\_DEFAULT\_ARENA\_RESERVE\ 1024L*1024L}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\ \#else}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\ \ \#define\ MI\_DEFAULT\_ARENA\_RESERVE\ 128L*1024L}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\ \#endif}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_DISALLOW\_ARENA\_ALLOC}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_DISALLOW\_ARENA\_ALLOC\ 0}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_ALLOW\_LARGE\_OS\_PAGES}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#if\ defined(\_\_linux\_\_)\ \&\&\ !defined(\_\_ANDROID\_\_)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_ALLOW\_LARGE\_OS\_PAGES\ 2\ \ \ \ }\textcolor{comment}{//\ enabled,\ but\ only\ use\ transparent\ huge\ pages\ through\ madvise}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_ALLOW\_LARGE\_OS\_PAGES\ 0}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_RESERVE\_HUGE\_OS\_PAGES}}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_RESERVE\_HUGE\_OS\_PAGES\ 0}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_RESERVE\_OS\_MEMORY}}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_RESERVE\_OS\_MEMORY\ 0}}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_GUARDED\_SAMPLE\_RATE}}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#if\ MI\_GUARDED}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_GUARDED\_SAMPLE\_RATE\ 4000}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_GUARDED\_SAMPLE\_RATE\ 0}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#ifndef\ MI\_DEFAULT\_PAGEMAP\_COMMIT}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#if\ defined(\_\_APPLE\_\_)\ \ }\textcolor{comment}{//\ when\ overloading\ malloc,\ we\ still\ get\ mixed\ pointers\ sometimes\ on\ macOS;\ this\ avoids\ a\ bad\ access}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_PAGEMAP\_COMMIT\ 1}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#define\ MI\_DEFAULT\_PAGEMAP\_COMMIT\ 0}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{keyword}{static}\ \mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}\ \mbox{\hyperlink{options_8c_a92a8d2cc6467e45662af606615851df8}{options}}[\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}}]\ =}
+\DoxyCodeLine{00115\ \{}
+\DoxyCodeLine{00116\ \ \ \textcolor{comment}{//\ stable\ options}}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#if\ MI\_DEBUG\ ||\ defined(MI\_SHOW\_ERRORS)}}
+\DoxyCodeLine{00118\ \ \ \{\ 1,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(show\_errors)\ \},}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00120\ \ \ \{\ 0,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(show\_errors)\ \},}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00122\ \ \ \{\ 0,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(show\_stats)\ \},}
+\DoxyCodeLine{00123\ \ \ \{\ \mbox{\hyperlink{options_8c_a8554a263e64dda0c009991c60da80e26}{MI\_DEFAULT\_VERBOSE}},\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(verbose)\ \},}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{comment}{//\ some\ of\ the\ following\ options\ are\ experimental\ and\ not\ all\ combinations\ are\ allowed.}}
+\DoxyCodeLine{00126\ \ \ \{\ \mbox{\hyperlink{options_8c_a1dd0e56637991db44acd334df3a2cd45}{MI\_DEFAULT\_EAGER\_COMMIT}},}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(eager\_commit)\ \},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ commit\ per\ segment\ directly\ (4MiB)\ \ (but\ see\ also\ \`{}eager\_commit\_delay`)}}
+\DoxyCodeLine{00128\ \ \ \{\ \mbox{\hyperlink{options_8c_aa92146b0eb4fbe20be762137cd1b4a3e}{MI\_DEFAULT\_ARENA\_EAGER\_COMMIT}},}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_af1008aff07ae74c1f464ea34504ef394}{MI\_OPTION\_LEGACY}}(arena\_eager\_commit,eager\_region\_commit)\ \},\ \textcolor{comment}{//\ eager\ commit\ arena's?\ 2\ is\ used\ to\ enable\ this\ only\ on\ an\ OS\ that\ has\ overcommit\ (i.e.\ linux)}}
+\DoxyCodeLine{00130\ \ \ \{\ 1,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_af1008aff07ae74c1f464ea34504ef394}{MI\_OPTION\_LEGACY}}(purge\_decommits,reset\_decommits)\ \},\ \ \ \ \ \ \ \ \textcolor{comment}{//\ purge\ decommits\ memory\ (instead\ of\ reset)\ (note:\ on\ linux\ this\ uses\ MADV\_DONTNEED\ for\ decommit)}}
+\DoxyCodeLine{00131\ \ \ \{\ \mbox{\hyperlink{options_8c_a88eea9747b75504fb4c086629e6ce6cf}{MI\_DEFAULT\_ALLOW\_LARGE\_OS\_PAGES}},}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_af1008aff07ae74c1f464ea34504ef394}{MI\_OPTION\_LEGACY}}(allow\_large\_os\_pages,large\_os\_pages)\ \},\ \ \ \ \textcolor{comment}{//\ use\ large\ OS\ pages,\ use\ only\ with\ eager\ commit\ to\ prevent\ fragmentation\ of\ VMA's}}
+\DoxyCodeLine{00133\ \ \ \{\ \mbox{\hyperlink{options_8c_afd6abffe6111eda737d7f3638ac2a3df}{MI\_DEFAULT\_RESERVE\_HUGE\_OS\_PAGES}},}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(reserve\_huge\_os\_pages)\ \},\ \ \ \ \ \ \textcolor{comment}{//\ per\ 1GiB\ huge\ pages}}
+\DoxyCodeLine{00135\ \ \ \{-\/1,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(reserve\_huge\_os\_pages\_at)\ \},\ \ \ \textcolor{comment}{//\ reserve\ huge\ pages\ at\ node\ N}}
+\DoxyCodeLine{00136\ \ \ \{\ \mbox{\hyperlink{options_8c_a4883499d353732a9c1fcb677f6000634}{MI\_DEFAULT\_RESERVE\_OS\_MEMORY}},}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(reserve\_os\_memory)\ \ \ \ \ \},\ \ \ \ \ \ \textcolor{comment}{//\ reserve\ N\ KiB\ OS\ memory\ in\ advance\ (use\ \`{}option\_get\_size`)}}
+\DoxyCodeLine{00138\ \ \ \{\ 0,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(deprecated\_segment\_cache)\ \},\ \ \ \textcolor{comment}{//\ cache\ N\ segments\ per\ thread}}
+\DoxyCodeLine{00139\ \ \ \{\ 0,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(deprecated\_page\_reset)\ \},\ \ \ \ \ \ \textcolor{comment}{//\ reset\ page\ memory\ on\ free}}
+\DoxyCodeLine{00140\ \ \ \{\ 0,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(abandoned\_page\_purge)\ \},\ \ \ \ \ \ \ \textcolor{comment}{//\ purge\ free\ page\ memory\ when\ a\ thread\ terminates}}
+\DoxyCodeLine{00141\ \ \ \{\ 0,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(deprecated\_segment\_reset)\ \},\ \ \ \textcolor{comment}{//\ reset\ segment\ memory\ on\ free\ (needs\ eager\ commit)}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\#if\ defined(\_\_NetBSD\_\_)}}
+\DoxyCodeLine{00143\ \ \ \{\ 0,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(eager\_commit\_delay)\ \},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ first\ N\ segments\ per\ thread\ are\ not\ eagerly\ committed}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00145\ \ \ \{\ 1,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(eager\_commit\_delay)\ \},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ first\ N\ segments\ per\ thread\ are\ not\ eagerly\ committed\ (but\ per\ page\ in\ the\ segment\ on\ demand)}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00147\ \ \ \{\ 1000,\mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_af1008aff07ae74c1f464ea34504ef394}{MI\_OPTION\_LEGACY}}(purge\_delay,reset\_delay)\ \},\ \ \textcolor{comment}{//\ purge\ delay\ in\ milli-\/seconds}}
+\DoxyCodeLine{00148\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(use\_numa\_nodes)\ \},\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 0\ =\ use\ available\ numa\ nodes,\ otherwise\ use\ at\ most\ N\ nodes.}}
+\DoxyCodeLine{00149\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_af1008aff07ae74c1f464ea34504ef394}{MI\_OPTION\_LEGACY}}(disallow\_os\_alloc,limit\_os\_alloc)\ \},\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1\ =\ do\ not\ use\ OS\ memory\ for\ allocation\ (but\ only\ reserved\ arenas)}}
+\DoxyCodeLine{00150\ \ \ \{\ 100,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(os\_tag)\ \},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ apple\ specific\ for\ now\ but\ might\ serve\ more\ or\ less\ related\ purpose}}
+\DoxyCodeLine{00151\ \ \ \{\ 32,\ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(max\_errors)\ \},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ maximum\ errors\ that\ are\ output}}
+\DoxyCodeLine{00152\ \ \ \{\ 32,\ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(max\_warnings)\ \},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ maximum\ warnings\ that\ are\ output}}
+\DoxyCodeLine{00153\ \ \ \{\ 10,\ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(deprecated\_max\_segment\_reclaim)\},\ \ \ \ \ \ \ \textcolor{comment}{//\ max.\ percentage\ of\ the\ abandoned\ segments\ to\ be\ reclaimed\ per\ try.}}
+\DoxyCodeLine{00154\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(destroy\_on\_exit)\},\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ release\ all\ OS\ memory\ on\ process\ exit;\ careful\ with\ dangling\ pointer\ or\ after-\/exit\ frees!}}
+\DoxyCodeLine{00155\ \ \ \{\ \mbox{\hyperlink{options_8c_a4935363cb09e6b3dd4cd44495368678b}{MI\_DEFAULT\_ARENA\_RESERVE}},\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(arena\_reserve)\ \},\ \textcolor{comment}{//\ reserve\ memory\ N\ KiB\ at\ a\ time\ (=1GiB)\ (use\ \`{}option\_get\_size`)}}
+\DoxyCodeLine{00156\ \ \ \{\ 1,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(arena\_purge\_mult)\ \},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ purge\ delay\ multiplier\ for\ arena's}}
+\DoxyCodeLine{00157\ \ \ \{\ 1,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_af1008aff07ae74c1f464ea34504ef394}{MI\_OPTION\_LEGACY}}(deprecated\_purge\_extend\_delay,\ decommit\_extend\_delay)\ \},}
+\DoxyCodeLine{00158\ \ \ \{\ \mbox{\hyperlink{options_8c_ac93729b7da926f8543299aa0442e1552}{MI\_DEFAULT\_DISALLOW\_ARENA\_ALLOC}},\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(disallow\_arena\_alloc)\ \},\ \textcolor{comment}{//\ 1\ =\ do\ not\ use\ arena's\ for\ allocation\ (except\ if\ using\ specific\ arena\ id's)}}
+\DoxyCodeLine{00159\ \ \ \{\ 400,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(retry\_on\_oom)\ \},\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ windows\ only:\ retry\ on\ out-\/of-\/memory\ for\ N\ milli\ seconds\ (=400),\ set\ to\ 0\ to\ disable\ retries.}}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#if\ defined(MI\_VISIT\_ABANDONED)}}
+\DoxyCodeLine{00161\ \ \ \{\ 1,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7aa307353740245a4be434ad2ca7169232}{INITIALIZED}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(visit\_abandoned)\ \},\ \ \ \ \ \textcolor{comment}{//\ allow\ visiting\ heap\ blocks\ in\ abandoned\ segments;\ requires\ taking\ locks\ during\ reclaim.}}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00163\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(visit\_abandoned)\ \},}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00165\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(guarded\_min)\ \},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ used\ when\ building\ with\ MI\_GUARDED:\ minimal\ rounded\ object\ size\ for\ guarded\ objects}}
+\DoxyCodeLine{00166\ \ \ \{\ \mbox{\hyperlink{bits_8h_a5d0d221f27b912f5fc202d2b0367468f}{MI\_GiB}},\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(guarded\_max)\ \},\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ used\ when\ building\ with\ MI\_GUARDED:\ maximal\ rounded\ object\ size\ for\ guarded\ objects}}
+\DoxyCodeLine{00167\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(guarded\_precise)\ \},\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ disregard\ minimal\ alignment\ requirement\ to\ always\ place\ guarded\ blocks\ exactly\ in\ front\ of\ a\ guard\ page\ (=0)}}
+\DoxyCodeLine{00168\ \ \ \{\ \mbox{\hyperlink{options_8c_a3353d46cdb3e288d4a4f141aecd98488}{MI\_DEFAULT\_GUARDED\_SAMPLE\_RATE}},}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(guarded\_sample\_rate)\},\ \ \ \ \ \ \ \textcolor{comment}{//\ 1\ out\ of\ N\ allocations\ in\ the\ min/max\ range\ will\ be\ guarded\ (=4000)}}
+\DoxyCodeLine{00170\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(guarded\_sample\_seed)\},}
+\DoxyCodeLine{00171\ \ \ \{\ 10000,\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(generic\_collect)\ \},\ \ \ \ \ \ \ \ \textcolor{comment}{//\ collect\ heaps\ every\ N\ (=10000)\ generic\ allocation\ calls}}
+\DoxyCodeLine{00172\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_af1008aff07ae74c1f464ea34504ef394}{MI\_OPTION\_LEGACY}}(page\_reclaim\_on\_free,\ abandoned\_reclaim\_on\_free)\ \},\textcolor{comment}{//\ reclaim\ abandoned\ pages\ on\ a\ free:\ -\/1\ =\ disable\ completely,\ 0\ =\ only\ reclaim\ into\ the\ originating\ heap,\ 1\ =\ reclaim\ on\ free\ across\ heaps}}
+\DoxyCodeLine{00173\ \ \ \{\ 2,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(page\_full\_retain)\ \},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ number\ of\ (small)\ pages\ to\ retain\ in\ the\ free\ page\ queues}}
+\DoxyCodeLine{00174\ \ \ \{\ 4,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(page\_max\_candidates)\ \},\ \ \ \ \ \ \textcolor{comment}{//\ max\ search\ to\ find\ a\ best\ page\ candidate}}
+\DoxyCodeLine{00175\ \ \ \{\ 0,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(max\_vabits)\ \},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ max\ virtual\ address\ space\ bits}}
+\DoxyCodeLine{00176\ \ \ \{\ \mbox{\hyperlink{options_8c_ab1827160eccf49f22bcc89b82c7fb5f9}{MI\_DEFAULT\_PAGEMAP\_COMMIT}},}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(pagemap\_commit)\ \},\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ commit\ the\ full\ pagemap\ upfront?}}
+\DoxyCodeLine{00178\ \ \ \{\ 1,\ \ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(page\_commit\_on\_demand)\ \},\ \ \ \ \textcolor{comment}{//\ commit\ pages\ on-\/demand\ (2\ disables\ this\ only\ on\ overcommit\ systems\ (like\ Linux))}}
+\DoxyCodeLine{00179\ \ \ \{\ 16,\ \ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}},\ \mbox{\hyperlink{options_8c_a0dd0f4d7ea342d39d8baf78cefdf562d}{MI\_OPTION}}(page\_reclaim\_max)\ \},\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ don't\ reclaim\ pages\ if\ we\ already\ own\ N\ pages\ (in\ that\ size\ class)}}
+\DoxyCodeLine{00180\ \};}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a61970c5b942f29a5dea8a39742421cfe}{mi\_option\_init}}(\mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}*\ desc);}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{options_8c_aee4ee640d854972d765c2896aa04270a}{mi\_option\_has\_size\_in\_kib}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}})\ \{}
+\DoxyCodeLine{00185\ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{structoption}{option}}\ ==\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930bafbf4999c828cf79a0fb2de65d23f7333}{mi\_option\_reserve\_os\_memory}}\ ||\ \mbox{\hyperlink{structoption}{option}}\ ==\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930bab1c88e23ae290bbeec824038a97959de}{mi\_option\_arena\_reserve}});}
+\DoxyCodeLine{00186\ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_ac1d7140d2d1466fafda465fa481bec86}{\_mi\_options\_init}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00189\ \ \ \textcolor{comment}{//\ called\ on\ process\ load}}
+\DoxyCodeLine{00190\ \ \ \mbox{\hyperlink{options_8c_a4d5d24a76f5249135a37294c6ec577ff}{mi\_add\_stderr\_output}}();\ \textcolor{comment}{//\ now\ it\ safe\ to\ use\ stderr\ for\ output}}
+\DoxyCodeLine{00191\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}};\ i++\ )\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}}\ =\ (\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}})i;}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{long}\ l\ =\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{structoption}{option}});\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(l);\ \textcolor{comment}{//\ initialize}}
+\DoxyCodeLine{00194\ \ \ \}}
+\DoxyCodeLine{00195\ \ \ \mbox{\hyperlink{options_8c_a61cbc33b6973cd7010ad895fcc076e7c}{mi\_max\_error\_count}}\ =\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930baec6ecbe29d46a48205ed8823a8a52a6a}{mi\_option\_max\_errors}});}
+\DoxyCodeLine{00196\ \ \ \mbox{\hyperlink{options_8c_ad25a46aef8dc7a9fc9cb43d581fb2d58}{mi\_max\_warning\_count}}\ =\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930baf9595921087e942602ee079158762665}{mi\_option\_max\_warnings}});}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\ \ \#if\ MI\_GUARDED}}
+\DoxyCodeLine{00198\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930baeb3c75b1a838eb42106750979d0888ec}{mi\_option\_guarded\_sample\_rate}})\ >\ 0)\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7cc4804ced69004fa42a9a136a9ba556}{mi\_option\_allow\_large\_os\_pages}}))\ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \mbox{\hyperlink{group__options_gaebf6ff707a2e688ebb1a2296ca564054}{mi\_option\_disable}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7cc4804ced69004fa42a9a136a9ba556}{mi\_option\_allow\_large\_os\_pages}});}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}option\ 'allow\_large\_os\_pages'\ is\ disabled\ to\ allow\ for\ guarded\ objects\(\backslash\)n"{}});}
+\DoxyCodeLine{00202\ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \}}
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00205\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7c8b7bf5281c581bad64f5daa6442777}{mi\_option\_verbose}}))\ \{\ \mbox{\hyperlink{options_8c_aecfcd3ed90af99932670d881de1fa8f1}{mi\_options\_print}}();\ \}}
+\DoxyCodeLine{00206\ \}}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \textcolor{preprocessor}{\#define\ mi\_stringifyx(str)\ \ \#str\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ and\ stringify}}
+\DoxyCodeLine{00209\ \textcolor{preprocessor}{\#define\ mi\_stringify(str)\ \ \ mi\_stringifyx(str)\ \ }\textcolor{comment}{//\ expand}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_aecfcd3ed90af99932670d881de1fa8f1}{mi\_options\_print}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}}
+\DoxyCodeLine{00212\ \{}
+\DoxyCodeLine{00213\ \ \ \textcolor{comment}{//\ show\ version}}
+\DoxyCodeLine{00214\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ vermajor\ =\ \mbox{\hyperlink{mimalloc_8h_abe0901cff45b21c70ed5b3c45c4c2126}{MI\_MALLOC\_VERSION}}/100;}
+\DoxyCodeLine{00215\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ verminor\ =\ (\mbox{\hyperlink{mimalloc_8h_abe0901cff45b21c70ed5b3c45c4c2126}{MI\_MALLOC\_VERSION}}\%100)/10;}
+\DoxyCodeLine{00216\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ verpatch\ =\ (\mbox{\hyperlink{mimalloc_8h_abe0901cff45b21c70ed5b3c45c4c2126}{MI\_MALLOC\_VERSION}}\%10);}
+\DoxyCodeLine{00217\ \ \ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{stringliteral}{"{}v\%i.\%i.\%i\%s\%s\ (built\ on\ \%s,\ \%s)\(\backslash\)n"{}},\ vermajor,\ verminor,\ verpatch,}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \#\textcolor{keywordflow}{if}\ defined(MI\_CMAKE\_BUILD\_TYPE)}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{stringliteral}{"{},\ "{}}\ \mbox{\hyperlink{options_8c_a8eae92687fdfe371411f4008a9662e2a}{mi\_stringify}}(MI\_CMAKE\_BUILD\_TYPE)}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \#\textcolor{keywordflow}{else}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}"{}}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \#endif}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ ,}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \#\textcolor{keywordflow}{if}\ defined(MI\_GIT\_DESCRIBE)}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{stringliteral}{"{},\ git\ "{}}\ \mbox{\hyperlink{options_8c_a8eae92687fdfe371411f4008a9662e2a}{mi\_stringify}}(MI\_GIT\_DESCRIBE)}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \#\textcolor{keywordflow}{else}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}"{}}}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \#endif}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ ,\ \_\_DATE\_\_,\ \_\_TIME\_\_);}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \textcolor{comment}{//\ show\ options}}
+\DoxyCodeLine{00232\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}};\ i++)\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}}\ =\ (\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}})i;}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordtype}{long}\ l\ =\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{structoption}{option}});\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(l);\ \textcolor{comment}{//\ possibly\ initialize}}
+\DoxyCodeLine{00235\ \ \ \ \ \mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}*\ desc\ =\ \&\mbox{\hyperlink{options_8c_a92a8d2cc6467e45662af606615851df8}{options}}[\mbox{\hyperlink{structoption}{option}}];}
+\DoxyCodeLine{00236\ \ \ \ \ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{stringliteral}{"{}option\ '\%s':\ \%ld\ \%s\(\backslash\)n"{}},\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a2cb8daf0e200d31c92d219a7ed21dfd2}{name}},\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}},\ (\mbox{\hyperlink{options_8c_aee4ee640d854972d765c2896aa04270a}{mi\_option\_has\_size\_in\_kib}}(\mbox{\hyperlink{structoption}{option}})\ ?\ \textcolor{stringliteral}{"{}KiB"{}}\ :\ \textcolor{stringliteral}{"{}"{}}));}
+\DoxyCodeLine{00237\ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \textcolor{comment}{//\ show\ build\ configuration}}
+\DoxyCodeLine{00240\ \ \ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{stringliteral}{"{}debug\ level\ :\ \%d\(\backslash\)n"{}},\ \mbox{\hyperlink{types_8h_a7ab9235971301997c6fb4172425d16f7}{MI\_DEBUG}}\ );}
+\DoxyCodeLine{00241\ \ \ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{stringliteral}{"{}secure\ level:\ \%d\(\backslash\)n"{}},\ \mbox{\hyperlink{types_8h_a16192d28dac241d44aa4ff272d2a29a5}{MI\_SECURE}}\ );}
+\DoxyCodeLine{00242\ \ \ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{stringliteral}{"{}mem\ tracking:\ \%s\(\backslash\)n"{}},\ \mbox{\hyperlink{track_8h_ad32aca25c4ef64dfc7743e79acca5373}{MI\_TRACK\_TOOL}});}
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\ \ \#if\ MI\_GUARDED}}
+\DoxyCodeLine{00244\ \ \ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{stringliteral}{"{}guarded\ build:\ \%s\(\backslash\)n"{}},\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930baeb3c75b1a838eb42106750979d0888ec}{mi\_option\_guarded\_sample\_rate}})\ !=\ 0\ ?\ \textcolor{stringliteral}{"{}enabled"{}}\ :\ \textcolor{stringliteral}{"{}disabled"{}});}
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00246\ \textcolor{preprocessor}{\ \ \#if\ MI\_TSAN}}
+\DoxyCodeLine{00247\ \ \ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{stringliteral}{"{}thread\ santizer\ enabled\(\backslash\)n"{}});}
+\DoxyCodeLine{00248\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00249\ \}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{options_8c_a1d96c2519367ba4bef4505cbd13aaec3}{\_mi\_option\_get\_fast}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}})\ \{}
+\DoxyCodeLine{00252\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{structoption}{option}}\ >=\ 0\ \&\&\ \mbox{\hyperlink{structoption}{option}}\ <\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}});}
+\DoxyCodeLine{00253\ \ \ \mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}*\ desc\ =\ \&\mbox{\hyperlink{options_8c_a92a8d2cc6467e45662af606615851df8}{options}}[\mbox{\hyperlink{structoption}{option}}];}
+\DoxyCodeLine{00254\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}}\ ==\ \mbox{\hyperlink{structoption}{option}});\ \ \textcolor{comment}{//\ index\ should\ match\ the\ option}}
+\DoxyCodeLine{00255\ \ \ \textcolor{comment}{//mi\_assert(desc-\/>init\ !=\ UNINIT);}}
+\DoxyCodeLine{00256\ \ \ \textcolor{keywordflow}{return}\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}};}
+\DoxyCodeLine{00257\ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \mbox{\hyperlink{mimalloc_8h_acbaf5f4132fcfb51f0bf40e3b50f0981}{mi\_decl\_nodiscard}}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}})\ \{}
+\DoxyCodeLine{00261\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{structoption}{option}}\ >=\ 0\ \&\&\ \mbox{\hyperlink{structoption}{option}}\ <\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}});}
+\DoxyCodeLine{00262\ \ \ \textcolor{keywordflow}{if}\ (option\ <\ 0\ ||\ option\ >=\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}})\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00263\ \ \ \mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}*\ desc\ =\ \&\mbox{\hyperlink{options_8c_a92a8d2cc6467e45662af606615851df8}{options}}[\mbox{\hyperlink{structoption}{option}}];}
+\DoxyCodeLine{00264\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}}\ ==\ \mbox{\hyperlink{structoption}{option}});\ \ \textcolor{comment}{//\ index\ should\ match\ the\ option}}
+\DoxyCodeLine{00265\ \ \ \textcolor{keywordflow}{if}\ \mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ ==\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}})\ \{}
+\DoxyCodeLine{00266\ \ \ \ \ \mbox{\hyperlink{options_8c_a61970c5b942f29a5dea8a39742421cfe}{mi\_option\_init}}(desc);}
+\DoxyCodeLine{00267\ \ \ \}}
+\DoxyCodeLine{00268\ \ \ \textcolor{keywordflow}{return}\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}};}
+\DoxyCodeLine{00269\ \}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \mbox{\hyperlink{mimalloc_8h_acbaf5f4132fcfb51f0bf40e3b50f0981}{mi\_decl\_nodiscard}}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{group__options_ga96ad9c406338bd314cfe878cfc9bf723}{mi\_option\_get\_clamp}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}},\ \textcolor{keywordtype}{long}\ min,\ \textcolor{keywordtype}{long}\ max)\ \{}
+\DoxyCodeLine{00272\ \ \ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{structoption}{option}});}
+\DoxyCodeLine{00273\ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ <\ min\ ?\ min\ :\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >\ max\ ?\ max\ :\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}));}
+\DoxyCodeLine{00274\ \}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \mbox{\hyperlink{mimalloc_8h_acbaf5f4132fcfb51f0bf40e3b50f0981}{mi\_decl\_nodiscard}}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{group__options_ga274db5a6ac87cc24ef0b23e7006ed02c}{mi\_option\_get\_size}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}})\ \{}
+\DoxyCodeLine{00277\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{structoption}{option}});}
+\DoxyCodeLine{00278\ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ =\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ <\ 0\ ?\ 0\ :\ (size\_t)\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00279\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{options_8c_aee4ee640d854972d765c2896aa04270a}{mi\_option\_has\_size\_in\_kib}}(\mbox{\hyperlink{structoption}{option}}))\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ *=\ \mbox{\hyperlink{bits_8h_adbafbf7fe5512b55fb47ea52426a2b63}{MI\_KiB}};}
+\DoxyCodeLine{00281\ \ \ \}}
+\DoxyCodeLine{00282\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}};}
+\DoxyCodeLine{00283\ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__options_gaf84921c32375e25754dc2ee6a911fa60}{mi\_option\_set}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}},\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \{}
+\DoxyCodeLine{00286\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{structoption}{option}}\ >=\ 0\ \&\&\ \mbox{\hyperlink{structoption}{option}}\ <\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}});}
+\DoxyCodeLine{00287\ \ \ \textcolor{keywordflow}{if}\ (option\ <\ 0\ ||\ option\ >=\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00288\ \ \ \mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}*\ desc\ =\ \&\mbox{\hyperlink{options_8c_a92a8d2cc6467e45662af606615851df8}{options}}[\mbox{\hyperlink{structoption}{option}}];}
+\DoxyCodeLine{00289\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}}\ ==\ \mbox{\hyperlink{structoption}{option}});\ \ \textcolor{comment}{//\ index\ should\ match\ the\ option}}
+\DoxyCodeLine{00290\ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00291\ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ =\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7aa307353740245a4be434ad2ca7169232}{INITIALIZED}};}
+\DoxyCodeLine{00292\ \ \ \textcolor{comment}{//\ ensure\ min/max\ range;\ be\ careful\ to\ not\ recurse.}}
+\DoxyCodeLine{00293\ \ \ \textcolor{keywordflow}{if}\ (desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}}\ ==\ \mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930ba00734c528aae52784654a8db996ae62b}{mi\_option\_guarded\_min}}\ \&\&\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1d96c2519367ba4bef4505cbd13aaec3}{\_mi\_option\_get\_fast}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930ba96077da4e5c841edeec0c4d6e45a5ffa}{mi\_option\_guarded\_max}})\ <\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \{}
+\DoxyCodeLine{00294\ \ \ \ \ \mbox{\hyperlink{group__options_gaf84921c32375e25754dc2ee6a911fa60}{mi\_option\_set}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930ba96077da4e5c841edeec0c4d6e45a5ffa}{mi\_option\_guarded\_max}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00295\ \ \ \}}
+\DoxyCodeLine{00296\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}}\ ==\ \mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930ba96077da4e5c841edeec0c4d6e45a5ffa}{mi\_option\_guarded\_max}}\ \&\&\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1d96c2519367ba4bef4505cbd13aaec3}{\_mi\_option\_get\_fast}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930ba00734c528aae52784654a8db996ae62b}{mi\_option\_guarded\_min}})\ >\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \mbox{\hyperlink{group__options_gaf84921c32375e25754dc2ee6a911fa60}{mi\_option\_set}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930ba00734c528aae52784654a8db996ae62b}{mi\_option\_guarded\_min}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00298\ \ \ \}}
+\DoxyCodeLine{00299\ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__options_ga7ef623e440e6e5545cb08c94e71e4b90}{mi\_option\_set\_default}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}},\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \{}
+\DoxyCodeLine{00302\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{structoption}{option}}\ >=\ 0\ \&\&\ \mbox{\hyperlink{structoption}{option}}\ <\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}});}
+\DoxyCodeLine{00303\ \ \ \textcolor{keywordflow}{if}\ (option\ <\ 0\ ||\ option\ >=\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba5b4357b74be0d87568036c32eb1a2e4a}{\_mi\_option\_last}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00304\ \ \ \mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}*\ desc\ =\ \&\mbox{\hyperlink{options_8c_a92a8d2cc6467e45662af606615851df8}{options}}[\mbox{\hyperlink{structoption}{option}}];}
+\DoxyCodeLine{00305\ \ \ \textcolor{keywordflow}{if}\ (desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ !=\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7aa307353740245a4be434ad2ca7169232}{INITIALIZED}})\ \{}
+\DoxyCodeLine{00306\ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00307\ \ \ \}}
+\DoxyCodeLine{00308\ \}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \mbox{\hyperlink{mimalloc_8h_acbaf5f4132fcfb51f0bf40e3b50f0981}{mi\_decl\_nodiscard}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}})\ \{}
+\DoxyCodeLine{00311\ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{structoption}{option}})\ !=\ 0);}
+\DoxyCodeLine{00312\ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__options_ga9a13d05fcb77489cb06d4d017ebd8bed}{mi\_option\_set\_enabled}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}},\ \textcolor{keywordtype}{bool}\ enable)\ \{}
+\DoxyCodeLine{00315\ \ \ \mbox{\hyperlink{group__options_gaf84921c32375e25754dc2ee6a911fa60}{mi\_option\_set}}(\mbox{\hyperlink{structoption}{option}},\ (enable\ ?\ 1\ :\ 0));}
+\DoxyCodeLine{00316\ \}}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__options_ga65518b69ec5d32336b50e07f74b3f629}{mi\_option\_set\_enabled\_default}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}},\ \textcolor{keywordtype}{bool}\ enable)\ \{}
+\DoxyCodeLine{00319\ \ \ \mbox{\hyperlink{group__options_ga7ef623e440e6e5545cb08c94e71e4b90}{mi\_option\_set\_default}}(\mbox{\hyperlink{structoption}{option}},\ (enable\ ?\ 1\ :\ 0));}
+\DoxyCodeLine{00320\ \}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__options_ga04180ae41b0d601421dd62ced40ca050}{mi\_option\_enable}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}})\ \{}
+\DoxyCodeLine{00323\ \ \ \mbox{\hyperlink{group__options_ga9a13d05fcb77489cb06d4d017ebd8bed}{mi\_option\_set\_enabled}}(\mbox{\hyperlink{structoption}{option}},\textcolor{keyword}{true});}
+\DoxyCodeLine{00324\ \}}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__options_gaebf6ff707a2e688ebb1a2296ca564054}{mi\_option\_disable}}(\mbox{\hyperlink{group__options_ga5398d41d2baaf7efa864877780ec2ef2}{mi\_option\_t}}\ \mbox{\hyperlink{structoption}{option}})\ \{}
+\DoxyCodeLine{00327\ \ \ \mbox{\hyperlink{group__options_ga9a13d05fcb77489cb06d4d017ebd8bed}{mi\_option\_set\_enabled}}(\mbox{\hyperlink{structoption}{option}},\textcolor{keyword}{false});}
+\DoxyCodeLine{00328\ \}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{mimalloc_8h_a9bc76cd39d1bc0a5dc939246d1e30fa4}{mi\_cdecl}}\ \mbox{\hyperlink{options_8c_a46a1b0aabe714d8c6808ed8f3ea629fd}{mi\_out\_stderr}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00331\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00332\ \ \ \textcolor{keywordflow}{if}\ (msg\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ \&\&\ msg[0]\ !=\ 0)\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \mbox{\hyperlink{prim_8h_a93a12757acc4f401fd4619057fdd209f}{\_mi\_prim\_out\_stderr}}(msg);}
+\DoxyCodeLine{00334\ \ \ \}}
+\DoxyCodeLine{00335\ \}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \textcolor{comment}{//\ Since\ an\ output\ function\ can\ be\ registered\ earliest\ in\ the\ \`{}main`}}
+\DoxyCodeLine{00338\ \textcolor{comment}{//\ function\ we\ also\ buffer\ output\ that\ happens\ earlier.\ When}}
+\DoxyCodeLine{00339\ \textcolor{comment}{//\ an\ output\ function\ is\ registered\ it\ is\ called\ immediately\ with}}
+\DoxyCodeLine{00340\ \textcolor{comment}{//\ the\ output\ up\ to\ that\ point.}}
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\#ifndef\ MI\_MAX\_DELAY\_OUTPUT}}
+\DoxyCodeLine{00342\ \textcolor{preprocessor}{\#define\ MI\_MAX\_DELAY\_OUTPUT\ ((size\_t)(16*1024))}}
+\DoxyCodeLine{00343\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00344\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{options_8c_a10b377887bb469bc71f17df5d153d414}{out\_buf}}[\mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}}+1];}
+\DoxyCodeLine{00345\ \textcolor{keyword}{static}\ \mbox{\hyperlink{options_8c_a819cdd7dd0c98de97843eba1d54dffbe}{\_Atomic}}(\textcolor{keywordtype}{size\_t})\ out\_len;}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{mimalloc_8h_a9bc76cd39d1bc0a5dc939246d1e30fa4}{mi\_cdecl}}\ mi\_out\_buf(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00348\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00349\ \ \ \textcolor{keywordflow}{if}\ (msg==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00350\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_ae060cc1d6be8764ac2170e1a0d91dd5e}{mi\_atomic\_load\_relaxed}}(\&out\_len)>=\mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00351\ \ \ \textcolor{keywordtype}{size\_t}\ n\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a70fc9bbb723b024221706d118be42bfc}{\_mi\_strlen}}(msg);}
+\DoxyCodeLine{00352\ \ \ \textcolor{keywordflow}{if}\ (n==0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00353\ \ \ \textcolor{comment}{//\ claim\ space}}
+\DoxyCodeLine{00354\ \ \ \textcolor{keywordtype}{size\_t}\ start\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_afc6eac6157a396af5e84f8f9f569a221}{mi\_atomic\_add\_acq\_rel}}(\&out\_len,\ n);}
+\DoxyCodeLine{00355\ \ \ \textcolor{keywordflow}{if}\ (start\ >=\ \mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00356\ \ \ \textcolor{comment}{//\ check\ bound}}
+\DoxyCodeLine{00357\ \ \ \textcolor{keywordflow}{if}\ (start+n\ >=\ \mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}})\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ n\ =\ \mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}}-\/start-\/1;}
+\DoxyCodeLine{00359\ \ \ \}}
+\DoxyCodeLine{00360\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aced8405f24c39af46117066bb1633924}{\_mi\_memcpy}}(\&\mbox{\hyperlink{options_8c_a10b377887bb469bc71f17df5d153d414}{out\_buf}}[start],\ msg,\ n);}
+\DoxyCodeLine{00361\ \}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a3252c8c536d2b00d94c00b557cff6b9e}{mi\_out\_buf\_flush}}(\mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ out,\ \textcolor{keywordtype}{bool}\ no\_more\_buf,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00364\ \ \ \textcolor{keywordflow}{if}\ (out==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00365\ \ \ \textcolor{comment}{//\ claim\ (if\ \`{}no\_more\_buf\ ==\ true`,\ no\ more\ output\ will\ be\ added\ after\ this\ point)}}
+\DoxyCodeLine{00366\ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_afc6eac6157a396af5e84f8f9f569a221}{mi\_atomic\_add\_acq\_rel}}(\&out\_len,\ (no\_more\_buf\ ?\ \mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}}\ :\ 1));}
+\DoxyCodeLine{00367\ \ \ \textcolor{comment}{//\ and\ output\ the\ current\ contents}}
+\DoxyCodeLine{00368\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}>\mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}})\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}\ =\ \mbox{\hyperlink{options_8c_a33ac12bcdf8153763ba957ab681e30bd}{MI\_MAX\_DELAY\_OUTPUT}};}
+\DoxyCodeLine{00369\ \ \ \mbox{\hyperlink{options_8c_a10b377887bb469bc71f17df5d153d414}{out\_buf}}[\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}]\ =\ 0;}
+\DoxyCodeLine{00370\ \ \ out(\mbox{\hyperlink{options_8c_a10b377887bb469bc71f17df5d153d414}{out\_buf}},\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00371\ \ \ \textcolor{keywordflow}{if}\ (!no\_more\_buf)\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \mbox{\hyperlink{options_8c_a10b377887bb469bc71f17df5d153d414}{out\_buf}}[\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}]\ =\ \textcolor{charliteral}{'\(\backslash\)n'};\ \textcolor{comment}{//\ if\ continue\ with\ the\ buffer,\ insert\ a\ newline}}
+\DoxyCodeLine{00373\ \ \ \}}
+\DoxyCodeLine{00374\ \}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \textcolor{comment}{//\ Once\ this\ module\ is\ loaded,\ switch\ to\ this\ routine}}
+\DoxyCodeLine{00378\ \textcolor{comment}{//\ which\ outputs\ to\ stderr\ and\ the\ delayed\ output\ buffer.}}
+\DoxyCodeLine{00379\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{mimalloc_8h_a9bc76cd39d1bc0a5dc939246d1e30fa4}{mi\_cdecl}}\ \mbox{\hyperlink{options_8c_a1e0adb0a0a57d337b8ca00ee0da95a6f}{mi\_out\_buf\_stderr}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00380\ \ \ \mbox{\hyperlink{options_8c_a46a1b0aabe714d8c6808ed8f3ea629fd}{mi\_out\_stderr}}(msg,\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00381\ \ \ mi\_out\_buf(msg,\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00382\ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00387\ \textcolor{comment}{//\ Default\ output\ handler}}
+\DoxyCodeLine{00388\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \textcolor{comment}{//\ Should\ be\ atomic\ but\ gives\ errors\ on\ many\ platforms\ as\ generally\ we\ cannot\ cast\ a\ function\ pointer\ to\ a\ uintptr\_t.}}
+\DoxyCodeLine{00391\ \textcolor{comment}{//\ For\ now,\ don't\ register\ output\ from\ multiple\ threads.}}
+\DoxyCodeLine{00392\ \textcolor{keyword}{static}\ \mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ \textcolor{keyword}{volatile}\ \mbox{\hyperlink{options_8c_aa7171f6e5c245c6371dc073276fa4cd7}{mi\_out\_default}};\ \textcolor{comment}{//\ =\ NULL}}
+\DoxyCodeLine{00393\ \textcolor{keyword}{static}\ \mbox{\hyperlink{options_8c_a819cdd7dd0c98de97843eba1d54dffbe}{\_Atomic}}(\textcolor{keywordtype}{void}*)\ mi\_out\_arg;\ \textcolor{comment}{//\ =\ NULL}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \textcolor{keyword}{static}\ \mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ mi\_out\_get\_default(\textcolor{keywordtype}{void}**\ parg)\ \{}
+\DoxyCodeLine{00396\ \ \ \textcolor{keywordflow}{if}\ (parg\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{\ *parg\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_a8c73aa9edbb9989a4b8c0cb491dfc3aa}{mi\_atomic\_load\_ptr\_acquire}}(\textcolor{keywordtype}{void},\&mi\_out\_arg);\ \}}
+\DoxyCodeLine{00397\ \ \ \mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ out\ =\ \mbox{\hyperlink{options_8c_aa7171f6e5c245c6371dc073276fa4cd7}{mi\_out\_default}};}
+\DoxyCodeLine{00398\ \ \ \textcolor{keywordflow}{return}\ (out\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ?\ \&mi\_out\_buf\ :\ out);}
+\DoxyCodeLine{00399\ \}}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__extended_gae5b17ff027cd2150b43a33040250cf3f}{mi\_register\_output}}(\mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ out,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00402\ \ \ \mbox{\hyperlink{options_8c_aa7171f6e5c245c6371dc073276fa4cd7}{mi\_out\_default}}\ =\ (out\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ?\ \&\mbox{\hyperlink{options_8c_a46a1b0aabe714d8c6808ed8f3ea629fd}{mi\_out\_stderr}}\ :\ out);\ \textcolor{comment}{//\ stop\ using\ the\ delayed\ output\ buffer}}
+\DoxyCodeLine{00403\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_a53a1e566591961fd9cf3d37f05c2cbb2}{mi\_atomic\_store\_ptr\_release}}(\textcolor{keywordtype}{void},\&mi\_out\_arg,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00404\ \ \ \textcolor{keywordflow}{if}\ (out!=\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \mbox{\hyperlink{options_8c_a3252c8c536d2b00d94c00b557cff6b9e}{mi\_out\_buf\_flush}}(out,\textcolor{keyword}{true},\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ output\ all\ the\ delayed\ output\ now}}
+\DoxyCodeLine{00405\ \}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \textcolor{comment}{//\ add\ stderr\ to\ the\ delayed\ output\ after\ the\ module\ is\ loaded}}
+\DoxyCodeLine{00408\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a4d5d24a76f5249135a37294c6ec577ff}{mi\_add\_stderr\_output}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00409\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{options_8c_aa7171f6e5c245c6371dc073276fa4cd7}{mi\_out\_default}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00410\ \ \ \mbox{\hyperlink{options_8c_a3252c8c536d2b00d94c00b557cff6b9e}{mi\_out\_buf\_flush}}(\&\mbox{\hyperlink{options_8c_a46a1b0aabe714d8c6808ed8f3ea629fd}{mi\_out\_stderr}},\ \textcolor{keyword}{false},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});\ \textcolor{comment}{//\ flush\ current\ contents\ to\ stderr}}
+\DoxyCodeLine{00411\ \ \ \mbox{\hyperlink{options_8c_aa7171f6e5c245c6371dc073276fa4cd7}{mi\_out\_default}}\ =\ \&\mbox{\hyperlink{options_8c_a1e0adb0a0a57d337b8ca00ee0da95a6f}{mi\_out\_buf\_stderr}};\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ add\ stderr\ to\ the\ delayed\ output}}
+\DoxyCodeLine{00412\ \}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00415\ \textcolor{comment}{//\ Messages,\ all\ end\ up\ calling\ \`{}\_mi\_fputs`.}}
+\DoxyCodeLine{00416\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00417\ \textcolor{keyword}{static}\ \mbox{\hyperlink{options_8c_a819cdd7dd0c98de97843eba1d54dffbe}{\_Atomic}}(\textcolor{keywordtype}{size\_t})\ error\_count;\ \ \ \textcolor{comment}{//\ =\ 0;\ \ //\ when\ >=\ max\_error\_count\ stop\ emitting\ errors}}
+\DoxyCodeLine{00418\ \textcolor{keyword}{static}\ \mbox{\hyperlink{options_8c_a819cdd7dd0c98de97843eba1d54dffbe}{\_Atomic}}(\textcolor{keywordtype}{size\_t})\ warning\_count;\ \textcolor{comment}{//\ =\ 0;\ \ //\ when\ >=\ max\_warning\_count\ stop\ emitting\ warnings}}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \textcolor{comment}{//\ When\ overriding\ malloc,\ we\ may\ recurse\ into\ mi\_vfprintf\ if\ an\ allocation}}
+\DoxyCodeLine{00421\ \textcolor{comment}{//\ inside\ the\ C\ runtime\ causes\ another\ message.}}
+\DoxyCodeLine{00422\ \textcolor{comment}{//\ In\ some\ cases\ (like\ on\ macOS)\ the\ loader\ already\ allocates\ which}}
+\DoxyCodeLine{00423\ \textcolor{comment}{//\ calls\ into\ mimalloc;\ if\ we\ then\ access\ thread\ locals\ (like\ \`{}recurse`)}}
+\DoxyCodeLine{00424\ \textcolor{comment}{//\ this\ may\ crash\ as\ the\ access\ may\ call\ \_tlv\_bootstrap\ that\ tries\ to}}
+\DoxyCodeLine{00425\ \textcolor{comment}{//\ (recursively)\ invoke\ malloc\ again\ to\ allocate\ space\ for\ the\ thread\ local}}
+\DoxyCodeLine{00426\ \textcolor{comment}{//\ variables\ on\ demand.\ This\ is\ why\ we\ use\ a\ \_mi\_preloading\ test\ on\ such}}
+\DoxyCodeLine{00427\ \textcolor{comment}{//\ platforms.\ However,\ C\ code\ generator\ may\ move\ the\ initial\ thread\ local\ address}}
+\DoxyCodeLine{00428\ \textcolor{comment}{//\ load\ before\ the\ \`{}if`\ and\ we\ therefore\ split\ it\ out\ in\ a\ separate\ function.}}
+\DoxyCodeLine{00429\ \textcolor{keyword}{static}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ad9650742916e5f301f6f645faf4d9f32}{mi\_decl\_thread}}\ \textcolor{keywordtype}{bool}\ recurse\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \textcolor{keyword}{static}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a0a63ad6116421ea60eb43806f8881a3b}{mi\_decl\_noinline}}\ \textcolor{keywordtype}{bool}\ mi\_recurse\_enter\_prim(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00432\ \ \ \textcolor{keywordflow}{if}\ (recurse)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00433\ \ \ recurse\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00434\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00435\ \}}
+\DoxyCodeLine{00436\ }
+\DoxyCodeLine{00437\ \textcolor{keyword}{static}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a0a63ad6116421ea60eb43806f8881a3b}{mi\_decl\_noinline}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_afa5ef675de035537efd679d53d629adc}{mi\_recurse\_exit\_prim}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00438\ \ \ recurse\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00439\ \}}
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{options_8c_a1fdb7bd3b10624ddeabe0988c52a1285}{mi\_recurse\_enter}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00442\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_APPLE\_\_)\ ||\ defined(MI\_TLS\_RECURSE\_GUARD)}}
+\DoxyCodeLine{00443\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_abe10bbb84d6109e4b0a5fcc92cb0cb0e}{\_mi\_preloading}}())\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00444\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00445\ \ \ \textcolor{keywordflow}{return}\ mi\_recurse\_enter\_prim();}
+\DoxyCodeLine{00446\ \}}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_ae9c4fbdaa6fedca31b9c25dcb78112ae}{mi\_recurse\_exit}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00449\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_APPLE\_\_)\ ||\ defined(MI\_TLS\_RECURSE\_GUARD)}}
+\DoxyCodeLine{00450\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_abe10bbb84d6109e4b0a5fcc92cb0cb0e}{\_mi\_preloading}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00451\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00452\ \ \ \mbox{\hyperlink{options_8c_afa5ef675de035537efd679d53d629adc}{mi\_recurse\_exit\_prim}}();}
+\DoxyCodeLine{00453\ \}}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a74eecad8676654f59f427a84ccc5c19d}{\_mi\_fputs}}(\mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ out,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ prefix,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ message)\ \{}
+\DoxyCodeLine{00456\ \ \ \textcolor{keywordflow}{if}\ (out==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ (\textcolor{keywordtype}{void}*)out==(\textcolor{keywordtype}{void}*)stdout\ ||\ (\textcolor{keywordtype}{void}*)out==(\textcolor{keywordtype}{void}*)stderr)\ \{\ \textcolor{comment}{//\ TODO:\ use\ mi\_out\_stderr\ for\ stderr?}}
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{options_8c_a1fdb7bd3b10624ddeabe0988c52a1285}{mi\_recurse\_enter}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00458\ \ \ \ \ out\ =\ mi\_out\_get\_default(\&\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00459\ \ \ \ \ \textcolor{keywordflow}{if}\ (prefix\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ out(prefix,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00460\ \ \ \ \ out(message,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00461\ \ \ \ \ \mbox{\hyperlink{options_8c_ae9c4fbdaa6fedca31b9c25dcb78112ae}{mi\_recurse\_exit}}();}
+\DoxyCodeLine{00462\ \ \ \}}
+\DoxyCodeLine{00463\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{keywordflow}{if}\ (prefix\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ out(prefix,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00465\ \ \ \ \ out(message,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00466\ \ \ \}}
+\DoxyCodeLine{00467\ \}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \textcolor{comment}{//\ Define\ our\ own\ limited\ \`{}fprintf`\ that\ avoids\ memory\ allocation.}}
+\DoxyCodeLine{00470\ \textcolor{comment}{//\ We\ do\ this\ using\ \`{}\_mi\_vsnprintf`\ with\ a\ limited\ buffer.}}
+\DoxyCodeLine{00471\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a1f31f62f178fb5309451aa44c8d25327}{mi\_vfprintf}}(\ \mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ out,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ prefix,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ va\_list\ args\ )\ \{}
+\DoxyCodeLine{00472\ \ \ \textcolor{keywordtype}{char}\ buf[992];}
+\DoxyCodeLine{00473\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacefmt}{fmt}}==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00474\ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{options_8c_a1fdb7bd3b10624ddeabe0988c52a1285}{mi\_recurse\_enter}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00475\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a8991188606f00dc8665aa14d8e7dab83}{\_mi\_vsnprintf}}(buf,\ \textcolor{keyword}{sizeof}(buf)-\/1,\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00476\ \ \ \mbox{\hyperlink{options_8c_ae9c4fbdaa6fedca31b9c25dcb78112ae}{mi\_recurse\_exit}}();}
+\DoxyCodeLine{00477\ \ \ \mbox{\hyperlink{options_8c_a74eecad8676654f59f427a84ccc5c19d}{\_mi\_fputs}}(out,\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},prefix,buf);}
+\DoxyCodeLine{00478\ \}}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_ad9bbc9d6bfdbc470a83947d3ffba90a3}{\_mi\_fprintf}}(\ \mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ out,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ ...\ )\ \{}
+\DoxyCodeLine{00481\ \ \ va\_list\ args;}
+\DoxyCodeLine{00482\ \ \ va\_start(args,\mbox{\hyperlink{namespacefmt}{fmt}});}
+\DoxyCodeLine{00483\ \ \ \mbox{\hyperlink{options_8c_a1f31f62f178fb5309451aa44c8d25327}{mi\_vfprintf}}(out,\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\mbox{\hyperlink{namespacefmt}{fmt}},args);}
+\DoxyCodeLine{00484\ \ \ va\_end(args);}
+\DoxyCodeLine{00485\ \}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a4af8263c139d04a876914f39024a7424}{mi\_vfprintf\_thread}}(\mbox{\hyperlink{group__extended_gadf31cea7d0332a81c8b882cbbdbadb8d}{mi\_output\_fun}}*\ out,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ prefix,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ va\_list\ args)\ \{}
+\DoxyCodeLine{00488\ \ \ \textcolor{keywordflow}{if}\ (prefix\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ \&\&\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae8577fe0d9bbe3fb90d2169caa1af943}{\_mi\_strnlen}}(prefix,33)\ <=\ 32\ \&\&\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a008e0a28e7c86b15a04094d595e2c327}{\_mi\_is\_main\_thread}}())\ \{}
+\DoxyCodeLine{00489\ \ \ \ \ \textcolor{keywordtype}{char}\ tprefix[64];}
+\DoxyCodeLine{00490\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a6c2f4673e3317f332571bc1bec18c49b}{\_mi\_snprintf}}(tprefix,\ \textcolor{keyword}{sizeof}(tprefix),\ \textcolor{stringliteral}{"{}\%sthread\ 0x\%tx:\ "{}},\ prefix,\ (uintptr\_t)\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac1c4e1fe7ce6d0939ff6c94eecacac61}{\_mi\_thread\_id}}());}
+\DoxyCodeLine{00491\ \ \ \ \ \mbox{\hyperlink{options_8c_a1f31f62f178fb5309451aa44c8d25327}{mi\_vfprintf}}(out,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},\ tprefix,\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00492\ \ \ \}}
+\DoxyCodeLine{00493\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00494\ \ \ \ \ \mbox{\hyperlink{options_8c_a1f31f62f178fb5309451aa44c8d25327}{mi\_vfprintf}}(out,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}},\ prefix,\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00495\ \ \ \}}
+\DoxyCodeLine{00496\ \}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a8799fd3cd2655ef80f0fdc94170042c4}{\_mi\_raw\_message}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ ...)\ \{}
+\DoxyCodeLine{00499\ \ \ va\_list\ args;}
+\DoxyCodeLine{00500\ \ \ va\_start(args,\ \mbox{\hyperlink{namespacefmt}{fmt}});}
+\DoxyCodeLine{00501\ \ \ \mbox{\hyperlink{options_8c_a1f31f62f178fb5309451aa44c8d25327}{mi\_vfprintf}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00502\ \ \ va\_end(args);}
+\DoxyCodeLine{00503\ \}}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_ada19c911e74a395413ea23fdc993e7a6}{\_mi\_message}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ ...)\ \{}
+\DoxyCodeLine{00506\ \ \ va\_list\ args;}
+\DoxyCodeLine{00507\ \ \ va\_start(args,\ \mbox{\hyperlink{namespacefmt}{fmt}});}
+\DoxyCodeLine{00508\ \ \ \mbox{\hyperlink{options_8c_a4af8263c139d04a876914f39024a7424}{mi\_vfprintf\_thread}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}mimalloc:\ "{}},\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00509\ \ \ va\_end(args);}
+\DoxyCodeLine{00510\ \}}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a39ef30e22895c4ec5fa3ca58922412f5}{\_mi\_trace\_message}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ ...)\ \{}
+\DoxyCodeLine{00513\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7c8b7bf5281c581bad64f5daa6442777}{mi\_option\_verbose}})\ <=\ 1)\ \textcolor{keywordflow}{return};\ \ \textcolor{comment}{//\ only\ with\ verbose\ level\ 2\ or\ higher}}
+\DoxyCodeLine{00514\ \ \ va\_list\ args;}
+\DoxyCodeLine{00515\ \ \ va\_start(args,\ \mbox{\hyperlink{namespacefmt}{fmt}});}
+\DoxyCodeLine{00516\ \ \ \mbox{\hyperlink{options_8c_a4af8263c139d04a876914f39024a7424}{mi\_vfprintf\_thread}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}mimalloc:\ "{}},\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00517\ \ \ va\_end(args);}
+\DoxyCodeLine{00518\ \}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_ab9890036c5acb25eacd13bec3a6b0c68}{\_mi\_verbose\_message}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ ...)\ \{}
+\DoxyCodeLine{00521\ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7c8b7bf5281c581bad64f5daa6442777}{mi\_option\_verbose}}))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00522\ \ \ va\_list\ args;}
+\DoxyCodeLine{00523\ \ \ va\_start(args,\mbox{\hyperlink{namespacefmt}{fmt}});}
+\DoxyCodeLine{00524\ \ \ \mbox{\hyperlink{options_8c_a1f31f62f178fb5309451aa44c8d25327}{mi\_vfprintf}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}mimalloc:\ "{}},\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00525\ \ \ va\_end(args);}
+\DoxyCodeLine{00526\ \}}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a025f32c63014753e87fd7a579d2bb8aa}{mi\_show\_error\_message}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ va\_list\ args)\ \{}
+\DoxyCodeLine{00529\ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7c8b7bf5281c581bad64f5daa6442777}{mi\_option\_verbose}}))\ \{}
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930bafbf4822e5c00732c5984b32a032837f0}{mi\_option\_show\_errors}}))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{options_8c_a61cbc33b6973cd7010ad895fcc076e7c}{mi\_max\_error\_count}}\ >=\ 0\ \&\&\ (\textcolor{keywordtype}{long})\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_ae6193ee4d1d1a5f4fd3832035392d7e9}{mi\_atomic\_increment\_acq\_rel}}(\&error\_count)\ >\ \mbox{\hyperlink{options_8c_a61cbc33b6973cd7010ad895fcc076e7c}{mi\_max\_error\_count}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00532\ \ \ \}}
+\DoxyCodeLine{00533\ \ \ \mbox{\hyperlink{options_8c_a4af8263c139d04a876914f39024a7424}{mi\_vfprintf\_thread}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}mimalloc:\ error:\ "{}},\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00534\ \}}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ ...)\ \{}
+\DoxyCodeLine{00537\ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7c8b7bf5281c581bad64f5daa6442777}{mi\_option\_verbose}}))\ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{group__options_ga459ad98f18b3fc9275474807fe0ca188}{mi\_option\_is\_enabled}}(\mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930bafbf4822e5c00732c5984b32a032837f0}{mi\_option\_show\_errors}}))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00539\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{options_8c_ad25a46aef8dc7a9fc9cb43d581fb2d58}{mi\_max\_warning\_count}}\ >=\ 0\ \&\&\ (\textcolor{keywordtype}{long})\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_ae6193ee4d1d1a5f4fd3832035392d7e9}{mi\_atomic\_increment\_acq\_rel}}(\&warning\_count)\ >\ \mbox{\hyperlink{options_8c_ad25a46aef8dc7a9fc9cb43d581fb2d58}{mi\_max\_warning\_count}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00540\ \ \ \}}
+\DoxyCodeLine{00541\ \ \ va\_list\ args;}
+\DoxyCodeLine{00542\ \ \ va\_start(args,\mbox{\hyperlink{namespacefmt}{fmt}});}
+\DoxyCodeLine{00543\ \ \ \mbox{\hyperlink{options_8c_a4af8263c139d04a876914f39024a7424}{mi\_vfprintf\_thread}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}mimalloc:\ warning:\ "{}},\ \mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00544\ \ \ va\_end(args);}
+\DoxyCodeLine{00545\ \}}
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \textcolor{preprocessor}{\#if\ MI\_DEBUG}}
+\DoxyCodeLine{00549\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a4fb36f039870b2afad400eff3201e13b}{\_mi\_assert\_fail}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ assertion,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fname,\ \textcolor{keywordtype}{unsigned}\ line,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ func\ )\ \{}
+\DoxyCodeLine{00550\ \ \ \mbox{\hyperlink{options_8c_ad9bbc9d6bfdbc470a83947d3ffba90a3}{\_mi\_fprintf}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}mimalloc:\ assertion\ failed:\ at\ \(\backslash\)"{}\%s\(\backslash\)"{}:\%u,\ \%s\(\backslash\)n\ \ assertion:\ \(\backslash\)"{}\%s\(\backslash\)"{}\(\backslash\)n"{}},\ fname,\ line,\ (func==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}?\textcolor{stringliteral}{"{}"{}}:func),\ assertion);}
+\DoxyCodeLine{00551\ \ \ \mbox{\hyperlink{namespacedetail_a619f3502677571222147bfadcc64392ea5bb94a1c12413a2e5d14deabab29f2aa}{abort}}();}
+\DoxyCodeLine{00552\ \}}
+\DoxyCodeLine{00553\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00556\ \textcolor{comment}{//\ Errors}}
+\DoxyCodeLine{00557\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \textcolor{keyword}{static}\ \mbox{\hyperlink{group__extended_ga83fc6a688b322261e1c2deab000b0591}{mi\_error\_fun}}*\ \textcolor{keyword}{volatile}\ \ \mbox{\hyperlink{options_8c_a33490af84ad53db0e61c393dfa54a330}{mi\_error\_handler}};\ \textcolor{comment}{//\ =\ NULL}}
+\DoxyCodeLine{00560\ \textcolor{keyword}{static}\ \mbox{\hyperlink{options_8c_a819cdd7dd0c98de97843eba1d54dffbe}{\_Atomic}}(\textcolor{keywordtype}{void}*)\ mi\_error\_arg;\ \ \ \ \ \textcolor{comment}{//\ =\ NULL}}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ mi\_error\_default(\textcolor{keywordtype}{int}\ err)\ \{}
+\DoxyCodeLine{00563\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(err);}
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\#if\ (MI\_DEBUG>0)}}
+\DoxyCodeLine{00565\ \ \ \textcolor{keywordflow}{if}\ (err==\mbox{\hyperlink{types_8h_a3f317946e043623f9d6b93dbf60e6316}{EFAULT}})\ \{}
+\DoxyCodeLine{00566\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_MSC\_VER}}
+\DoxyCodeLine{00567\ \ \ \ \ \_\_debugbreak();}
+\DoxyCodeLine{00568\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00569\ \ \ \ \ abort();}
+\DoxyCodeLine{00570\ \ \ \}}
+\DoxyCodeLine{00571\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00572\ \textcolor{preprocessor}{\#if\ (MI\_SECURE>0)}}
+\DoxyCodeLine{00573\ \ \ \textcolor{keywordflow}{if}\ (err==\mbox{\hyperlink{types_8h_a3f317946e043623f9d6b93dbf60e6316}{EFAULT}})\ \{\ \ \textcolor{comment}{//\ abort\ on\ serious\ errors\ in\ secure\ mode\ (corrupted\ meta-\/data)}}
+\DoxyCodeLine{00574\ \ \ \ \ abort();}
+\DoxyCodeLine{00575\ \ \ \}}
+\DoxyCodeLine{00576\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00577\ \textcolor{preprocessor}{\#if\ defined(MI\_XMALLOC)}}
+\DoxyCodeLine{00578\ \ \ \textcolor{keywordflow}{if}\ (err==\mbox{\hyperlink{types_8h_a6a05c923dad0c1208043e9c20a58c8e5}{ENOMEM}}\ ||\ err==\mbox{\hyperlink{types_8h_a888552a5e3c78b5883904cf5d55244ab}{EOVERFLOW}})\ \{\ \textcolor{comment}{//\ abort\ on\ memory\ allocation\ fails\ in\ xmalloc\ mode}}
+\DoxyCodeLine{00579\ \ \ \ \ abort();}
+\DoxyCodeLine{00580\ \ \ \}}
+\DoxyCodeLine{00581\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00582\ \}}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__extended_gaa1d55e0e894be240827e5d87ec3a1f45}{mi\_register\_error}}(\mbox{\hyperlink{group__extended_ga83fc6a688b322261e1c2deab000b0591}{mi\_error\_fun}}*\ fun,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00585\ \ \ \mbox{\hyperlink{options_8c_a33490af84ad53db0e61c393dfa54a330}{mi\_error\_handler}}\ =\ fun;\ \ \textcolor{comment}{//\ can\ be\ NULL}}
+\DoxyCodeLine{00586\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_a53a1e566591961fd9cf3d37f05c2cbb2}{mi\_atomic\_store\_ptr\_release}}(\textcolor{keywordtype}{void},\&mi\_error\_arg,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00587\ \}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a2bebc073bcaac71658e57bb260c2e426}{\_mi\_error\_message}}(\textcolor{keywordtype}{int}\ err,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{namespacefmt}{fmt}},\ ...)\ \{}
+\DoxyCodeLine{00590\ \ \ \textcolor{comment}{//\ show\ detailed\ error\ message}}
+\DoxyCodeLine{00591\ \ \ va\_list\ args;}
+\DoxyCodeLine{00592\ \ \ va\_start(args,\ \mbox{\hyperlink{namespacefmt}{fmt}});}
+\DoxyCodeLine{00593\ \ \ \mbox{\hyperlink{options_8c_a025f32c63014753e87fd7a579d2bb8aa}{mi\_show\_error\_message}}(\mbox{\hyperlink{namespacefmt}{fmt}},\ args);}
+\DoxyCodeLine{00594\ \ \ va\_end(args);}
+\DoxyCodeLine{00595\ \ \ \textcolor{comment}{//\ and\ call\ the\ error\ handler\ which\ may\ abort\ (or\ return\ normally)}}
+\DoxyCodeLine{00596\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{options_8c_a33490af84ad53db0e61c393dfa54a330}{mi\_error\_handler}}\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \mbox{\hyperlink{options_8c_a33490af84ad53db0e61c393dfa54a330}{mi\_error\_handler}}(err,\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_a8c73aa9edbb9989a4b8c0cb491dfc3aa}{mi\_atomic\_load\_ptr\_acquire}}(\textcolor{keywordtype}{void},\&mi\_error\_arg));}
+\DoxyCodeLine{00598\ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00600\ \ \ \ \ mi\_error\_default(err);}
+\DoxyCodeLine{00601\ \ \ \}}
+\DoxyCodeLine{00602\ \}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00605\ \textcolor{comment}{//\ Initialize\ options\ by\ checking\ the\ environment}}
+\DoxyCodeLine{00606\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \textcolor{comment}{//\ TODO:\ implement\ ourselves\ to\ reduce\ dependencies\ on\ the\ C\ runtime}}
+\DoxyCodeLine{00609\ \textcolor{preprocessor}{\#include\ <stdlib.h>}\ \textcolor{comment}{//\ strtol}}
+\DoxyCodeLine{00610\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{string_8h}{string.h}}>}\ \textcolor{comment}{//\ strstr}}
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ }
+\DoxyCodeLine{00613\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{options_8c_a61970c5b942f29a5dea8a39742421cfe}{mi\_option\_init}}(\mbox{\hyperlink{options_8c_a72f6c99bddc308ee3c7f880d4640de08}{mi\_option\_desc\_t}}*\ desc)\ \{}
+\DoxyCodeLine{00614\ \ \ \textcolor{comment}{//\ Read\ option\ value\ from\ the\ environment}}
+\DoxyCodeLine{00615\ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}[64\ +\ 1];}
+\DoxyCodeLine{00616\ \ \ \textcolor{keywordtype}{char}\ buf[64+1];}
+\DoxyCodeLine{00617\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a17a9534829be8a086014bf2a2792154f}{\_mi\_strlcpy}}(buf,\ \textcolor{stringliteral}{"{}mimalloc\_"{}},\ \textcolor{keyword}{sizeof}(buf));}
+\DoxyCodeLine{00618\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a29572712fc70f836ac31d224d98ad41a}{\_mi\_strlcat}}(buf,\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a2cb8daf0e200d31c92d219a7ed21dfd2}{name}},\ \textcolor{keyword}{sizeof}(buf));}
+\DoxyCodeLine{00619\ \ \ \textcolor{keywordtype}{bool}\ found\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae24e3d9662cc4cc3277fa0f31359b3ee}{\_mi\_getenv}}(buf,\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}));}
+\DoxyCodeLine{00620\ \ \ \textcolor{keywordflow}{if}\ (!found\ \&\&\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_adfb21c3abacad426085ed29183882356}{legacy\_name}}\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00621\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a17a9534829be8a086014bf2a2792154f}{\_mi\_strlcpy}}(buf,\ \textcolor{stringliteral}{"{}mimalloc\_"{}},\ \textcolor{keyword}{sizeof}(buf));}
+\DoxyCodeLine{00622\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a29572712fc70f836ac31d224d98ad41a}{\_mi\_strlcat}}(buf,\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_adfb21c3abacad426085ed29183882356}{legacy\_name}},\ \textcolor{keyword}{sizeof}(buf));}
+\DoxyCodeLine{00623\ \ \ \ \ found\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae24e3d9662cc4cc3277fa0f31359b3ee}{\_mi\_getenv}}(buf,\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}));}
+\DoxyCodeLine{00624\ \ \ \ \ \textcolor{keywordflow}{if}\ (found)\ \{}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}environment\ option\ \(\backslash\)"{}mimalloc\_\%s\(\backslash\)"{}\ is\ deprecated\ -\/-\/\ use\ \(\backslash\)"{}mimalloc\_\%s\(\backslash\)"{}\ instead.\(\backslash\)n"{}},\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_adfb21c3abacad426085ed29183882356}{legacy\_name}},\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a2cb8daf0e200d31c92d219a7ed21dfd2}{name}});}
+\DoxyCodeLine{00626\ \ \ \ \ \}}
+\DoxyCodeLine{00627\ \ \ \}}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \ \ \textcolor{keywordflow}{if}\ (found)\ \{}
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ len\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae8577fe0d9bbe3fb90d2169caa1af943}{\_mi\_strnlen}}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \textcolor{keyword}{sizeof}(buf)\ -\/\ 1);}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ len;\ i++)\ \{}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ buf[i]\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a0d811385427149f1ea8637c8fab1fd07}{\_mi\_toupper}}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}[i]);}
+\DoxyCodeLine{00633\ \ \ \ \ \}}
+\DoxyCodeLine{00634\ \ \ \ \ buf[len]\ =\ 0;}
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{keywordflow}{if}\ (buf[0]\ ==\ 0\ ||\ strstr(\textcolor{stringliteral}{"{}1;TRUE;YES;ON"{}},\ buf)\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}}\ =\ 1;}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ =\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7aa307353740245a4be434ad2ca7169232}{INITIALIZED}};}
+\DoxyCodeLine{00638\ \ \ \ \ \}}
+\DoxyCodeLine{00639\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (strstr(\textcolor{stringliteral}{"{}0;FALSE;NO;OFF"{}},\ buf)\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}}\ =\ 0;}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ =\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7aa307353740245a4be434ad2ca7169232}{INITIALIZED}};}
+\DoxyCodeLine{00642\ \ \ \ \ \}}
+\DoxyCodeLine{00643\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ end\ =\ buf;}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ strtol(buf,\ \&end,\ 10);}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{options_8c_aee4ee640d854972d765c2896aa04270a}{mi\_option\_has\_size\_in\_kib}}(desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}}))\ \{}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ this\ option\ is\ interpreted\ in\ KiB\ to\ prevent\ overflow\ of\ \`{}long`\ for\ large\ allocations}}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (long\ is\ 32-\/bit\ on\ 64-\/bit\ windows,\ which\ allows\ for\ 4TiB\ max.)}}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ =\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ <\ 0\ ?\ 0\ :\ (size\_t)\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ overflow\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*end\ ==\ \textcolor{charliteral}{'K'})\ \{\ end++;\ \}}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (*end\ ==\ \textcolor{charliteral}{'M'})\ \{\ overflow\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_abf06027911fbdc300901fb961a45e4d0}{mi\_mul\_overflow}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\mbox{\hyperlink{bits_8h_adbafbf7fe5512b55fb47ea52426a2b63}{MI\_KiB}},\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});\ end++;\ \}}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (*end\ ==\ \textcolor{charliteral}{'G'})\ \{\ overflow\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_abf06027911fbdc300901fb961a45e4d0}{mi\_mul\_overflow}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\mbox{\hyperlink{bits_8h_a2957d2f636a8bafeb4873446283d10bf}{MI\_MiB}},\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});\ end++;\ \}}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (*end\ ==\ \textcolor{charliteral}{'T'})\ \{\ overflow\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_abf06027911fbdc300901fb961a45e4d0}{mi\_mul\_overflow}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\mbox{\hyperlink{bits_8h_a5d0d221f27b912f5fc202d2b0367468f}{MI\_GiB}},\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});\ end++;\ \}}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ =\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ +\ \mbox{\hyperlink{bits_8h_adbafbf7fe5512b55fb47ea52426a2b63}{MI\_KiB}}\ -\/\ 1)\ /\ \mbox{\hyperlink{bits_8h_adbafbf7fe5512b55fb47ea52426a2b63}{MI\_KiB}};\ \}}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (end[0]\ ==\ \textcolor{charliteral}{'I'}\ \&\&\ end[1]\ ==\ \textcolor{charliteral}{'B'})\ \{\ end\ +=\ 2;\ \}\ \textcolor{comment}{//\ KiB,\ MiB,\ GiB,\ TiB}}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (*end\ ==\ \textcolor{charliteral}{'B'})\ \{\ end++;\ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Kb,\ Mb,\ Gb,\ Tb}}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (overflow\ ||\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ >\ \mbox{\hyperlink{types_8h_a1e8989503ebdb1d6865a46923b23b93a}{MI\_MAX\_ALLOC\_SIZE}})\ \{\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ =\ (\mbox{\hyperlink{types_8h_a1e8989503ebdb1d6865a46923b23b93a}{MI\_MAX\_ALLOC\_SIZE}}\ /\ \mbox{\hyperlink{bits_8h_adbafbf7fe5512b55fb47ea52426a2b63}{MI\_KiB}});\ \}}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ >\ LONG\_MAX\ ?\ LONG\_MAX\ :\ (long)\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*end\ ==\ 0)\ \{}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__options_gaf84921c32375e25754dc2ee6a911fa60}{mi\_option\_set}}(desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set\ \`{}init`\ first\ to\ avoid\ recursion\ through\ \_mi\_warning\_message\ on\ mimalloc\_verbose.}}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ =\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7abb6dddb31589dc7c021334aa53c472f1}{DEFAULTED}};}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a1a1bd98d88df8af3cd170299b90cbd84}{option}}\ ==\ \mbox{\hyperlink{group__options_ggacf0af9f50d2fca76b4e158d611bc930ba7c8b7bf5281c581bad64f5daa6442777}{mi\_option\_verbose}}\ \&\&\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ 'mimalloc\_verbose'\ env\ var\ has\ a\ bogus\ value\ we'd\ never\ know}}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (since\ the\ value\ defaults\ to\ 'off')\ so\ in\ that\ case\ briefly\ enable\ verbose}}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}}\ =\ 1;}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}environment\ option\ mimalloc\_\%s\ has\ an\ invalid\ value.\(\backslash\)n"{}},\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a2cb8daf0e200d31c92d219a7ed21dfd2}{name}});}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a855ca3c7749d30b95a62a7872f1aaab9}{value}}\ =\ 0;}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{options_8c_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}environment\ option\ mimalloc\_\%s\ has\ an\ invalid\ value.\(\backslash\)n"{}},\ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a2cb8daf0e200d31c92d219a7ed21dfd2}{name}});}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00678\ \ \ \ \ \}}
+\DoxyCodeLine{00679\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ !=\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7a2a68f51b73db179a30b6a8aea11f7485}{UNINIT}});}
+\DoxyCodeLine{00680\ \ \ \}}
+\DoxyCodeLine{00681\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_abe10bbb84d6109e4b0a5fcc92cb0cb0e}{\_mi\_preloading}}())\ \{}
+\DoxyCodeLine{00682\ \ \ \ \ desc-\/>\mbox{\hyperlink{structmi__option__desc__s_a3c26d47132ee2b7c11ef760982ad219f}{init}}\ =\ \mbox{\hyperlink{options_8c_a196ef342c47d0ed5c13d1eaf104a11e7abb6dddb31589dc7c021334aa53c472f1}{DEFAULTED}};}
+\DoxyCodeLine{00683\ \ \ \}}
+\DoxyCodeLine{00684\ \}}
+
+\end{DoxyCode}

@@ -1,0 +1,28 @@
+var atomic__macros__or__fetch_8h =
+[
+    [ "EASTL_ATOMIC_OR_FETCH_ACQ_REL_128", "atomic__macros__or__fetch_8h.html#af7d006374e03c934aec1f706eff88c4a", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQ_REL_16", "atomic__macros__or__fetch_8h.html#a5e074ade69235893d267d2d4cecaabc7", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQ_REL_32", "atomic__macros__or__fetch_8h.html#ad07cea0cf898a4de694ae6212f84a47e", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQ_REL_64", "atomic__macros__or__fetch_8h.html#a933955ea82819f92c0441d385995f4a9", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQ_REL_8", "atomic__macros__or__fetch_8h.html#a70b48ba2e362b591c95153c2f5b24853", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQUIRE_128", "atomic__macros__or__fetch_8h.html#a7ecc87699bdb6c52be7f4d4f1d5ea5fa", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQUIRE_16", "atomic__macros__or__fetch_8h.html#ad197f4069138561b42f4c3d6648af253", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQUIRE_32", "atomic__macros__or__fetch_8h.html#af4892e4be4eff85ee106a0dd85a9e45a", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQUIRE_64", "atomic__macros__or__fetch_8h.html#a0d5aeca38c0d234baf7def2b21fb8a6d", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_ACQUIRE_8", "atomic__macros__or__fetch_8h.html#abf48e2aa3edffdfb6c8164191878c9b2", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELAXED_128", "atomic__macros__or__fetch_8h.html#ae11b95f470f959ce87659c2a6c3646b2", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELAXED_16", "atomic__macros__or__fetch_8h.html#a67725b680c1faf57ddd5ae369a66e3aa", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELAXED_32", "atomic__macros__or__fetch_8h.html#a9cd2c8bdef01640fd4b423171f54b8e1", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELAXED_64", "atomic__macros__or__fetch_8h.html#a36f95db99d22afac602b3b9498dd47ed", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELAXED_8", "atomic__macros__or__fetch_8h.html#a303a20d1937981d3c1bc9ebb51b3aef0", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELEASE_128", "atomic__macros__or__fetch_8h.html#a7c533f5dd7c2fc2123739fbd118dd1d5", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELEASE_16", "atomic__macros__or__fetch_8h.html#a8818eca67a82273186c818b936a49da0", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELEASE_32", "atomic__macros__or__fetch_8h.html#a09f1fb7ccb2b75cf32c5c0c6d99e9a99", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELEASE_64", "atomic__macros__or__fetch_8h.html#ad165ad5002a3344f92087c2e49aefa52", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_RELEASE_8", "atomic__macros__or__fetch_8h.html#aeec1da818ccc012aa0fd0cbcff3fcc10", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_SEQ_CST_128", "atomic__macros__or__fetch_8h.html#aea978c8aad4f343d4e688da7b6560676", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_SEQ_CST_16", "atomic__macros__or__fetch_8h.html#adb46005bedc037c72f3d56543f0f4e8f", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_SEQ_CST_32", "atomic__macros__or__fetch_8h.html#a487406b58e630728fb417dcfcd8c0d71", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_SEQ_CST_64", "atomic__macros__or__fetch_8h.html#ae3aef6711dfb91ad2f8f79d1e9bbdcda", null ],
+    [ "EASTL_ATOMIC_OR_FETCH_SEQ_CST_8", "atomic__macros__or__fetch_8h.html#ae1404eea71d9cc108aa5468aa2b66a0a", null ]
+];

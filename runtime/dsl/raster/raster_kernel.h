@@ -1,9 +1,9 @@
 #pragma once
 
-#include <luisa/ast/function.h>
-#include <luisa/dsl/raster/raster_func.h>
-#include <luisa/dsl/struct.h>
-#include <luisa/runtime/raster/app_data.h>
+#include <runtime/ast/function.h>
+#include <runtime/dsl/raster/raster_func.h>
+#include <runtime/dsl/struct.h>
+#include <runtime/runtime/raster/app_data.h>
 LUISA_STRUCT(luisa::compute::AppData, position, normal, tangent, color, uv, vertex_id, instance_id){};
 
 namespace luisa::compute {

@@ -1,9 +1,5 @@
-target("spdlog")
-    set_languages("c++20")
-    set_kind("$(kind)")
-    add_includedirs("include", { public = true })
-    add_files("src/*.cpp")
-    add_defines("SPDLOG_COMPILED_LIB=")
-target_end()
 
-table.insert(global_deps, "spdlog")
+table.insert(global_includedirs, "runtime/spdlog/include")
+table.insert(global_headerfiles, "runtime/spdlog/include/**.h")
+table.insert(global_files, "runtime/spdlog/src/*.cpp")
+table.insert(global_defines, "SPDLOG_COMPILED_LIB=")

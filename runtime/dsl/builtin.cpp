@@ -1,6 +1,6 @@
-#include <luisa/core/basic_types.h>
-#include <luisa/core/logging.h>
-#include <luisa/ast/type.h>
+#include <runtime/core/basic_types.h>
+#include <runtime/core/logging.h>
+#include <runtime/ast/type.h>
 
 namespace luisa::compute::detail {
 

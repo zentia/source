@@ -1,0 +1,255 @@
+\doxysection{random.\+c}
+\hypertarget{random_8c_source}{}\label{random_8c_source}\index{runtime/EASTL/packages/mimalloc/src/random.c@{runtime/EASTL/packages/mimalloc/src/random.c}}
+\mbox{\hyperlink{random_8c}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{Copyright\ (c)\ 2019-\/2021,\ Microsoft\ Research,\ Daan\ Leijen}}
+\DoxyCodeLine{00003\ \textcolor{comment}{This\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it\ under\ the}}
+\DoxyCodeLine{00004\ \textcolor{comment}{terms\ of\ the\ MIT\ license.\ A\ copy\ of\ the\ license\ can\ be\ found\ in\ the\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{"{}LICENSE"{}\ at\ the\ root\ of\ this\ distribution.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mimalloc_8h}{mimalloc.h}}"{}}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h}{mimalloc/internal.h}}"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{prim_8h}{mimalloc/prim.h}}"{}}\ \ \ \ \textcolor{comment}{//\ \_mi\_prim\_random\_buf}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00012\ \textcolor{comment}{We\ use\ our\ own\ PRNG\ to\ keep\ predictable\ performance\ of\ random\ number\ generation}}
+\DoxyCodeLine{00013\ \textcolor{comment}{and\ to\ avoid\ implementations\ that\ use\ a\ lock.\ We\ only\ use\ the\ OS\ provided}}
+\DoxyCodeLine{00014\ \textcolor{comment}{random\ source\ to\ initialize\ the\ initial\ seeds.\ Since\ we\ do\ not\ need\ ultimate}}
+\DoxyCodeLine{00015\ \textcolor{comment}{performance\ but\ we\ do\ rely\ on\ the\ security\ (for\ secret\ cookies\ in\ secure\ mode)}}
+\DoxyCodeLine{00016\ \textcolor{comment}{we\ use\ a\ cryptographically\ secure\ generator\ (chacha20).}}
+\DoxyCodeLine{00017\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#define\ MI\_CHACHA\_ROUNDS\ (20)\ \ \ }\textcolor{comment}{//\ perhaps\ use\ 12\ for\ better\ performance?}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00023\ \textcolor{comment}{Chacha20\ implementation\ as\ the\ original\ algorithm\ with\ a\ 64-\/bit\ nonce}}
+\DoxyCodeLine{00024\ \textcolor{comment}{and\ counter:\ https://en.wikipedia.org/wiki/Salsa20}}
+\DoxyCodeLine{00025\ \textcolor{comment}{The\ input\ matrix\ has\ sixteen\ 32-\/bit\ values:}}
+\DoxyCodeLine{00026\ \textcolor{comment}{Position\ \ 0\ to\ \ 3:\ constant\ key}}
+\DoxyCodeLine{00027\ \textcolor{comment}{Position\ \ 4\ to\ 11:\ the\ key}}
+\DoxyCodeLine{00028\ \textcolor{comment}{Position\ 12\ to\ 13:\ the\ counter.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{Position\ 14\ to\ 15:\ the\ nonce.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{}}
+\DoxyCodeLine{00031\ \textcolor{comment}{The\ implementation\ uses\ regular\ C\ code\ which\ compiles\ very\ well\ on\ modern\ compilers.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{(gcc\ x64\ has\ no\ register\ spills,\ and\ clang\ 6+\ uses\ SSE\ instructions)}}
+\DoxyCodeLine{00033\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[16],\ \textcolor{keywordtype}{size\_t}\ a,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ \textcolor{keywordtype}{size\_t}\ c,\ \textcolor{keywordtype}{size\_t}\ d)\ \{}
+\DoxyCodeLine{00036\ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[a]\ +=\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}];\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[d]\ =\ \mbox{\hyperlink{bits_8h_a54b39737c07063eda533e284d0300d1b}{mi\_rotl32}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[d]\ \string^\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[a],\ 16);}
+\DoxyCodeLine{00037\ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[c]\ +=\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[d];\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}]\ =\ \mbox{\hyperlink{bits_8h_a54b39737c07063eda533e284d0300d1b}{mi\_rotl32}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}]\ \string^\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[c],\ 12);}
+\DoxyCodeLine{00038\ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[a]\ +=\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}];\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[d]\ =\ \mbox{\hyperlink{bits_8h_a54b39737c07063eda533e284d0300d1b}{mi\_rotl32}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[d]\ \string^\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[a],\ 8);}
+\DoxyCodeLine{00039\ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[c]\ +=\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[d];\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}]\ =\ \mbox{\hyperlink{bits_8h_a54b39737c07063eda533e284d0300d1b}{mi\_rotl32}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}]\ \string^\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[c],\ 7);}
+\DoxyCodeLine{00040\ \}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_ac7c3361c50bd6885f2fa95dbd8446b4b}{chacha\_block}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx)}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \textcolor{comment}{//\ scramble\ into\ \`{}x`}}
+\DoxyCodeLine{00045\ \ \ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[16];}
+\DoxyCodeLine{00046\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ 16;\ i++)\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[i]\ =\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[i];}
+\DoxyCodeLine{00048\ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{random_8c_af8df234f57e7dce3ed76b5df4017fab1}{MI\_CHACHA\_ROUNDS}};\ i\ +=\ 2)\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 0,\ 4,\ \ 8,\ 12);}
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 1,\ 5,\ \ 9,\ 13);}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 2,\ 6,\ 10,\ 14);}
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 3,\ 7,\ 11,\ 15);}
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 0,\ 5,\ 10,\ 15);}
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 1,\ 6,\ 11,\ 12);}
+\DoxyCodeLine{00056\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 2,\ 7,\ \ 8,\ 13);}
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{random_8c_a4b6bacd2f7b7850e296611f716692baa}{qround}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ 3,\ 4,\ \ 9,\ 14);}
+\DoxyCodeLine{00058\ \ \ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \textcolor{comment}{//\ add\ scrambled\ data\ to\ the\ initial\ state}}
+\DoxyCodeLine{00061\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ 16;\ i++)\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_a2521a8c031d58f5c328ac62f30a274e9}{output}}[i]\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}[i]\ +\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[i];}
+\DoxyCodeLine{00063\ \ \ \}}
+\DoxyCodeLine{00064\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_ae0250a5125e5675b6cd979bc724cf2cc}{output\_available}}\ =\ 16;}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \textcolor{comment}{//\ increment\ the\ counter\ for\ the\ next\ round}}
+\DoxyCodeLine{00067\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[12]\ +=\ 1;}
+\DoxyCodeLine{00068\ \ \ \textcolor{keywordflow}{if}\ (ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[12]\ ==\ 0)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[13]\ +=\ 1;}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{if}\ (ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[13]\ ==\ 0)\ \{\ \ \textcolor{comment}{//\ and\ keep\ increasing\ into\ the\ nonce}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[14]\ +=\ 1;}
+\DoxyCodeLine{00072\ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \}}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{static}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{random_8c_aee994349e65d0c17afc5f058382e4987}{chacha\_next32}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx)\ \{}
+\DoxyCodeLine{00077\ \ \ \textcolor{keywordflow}{if}\ (ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_ae0250a5125e5675b6cd979bc724cf2cc}{output\_available}}\ <=\ 0)\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{random_8c_ac7c3361c50bd6885f2fa95dbd8446b4b}{chacha\_block}}(ctx);}
+\DoxyCodeLine{00079\ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_ae0250a5125e5675b6cd979bc724cf2cc}{output\_available}}\ =\ 16;\ \textcolor{comment}{//\ (assign\ again\ to\ suppress\ static\ analysis\ warning)}}
+\DoxyCodeLine{00080\ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_a2521a8c031d58f5c328ac62f30a274e9}{output}}[16\ -\/\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_ae0250a5125e5675b6cd979bc724cf2cc}{output\_available}}];}
+\DoxyCodeLine{00082\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_a2521a8c031d58f5c328ac62f30a274e9}{output}}[16\ -\/\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_ae0250a5125e5675b6cd979bc724cf2cc}{output\_available}}]\ =\ 0;\ \textcolor{comment}{//\ reset\ once\ the\ data\ is\ handed\ out}}
+\DoxyCodeLine{00083\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_ae0250a5125e5675b6cd979bc724cf2cc}{output\_available}}-\/-\/;}
+\DoxyCodeLine{00084\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{random_8c_afd3f417c9b7fc24e615d80dd7cb763ad}{read32}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ idx32)\ \{}
+\DoxyCodeLine{00088\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i\ =\ 4*idx32;}
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}[i+0]\ |\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}[i+1]\ <<\ 8\ |\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}[i+2]\ <<\ 16\ |\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}[i+3]\ <<\ 24);}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_a67366410cb2bd986ff81703ec536d544}{chacha\_init}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ \mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}[32],\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ nonce)}
+\DoxyCodeLine{00093\ \{}
+\DoxyCodeLine{00094\ \ \ \textcolor{comment}{//\ since\ we\ only\ use\ chacha\ for\ randomness\ (and\ not\ encryption)\ we}}
+\DoxyCodeLine{00095\ \ \ \textcolor{comment}{//\ do\ not\ \_need\_\ to\ read\ 32-\/bit\ values\ as\ little\ endian\ but\ we\ do\ anyways}}
+\DoxyCodeLine{00096\ \ \ \textcolor{comment}{//\ just\ for\ being\ compatible\ :-\/)}}
+\DoxyCodeLine{00097\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a621a19b2339e1a1d23f8bc1a96eb3b54}{\_mi\_memzero}}(ctx,\ \textcolor{keyword}{sizeof}(*ctx));}
+\DoxyCodeLine{00098\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ 4;\ i++)\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*\ sigma\ =\ (\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)\textcolor{stringliteral}{"{}expand\ 32-\/byte\ k"{}};}
+\DoxyCodeLine{00100\ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[i]\ =\ \mbox{\hyperlink{random_8c_afd3f417c9b7fc24e615d80dd7cb763ad}{read32}}(sigma,i);}
+\DoxyCodeLine{00101\ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ 8;\ i++)\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[i\ +\ 4]\ =\ \mbox{\hyperlink{random_8c_afd3f417c9b7fc24e615d80dd7cb763ad}{read32}}(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},i);}
+\DoxyCodeLine{00104\ \ \ \}}
+\DoxyCodeLine{00105\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[12]\ =\ 0;}
+\DoxyCodeLine{00106\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[13]\ =\ 0;}
+\DoxyCodeLine{00107\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[14]\ =\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})nonce;}
+\DoxyCodeLine{00108\ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[15]\ =\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})(nonce\ >>\ 32);}
+\DoxyCodeLine{00109\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_a6263b31c27402ce6dd31e0afe1b549c9}{chacha\_split}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx,\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ nonce,\ \mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx\_new)\ \{}
+\DoxyCodeLine{00112\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a621a19b2339e1a1d23f8bc1a96eb3b54}{\_mi\_memzero}}(ctx\_new,\ \textcolor{keyword}{sizeof}(*ctx\_new));}
+\DoxyCodeLine{00113\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aced8405f24c39af46117066bb1633924}{\_mi\_memcpy}}(ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}},\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}},\ \textcolor{keyword}{sizeof}(ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}));}
+\DoxyCodeLine{00114\ \ \ ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[12]\ =\ 0;}
+\DoxyCodeLine{00115\ \ \ ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[13]\ =\ 0;}
+\DoxyCodeLine{00116\ \ \ ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[14]\ =\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})nonce;}
+\DoxyCodeLine{00117\ \ \ ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[15]\ =\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})(nonce\ >>\ 32);}
+\DoxyCodeLine{00118\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[14]\ !=\ ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[14]\ ||\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[15]\ !=\ ctx\_new-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[15]);\ \textcolor{comment}{//\ do\ not\ reuse\ nonces!}}
+\DoxyCodeLine{00119\ \ \ \mbox{\hyperlink{random_8c_ac7c3361c50bd6885f2fa95dbd8446b4b}{chacha\_block}}(ctx\_new);}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00124\ \textcolor{comment}{Random\ interface}}
+\DoxyCodeLine{00125\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00128\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ mi\_random\_is\_initialized(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx)\ \{}
+\DoxyCodeLine{00129\ \ \ \textcolor{keywordflow}{return}\ (ctx\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ \&\&\ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_aaa3a2fbc83f257ecf03bfe6544641eef}{input}}[0]\ !=\ 0);}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_a9bcf114a9df83f1ff769d84eea98d0f6}{\_mi\_random\_split}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx,\ \mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx\_new)\ \{}
+\DoxyCodeLine{00134\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(mi\_random\_is\_initialized(ctx));}
+\DoxyCodeLine{00135\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(ctx\ !=\ ctx\_new);}
+\DoxyCodeLine{00136\ \ \ \mbox{\hyperlink{random_8c_a6263b31c27402ce6dd31e0afe1b549c9}{chacha\_split}}(ctx,\ (uintptr\_t)ctx\_new\ \textcolor{comment}{/*nonce*/},\ ctx\_new);}
+\DoxyCodeLine{00137\ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ uintptr\_t\ \mbox{\hyperlink{random_8c_ae7c0ab020aad85edd43240680cc4f76e}{\_mi\_random\_next}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx)\ \{}
+\DoxyCodeLine{00140\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(mi\_random\_is\_initialized(ctx));}
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\ \ \#if\ MI\_INTPTR\_SIZE\ <=\ 4}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{random_8c_aee994349e65d0c17afc5f058382e4987}{chacha\_next32}}(ctx);}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\ \ \#elif\ MI\_INTPTR\_SIZE\ ==\ 8}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{return}\ (((uintptr\_t)\mbox{\hyperlink{random_8c_aee994349e65d0c17afc5f058382e4987}{chacha\_next32}}(ctx)\ <<\ 32)\ |\ \mbox{\hyperlink{random_8c_aee994349e65d0c17afc5f058382e4987}{chacha\_next32}}(ctx));}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\ \ \#\ error\ "{}define\ mi\_random\_next\ for\ this\ platform"{}}}
+\DoxyCodeLine{00147\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00152\ \textcolor{comment}{To\ initialize\ a\ fresh\ random\ context.}}
+\DoxyCodeLine{00153\ \textcolor{comment}{If\ we\ cannot\ get\ good\ randomness,\ we\ fall\ back\ to\ weak\ randomness\ based\ on\ a\ timer\ and\ ASLR.}}
+\DoxyCodeLine{00154\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ uintptr\_t\ \mbox{\hyperlink{random_8c_a85bf7bbd920b6b6afb84fea419ec3392}{\_mi\_os\_random\_weak}}(uintptr\_t\ extra\_seed)\ \{}
+\DoxyCodeLine{00157\ \ \ uintptr\_t\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ (uintptr\_t)\&\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a85bf7bbd920b6b6afb84fea419ec3392}{\_mi\_os\_random\_weak}}\ \string^\ extra\_seed;\ \textcolor{comment}{//\ ASLR\ makes\ the\ address\ random}}
+\DoxyCodeLine{00158\ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ \string^=\ \mbox{\hyperlink{prim_8h_a9a1effe54aac3a8c248f0eceea1d5b63}{\_mi\_prim\_clock\_now}}();}
+\DoxyCodeLine{00159\ \ \ \textcolor{comment}{//\ and\ do\ a\ few\ randomization\ steps}}
+\DoxyCodeLine{00160\ \ \ uintptr\_t\ max\ =\ ((\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ \string^\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ 17))\ \&\ 0x0F)\ +\ 1;}
+\DoxyCodeLine{00161\ \ \ \textcolor{keywordflow}{for}\ (uintptr\_t\ i\ =\ 0;\ i\ <\ max;\ i++)\ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aed665df96f860a0ef89cc82e538df873}{\_mi\_random\_shuffle}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00163\ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ !=\ 0);}
+\DoxyCodeLine{00165\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};}
+\DoxyCodeLine{00166\ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_ab23662b29a587205a8f597fa5a2e1de6}{mi\_random\_init\_ex}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx,\ \textcolor{keywordtype}{bool}\ use\_weak)\ \{}
+\DoxyCodeLine{00169\ \ \ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ \mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}[32];}
+\DoxyCodeLine{00170\ \ \ \textcolor{keywordflow}{if}\ (use\_weak\ ||\ !\mbox{\hyperlink{prim_8h_a4d9172e2503d3616115ff0bc8a6a908d}{\_mi\_prim\_random\_buf}}(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})))\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ if\ we\ fail\ to\ get\ random\ data\ from\ the\ OS,\ we\ fall\ back\ to\ a}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ weak\ random\ source\ based\ on\ the\ current\ time}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\ \ \ \ \#if\ !defined(\_\_wasi\_\_)}}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{if}\ (!use\_weak)\ \{\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}unable\ to\ use\ secure\ randomness\(\backslash\)n"{}});\ \}}
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00176\ \ \ \ \ uintptr\_t\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{random_8c_a85bf7bbd920b6b6afb84fea419ec3392}{\_mi\_os\_random\_weak}}(0);}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ 8;\ i++)\ \{\ \ \textcolor{comment}{//\ key\ is\ eight\ 32-\/bit\ words.}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aed665df96f860a0ef89cc82e538df873}{\_mi\_random\_shuffle}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ ((\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}*)\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})[i]\ =\ (\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}})\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};}
+\DoxyCodeLine{00180\ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_a75dae3593d850880ba00dbedb3d23186}{weak}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00182\ \ \ \}}
+\DoxyCodeLine{00183\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_a75dae3593d850880ba00dbedb3d23186}{weak}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00185\ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \mbox{\hyperlink{random_8c_a67366410cb2bd986ff81703ec536d544}{chacha\_init}}(ctx,\ \mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ (uintptr\_t)ctx\ \textcolor{comment}{/*nonce*/}\ );}
+\DoxyCodeLine{00187\ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_aca9dc8a900f1b727e326063778b2eee1}{\_mi\_random\_init}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}*\ ctx)\ \{}
+\DoxyCodeLine{00190\ \ \ \mbox{\hyperlink{random_8c_ab23662b29a587205a8f597fa5a2e1de6}{mi\_random\_init\_ex}}(ctx,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00191\ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_a6bfdbdbf180aa56ff5697e0f2e3ca49a}{\_mi\_random\_init\_weak}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}\ *\ ctx)\ \{}
+\DoxyCodeLine{00194\ \ \ \mbox{\hyperlink{random_8c_ab23662b29a587205a8f597fa5a2e1de6}{mi\_random\_init\_ex}}(ctx,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{random_8c_a19b59fe73675f35bbb0973e44a08175e}{\_mi\_random\_reinit\_if\_weak}}(\mbox{\hyperlink{types_8h_a31cfd49f9f6f9e40f1a46c9879203e71}{mi\_random\_ctx\_t}}\ *\ ctx)\ \{}
+\DoxyCodeLine{00198\ \ \ \textcolor{keywordflow}{if}\ (ctx-\/>\mbox{\hyperlink{structmi__random__cxt__s_a75dae3593d850880ba00dbedb3d23186}{weak}})\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{random_8c_aca9dc8a900f1b727e326063778b2eee1}{\_mi\_random\_init}}(ctx);}
+\DoxyCodeLine{00200\ \ \ \}}
+\DoxyCodeLine{00201\ \}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00204\ \textcolor{comment}{test\ vectors\ from\ <https://tools.ietf.org/html/rfc8439>}}
+\DoxyCodeLine{00205\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00206\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00207\ \textcolor{comment}{static\ bool\ array\_equals(uint32\_t*\ x,\ uint32\_t*\ y,\ size\_t\ n)\ \{}}
+\DoxyCodeLine{00208\ \textcolor{comment}{\ \ for\ (size\_t\ i\ =\ 0;\ i\ <\ n;\ i++)\ \{}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ \ \ if\ (x[i]\ !=\ y[i])\ return\ false;}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ \}}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ return\ true;}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\}}}
+\DoxyCodeLine{00213\ \textcolor{comment}{static\ void\ chacha\_test(void)}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\{}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ uint32\_t\ x[4]\ =\ \{\ 0x11111111,\ 0x01020304,\ 0x9b8d6f43,\ 0x01234567\ \};}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ uint32\_t\ x\_out[4]\ =\ \{\ 0xea2a92f4,\ 0xcb1cf8ce,\ 0x4581472e,\ 0x5881c4bb\ \};}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ qround(x,\ 0,\ 1,\ 2,\ 3);}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ mi\_assert\_internal(array\_equals(x,\ x\_out,\ 4));}}
+\DoxyCodeLine{00219\ \textcolor{comment}{}}
+\DoxyCodeLine{00220\ \textcolor{comment}{\ \ uint32\_t\ y[16]\ =\ \{}}
+\DoxyCodeLine{00221\ \textcolor{comment}{\ \ \ \ \ \ \ 0x879531e0,\ \ 0xc5ecf37d,\ \ 0x516461b1,\ \ 0xc9a62f8a,}}
+\DoxyCodeLine{00222\ \textcolor{comment}{\ \ \ \ \ \ \ 0x44c20ef3,\ \ 0x3390af7f,\ \ 0xd9fc690b,\ \ 0x2a5f714c,}}
+\DoxyCodeLine{00223\ \textcolor{comment}{\ \ \ \ \ \ \ 0x53372767,\ \ 0xb00a5631,\ \ 0x974c541a,\ \ 0x359e9963,}}
+\DoxyCodeLine{00224\ \textcolor{comment}{\ \ \ \ \ \ \ 0x5c971061,\ \ 0x3d631689,\ \ 0x2098d9d6,\ \ 0x91dbd320\ \};}}
+\DoxyCodeLine{00225\ \textcolor{comment}{\ \ uint32\_t\ y\_out[16]\ =\ \{}}
+\DoxyCodeLine{00226\ \textcolor{comment}{\ \ \ \ \ \ \ 0x879531e0,\ \ 0xc5ecf37d,\ \ 0xbdb886dc,\ \ 0xc9a62f8a,}}
+\DoxyCodeLine{00227\ \textcolor{comment}{\ \ \ \ \ \ \ 0x44c20ef3,\ \ 0x3390af7f,\ \ 0xd9fc690b,\ \ 0xcfacafd2,}}
+\DoxyCodeLine{00228\ \textcolor{comment}{\ \ \ \ \ \ \ 0xe46bea80,\ \ 0xb00a5631,\ \ 0x974c541a,\ \ 0x359e9963,}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ \ \ \ \ 0x5c971061,\ \ 0xccc07c79,\ \ 0x2098d9d6,\ \ 0x91dbd320\ \};}}
+\DoxyCodeLine{00230\ \textcolor{comment}{\ \ qround(y,\ 2,\ 7,\ 8,\ 13);}}
+\DoxyCodeLine{00231\ \textcolor{comment}{\ \ mi\_assert\_internal(array\_equals(y,\ y\_out,\ 16));}}
+\DoxyCodeLine{00232\ \textcolor{comment}{}}
+\DoxyCodeLine{00233\ \textcolor{comment}{\ \ mi\_random\_ctx\_t\ r\ =\ \{}}
+\DoxyCodeLine{00234\ \textcolor{comment}{\ \ \ \ \{\ 0x61707865,\ 0x3320646e,\ 0x79622d32,\ 0x6b206574,}}
+\DoxyCodeLine{00235\ \textcolor{comment}{\ \ \ \ \ \ 0x03020100,\ 0x07060504,\ 0x0b0a0908,\ 0x0f0e0d0c,}}
+\DoxyCodeLine{00236\ \textcolor{comment}{\ \ \ \ \ \ 0x13121110,\ 0x17161514,\ 0x1b1a1918,\ 0x1f1e1d1c,}}
+\DoxyCodeLine{00237\ \textcolor{comment}{\ \ \ \ \ \ 0x00000001,\ 0x09000000,\ 0x4a000000,\ 0x00000000\ \},}}
+\DoxyCodeLine{00238\ \textcolor{comment}{\ \ \ \ \{0\},}}
+\DoxyCodeLine{00239\ \textcolor{comment}{\ \ \ \ 0}}
+\DoxyCodeLine{00240\ \textcolor{comment}{\ \ \};}}
+\DoxyCodeLine{00241\ \textcolor{comment}{\ \ uint32\_t\ r\_out[16]\ =\ \{}}
+\DoxyCodeLine{00242\ \textcolor{comment}{\ \ \ \ \ \ \ 0xe4e7f110,\ 0x15593bd1,\ 0x1fdd0f50,\ 0xc47120a3,}}
+\DoxyCodeLine{00243\ \textcolor{comment}{\ \ \ \ \ \ \ 0xc7f4d1c7,\ 0x0368c033,\ 0x9aaa2204,\ 0x4e6cd4c3,}}
+\DoxyCodeLine{00244\ \textcolor{comment}{\ \ \ \ \ \ \ 0x466482d2,\ 0x09aa9f07,\ 0x05d7c214,\ 0xa2028bd9,}}
+\DoxyCodeLine{00245\ \textcolor{comment}{\ \ \ \ \ \ \ 0xd19c12b5,\ 0xb94e16de,\ 0xe883d0cb,\ 0x4e3c50a2\ \};}}
+\DoxyCodeLine{00246\ \textcolor{comment}{\ \ chacha\_block(\&r);}}
+\DoxyCodeLine{00247\ \textcolor{comment}{\ \ mi\_assert\_internal(array\_equals(r.output,\ r\_out,\ 16));}}
+\DoxyCodeLine{00248\ \textcolor{comment}{\}}}
+\DoxyCodeLine{00249\ \textcolor{comment}{*/}}
+
+\end{DoxyCode}

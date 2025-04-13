@@ -1,0 +1,4 @@
+var structluisa_1_1compute_1_1_external_callable_3_01_ret_07_args_8_8_8_08_4_1_1_usage_of_3_01_t_01_6_01_4 =
+[
+    [ "value", "structluisa_1_1compute_1_1_external_callable_3_01_ret_07_args_8_8_8_08_4_1_1_usage_of_3_01_t_01_6_01_4.html#a9cc9a14dcf7ab8855ac232b9a79f7f43", null ]
+];

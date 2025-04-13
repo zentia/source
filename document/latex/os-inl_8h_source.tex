@@ -1,0 +1,612 @@
+\doxysection{os-\/inl.h}
+\hypertarget{os-inl_8h_source}{}\label{os-inl_8h_source}\index{runtime/spdlog/include/spdlog/details/os-\/inl.h@{runtime/spdlog/include/spdlog/details/os-\/inl.h}}
+\mbox{\hyperlink{os-inl_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright(c)\ 2015-\/present,\ Gabi\ Melman\ \&\ spdlog\ contributors.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Distributed\ under\ the\ MIT\ License\ (http://opensource.org/licenses/MIT)}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ SPDLOG\_HEADER\_ONLY}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\ \ \ \ \#include\ <\mbox{\hyperlink{details_2os_8h}{spdlog/details/os.h}}>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{common_8h}{spdlog/common.h}}>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <array>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <chrono>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <ctime>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <sys/stat.h>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <sys/types.h>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\ \ \ \ \#include\ <\mbox{\hyperlink{windows__include_8h}{spdlog/details/windows\_include.h}}>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\ \ \ \ \#include\ <fileapi.h>}\ \ \textcolor{comment}{//\ for\ FlushFileBuffers}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\ \ \ \ \#include\ <io.h>}\ \ \ \ \ \ \ \textcolor{comment}{//\ for\ \_get\_osfhandle,\ \_isatty,\ \_fileno}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\ \ \ \ \#include\ <process.h>}\ \ \textcolor{comment}{//\ for\ \_get\_pid}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_MINGW32\_\_}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <share.h>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(SPDLOG\_WCHAR\_TO\_UTF8\_SUPPORT)\ ||\ defined(SPDLOG\_WCHAR\_FILENAMES)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <cassert>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <limits>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\ \ \ \ \#include\ <direct.h>}\ \ \textcolor{comment}{//\ for\ \_mkdir/\_wmkdir}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ unix}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ \#include\ <fcntl.h>}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \#include\ <unistd.h>}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_linux\_\_}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <sys/syscall.h>}\ \ \textcolor{comment}{//Use\ gettid()\ syscall\ under\ linux\ to\ get\ thread\ id}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\ \ \ \ \#elif\ defined(\_AIX)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <pthread.h>}\ \ \textcolor{comment}{//\ for\ pthread\_getthrds\_np}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ \#elif\ defined(\_\_DragonFly\_\_)\ ||\ defined(\_\_FreeBSD\_\_)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <pthread\_np.h>}\ \ \textcolor{comment}{//\ for\ pthread\_getthreadid\_np}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \ \ \#elif\ defined(\_\_NetBSD\_\_)}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <lwp.h>}\ \ \textcolor{comment}{//\ for\ \_lwp\_self}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \ \ \#elif\ defined(\_\_sun)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <thread.h>}\ \ \textcolor{comment}{//\ for\ thr\_self}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ unix}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#if\ defined\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\ \ \ \ \#include\ <AvailabilityMacros.h>}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#ifndef\ \_\_has\_feature\ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ Clang\ -\/\ feature\ checking\ macros.}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\ \ \ \ \#define\ \_\_has\_feature(x)\ 0\ \ }\textcolor{comment}{//\ Compatibility\ with\ non-\/clang\ compilers.}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog}{spdlog}}\ \{}
+\DoxyCodeLine{00073\ \textcolor{keyword}{namespace\ }details\ \{}
+\DoxyCodeLine{00074\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog_1_1details_1_1os}{os}}\ \{}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ spdlog::log\_clock::time\_point\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_aa8e51fe363f1c951f14fffea69ab19ca}{now}}()\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#if\ defined\ \_\_linux\_\_\ \&\&\ defined\ SPDLOG\_CLOCK\_COARSE}}
+\DoxyCodeLine{00078\ \ \ \ \ timespec\ ts;}
+\DoxyCodeLine{00079\ \ \ \ \ ::clock\_gettime(CLOCK\_REALTIME\_COARSE,\ \&ts);}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordflow}{return}\ std::chrono::time\_point<log\_clock,\ typename\ log\_clock::duration>(}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ std::chrono::duration\_cast<typename\ log\_clock::duration>(}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ std::chrono::seconds(ts.tv\_sec)\ +\ std::chrono::nanoseconds(ts.tv\_nsec)));}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{return}\ log\_clock::now();}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00087\ \}}
+\DoxyCodeLine{00088\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ std::tm\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ab090524da42b398917c5f90b3919599a}{localtime}}(\textcolor{keyword}{const}\ std::time\_t\ \&time\_tt)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00090\ \ \ \ \ std::tm\ tm;}
+\DoxyCodeLine{00091\ \ \ \ \ ::localtime\_s(\&tm,\ \&time\_tt);}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00093\ \ \ \ \ std::tm\ tm;}
+\DoxyCodeLine{00094\ \ \ \ \ ::localtime\_r(\&time\_tt,\ \&tm);}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{return}\ tm;}
+\DoxyCodeLine{00097\ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ std::tm\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ab090524da42b398917c5f90b3919599a}{localtime}}()\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ std::time\_t\ now\_t\ =\ ::time(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ab090524da42b398917c5f90b3919599a}{localtime}}(now\_t);}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ std::tm\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ae2fdac746f03d004e2839c87177fc35a}{gmtime}}(\textcolor{keyword}{const}\ std::time\_t\ \&time\_tt)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00106\ \ \ \ \ std::tm\ tm;}
+\DoxyCodeLine{00107\ \ \ \ \ ::gmtime\_s(\&tm,\ \&time\_tt);}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00109\ \ \ \ \ std::tm\ tm;}
+\DoxyCodeLine{00110\ \ \ \ \ ::gmtime\_r(\&time\_tt,\ \&tm);}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordflow}{return}\ tm;}
+\DoxyCodeLine{00113\ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ std::tm\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ae2fdac746f03d004e2839c87177fc35a}{gmtime}}()\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ std::time\_t\ now\_t\ =\ ::time(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ae2fdac746f03d004e2839c87177fc35a}{gmtime}}(now\_t);}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ fopen\_s\ on\ non\ windows\ for\ writing}}
+\DoxyCodeLine{00121\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a276daad8ea206e618d56ff6f01914044}{fopen\_s}}(FILE\ **fp,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1e71d9c196e4683cc06c4b54d53f7ef5}{mode}})\ \{}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ SPDLOG\_WCHAR\_FILENAMES}}
+\DoxyCodeLine{00124\ \ \ \ \ *fp\ =\ ::\_wfsopen((filename.c\_str()),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1e71d9c196e4683cc06c4b54d53f7ef5}{mode}}.c\_str(),\ \_SH\_DENYNO);}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00126\ \ \ \ \ *fp\ =\ ::\_fsopen((filename.c\_str()),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1e71d9c196e4683cc06c4b54d53f7ef5}{mode}}.c\_str(),\ \_SH\_DENYNO);}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(SPDLOG\_PREVENT\_CHILD\_FD)}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{keywordflow}{if}\ (*fp\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ file\_handle\ =\ \textcolor{keyword}{reinterpret\_cast<}HANDLE\textcolor{keyword}{>}(\_get\_osfhandle(::\_fileno(*fp)));}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!::SetHandleInformation(file\_handle,\ HANDLE\_FLAG\_INHERIT,\ 0))\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ ::fclose(*fp);}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ *fp\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00135\ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ unix}}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(SPDLOG\_PREVENT\_CHILD\_FD)}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ mode\_flag\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1e71d9c196e4683cc06c4b54d53f7ef5}{mode}}\ ==\ \mbox{\hyperlink{common_8h_a63d60ea1c1a925d3db13864d37bd2da2}{SPDLOG\_FILENAME\_T}}(\textcolor{stringliteral}{"{}ab"{}})\ ?\ O\_APPEND\ :\ O\_TRUNC;}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ fd\ =}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ ::open((filename.c\_str()),\ O\_CREAT\ |\ O\_WRONLY\ |\ O\_CLOEXEC\ |\ mode\_flag,\ mode\_t(0644));}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keywordflow}{if}\ (fd\ ==\ -\/1)\ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ \ \ \ \ *fp\ =\ ::fdopen(fd,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1e71d9c196e4683cc06c4b54d53f7ef5}{mode}}.c\_str());}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{if}\ (*fp\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ ::close(fd);}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00150\ \ \ \ \ *fp\ =\ ::fopen((filename.c\_str()),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1e71d9c196e4683cc06c4b54d53f7ef5}{mode}}.c\_str());}
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00152\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{return}\ *fp\ ==\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00155\ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a4ef47eb60fab317f746fd6c8a2bc30c2}{remove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\#if\ defined(\_WIN32)\ \&\&\ defined(SPDLOG\_WCHAR\_FILENAMES)}}
+\DoxyCodeLine{00159\ \ \ \ \ return\ ::\_wremove(filename.c\_str());}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{return}\ std::remove(filename.c\_str());}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00163\ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a357d8489221eb20991038b1ecd00e186}{remove\_if\_exists}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adf9dc0aae835a2e5e3076f3582a42868}{path\_exists}}(filename)\ ?\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a4ef47eb60fab317f746fd6c8a2bc30c2}{remove}}(filename)\ :\ 0;}
+\DoxyCodeLine{00167\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_aa11fb3661265ad941f79081777afd86c}{rename}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename2)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\#if\ defined(\_WIN32)\ \&\&\ defined(SPDLOG\_WCHAR\_FILENAMES)}}
+\DoxyCodeLine{00171\ \ \ \ \ return\ ::\_wrename(filename1.c\_str(),\ filename2.c\_str());}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordflow}{return}\ std::rename(filename1.c\_str(),\ filename2.c\_str());}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00175\ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \textcolor{comment}{//\ Return\ true\ if\ path\ exists\ (file\ or\ directory)}}
+\DoxyCodeLine{00178\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adf9dc0aae835a2e5e3076f3582a42868}{path\_exists}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keyword}{struct\ }\_stat\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}};}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ SPDLOG\_WCHAR\_FILENAMES}}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{return}\ (::\_wstat(filename.c\_str(),\ \&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}})\ ==\ 0);}
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordflow}{return}\ (::\_stat(filename.c\_str(),\ \&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}})\ ==\ 0);}
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00186\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ common\ linux/unix\ all\ have\ the\ stat\ system\ call}}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keyword}{struct\ }stat\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}};}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordflow}{return}\ (::stat(filename.c\_str(),\ \&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}})\ ==\ 0);}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00190\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\#ifdef\ \_MSC\_VER}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ avoid\ warning\ about\ unreachable\ statement\ at\ the\ end\ of\ filesize()}}
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ warning(push)}}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ warning(disable\ :\ 4702)}}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{comment}{//\ Return\ file\ size\ according\ to\ open\ FILE*\ object}}
+\DoxyCodeLine{00199\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a37ff3adb558f4b7ce30bf048e913e076}{filesize}}(FILE\ *f)\ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordflow}{if}\ (f\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(\textcolor{stringliteral}{"{}Failed\ getting\ file\ size.\ fd\ is\ null"{}});}
+\DoxyCodeLine{00202\ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\#if\ defined(\_WIN32)\ \&\&\ !defined(\_\_CYGWIN\_\_)}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{int}\ fd\ =\ ::\_fileno(f);}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_WIN64)\ \ }\textcolor{comment}{//\ 64\ bits}}
+\DoxyCodeLine{00206\ \ \ \ \ \_\_int64\ ret\ =\ ::\_filelengthi64(fd);}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ >=\ 0)\ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(ret);}
+\DoxyCodeLine{00209\ \ \ \ \ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\ \ \ \ \#else\ \ }\textcolor{comment}{//\ windows\ 32\ bits}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{long}\ ret\ =\ ::\_filelength(fd);}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordflow}{if}\ (ret\ >=\ 0)\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(ret);}
+\DoxyCodeLine{00215\ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ unix}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{//\ OpenBSD\ and\ AIX\ doesn't\ compile\ with\ ::\ before\ the\ fileno(..)}}
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_OpenBSD\_\_)\ ||\ defined(\_AIX)}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordtype}{int}\ fd\ =\ fileno(f);}
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{int}\ fd\ =\ ::fileno(f);}
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{comment}{//\ 64\ bits(but\ not\ in\ osx,\ linux/musl\ or\ cygwin,\ where\ fstat64\ is\ deprecated)}}
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\ \ \ \ \#if\ ((defined(\_\_linux\_\_)\ \&\&\ defined(\_\_GLIBC\_\_))\ ||\ defined(\_\_sun)\ ||\ defined(\_AIX))\ \&\&\ \(\backslash\)}}
+\DoxyCodeLine{00227\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (defined(\_\_LP64\_\_)\ ||\ defined(\_LP64))}}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keyword}{struct\ }stat64\ st;}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{if}\ (::fstat64(fd,\ \&st)\ ==\ 0)\ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(st.st\_size);}
+\DoxyCodeLine{00231\ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \textcolor{preprocessor}{\ \ \ \ \#else\ \ }\textcolor{comment}{//\ other\ unix\ or\ linux\ 32\ bits\ or\ cygwin}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{struct\ }stat\ st;}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordflow}{if}\ (::fstat(fd,\ \&st)\ ==\ 0)\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(st.st\_size);}
+\DoxyCodeLine{00236\ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00239\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(\textcolor{stringliteral}{"{}Failed\ getting\ file\ size\ from\ fd"{}},\ errno);}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;\ \ \textcolor{comment}{//\ will\ not\ be\ reached.}}
+\DoxyCodeLine{00241\ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\#ifdef\ \_MSC\_VER}}
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ warning(pop)}}
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{comment}{//\ Return\ utc\ offset\ in\ minutes\ or\ throw\ spdlog\_ex\ on\ failure}}
+\DoxyCodeLine{00248\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a4159ab79ba30eae7397c90ca78df2494}{utc\_minutes\_offset}}(\textcolor{keyword}{const}\ std::tm\ \&tm)\ \{}
+\DoxyCodeLine{00249\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00250\ \textcolor{preprocessor}{\ \ \ \ \#if\ \_WIN32\_WINNT\ <\ \_WIN32\_WINNT\_WS08}}
+\DoxyCodeLine{00251\ \ \ \ \ TIME\_ZONE\_INFORMATION\ tzinfo;}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keyword}{auto}\ rv\ =\ ::GetTimeZoneInformation(\&tzinfo);}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00254\ \ \ \ \ DYNAMIC\_TIME\_ZONE\_INFORMATION\ tzinfo;}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keyword}{auto}\ rv\ =\ ::GetDynamicTimeZoneInformation(\&tzinfo);}
+\DoxyCodeLine{00256\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordflow}{if}\ (rv\ ==\ TIME\_ZONE\_ID\_INVALID)\ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(\textcolor{stringliteral}{"{}Failed\ getting\ timezone\ info.\ "{}},\ errno);}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ -\/tzinfo.Bias;}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordflow}{if}\ (tm.tm\_isdst)\ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ -\/=\ tzinfo.DaylightBias;}
+\DoxyCodeLine{00262\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ -\/=\ tzinfo.StandardBias;}
+\DoxyCodeLine{00264\ \ \ \ \ \}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}};}
+\DoxyCodeLine{00266\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(sun)\ ||\ defined(\_\_sun)\ ||\ defined(\_AIX)\ ||\ \(\backslash\)}}
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (defined(\_\_NEWLIB\_\_)\ \&\&\ !defined(\_\_TM\_GMTOFF))\ ||\ \ \(\backslash\)}}
+\DoxyCodeLine{00270\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ (!defined(\_BSD\_SOURCE)\ \&\&\ !defined(\_GNU\_SOURCE))}}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ 'tm\_gmtoff'\ field\ is\ BSD\ extension\ and\ it's\ missing\ on\ SunOS/Solaris}}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keyword}{struct\ }helper\ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ calculate\_gmt\_offset(\textcolor{keyword}{const}\ std::tm\ \&localtm\ =\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ad9ad59508eb2351fbcb524bcf015b03f}{details::os::localtime}}(),}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::tm\ \&gmtm\ =\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a3305290d454b1c5162cc8a629290cbdd}{details::os::gmtime}}())\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ local\_year\ =\ localtm.tm\_year\ +\ (1900\ -\/\ 1);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ gmt\_year\ =\ gmtm.tm\_year\ +\ (1900\ -\/\ 1);}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacespdlog_1_1details_a5a7be08dfeaa6df919a3c3f59a978563}{days}}\ =\ (}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ difference\ in\ day\ of\ year}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ localtm.tm\_yday\ -\/}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gmtm.tm\_yday}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ +\ intervening\ leap\ days}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ ((local\_year\ >>\ 2)\ -\/\ (gmt\_year\ >>\ 2))\ -\/\ (local\_year\ /\ 100\ -\/\ gmt\_year\ /\ 100)\ +}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((local\_year\ /\ 100\ >>\ 2)\ -\/\ (gmt\_year\ /\ 100\ >>\ 2))}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ +\ difference\ in\ years\ *\ 365\ */}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\textcolor{keyword}{>}(local\_year\ -\/\ gmt\_year)\ *\ 365);}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ hours\ =\ (24\ *\ \mbox{\hyperlink{namespacespdlog_1_1details_a5a7be08dfeaa6df919a3c3f59a978563}{days}})\ +\ (localtm.tm\_hour\ -\/\ gmtm.tm\_hour);}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ mins\ =\ (60\ *\ hours)\ +\ (localtm.tm\_min\ -\/\ gmtm.tm\_min);}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\ secs\ =\ (60\ *\ mins)\ +\ (localtm.tm\_sec\ -\/\ gmtm.tm\_sec);}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ secs;}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ \ \ \ \ \};}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keyword}{auto}\ offset\_seconds\ =\ helper::calculate\_gmt\_offset(tm);}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{auto}\ offset\_seconds\ =\ tm.tm\_gmtoff;}
+\DoxyCodeLine{00301\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(offset\_seconds\ /\ 60);}
+\DoxyCodeLine{00304\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00305\ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ \textcolor{comment}{//\ Return\ current\ thread\ id\ as\ size\_t}}
+\DoxyCodeLine{00308\ \textcolor{comment}{//\ It\ exists\ because\ the\ std::this\_thread::get\_id()\ is\ much\ slower(especially}}
+\DoxyCodeLine{00309\ \textcolor{comment}{//\ under\ VS\ 2013)}}
+\DoxyCodeLine{00310\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a782b447469972ff6c179a150532161c8}{\_thread\_id}}()\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00311\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(::GetCurrentThreadId());}
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\#elif\ defined(\_\_linux\_\_)}}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_ANDROID\_\_)\ \&\&\ defined(\_\_ANDROID\_API\_\_)\ \&\&\ (\_\_ANDROID\_API\_\_\ <\ 21)}}
+\DoxyCodeLine{00315\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ SYS\_gettid\ \_\_NR\_gettid}}
+\DoxyCodeLine{00316\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(::syscall(SYS\_gettid));}
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\#elif\ defined(\_AIX)}}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keyword}{struct\ }\_\_pthrdsinfo\ buf;}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keywordtype}{int}\ reg\_size\ =\ 0;}
+\DoxyCodeLine{00321\ \ \ \ \ pthread\_t\ pt\ =\ pthread\_self();}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keywordtype}{int}\ retval\ =\ pthread\_getthrds\_np(\&pt,\ PTHRDSINFO\_QUERY\_TID,\ \&buf,\ \textcolor{keyword}{sizeof}(buf),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \&reg\_size);}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordtype}{int}\ tid\ =\ (!retval)\ ?\ buf.\_\_pi\_tid\ :\ 0;}
+\DoxyCodeLine{00324\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(tid);}
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\#elif\ defined(\_\_DragonFly\_\_)\ ||\ defined(\_\_FreeBSD\_\_)}}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(::pthread\_getthreadid\_np());}
+\DoxyCodeLine{00327\ \textcolor{preprocessor}{\#elif\ defined(\_\_NetBSD\_\_)}}
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(::\_lwp\_self());}
+\DoxyCodeLine{00329\ \textcolor{preprocessor}{\#elif\ defined(\_\_OpenBSD\_\_)}}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(::getthrid());}
+\DoxyCodeLine{00331\ \textcolor{preprocessor}{\#elif\ defined(\_\_sun)}}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(::thr\_self());}
+\DoxyCodeLine{00333\ \textcolor{preprocessor}{\#elif\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00334\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ tid;}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ There\ is\ no\ pthread\_threadid\_np\ prior\ to\ Mac\ OS\ X\ 10.6,\ and\ it\ is\ not\ supported\ on\ any\ PPC,}}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{comment}{//\ including\ 10.6.8\ Rosetta.\ \_\_POWERPC\_\_\ is\ Apple-\/specific\ define\ encompassing\ ppc\ and\ ppc64.}}
+\DoxyCodeLine{00337\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ MAC\_OS\_X\_VERSION\_MAX\_ALLOWED}}
+\DoxyCodeLine{00338\ \ \ \ \ \{}
+\DoxyCodeLine{00339\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ (MAC\_OS\_X\_VERSION\_MAX\_ALLOWED\ <\ 1060)\ ||\ defined(\_\_POWERPC\_\_)}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ tid\ =\ pthread\_mach\_thread\_np(pthread\_self());}
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#elif\ MAC\_OS\_X\_VERSION\_MIN\_REQUIRED\ <\ 1060}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\&pthread\_threadid\_np)\ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ pthread\_threadid\_np(\textcolor{keyword}{nullptr},\ \&tid);}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ tid\ =\ pthread\_mach\_thread\_np(pthread\_self());}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00347\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ pthread\_threadid\_np(\textcolor{keyword}{nullptr},\ \&tid);}
+\DoxyCodeLine{00349\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00350\ \ \ \ \ \}}
+\DoxyCodeLine{00351\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00352\ \ \ \ \ pthread\_threadid\_np(\textcolor{keyword}{nullptr},\ \&tid);}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(tid);}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ Default\ to\ standard\ C++11\ (other\ Unix)}}
+\DoxyCodeLine{00356\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(std::hash<std::thread::id>()(std::this\_thread::get\_id()));}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00358\ \}}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \textcolor{comment}{//\ Return\ current\ thread\ id\ as\ size\_t\ (from\ thread\ local\ storage)}}
+\DoxyCodeLine{00361\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_acc534524a0a282483dbefe5048517339}{thread\_id}}()\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00362\ \textcolor{preprocessor}{\#if\ defined(SPDLOG\_NO\_TLS)}}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a782b447469972ff6c179a150532161c8}{\_thread\_id}}();}
+\DoxyCodeLine{00364\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ cache\ thread\ id\ in\ tls}}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{thread\_local}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ tid\ =\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a782b447469972ff6c179a150532161c8}{\_thread\_id}}();}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keywordflow}{return}\ tid;}
+\DoxyCodeLine{00367\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00368\ \}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \textcolor{comment}{//\ This\ is\ avoid\ msvc\ issue\ in\ sleep\_for\ that\ happens\ if\ the\ clock\ changes.}}
+\DoxyCodeLine{00371\ \textcolor{comment}{//\ See\ https://github.com/gabime/spdlog/issues/609}}
+\DoxyCodeLine{00372\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_af2da5579c7ea1726de7699f3fbf3afb6}{sleep\_for\_millis}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ milliseconds)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\#if\ defined(\_WIN32)}}
+\DoxyCodeLine{00374\ \ \ \ \ ::Sleep(milliseconds);}
+\DoxyCodeLine{00375\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00376\ \ \ \ \ std::this\_thread::sleep\_for(std::chrono::milliseconds(milliseconds));}
+\DoxyCodeLine{00377\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00378\ \}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \textcolor{comment}{//\ wchar\ support\ for\ windows\ file\ names\ (SPDLOG\_WCHAR\_FILENAMES\ must\ be\ defined)}}
+\DoxyCodeLine{00381\ \textcolor{preprocessor}{\#if\ defined(\_WIN32)\ \&\&\ defined(SPDLOG\_WCHAR\_FILENAMES)}}
+\DoxyCodeLine{00382\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ std::string\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a1b7269cc914fd057cc37f936c5b1bf9c}{filename\_to\_str}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename)\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_a9ae6875ab28ec95e33921c45ae451633}{memory\_buf\_t}}\ buf;}
+\DoxyCodeLine{00384\ \ \ \ \ wstr\_to\_utf8buf(filename,\ buf);}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{common_8h_a3294a20c2061d1478e8bd94026d8c2cf}{SPDLOG\_BUF\_TO\_STRING}}(buf);}
+\DoxyCodeLine{00386\ \}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00388\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ std::string\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a1b7269cc914fd057cc37f936c5b1bf9c}{filename\_to\_str}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&filename)\ \{\ \textcolor{keywordflow}{return}\ filename;\ \}}
+\DoxyCodeLine{00389\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adbde86613bd4e98205cffb43184df625}{pid}}()\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacespdlog_1_1details_a9e7a73da3084fa85f7a13d92dc9533c2}{conditional\_static\_cast<int>}}(::GetCurrentProcessId());}
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacespdlog_1_1details_a9e7a73da3084fa85f7a13d92dc9533c2}{conditional\_static\_cast<int>}}(::getpid());}
+\DoxyCodeLine{00396\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00397\ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \textcolor{comment}{//\ Determine\ if\ the\ terminal\ supports\ colors}}
+\DoxyCodeLine{00400\ \textcolor{comment}{//\ Based\ on:\ https://github.com/agauniyal/rang/}}
+\DoxyCodeLine{00401\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a3e219f920ecdbad6580a11f96ba6fc1e}{is\_color\_terminal}}()\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00402\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00404\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ []()\ \{}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *env\_colorterm\_p\ =\ std::getenv(\textcolor{stringliteral}{"{}COLORTERM"{}});}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (env\_colorterm\_p\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ std::array<const\ char\ *,\ 16>\ terms\ =\ \{}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}ansi"{}},\ \textcolor{stringliteral}{"{}color"{}},\ \textcolor{stringliteral}{"{}console"{}},\ \textcolor{stringliteral}{"{}cygwin"{}},\ \textcolor{stringliteral}{"{}gnome"{}},\ \textcolor{stringliteral}{"{}konsole"{}},\ \textcolor{stringliteral}{"{}kterm"{}},\ \textcolor{stringliteral}{"{}linux"{}},\ \textcolor{stringliteral}{"{}msys"{}},}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}putty"{}},\ \textcolor{stringliteral}{"{}rxvt"{}},\ \textcolor{stringliteral}{"{}screen"{}},\ \textcolor{stringliteral}{"{}vt100"{}},\ \textcolor{stringliteral}{"{}xterm"{}},\ \textcolor{stringliteral}{"{}alacritty"{}},\ \textcolor{stringliteral}{"{}vt102"{}}\}\};}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *env\_term\_p\ =\ std::getenv(\textcolor{stringliteral}{"{}TERM"{}});}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (env\_term\_p\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::any\_of(terms.begin(),\ terms.end(),\ [\&](\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *term)\ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ return\ std::strstr(env\_term\_p,\ term)\ !=\ nullptr;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00424\ \ \ \ \ \}();}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00427\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00428\ \}}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \textcolor{comment}{//\ Determine\ if\ the\ terminal\ attached}}
+\DoxyCodeLine{00431\ \textcolor{comment}{//\ Source:\ https://github.com/agauniyal/rang/}}
+\DoxyCodeLine{00432\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a62bd411033663fea9bcfcd940ef5fddb}{in\_terminal}}(FILE\ *file)\ \mbox{\hyperlink{common_8h_a15d2dc432e6bb83beb5130be9a4ca8d6}{SPDLOG\_NOEXCEPT}}\ \{}
+\DoxyCodeLine{00433\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00434\ \ \ \ \ return\ ::\_isatty(\_fileno(file))\ !=\ 0;}
+\DoxyCodeLine{00435\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00436\ \ \ \ \ return\ ::isatty(fileno(file))\ !=\ 0;}
+\DoxyCodeLine{00437\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00438\ \}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \textcolor{preprocessor}{\#if\ (defined(SPDLOG\_WCHAR\_TO\_UTF8\_SUPPORT)\ ||\ defined(SPDLOG\_WCHAR\_FILENAMES))\ \&\&\ defined(\_WIN32)}}
+\DoxyCodeLine{00441\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{void}\ wstr\_to\_utf8buf(wstring\_view\_t\ wstr,\ \mbox{\hyperlink{namespacespdlog_a9ae6875ab28ec95e33921c45ae451633}{memory\_buf\_t}}\ \&target)\ \{}
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keywordflow}{if}\ (wstr.size()\ >\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}((std::numeric\_limits<int>::max)())\ /\ 4\ -\/\ 1)\ \{}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(\textcolor{stringliteral}{"{}UTF-\/16\ string\ is\ too\ big\ to\ be\ converted\ to\ UTF-\/8"{}});}
+\DoxyCodeLine{00444\ \ \ \ \ \}}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keywordtype}{int}\ wstr\_size\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(wstr.size());}
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{keywordflow}{if}\ (wstr\_size\ ==\ 0)\ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ target.resize(0);}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00450\ \ \ \ \ \}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{keywordtype}{int}\ result\_size\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(target.capacity());}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keywordflow}{if}\ ((wstr\_size\ +\ 1)\ *\ 4\ >\ result\_size)\ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ result\_size\ =}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ ::WideCharToMultiByte(CP\_UTF8,\ 0,\ wstr.data(),\ wstr\_size,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ 0,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00456\ \ \ \ \ \}}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \ \ \ \ \textcolor{keywordflow}{if}\ (result\_size\ >\ 0)\ \{}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ target.resize(result\_size);}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ result\_size\ =\ ::WideCharToMultiByte(CP\_UTF8,\ 0,\ wstr.data(),\ wstr\_size,\ target.data(),}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ result\_size,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\_size\ >\ 0)\ \{}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ target.resize(result\_size);}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00467\ \ \ \ \ \}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ fmt\_lib::format(\textcolor{stringliteral}{"{}WideCharToMultiByte\ failed.\ Last\ error:\ \{\}"{}},\ ::GetLastError()));}
+\DoxyCodeLine{00471\ \}}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{void}\ utf8\_to\_wstrbuf(\mbox{\hyperlink{namespacespdlog_a26388f91e439f69a068bc6774caed2b1}{string\_view\_t}}\ str,\ wmemory\_buf\_t\ \&target)\ \{}
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keywordflow}{if}\ (str.size()\ >\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}((std::numeric\_limits<int>::max)())\ -\/\ 1)\ \{}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(\textcolor{stringliteral}{"{}UTF-\/8\ string\ is\ too\ big\ to\ be\ converted\ to\ UTF-\/16"{}});}
+\DoxyCodeLine{00476\ \ \ \ \ \}}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keywordtype}{int}\ str\_size\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(str.size());}
+\DoxyCodeLine{00479\ \ \ \ \ \textcolor{keywordflow}{if}\ (str\_size\ ==\ 0)\ \{}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ target.resize(0);}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00482\ \ \ \ \ \}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{comment}{//\ find\ the\ size\ to\ allocate\ for\ the\ result\ buffer}}
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keywordtype}{int}\ result\_size\ =}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ ::MultiByteToWideChar(CP\_UTF8,\ 0,\ str.data(),\ str\_size,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ 0);}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ \textcolor{keywordflow}{if}\ (result\_size\ >\ 0)\ \{}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ target.resize(result\_size);}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ result\_size\ =\ ::MultiByteToWideChar(CP\_UTF8,\ 0,\ str.data(),\ str\_size,\ target.data(),}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ result\_size);}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (result\_size\ >\ 0)\ \{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ assert(result\_size\ ==\ target.size());}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00496\ \ \ \ \ \}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ fmt\_lib::format(\textcolor{stringliteral}{"{}MultiByteToWideChar\ failed.\ Last\ error:\ \{\}"{}},\ ::GetLastError()));}
+\DoxyCodeLine{00500\ \}}
+\DoxyCodeLine{00501\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ (defined(SPDLOG\_WCHAR\_TO\_UTF8\_SUPPORT)\ ||\ defined(SPDLOG\_WCHAR\_FILENAMES))\ \&\&}}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ defined(\_WIN32)}}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \textcolor{comment}{//\ return\ true\ on\ success}}
+\DoxyCodeLine{00505\ \textcolor{keyword}{static}\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a9a9049c129e380fa35a7bb65f887d65a}{mkdir\_}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&path)\ \{}
+\DoxyCodeLine{00506\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00507\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ SPDLOG\_WCHAR\_FILENAMES}}
+\DoxyCodeLine{00508\ \ \ \ \ return\ ::\_wmkdir(path.c\_str())\ ==\ 0;}
+\DoxyCodeLine{00509\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00510\ \ \ \ \ return\ ::\_mkdir(path.c\_str())\ ==\ 0;}
+\DoxyCodeLine{00511\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00512\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00513\ \ \ \ \ return\ ::mkdir(path.c\_str(),\ mode\_t(0755))\ ==\ 0;}
+\DoxyCodeLine{00514\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00515\ \}}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \textcolor{comment}{//\ create\ the\ given\ directory\ -\/\ and\ all\ directories\ leading\ to\ it}}
+\DoxyCodeLine{00518\ \textcolor{comment}{//\ return\ true\ on\ success\ or\ if\ the\ directory\ already\ exists}}
+\DoxyCodeLine{00519\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ab4f82e1542283f3c7a128331b8fd9678}{create\_dir}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&path)\ \{}
+\DoxyCodeLine{00520\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adf9dc0aae835a2e5e3076f3582a42868}{path\_exists}}(path))\ \{}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00522\ \ \ \ \ \}}
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keywordflow}{if}\ (path.empty())\ \{}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00526\ \ \ \ \ \}}
+\DoxyCodeLine{00527\ }
+\DoxyCodeLine{00528\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ search\_offset\ =\ 0;}
+\DoxyCodeLine{00529\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ token\_pos\ =\ path.find\_first\_of(\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_af695f46ed52cd4a52038f029282817ce}{folder\_seps\_filename}},\ search\_offset);}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ treat\ the\ entire\ path\ as\ a\ folder\ if\ no\ folder\ separator\ not\ found}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (token\_pos\ ==\ filename\_t::npos)\ \{}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ token\_pos\ =\ path.size();}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ subdir\ =\ path.substr(0,\ token\_pos);}
+\DoxyCodeLine{00537\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ subdir\ is\ just\ a\ drive\ letter,\ add\ a\ slash\ e.g.\ "{}c:"{}=>"{}c:\(\backslash\)"{},}}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ otherwise\ path\_exists(subdir)\ returns\ false\ (issue\ \#3079)}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_drive\ =\ subdir.length()\ ==\ 2\ \&\&\ subdir[1]\ ==\ \textcolor{charliteral}{':'};}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_drive)\ \{}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ subdir\ +=\ \textcolor{charliteral}{'\(\backslash\)\(\backslash\)'};}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ token\_pos++;}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00545\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!subdir.empty()\ \&\&\ !\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adf9dc0aae835a2e5e3076f3582a42868}{path\_exists}}(subdir)\ \&\&\ !\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a9a9049c129e380fa35a7bb65f887d65a}{mkdir\_}}(subdir))\ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \ \textcolor{comment}{//\ return\ error\ if\ failed\ creating\ dir}}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ search\_offset\ =\ token\_pos\ +\ 1;}
+\DoxyCodeLine{00551\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (search\_offset\ <\ path.size());}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00554\ \}}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \textcolor{comment}{//\ Return\ directory\ name\ from\ given\ path\ or\ empty\ string}}
+\DoxyCodeLine{00557\ \textcolor{comment}{//\ "{}abc/file"{}\ =>\ "{}abc"{}}}
+\DoxyCodeLine{00558\ \textcolor{comment}{//\ "{}abc/"{}\ =>\ "{}abc"{}}}
+\DoxyCodeLine{00559\ \textcolor{comment}{//\ "{}abc"{}\ =>\ "{}"{}}}
+\DoxyCodeLine{00560\ \textcolor{comment}{//\ "{}abc///"{}\ =>\ "{}abc//"{}}}
+\DoxyCodeLine{00561\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a0bd167603459a10c6dfe4b9bd01dc82c}{dir\_name}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\ \&path)\ \{}
+\DoxyCodeLine{00562\ \ \ \ \ \textcolor{keyword}{auto}\ pos\ =\ path.find\_last\_of(\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_af695f46ed52cd4a52038f029282817ce}{folder\_seps\_filename}});}
+\DoxyCodeLine{00563\ \ \ \ \ \textcolor{keywordflow}{return}\ pos\ !=\ filename\_t::npos\ ?\ path.substr(0,\ pos)\ :\ \mbox{\hyperlink{namespacespdlog_a6fe9554b72972dc15ebf3ca0eb24f5a5}{filename\_t}}\{\};}
+\DoxyCodeLine{00564\ \}}
+\DoxyCodeLine{00565\ }
+\DoxyCodeLine{00566\ std::string\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a92fad51c7be81e35538b9bb540b4f85a}{getenv}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *field)\ \{}
+\DoxyCodeLine{00567\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00568\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_cplusplus\_winrt)}}
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keywordflow}{return}\ std::string\{\};\ \ \textcolor{comment}{//\ not\ supported\ under\ uwp}}
+\DoxyCodeLine{00570\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00571\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ len\ =\ 0;}
+\DoxyCodeLine{00572\ \ \ \ \ \textcolor{keywordtype}{char}\ buf[128];}
+\DoxyCodeLine{00573\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{testhelper_8h_a047ea0d874e6802b9b6d08f6b50248e5}{ok}}\ =\ ::getenv\_s(\&len,\ buf,\ \textcolor{keyword}{sizeof}(buf),\ field)\ ==\ 0;}
+\DoxyCodeLine{00574\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{testhelper_8h_a047ea0d874e6802b9b6d08f6b50248e5}{ok}}\ ?\ buf\ :\ std::string\{\};}
+\DoxyCodeLine{00575\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00576\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ revert\ to\ getenv}}
+\DoxyCodeLine{00577\ \ \ \ \ \textcolor{keywordtype}{char}\ *buf\ =\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_a92fad51c7be81e35538b9bb540b4f85a}{::getenv}}(field);}
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{keywordflow}{return}\ buf\ ?\ buf\ :\ std::string\{\};}
+\DoxyCodeLine{00579\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00580\ \}}
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ \textcolor{comment}{//\ Do\ fsync\ by\ FILE\ handlerpointer}}
+\DoxyCodeLine{00583\ \textcolor{comment}{//\ Return\ true\ on\ success}}
+\DoxyCodeLine{00584\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ae41292a48cd401cb4bb041d52cfd6b02}{fsync}}(FILE\ *fp)\ \{}
+\DoxyCodeLine{00585\ \textcolor{preprocessor}{\#ifdef\ \_WIN32}}
+\DoxyCodeLine{00586\ \ \ \ \ \textcolor{keywordflow}{return}\ FlushFileBuffers(\textcolor{keyword}{reinterpret\_cast<}HANDLE\textcolor{keyword}{>}(\_get\_osfhandle(\_fileno(fp))))\ !=\ 0;}
+\DoxyCodeLine{00587\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00588\ \ \ \ \ return\ ::fsync(fileno(fp))\ ==\ 0;}
+\DoxyCodeLine{00589\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00590\ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \textcolor{comment}{//\ Do\ non-\/locking\ fwrite\ if\ possible\ by\ the\ os\ or\ use\ the\ regular\ locking\ fwrite}}
+\DoxyCodeLine{00593\ \textcolor{comment}{//\ Return\ true\ on\ success.}}
+\DoxyCodeLine{00594\ \mbox{\hyperlink{common_8h_a81ecc4703fe6ce0f7820fc3652ee2b21}{SPDLOG\_INLINE}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacespdlog_1_1details_1_1os_ac88e8b6306bb8f057dd9ea0b1c8c2dac}{fwrite\_bytes}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *\mbox{\hyperlink{spdlog_2include_2spdlog_2fmt_2bundled_2format_8h_adb6e274f8eb0b74b2865215e1b49c535}{ptr}},\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ n\_bytes,\ FILE\ *fp)\ \{}
+\DoxyCodeLine{00595\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_WIN32)\ \&\&\ defined(SPDLOG\_FWRITE\_UNLOCKED)}}
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{keywordflow}{return}\ \_fwrite\_nolock(\mbox{\hyperlink{spdlog_2include_2spdlog_2fmt_2bundled_2format_8h_adb6e274f8eb0b74b2865215e1b49c535}{ptr}},\ 1,\ n\_bytes,\ fp)\ ==\ n\_bytes;}
+\DoxyCodeLine{00597\ \textcolor{preprocessor}{\ \ \ \ \#elif\ defined(SPDLOG\_FWRITE\_UNLOCKED)}}
+\DoxyCodeLine{00598\ \ \ \ \ return\ ::fwrite\_unlocked(\mbox{\hyperlink{spdlog_2include_2spdlog_2fmt_2bundled_2format_8h_adb6e274f8eb0b74b2865215e1b49c535}{ptr}},\ 1,\ n\_bytes,\ fp)\ ==\ n\_bytes;}
+\DoxyCodeLine{00599\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00600\ \ \ \ \ \textcolor{keywordflow}{return}\ std::fwrite(\mbox{\hyperlink{spdlog_2include_2spdlog_2fmt_2bundled_2format_8h_adb6e274f8eb0b74b2865215e1b49c535}{ptr}},\ 1,\ n\_bytes,\ fp)\ ==\ n\_bytes;}
+\DoxyCodeLine{00601\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00602\ \}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \}\ \ \textcolor{comment}{//\ namespace\ os}}
+\DoxyCodeLine{00605\ \}\ \ \textcolor{comment}{//\ namespace\ details}}
+\DoxyCodeLine{00606\ \}\ \ \textcolor{comment}{//\ namespace\ spdlog}}
+
+\end{DoxyCode}

@@ -1,0 +1,8 @@
+var _tensor_patch_8h =
+[
+    [ "Eigen::internal::traits< TensorPatchOp< PatchDim, XprType > >", "struct_eigen_1_1internal_1_1traits_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_01_4.html", "struct_eigen_1_1internal_1_1traits_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_01_4" ],
+    [ "Eigen::internal::eval< TensorPatchOp< PatchDim, XprType >, Eigen::Dense >", "struct_eigen_1_1internal_1_1eval_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4.html", "struct_eigen_1_1internal_1_1eval_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4" ],
+    [ "Eigen::internal::nested< TensorPatchOp< PatchDim, XprType >, 1, typename eval< TensorPatchOp< PatchDim, XprType > >::type >", "struct_eigen_1_1internal_1_1nested_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_00_017d8350baeaabc5f17d005b7a04cfaf28.html", "struct_eigen_1_1internal_1_1nested_3_01_tensor_patch_op_3_01_patch_dim_00_01_xpr_type_01_4_00_017d8350baeaabc5f17d005b7a04cfaf28" ],
+    [ "Eigen::TensorPatchOp< PatchDim, XprType >", "class_eigen_1_1_tensor_patch_op.html", "class_eigen_1_1_tensor_patch_op" ],
+    [ "Eigen::TensorEvaluator< const TensorPatchOp< PatchDim, ArgType >, Device >", "struct_eigen_1_1_tensor_evaluator_3_01const_01_tensor_patch_op_3_01_patch_dim_00_01_arg_type_01_4_00_01_device_01_4.html", "struct_eigen_1_1_tensor_evaluator_3_01const_01_tensor_patch_op_3_01_patch_dim_00_01_arg_type_01_4_00_01_device_01_4" ]
+];

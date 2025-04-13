@@ -1,0 +1,895 @@
+\doxysection{Memory.\+h}
+\hypertarget{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2memory_8h_source}{}\label{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2memory_8h_source}\index{external/taskflow/3rd-\/party/eigen-\/3.3.7/Eigen/src/Core/util/Memory.h@{external/taskflow/3rd-\/party/eigen-\/3.3.7/Eigen/src/Core/util/Memory.h}}
+\mbox{\hyperlink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2memory_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2015\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2009\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Kenneth\ Riddile\ <kfriddile@yahoo.com>}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Hauke\ Heibel\ <hauke.heibel@gmail.com>}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Thomas\ Capricelli\ <orzel@freehackers.org>}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Copyright\ (C)\ 2013\ Pavel\ Holoborodko\ <pavel@holoborodko.com>}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00017\ \textcolor{comment}{***\ Platform\ checks\ for\ aligned\ malloc\ functions\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ***}}
+\DoxyCodeLine{00018\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_MEMORY\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ EIGEN\_MEMORY\_H}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_MALLOC\_ALREADY\_ALIGNED}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ Try\ to\ determine\ automatically\ if\ malloc\ is\ already\ aligned.}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ On\ 64-\/bit\ systems,\ glibc's\ malloc\ returns\ 16-\/byte-\/aligned\ pointers,\ see:}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ http://www.gnu.org/s/libc/manual/html\_node/Aligned-\/Memory-\/Blocks.html}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ This\ is\ true\ at\ least\ since\ glibc\ 2.8.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ This\ leaves\ the\ question\ how\ to\ detect\ 64-\/bit.\ According\ to\ this\ document,}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ http://gcc.fyxm.net/summit/2003/Porting\%20to\%2064\%20bit.pdf}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ page\ 114,\ "{}[The]\ LP64\ model\ [...]\ is\ used\ by\ all\ 64-\/bit\ UNIX\ ports"{}\ so\ it's\ indeed}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ quite\ safe,\ at\ least\ within\ the\ context\ of\ glibc,\ to\ equate\ 64-\/bit\ with\ LP64.}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#if\ defined(\_\_GLIBC\_\_)\ \&\&\ ((\_\_GLIBC\_\_>=2\ \&\&\ \_\_GLIBC\_MINOR\_\_\ >=\ 8)\ ||\ \_\_GLIBC\_\_>2)\ \(\backslash\)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \&\&\ defined(\_\_LP64\_\_)\ \&\&\ !\ defined(\ \_\_SANITIZE\_ADDRESS\_\_\ )\ \&\&\ (EIGEN\_DEFAULT\_ALIGN\_BYTES\ ==\ 16)}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_GLIBC\_MALLOC\_ALREADY\_ALIGNED\ 1}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_GLIBC\_MALLOC\_ALREADY\_ALIGNED\ 0}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ FreeBSD\ 6\ seems\ to\ have\ 16-\/byte\ aligned\ malloc}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ See\ http://svn.freebsd.org/viewvc/base/stable/6/lib/libc/stdlib/malloc.c?view=markup}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ FreeBSD\ 7\ seems\ to\ have\ 16-\/byte\ aligned\ malloc\ except\ on\ ARM\ and\ MIPS\ architectures}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ See\ http://svn.freebsd.org/viewvc/base/stable/7/lib/libc/stdlib/malloc.c?view=markup}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#if\ defined(\_\_FreeBSD\_\_)\ \&\&\ !(EIGEN\_ARCH\_ARM\ ||\ EIGEN\_ARCH\_MIPS)\ \&\&\ (EIGEN\_DEFAULT\_ALIGN\_BYTES\ ==\ 16)}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_FREEBSD\_MALLOC\_ALREADY\_ALIGNED\ 1}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_FREEBSD\_MALLOC\_ALREADY\_ALIGNED\ 0}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#if\ (EIGEN\_OS\_MAC\ \&\&\ (EIGEN\_DEFAULT\_ALIGN\_BYTES\ ==\ 16))\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ ||\ (EIGEN\_OS\_WIN64\ \&\&\ (EIGEN\_DEFAULT\_ALIGN\_BYTES\ ==\ 16))\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ ||\ EIGEN\_GLIBC\_MALLOC\_ALREADY\_ALIGNED\ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\ ||\ EIGEN\_FREEBSD\_MALLOC\_ALREADY\_ALIGNED}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MALLOC\_ALREADY\_ALIGNED\ 1}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MALLOC\_ALREADY\_ALIGNED\ 0}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceinternal}{internal}}\ \{}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ EIGEN\_DEVICE\_FUNC\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_aa03c647c0da4f77a83252fd9bd097ca4}{throw\_std\_bad\_alloc}}()}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\ \ \#ifdef\ EIGEN\_EXCEPTIONS}}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{throw}\ std::bad\_alloc();}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00072\ \ \ \ \ std::size\_t\ huge\ =\ \textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(-\/1);}
+\DoxyCodeLine{00073\ \ \ \ \ ::operator\ \textcolor{keyword}{new}(huge);}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00078\ \textcolor{comment}{***\ Implementation\ of\ handmade\ aligned\ functions\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ***}}
+\DoxyCodeLine{00079\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/\ Hand\ made\ implementations\ of\ aligned\ malloc/free\ and\ realloc\ -\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00086\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a953346c5e1a0a5efbcc19ed387021548}{handmade\_aligned\_malloc}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ \textcolor{keywordtype}{void}\ *original\ =\ std::malloc(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}+\mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_ac9abd2bd8168b534c444bc66034cdfd8}{EIGEN\_DEFAULT\_ALIGN\_BYTES}});}
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordflow}{if}\ (original\ ==\ 0)\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00090\ \ \ \textcolor{keywordtype}{void}\ *aligned\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}((\textcolor{keyword}{reinterpret\_cast<}std::size\_t\textcolor{keyword}{>}(original)\ \&\ \string~(std::size\_t(\mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_ac9abd2bd8168b534c444bc66034cdfd8}{EIGEN\_DEFAULT\_ALIGN\_BYTES}}-\/1)))\ +\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_ac9abd2bd8168b534c444bc66034cdfd8}{EIGEN\_DEFAULT\_ALIGN\_BYTES}});}
+\DoxyCodeLine{00091\ \ \ *(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(aligned)\ -\/\ 1)\ =\ original;}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordflow}{return}\ aligned;}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a2e468d0c36a0b52ab8e22efdc6ca67}{handmade\_aligned\_free}}(\textcolor{keywordtype}{void}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})}
+\DoxyCodeLine{00097\ \{}
+\DoxyCodeLine{00098\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})\ std::free(*(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})\ -\/\ 1));}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00106\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a1fa3c8ec559634a7161cd0ac7669ff7d}{handmade\_aligned\_realloc}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}},\ std::size\_t\ =\ 0)}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ ==\ 0)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a953346c5e1a0a5efbcc19ed387021548}{handmade\_aligned\_malloc}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00109\ \ \ \textcolor{keywordtype}{void}\ *original\ =\ *(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})\ -\/\ 1);}
+\DoxyCodeLine{00110\ \ \ std::ptrdiff\_t\ previous\_offset\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}\ *\textcolor{keyword}{>}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})-\/\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}\ *\textcolor{keyword}{>}(original);}
+\DoxyCodeLine{00111\ \ \ original\ =\ std::realloc(original,\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}+\mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_ac9abd2bd8168b534c444bc66034cdfd8}{EIGEN\_DEFAULT\_ALIGN\_BYTES}});}
+\DoxyCodeLine{00112\ \ \ \textcolor{keywordflow}{if}\ (original\ ==\ 0)\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00113\ \ \ \textcolor{keywordtype}{void}\ *aligned\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}((\textcolor{keyword}{reinterpret\_cast<}std::size\_t\textcolor{keyword}{>}(original)\ \&\ \string~(std::size\_t(\mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_ac9abd2bd8168b534c444bc66034cdfd8}{EIGEN\_DEFAULT\_ALIGN\_BYTES}}-\/1)))\ +\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_ac9abd2bd8168b534c444bc66034cdfd8}{EIGEN\_DEFAULT\_ALIGN\_BYTES}});}
+\DoxyCodeLine{00114\ \ \ \textcolor{keywordtype}{void}\ *previous\_aligned\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{char}\ *\textcolor{keyword}{>}(original)+previous\_offset;}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordflow}{if}(aligned!=previous\_aligned)}
+\DoxyCodeLine{00116\ \ \ \ \ std::memmove(aligned,\ previous\_aligned,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00117\ \ \ }
+\DoxyCodeLine{00118\ \ \ *(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}**\textcolor{keyword}{>}(aligned)\ -\/\ 1)\ =\ original;}
+\DoxyCodeLine{00119\ \ \ \textcolor{keywordflow}{return}\ aligned;}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00123\ \textcolor{comment}{***\ Implementation\ of\ portable\ aligned\ versions\ of\ malloc/free/realloc\ \ \ \ \ ***}}
+\DoxyCodeLine{00124\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_NO\_MALLOC}}
+\DoxyCodeLine{00127\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_aade40fb602f8649b396fd4f20494884e}{check\_that\_malloc\_is\_allowed}}()}
+\DoxyCodeLine{00128\ \{}
+\DoxyCodeLine{00129\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}heap\ allocation\ is\ forbidden\ (EIGEN\_NO\_MALLOC\ is\ defined)"{}});}
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\#elif\ defined\ EIGEN\_RUNTIME\_NO\_MALLOC}}
+\DoxyCodeLine{00132\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_malloc\_allowed\_impl(\textcolor{keywordtype}{bool}\ update,\ \textcolor{keywordtype}{bool}\ new\_value\ =\ \textcolor{keyword}{false})}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_abe8e049f756b5ba547bda825af81b645}{value}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordflow}{if}\ (update\ ==\ 1)}
+\DoxyCodeLine{00136\ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_abe8e049f756b5ba547bda825af81b645}{value}}\ =\ new\_value;}
+\DoxyCodeLine{00137\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_abe8e049f756b5ba547bda825af81b645}{value}};}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_malloc\_allowed()\ \{\ \textcolor{keywordflow}{return}\ is\_malloc\_allowed\_impl(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00140\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ set\_is\_malloc\_allowed(\textcolor{keywordtype}{bool}\ new\_value)\ \{\ \textcolor{keywordflow}{return}\ is\_malloc\_allowed\_impl(\textcolor{keyword}{true},\ new\_value);\ \}}
+\DoxyCodeLine{00141\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_aade40fb602f8649b396fd4f20494884e}{check\_that\_malloc\_is\_allowed}}()}
+\DoxyCodeLine{00142\ \{}
+\DoxyCodeLine{00143\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(is\_malloc\_allowed()\ \&\&\ \textcolor{stringliteral}{"{}heap\ allocation\ is\ forbidden\ (EIGEN\_RUNTIME\_NO\_MALLOC\ is\ defined\ and\ g\_is\_malloc\_allowed\ is\ false)"{}});}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#else\ }}
+\DoxyCodeLine{00146\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_aade40fb602f8649b396fd4f20494884e}{check\_that\_malloc\_is\_allowed}}()}
+\DoxyCodeLine{00147\ \{\}}
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00153\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a085e514c677ac3bb48f3c3674a372865}{aligned\_malloc}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00154\ \{}
+\DoxyCodeLine{00155\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aade40fb602f8649b396fd4f20494884e}{check\_that\_malloc\_is\_allowed}}();}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \textcolor{keywordtype}{void}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\ \ \#if\ (EIGEN\_DEFAULT\_ALIGN\_BYTES==0)\ ||\ EIGEN\_MALLOC\_ALREADY\_ALIGNED}}
+\DoxyCodeLine{00159\ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ std::malloc(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\ \ \ \ \#if\ EIGEN\_DEFAULT\_ALIGN\_BYTES==16}}
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}((\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}<16\ ||\ (std::size\_t(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}})\%16)==0)\ \&\&\ \textcolor{stringliteral}{"{}System's\ malloc\ returned\ an\ unaligned\ pointer.\ Compile\ with\ EIGEN\_MALLOC\_ALREADY\_ALIGNED=0\ to\ fallback\ to\ handmade\ alignd\ memory\ allocator."{}});}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00164\ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{namespace_eigen_1_1internal_a953346c5e1a0a5efbcc19ed387021548}{handmade\_aligned\_malloc}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \textcolor{keywordflow}{if}(!\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ \&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00168\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aa03c647c0da4f77a83252fd9bd097ca4}{throw\_std\_bad\_alloc}}();}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00171\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00174\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_adad153f95799bcc02d86235418c0a73f}{aligned\_free}}(\textcolor{keywordtype}{void}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})}
+\DoxyCodeLine{00175\ \{}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\ \ \#if\ (EIGEN\_DEFAULT\_ALIGN\_BYTES==0)\ ||\ EIGEN\_MALLOC\_ALREADY\_ALIGNED}}
+\DoxyCodeLine{00177\ \ \ \ \ std::free(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}});}
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a2e468d0c36a0b52ab8e22efdc6ca67}{handmade\_aligned\_free}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}});}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00181\ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00188\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a16d5dc316b1f498b3690f3c0c8d40c5d}{aligned\_realloc}}(\textcolor{keywordtype}{void}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ std::size\_t\ old\_size)}
+\DoxyCodeLine{00189\ \{}
+\DoxyCodeLine{00190\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a7cf6d5b460def34dc4e6acf42889b6a9}{EIGEN\_UNUSED\_VARIABLE}}(old\_size);}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordtype}{void}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\#if\ (EIGEN\_DEFAULT\_ALIGN\_BYTES==0)\ ||\ EIGEN\_MALLOC\_ALREADY\_ALIGNED}}
+\DoxyCodeLine{00194\ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ std::realloc(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}});}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00196\ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{namespace_eigen_1_1internal_a1fa3c8ec559634a7161cd0ac7669ff7d}{handmade\_aligned\_realloc}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},old\_size);}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ \&\&\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}})}
+\DoxyCodeLine{00200\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aa03c647c0da4f77a83252fd9bd097ca4}{throw\_std\_bad\_alloc}}();}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00203\ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00206\ \textcolor{comment}{***\ Implementation\ of\ conditionally\ aligned\ functions\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ***}}
+\DoxyCodeLine{00207\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00212\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Align>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a1a0570833e5374772ff9afd06537e1a8}{conditional\_aligned\_malloc}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00213\ \{}
+\DoxyCodeLine{00214\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a085e514c677ac3bb48f3c3674a372865}{aligned\_malloc}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00215\ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a27dc72b9a184a2a15c782f8c20e4b8a2}{conditional\_aligned\_malloc<false>}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00218\ \{}
+\DoxyCodeLine{00219\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aade40fb602f8649b396fd4f20494884e}{check\_that\_malloc\_is\_allowed}}();}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \textcolor{keywordtype}{void}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ std::malloc(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00222\ \ \ \textcolor{keywordflow}{if}(!\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ \&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00223\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aa03c647c0da4f77a83252fd9bd097ca4}{throw\_std\_bad\_alloc}}();}
+\DoxyCodeLine{00224\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00225\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00228\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Align>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a7fb46ed6502862862b417071e3d618}{conditional\_aligned\_free}}(\textcolor{keywordtype}{void}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})}
+\DoxyCodeLine{00229\ \{}
+\DoxyCodeLine{00230\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_adad153f95799bcc02d86235418c0a73f}{aligned\_free}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}});}
+\DoxyCodeLine{00231\ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a879b765262b6a5776aed464ae01e0520}{conditional\_aligned\_free<false>}}(\textcolor{keywordtype}{void}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})}
+\DoxyCodeLine{00234\ \{}
+\DoxyCodeLine{00235\ \ \ std::free(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}});}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Align>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a0c633e0675f1eb9e93b1f4eac0b9f0de}{conditional\_aligned\_realloc}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ std::size\_t\ old\_size)}
+\DoxyCodeLine{00239\ \{}
+\DoxyCodeLine{00240\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a16d5dc316b1f498b3690f3c0c8d40c5d}{aligned\_realloc}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ old\_size);}
+\DoxyCodeLine{00241\ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_aea41e5e1db6ad09e6179067833413451}{conditional\_aligned\_realloc<false>}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ std::size\_t)}
+\DoxyCodeLine{00244\ \{}
+\DoxyCodeLine{00245\ \ \ \textcolor{keywordflow}{return}\ std::realloc(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}});}
+\DoxyCodeLine{00246\ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00249\ \textcolor{comment}{***\ Construction/destruction\ of\ array\ elements\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ***}}
+\DoxyCodeLine{00250\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00255\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{destruct\_elements\_of\_array}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00256\ \{}
+\DoxyCodeLine{00257\ \ \ \textcolor{comment}{//\ always\ destruct\ an\ array\ starting\ from\ the\ end.}}
+\DoxyCodeLine{00258\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordflow}{while}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}[-\/-\/\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}].\string~T();}
+\DoxyCodeLine{00260\ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00265\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_acfef653c7a80b5d49047e85ff19ac2b6}{construct\_elements\_of\_array}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00266\ \{}
+\DoxyCodeLine{00267\ \ \ std::size\_t\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}};}
+\DoxyCodeLine{00268\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a6ceaf167edc5192421db3f6d310479a6}{EIGEN\_TRY}}}
+\DoxyCodeLine{00269\ \ \ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}};\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ ::new\ (\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ +\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}};}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}};}
+\DoxyCodeLine{00272\ \ \ \}}
+\DoxyCodeLine{00273\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a3c7d602f9e4ee3644492da1f65954f22}{EIGEN\_CATCH}}(...)}
+\DoxyCodeLine{00274\ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{destruct\_elements\_of\_array}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{00276\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a42d4b7cca6845685cea0bed006fe4b04}{EIGEN\_THROW}};}
+\DoxyCodeLine{00277\ \ \ \}}
+\DoxyCodeLine{00278\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00279\ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00282\ \textcolor{comment}{***\ Implementation\ of\ aligned\ new/delete-\/like\ functions\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ***}}
+\DoxyCodeLine{00283\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00286\ EIGEN\_DEVICE\_FUNC\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a1fdc6f94f20527c7275768d82b2eb9ce}{EIGEN\_ALWAYS\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00287\ \{}
+\DoxyCodeLine{00288\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ >\ std::size\_t(-\/1)\ /\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}))}
+\DoxyCodeLine{00289\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aa03c647c0da4f77a83252fd9bd097ca4}{throw\_std\_bad\_alloc}}();}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00296\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a67fee538128f7d7ccd1dac4cc84dc089}{aligned\_new}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00297\ \{}
+\DoxyCodeLine{00298\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow<T>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00299\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\mbox{\hyperlink{namespace_eigen_1_1internal_a085e514c677ac3bb48f3c3674a372865}{aligned\_malloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})*\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}));}
+\DoxyCodeLine{00300\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a6ceaf167edc5192421db3f6d310479a6}{EIGEN\_TRY}}}
+\DoxyCodeLine{00301\ \ \ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1internal_acfef653c7a80b5d49047e85ff19ac2b6}{construct\_elements\_of\_array}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00303\ \ \ \}}
+\DoxyCodeLine{00304\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a3c7d602f9e4ee3644492da1f65954f22}{EIGEN\_CATCH}}(...)}
+\DoxyCodeLine{00305\ \ \ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_adad153f95799bcc02d86235418c0a73f}{aligned\_free}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}});}
+\DoxyCodeLine{00307\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a42d4b7cca6845685cea0bed006fe4b04}{EIGEN\_THROW}};}
+\DoxyCodeLine{00308\ \ \ \}}
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00310\ \}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ Align>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a8eb310e5e6834f1f931df593bb9ee26e}{conditional\_aligned\_new}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00313\ \{}
+\DoxyCodeLine{00314\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow<T>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00315\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\mbox{\hyperlink{namespace_eigen_1_1internal_a1a0570833e5374772ff9afd06537e1a8}{conditional\_aligned\_malloc<Align>}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})*\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}));}
+\DoxyCodeLine{00316\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a6ceaf167edc5192421db3f6d310479a6}{EIGEN\_TRY}}}
+\DoxyCodeLine{00317\ \ \ \{}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1internal_acfef653c7a80b5d49047e85ff19ac2b6}{construct\_elements\_of\_array}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00319\ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a3c7d602f9e4ee3644492da1f65954f22}{EIGEN\_CATCH}}(...)}
+\DoxyCodeLine{00321\ \ \ \{}
+\DoxyCodeLine{00322\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a7fb46ed6502862862b417071e3d618}{conditional\_aligned\_free<Align>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}});}
+\DoxyCodeLine{00323\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a42d4b7cca6845685cea0bed006fe4b04}{EIGEN\_THROW}};}
+\DoxyCodeLine{00324\ \ \ \}}
+\DoxyCodeLine{00325\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00326\ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00331\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a0a7685afbcd966504733314551bb1c0f}{aligned\_delete}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00332\ \{}
+\DoxyCodeLine{00333\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{destruct\_elements\_of\_array<T>}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00334\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_adad153f95799bcc02d86235418c0a73f}{aligned\_free}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}});}
+\DoxyCodeLine{00335\ \}}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00340\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ Align>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3b0a6d8544622794c1a91c7d5ecc0462}{conditional\_aligned\_delete}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00341\ \{}
+\DoxyCodeLine{00342\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{destruct\_elements\_of\_array<T>}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00343\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a7fb46ed6502862862b417071e3d618}{conditional\_aligned\_free<Align>}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}});}
+\DoxyCodeLine{00344\ \}}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ Align>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_aff2e184825a824997558362829777c81}{conditional\_aligned\_realloc\_new}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ pts,\ std::size\_t\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ std::size\_t\ old\_size)}
+\DoxyCodeLine{00347\ \{}
+\DoxyCodeLine{00348\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow<T>}}(\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}});}
+\DoxyCodeLine{00349\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow<T>}}(old\_size);}
+\DoxyCodeLine{00350\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}}\ <\ old\_size)}
+\DoxyCodeLine{00351\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{destruct\_elements\_of\_array}}(pts+\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ old\_size-\/\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}});}
+\DoxyCodeLine{00352\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\mbox{\hyperlink{namespace_eigen_1_1internal_a0c633e0675f1eb9e93b1f4eac0b9f0de}{conditional\_aligned\_realloc<Align>}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(pts),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})*\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})*old\_size));}
+\DoxyCodeLine{00353\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}}\ >\ old\_size)}
+\DoxyCodeLine{00354\ \ \ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a6ceaf167edc5192421db3f6d310479a6}{EIGEN\_TRY}}}
+\DoxyCodeLine{00356\ \ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_acfef653c7a80b5d49047e85ff19ac2b6}{construct\_elements\_of\_array}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}+old\_size,\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}}-\/old\_size);}
+\DoxyCodeLine{00358\ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a3c7d602f9e4ee3644492da1f65954f22}{EIGEN\_CATCH}}(...)}
+\DoxyCodeLine{00360\ \ \ \ \ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a7fb46ed6502862862b417071e3d618}{conditional\_aligned\_free<Align>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}});}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a42d4b7cca6845685cea0bed006fe4b04}{EIGEN\_THROW}};}
+\DoxyCodeLine{00363\ \ \ \ \ \}}
+\DoxyCodeLine{00364\ \ \ \}}
+\DoxyCodeLine{00365\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00366\ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ Align>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a0bbef5f3b9ae8fe336e74269cdd1c6b7}{conditional\_aligned\_new\_auto}}(std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00370\ \{}
+\DoxyCodeLine{00371\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}==0)}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;\ \textcolor{comment}{//\ short-\/cut.\ Also\ fixes\ Bug\ 884}}
+\DoxyCodeLine{00373\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow<T>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00374\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\mbox{\hyperlink{namespace_eigen_1_1internal_a1a0570833e5374772ff9afd06537e1a8}{conditional\_aligned\_malloc<Align>}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})*\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}));}
+\DoxyCodeLine{00375\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{NumTraits<T>::RequireInitialization}})}
+\DoxyCodeLine{00376\ \ \ \{}
+\DoxyCodeLine{00377\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a6ceaf167edc5192421db3f6d310479a6}{EIGEN\_TRY}}}
+\DoxyCodeLine{00378\ \ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_acfef653c7a80b5d49047e85ff19ac2b6}{construct\_elements\_of\_array}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00380\ \ \ \ \ \}}
+\DoxyCodeLine{00381\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a3c7d602f9e4ee3644492da1f65954f22}{EIGEN\_CATCH}}(...)}
+\DoxyCodeLine{00382\ \ \ \ \ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a7fb46ed6502862862b417071e3d618}{conditional\_aligned\_free<Align>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}});}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a42d4b7cca6845685cea0bed006fe4b04}{EIGEN\_THROW}};}
+\DoxyCodeLine{00385\ \ \ \ \ \}}
+\DoxyCodeLine{00386\ \ \ \}}
+\DoxyCodeLine{00387\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00388\ \}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ Align>\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{namespace_eigen_1_1internal_a7cca48785c34346aa5a31b905dbab610}{conditional\_aligned\_realloc\_new\_auto}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ pts,\ std::size\_t\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ std::size\_t\ old\_size)}
+\DoxyCodeLine{00391\ \{}
+\DoxyCodeLine{00392\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow<T>}}(\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}});}
+\DoxyCodeLine{00393\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{check\_size\_for\_overflow<T>}}(old\_size);}
+\DoxyCodeLine{00394\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{NumTraits<T>::RequireInitialization}}\ \&\&\ (\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}}\ <\ old\_size))}
+\DoxyCodeLine{00395\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{destruct\_elements\_of\_array}}(pts+\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ old\_size-\/\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}});}
+\DoxyCodeLine{00396\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\mbox{\hyperlink{namespace_eigen_1_1internal_a0c633e0675f1eb9e93b1f4eac0b9f0de}{conditional\_aligned\_realloc<Align>}}(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(pts),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})*\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})*old\_size));}
+\DoxyCodeLine{00397\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{NumTraits<T>::RequireInitialization}}\ \&\&\ (\mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}}\ >\ old\_size))}
+\DoxyCodeLine{00398\ \ \ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a6ceaf167edc5192421db3f6d310479a6}{EIGEN\_TRY}}}
+\DoxyCodeLine{00400\ \ \ \ \ \{}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_acfef653c7a80b5d49047e85ff19ac2b6}{construct\_elements\_of\_array}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}+old\_size,\ \mbox{\hyperlink{ittnotify__static_8h_a0ff2395a84e0714023e69b0ff3d7363b}{new\_size}}-\/old\_size);}
+\DoxyCodeLine{00402\ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a3c7d602f9e4ee3644492da1f65954f22}{EIGEN\_CATCH}}(...)}
+\DoxyCodeLine{00404\ \ \ \ \ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a7fb46ed6502862862b417071e3d618}{conditional\_aligned\_free<Align>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}});}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a42d4b7cca6845685cea0bed006fe4b04}{EIGEN\_THROW}};}
+\DoxyCodeLine{00407\ \ \ \ \ \}}
+\DoxyCodeLine{00408\ \ \ \}}
+\DoxyCodeLine{00409\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00410\ \}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ Align>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a4e30a9533494470d75c772223faa9903}{conditional\_aligned\_delete\_auto}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ *\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00413\ \{}
+\DoxyCodeLine{00414\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{NumTraits<T>::RequireInitialization}})}
+\DoxyCodeLine{00415\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{destruct\_elements\_of\_array<T>}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00416\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a2a7fb46ed6502862862b417071e3d618}{conditional\_aligned\_free<Align>}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}});}
+\DoxyCodeLine{00417\ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \textcolor{comment}{/****************************************************************************/}}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00438\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ Alignment,\ \textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00439\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab83986b0ebbd20ebde1f9033162ca121}{first\_aligned}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \mbox{\hyperlink{class_eigen_1_1array}{array}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00440\ \{}
+\DoxyCodeLine{00441\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ ScalarSize\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}});}
+\DoxyCodeLine{00442\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ AlignmentSize\ =\ Alignment\ /\ ScalarSize;}
+\DoxyCodeLine{00443\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ AlignmentMask\ =\ AlignmentSize-\/1;}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \textcolor{keywordflow}{if}(AlignmentSize<=1)}
+\DoxyCodeLine{00446\ \ \ \{}
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{//\ Either\ the\ requested\ alignment\ if\ smaller\ than\ a\ scalar,\ or\ it\ exactly\ match\ a\ 1\ scalar}}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{comment}{//\ so\ that\ all\ elements\ of\ the\ array\ have\ the\ same\ alignment.}}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00450\ \ \ \}}
+\DoxyCodeLine{00451\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\mbox{\hyperlink{namespace_eigen_1_1internal_a017bb5f182d0e8afd1fed693649d2436}{UIntPtr}}(\mbox{\hyperlink{class_eigen_1_1array}{array}})\ \&\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}})-\/1))\ ||\ (Alignment\%ScalarSize)!=0)}
+\DoxyCodeLine{00452\ \ \ \{}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{comment}{//\ The\ array\ is\ not\ aligned\ to\ the\ size\ of\ a\ single\ scalar,\ or\ the\ requested\ alignment\ is\ not\ a\ multiple\ of\ the\ scalar\ size.}}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{//\ Consequently,\ no\ element\ of\ the\ array\ is\ well\ aligned.}}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}};}
+\DoxyCodeLine{00456\ \ \ \}}
+\DoxyCodeLine{00457\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00458\ \ \ \{}
+\DoxyCodeLine{00459\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ first\ =\ (AlignmentSize\ -\/\ (\mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}((\mbox{\hyperlink{namespace_eigen_1_1internal_a017bb5f182d0e8afd1fed693649d2436}{UIntPtr}}(\mbox{\hyperlink{class_eigen_1_1array}{array}})/\textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}})))\ \&\ AlignmentMask))\ \&\ AlignmentMask;}
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{keywordflow}{return}\ (first\ <\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})\ ?\ first\ :\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}};}
+\DoxyCodeLine{00461\ \ \ \}}
+\DoxyCodeLine{00462\ \}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00466\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00467\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a8f16b915ba954e15a13f76ca3016830a}{first\_default\_aligned}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \mbox{\hyperlink{class_eigen_1_1array}{array}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00468\ \{}
+\DoxyCodeLine{00469\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits_a811c5bde6641fd0f7a8f88be5e11ce27}{packet\_traits<Scalar>::type}}\ DefaultPacketType;}
+\DoxyCodeLine{00470\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab83986b0ebbd20ebde1f9033162ca121}{first\_aligned<unpacket\_traits<DefaultPacketType>::alignment}}>(\mbox{\hyperlink{class_eigen_1_1array}{array}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00471\ \}}
+\DoxyCodeLine{00472\ \ }
+\DoxyCodeLine{00475\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Index>\ }
+\DoxyCodeLine{00476\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a5692cd3c30a1b398f9c6d23edca0262f}{first\_multiple}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ base)}
+\DoxyCodeLine{00477\ \{}
+\DoxyCodeLine{00478\ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}+base-\/1)/base)*base;}
+\DoxyCodeLine{00479\ \}}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \textcolor{comment}{//\ std::copy\ is\ much\ slower\ than\ memcpy,\ so\ let's\ introduce\ a\ smart\_copy\ which}}
+\DoxyCodeLine{00482\ \textcolor{comment}{//\ use\ memcpy\ on\ trivial\ types,\ i.e.,\ on\ types\ that\ does\ not\ require\ an\ initialization\ ctor.}}
+\DoxyCodeLine{00483\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ UseMemcpy>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__copy__helper}{smart\_copy\_helper}};}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_aaa5263274e83e4b19ff5558046f1077f}{smart\_copy}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ target)}
+\DoxyCodeLine{00486\ \{}
+\DoxyCodeLine{00487\ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__copy__helper}{smart\_copy\_helper<T,!NumTraits<T>::RequireInitialization}}>\mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{::run}}(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ target);}
+\DoxyCodeLine{00488\ \}}
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__copy__helper}{smart\_copy\_helper}}<\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}},\mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>\ \{}
+\DoxyCodeLine{00491\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__copy__helper_3_01_t_00_01true_01_4_a9872c664be2ec0d7493901897b0e1adf}{run}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ target)}
+\DoxyCodeLine{00492\ \ \ \{}
+\DoxyCodeLine{00493\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aa163dba844d8d3fb778e6cc6b207d61e}{IntPtr}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ =\ \mbox{\hyperlink{namespace_eigen_1_1internal_aa163dba844d8d3fb778e6cc6b207d61e}{IntPtr}}(\mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}})-\/\mbox{\hyperlink{namespace_eigen_1_1internal_aa163dba844d8d3fb778e6cc6b207d61e}{IntPtr}}(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}});}
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}==0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00495\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a4e742b5a08636a61784c0e173b61e710}{eigen\_internal\_assert}}(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}}!=0\ \&\&\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}}!=0\ \&\&\ target!=0);}
+\DoxyCodeLine{00496\ \ \ \ \ std::memcpy(target,\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00497\ \ \ \}}
+\DoxyCodeLine{00498\ \};}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__copy__helper}{smart\_copy\_helper}}<\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}},\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}>\ \{}
+\DoxyCodeLine{00501\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__copy__helper_3_01_t_00_01false_01_4_a3402ad1bfee4744ffc250e1c05deb149}{run}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ target)}
+\DoxyCodeLine{00502\ \ \ \{\ std::copy(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ target);\ \}}
+\DoxyCodeLine{00503\ \};}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ \textcolor{comment}{//\ intelligent\ memmove.\ falls\ back\ to\ std::memmove\ for\ POD\ types,\ uses\ std::copy\ otherwise.\ }}
+\DoxyCodeLine{00506\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ UseMemmove>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__memmove__helper}{smart\_memmove\_helper}};}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab62b385a18b8a749eded9322d0b853ac}{smart\_memmove}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ target)}
+\DoxyCodeLine{00509\ \{}
+\DoxyCodeLine{00510\ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__memmove__helper}{smart\_memmove\_helper<T,!NumTraits<T>::RequireInitialization}}>\mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{::run}}(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ target);}
+\DoxyCodeLine{00511\ \}}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__memmove__helper}{smart\_memmove\_helper}}<\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}},\mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>\ \{}
+\DoxyCodeLine{00514\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__memmove__helper_3_01_t_00_01true_01_4_a34f6b783caad68de6b232f505bc74dde}{run}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ target)}
+\DoxyCodeLine{00515\ \ \ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_aa163dba844d8d3fb778e6cc6b207d61e}{IntPtr}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ =\ \mbox{\hyperlink{namespace_eigen_1_1internal_aa163dba844d8d3fb778e6cc6b207d61e}{IntPtr}}(\mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}})-\/\mbox{\hyperlink{namespace_eigen_1_1internal_aa163dba844d8d3fb778e6cc6b207d61e}{IntPtr}}(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}});}
+\DoxyCodeLine{00517\ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}==0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00518\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a4e742b5a08636a61784c0e173b61e710}{eigen\_internal\_assert}}(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}}!=0\ \&\&\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}}!=0\ \&\&\ target!=0);}
+\DoxyCodeLine{00519\ \ \ \ \ std::memmove(target,\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00520\ \ \ \}}
+\DoxyCodeLine{00521\ \};}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__memmove__helper}{smart\_memmove\_helper}}<\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}},\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}>\ \{}
+\DoxyCodeLine{00524\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1smart__memmove__helper_3_01_t_00_01false_01_4_a31722a9391830fcb006054b009fb8e2c}{run}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ target)}
+\DoxyCodeLine{00525\ \ \ \{\ }
+\DoxyCodeLine{00526\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespace_eigen_1_1internal_a017bb5f182d0e8afd1fed693649d2436}{UIntPtr}}(target)\ <\ \mbox{\hyperlink{namespace_eigen_1_1internal_a017bb5f182d0e8afd1fed693649d2436}{UIntPtr}}(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}}))}
+\DoxyCodeLine{00527\ \ \ \ \ \{}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ std::copy(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ target);}
+\DoxyCodeLine{00529\ \ \ \ \ \}}
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00531\ \ \ \ \ \{}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ std::ptrdiff\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ =\ (std::ptrdiff\_t(\mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}})-\/std::ptrdiff\_t(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}}))\ /\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}});}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ std::copy\_backward(\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}},\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}},\ target\ +\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});\ }
+\DoxyCodeLine{00534\ \ \ \ \ \}}
+\DoxyCodeLine{00535\ \ \ \}}
+\DoxyCodeLine{00536\ \};}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00540\ \textcolor{comment}{***\ Implementation\ of\ runtime\ stack\ allocation\ (falling\ back\ to\ malloc)\ \ \ \ ***}}
+\DoxyCodeLine{00541\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00542\ }
+\DoxyCodeLine{00543\ \textcolor{comment}{//\ you\ can\ overwrite\ Eigen's\ default\ behavior\ regarding\ alloca\ by\ defining\ EIGEN\_ALLOCA}}
+\DoxyCodeLine{00544\ \textcolor{comment}{//\ to\ the\ appropriate\ stack\ allocation\ function}}
+\DoxyCodeLine{00545\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_ALLOCA}}
+\DoxyCodeLine{00546\ \textcolor{preprocessor}{\ \ \#if\ EIGEN\_OS\_LINUX\ ||\ EIGEN\_OS\_MAC\ ||\ (defined\ alloca)}}
+\DoxyCodeLine{00547\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_ALLOCA\ alloca}}
+\DoxyCodeLine{00548\ \textcolor{preprocessor}{\ \ \#elif\ EIGEN\_COMP\_MSVC}}
+\DoxyCodeLine{00549\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_ALLOCA\ \_alloca}}
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00551\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \textcolor{comment}{//\ This\ helper\ class\ construct\ the\ allocated\ memory,\ and\ takes\ care\ of\ destructing\ and\ freeing\ the\ handled\ data}}
+\DoxyCodeLine{00554\ \textcolor{comment}{//\ at\ destruction\ time.\ In\ practice\ this\ helper\ class\ is\ mainly\ useful\ to\ avoid\ memory\ leak\ in\ case\ of\ exceptions.}}
+\DoxyCodeLine{00555\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a6cb7f7415fdcaf5a53d214092e737200}{aligned\_stack\_memory\_handler}}\ :\ \mbox{\hyperlink{class_eigen_1_1internal_1_1noncopyable_a033e282dcb55e2a8339ebdd5749be0f9}{noncopyable}}}
+\DoxyCodeLine{00556\ \{}
+\DoxyCodeLine{00557\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00558\ \ \ \ \ \textcolor{comment}{/*\ Creates\ a\ stack\_memory\_handler\ responsible\ for\ the\ buffer\ \(\backslash\)a\ ptr\ of\ size\ \(\backslash\)a\ size.}}
+\DoxyCodeLine{00559\ \textcolor{comment}{\ \ \ \ \ *\ Note\ that\ \(\backslash\)a\ ptr\ can\ be\ 0\ regardless\ of\ the\ other\ parameters.}}
+\DoxyCodeLine{00560\ \textcolor{comment}{\ \ \ \ \ *\ This\ constructor\ takes\ care\ of\ constructing/initializing\ the\ elements\ of\ the\ buffer\ if\ required\ by\ the\ scalar\ type\ T\ (see\ NumTraits<T>::RequireInitialization).}}
+\DoxyCodeLine{00561\ \textcolor{comment}{\ \ \ \ \ *\ In\ this\ case,\ the\ buffer\ elements\ will\ also\ be\ destructed\ when\ this\ handler\ will\ be\ destructed.}}
+\DoxyCodeLine{00562\ \textcolor{comment}{\ \ \ \ \ *\ Finally,\ if\ \(\backslash\)a\ dealloc\ is\ true,\ then\ the\ pointer\ \(\backslash\)a\ ptr\ is\ freed.}}
+\DoxyCodeLine{00563\ \textcolor{comment}{\ \ \ \ \ **/}}
+\DoxyCodeLine{00564\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a6cb7f7415fdcaf5a53d214092e737200}{aligned\_stack\_memory\_handler}}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}},\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}},\ \textcolor{keywordtype}{bool}\ dealloc)}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ :\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a435d20ca546a543ff7f507d19bffdbbc}{m\_ptr}}(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}),\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_aacdeb3bdb417af342c7c871ca6cc37f8}{m\_size}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}),\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_ad09991a594bdf6a44f1f05132d49cb2f}{m\_deallocate}}(dealloc)}
+\DoxyCodeLine{00566\ \ \ \ \ \{}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{NumTraits<T>::RequireInitialization}}\ \&\&\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a435d20ca546a543ff7f507d19bffdbbc}{m\_ptr}})}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_acfef653c7a80b5d49047e85ff19ac2b6}{Eigen::internal::construct\_elements\_of\_array}}(\mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a435d20ca546a543ff7f507d19bffdbbc}{m\_ptr}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00569\ \ \ \ \ \}}
+\DoxyCodeLine{00570\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_aec4bbafb85e25b2e951a421ecca5058f}{\string~aligned\_stack\_memory\_handler}}()}
+\DoxyCodeLine{00571\ \ \ \ \ \{}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_a4a7b16effb0b7df2ab247e4df795dd3ea3076e038003ec0a60ff43bffdcddc2bc}{NumTraits<T>::RequireInitialization}}\ \&\&\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a435d20ca546a543ff7f507d19bffdbbc}{m\_ptr}})}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a6f532d76e83ab848ef30d9540bc6c66c}{Eigen::internal::destruct\_elements\_of\_array<T>}}(\mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a435d20ca546a543ff7f507d19bffdbbc}{m\_ptr}},\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_aacdeb3bdb417af342c7c871ca6cc37f8}{m\_size}});}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_ad09991a594bdf6a44f1f05132d49cb2f}{m\_deallocate}})}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_adad153f95799bcc02d86235418c0a73f}{Eigen::internal::aligned\_free}}(\mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a435d20ca546a543ff7f507d19bffdbbc}{m\_ptr}});}
+\DoxyCodeLine{00576\ \ \ \ \ \}}
+\DoxyCodeLine{00577\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00578\ \ \ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_a435d20ca546a543ff7f507d19bffdbbc}{m\_ptr}};}
+\DoxyCodeLine{00579\ \ \ \ \ std::size\_t\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_aacdeb3bdb417af342c7c871ca6cc37f8}{m\_size}};}
+\DoxyCodeLine{00580\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1aligned__stack__memory__handler_ad09991a594bdf6a44f1f05132d49cb2f}{m\_deallocate}};}
+\DoxyCodeLine{00581\ \};}
+\DoxyCodeLine{00582\ }
+\DoxyCodeLine{00583\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_a9f8920e0264b84f4371ebeac7db8d85b}{scoped\_array}}\ :\ \mbox{\hyperlink{class_eigen_1_1internal_1_1noncopyable_a033e282dcb55e2a8339ebdd5749be0f9}{noncopyable}}}
+\DoxyCodeLine{00584\ \{}
+\DoxyCodeLine{00585\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}};}
+\DoxyCodeLine{00586\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00587\ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_a9f8920e0264b84f4371ebeac7db8d85b}{scoped\_array}}(std::ptrdiff\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})}
+\DoxyCodeLine{00588\ \ \ \{}
+\DoxyCodeLine{00589\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}}\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}[\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}];}
+\DoxyCodeLine{00590\ \ \ \}}
+\DoxyCodeLine{00591\ \ \ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_a708d27772099e7b552ad85668b75cd9e}{\string~scoped\_array}}()}
+\DoxyCodeLine{00592\ \ \ \{}
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{keyword}{delete}[]\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}};}
+\DoxyCodeLine{00594\ \ \ \}}
+\DoxyCodeLine{00595\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_a05b8cc99fadfb3cea0ec4b97c965a3c6}{operator[]}}(std::ptrdiff\_t\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];\ \}}
+\DoxyCodeLine{00596\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_a8163366247c266c9a2119b0c62bad78d}{operator[]}}(std::ptrdiff\_t\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];\ \}}
+\DoxyCodeLine{00597\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \&\mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_a8692b048ba4c3bc9af850d9c2436f1ba}{ptr}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}};\ \}}
+\DoxyCodeLine{00598\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_a61952bb2f508fc594f5b0714fc30766f}{ptr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}};\ \}}
+\DoxyCodeLine{00599\ \ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*()\ \textcolor{keyword}{const}\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array_aaaacb69ab097052df3316b63051544b0}{m\_ptr}};\ \}}
+\DoxyCodeLine{00600\ \};}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_aefb14fc87518cc6b91063a820a66a21b}{swap}}(\mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array}{scoped\_array<T>}}\ \&\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\mbox{\hyperlink{class_eigen_1_1internal_1_1scoped__array}{scoped\_array<T>}}\ \&\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})}
+\DoxyCodeLine{00603\ \{}
+\DoxyCodeLine{00604\ \ \ \mbox{\hyperlink{namespacestd_a3acbe51b6415e9284430194bf04944e1}{std::swap}}(\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}.ptr(),\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}.ptr());}
+\DoxyCodeLine{00605\ \}}
+\DoxyCodeLine{00606\ \ \ \ \ }
+\DoxyCodeLine{00607\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00608\ }
+\DoxyCodeLine{00624\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_ALLOCA}}
+\DoxyCodeLine{00625\ \ \ }
+\DoxyCodeLine{00626\ \textcolor{preprocessor}{\ \ \#if\ EIGEN\_DEFAULT\_ALIGN\_BYTES>0}}
+\DoxyCodeLine{00627\ \ \ \ \ \textcolor{comment}{//\ We\ always\ manually\ re-\/align\ the\ result\ of\ EIGEN\_ALLOCA.}}
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{comment}{//\ If\ alloca\ is\ already\ aligned,\ the\ compiler\ should\ be\ smart\ enough\ to\ optimize\ away\ the\ re-\/alignment.}}
+\DoxyCodeLine{00629\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_ALIGNED\_ALLOCA(SIZE)\ reinterpret\_cast<void*>((internal::UIntPtr(EIGEN\_ALLOCA(SIZE+EIGEN\_DEFAULT\_ALIGN\_BYTES-\/1))\ +\ EIGEN\_DEFAULT\_ALIGN\_BYTES-\/1)\ \&\ \string~(std::size\_t(EIGEN\_DEFAULT\_ALIGN\_BYTES-\/1)))}}
+\DoxyCodeLine{00630\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00631\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_ALIGNED\_ALLOCA(SIZE)\ EIGEN\_ALLOCA(SIZE)}}
+\DoxyCodeLine{00632\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00633\ }
+\DoxyCodeLine{00634\ \textcolor{preprocessor}{\ \ \#define\ ei\_declare\_aligned\_stack\_constructed\_variable(TYPE,NAME,SIZE,BUFFER)\ \(\backslash\)}}
+\DoxyCodeLine{00635\ \textcolor{preprocessor}{\ \ \ \ Eigen::internal::check\_size\_for\_overflow<TYPE>(SIZE);\ \(\backslash\)}}
+\DoxyCodeLine{00636\ \textcolor{preprocessor}{\ \ \ \ TYPE*\ NAME\ =\ (BUFFER)!=0\ ?\ (BUFFER)\ \(\backslash\)}}
+\DoxyCodeLine{00637\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ reinterpret\_cast<TYPE*>(\ \(\backslash\)}}
+\DoxyCodeLine{00638\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (sizeof(TYPE)*SIZE<=EIGEN\_STACK\_ALLOCATION\_LIMIT)\ ?\ EIGEN\_ALIGNED\_ALLOCA(sizeof(TYPE)*SIZE)\ \(\backslash\)}}
+\DoxyCodeLine{00639\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ Eigen::internal::aligned\_malloc(sizeof(TYPE)*SIZE)\ );\ \ \(\backslash\)}}
+\DoxyCodeLine{00640\ \textcolor{preprocessor}{\ \ \ \ Eigen::internal::aligned\_stack\_memory\_handler<TYPE>\ EIGEN\_CAT(NAME,\_stack\_memory\_destructor)((BUFFER)==0\ ?\ NAME\ :\ 0,SIZE,sizeof(TYPE)*SIZE>EIGEN\_STACK\_ALLOCATION\_LIMIT)}}
+\DoxyCodeLine{00641\ }
+\DoxyCodeLine{00642\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00643\ }
+\DoxyCodeLine{00644\ \textcolor{preprocessor}{\ \ \#define\ ei\_declare\_aligned\_stack\_constructed\_variable(TYPE,NAME,SIZE,BUFFER)\ \(\backslash\)}}
+\DoxyCodeLine{00645\ \textcolor{preprocessor}{\ \ \ \ Eigen::internal::check\_size\_for\_overflow<TYPE>(SIZE);\ \(\backslash\)}}
+\DoxyCodeLine{00646\ \textcolor{preprocessor}{\ \ \ \ TYPE*\ NAME\ =\ (BUFFER)!=0\ ?\ BUFFER\ :\ reinterpret\_cast<TYPE*>(Eigen::internal::aligned\_malloc(sizeof(TYPE)*SIZE));\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00647\ \textcolor{preprocessor}{\ \ \ \ Eigen::internal::aligned\_stack\_memory\_handler<TYPE>\ EIGEN\_CAT(NAME,\_stack\_memory\_destructor)((BUFFER)==0\ ?\ NAME\ :\ 0,SIZE,true)}}
+\DoxyCodeLine{00648\ \ \ \ \ }
+\DoxyCodeLine{00649\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00650\ }
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \textcolor{comment}{/*****************************************************************************}}
+\DoxyCodeLine{00653\ \textcolor{comment}{***\ Implementation\ of\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\ [\_IF]\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ***}}
+\DoxyCodeLine{00654\ \textcolor{comment}{*****************************************************************************/}}
+\DoxyCodeLine{00655\ }
+\DoxyCodeLine{00656\ \textcolor{preprocessor}{\#if\ EIGEN\_MAX\_ALIGN\_BYTES!=0}}
+\DoxyCodeLine{00657\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_NOTHROW(NeedsToAlign)\ \(\backslash\)}}
+\DoxyCodeLine{00658\ \textcolor{preprocessor}{\ \ \ \ \ \ void*\ operator\ new(std::size\_t\ size,\ const\ std::nothrow\_t\&)\ EIGEN\_NO\_THROW\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00659\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ EIGEN\_TRY\ \{\ return\ Eigen::internal::conditional\_aligned\_malloc<NeedsToAlign>(size);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00660\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ EIGEN\_CATCH\ (...)\ \{\ return\ 0;\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00661\ \textcolor{preprocessor}{\ \ \ \ \ \ \}}}
+\DoxyCodeLine{00662\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_IF(NeedsToAlign)\ \(\backslash\)}}
+\DoxyCodeLine{00663\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ *operator\ new(std::size\_t\ size)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00664\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ return\ Eigen::internal::conditional\_aligned\_malloc<NeedsToAlign>(size);\ \(\backslash\)}}
+\DoxyCodeLine{00665\ \textcolor{preprocessor}{\ \ \ \ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00666\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ *operator\ new[](std::size\_t\ size)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00667\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ return\ Eigen::internal::conditional\_aligned\_malloc<NeedsToAlign>(size);\ \(\backslash\)}}
+\DoxyCodeLine{00668\ \textcolor{preprocessor}{\ \ \ \ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00669\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ operator\ delete(void\ *\ ptr)\ EIGEN\_NO\_THROW\ \{\ Eigen::internal::conditional\_aligned\_free<NeedsToAlign>(ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ operator\ delete[](void\ *\ ptr)\ EIGEN\_NO\_THROW\ \{\ Eigen::internal::conditional\_aligned\_free<NeedsToAlign>(ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00671\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ operator\ delete(void\ *\ ptr,\ std::size\_t\ }\textcolor{comment}{/*\ sz\ */}\textcolor{preprocessor}{)\ EIGEN\_NO\_THROW\ \{\ Eigen::internal::conditional\_aligned\_free<NeedsToAlign>(ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00672\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ operator\ delete[](void\ *\ ptr,\ std::size\_t\ }\textcolor{comment}{/*\ sz\ */}\textcolor{preprocessor}{)\ EIGEN\_NO\_THROW\ \{\ Eigen::internal::conditional\_aligned\_free<NeedsToAlign>(ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00673\ \textcolor{preprocessor}{\ \ \ \ \ \ }\textcolor{comment}{/*\ in-\/place\ new\ and\ delete.\ since\ (at\ least\ afaik)\ there\ is\ no\ actual\ \ \ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00674\ \textcolor{preprocessor}{\ \ \ \ \ \ }\textcolor{comment}{/*\ memory\ allocated\ we\ can\ safely\ let\ the\ default\ implementation\ handle\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00675\ \textcolor{preprocessor}{\ \ \ \ \ \ }\textcolor{comment}{/*\ this\ particular\ case.\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00676\ \textcolor{preprocessor}{\ \ \ \ \ \ static\ void\ *operator\ new(std::size\_t\ size,\ void\ *ptr)\ \{\ return\ ::operator\ new(size,ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00677\ \textcolor{preprocessor}{\ \ \ \ \ \ static\ void\ *operator\ new[](std::size\_t\ size,\ void*\ ptr)\ \{\ return\ ::operator\ new[](size,ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00678\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ operator\ delete(void\ *\ memory,\ void\ *ptr)\ EIGEN\_NO\_THROW\ \{\ return\ ::operator\ delete(memory,ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00679\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ operator\ delete[](void\ *\ memory,\ void\ *ptr)\ EIGEN\_NO\_THROW\ \{\ return\ ::operator\ delete[](memory,ptr);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00680\ \textcolor{preprocessor}{\ \ \ \ \ \ }\textcolor{comment}{/*\ nothrow-\/new\ (returns\ zero\ instead\ of\ std::bad\_alloc)\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00681\ \textcolor{preprocessor}{\ \ \ \ \ \ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_NOTHROW(NeedsToAlign)\ \(\backslash\)}}
+\DoxyCodeLine{00682\ \textcolor{preprocessor}{\ \ \ \ \ \ void\ operator\ delete(void\ *ptr,\ const\ std::nothrow\_t\&)\ EIGEN\_NO\_THROW\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00683\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ Eigen::internal::conditional\_aligned\_free<NeedsToAlign>(ptr);\ \(\backslash\)}}
+\DoxyCodeLine{00684\ \textcolor{preprocessor}{\ \ \ \ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00685\ \textcolor{preprocessor}{\ \ \ \ \ \ typedef\ void\ eigen\_aligned\_operator\_new\_marker\_type;}}
+\DoxyCodeLine{00686\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00687\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_IF(NeedsToAlign)}}
+\DoxyCodeLine{00688\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00689\ }
+\DoxyCodeLine{00690\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_IF(true)}}
+\DoxyCodeLine{00691\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_IF\_VECTORIZABLE\_FIXED\_SIZE(Scalar,Size)\ \(\backslash\)}}
+\DoxyCodeLine{00692\ \textcolor{preprocessor}{\ \ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_IF(bool(((Size)!=Eigen::Dynamic)\ \&\&\ ((sizeof(Scalar)*(Size))\%EIGEN\_MAX\_ALIGN\_BYTES==0)))}}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ \textcolor{comment}{/****************************************************************************/}}
+\DoxyCodeLine{00695\ }
+\DoxyCodeLine{00720\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00721\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_eigen_1_1aligned__allocator_a8cee18d68ccd7d93588a0c08233f9be6}{aligned\_allocator}}\ :\ \textcolor{keyword}{public}\ std::allocator<T>}
+\DoxyCodeLine{00722\ \{}
+\DoxyCodeLine{00723\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00724\ \ \ \textcolor{keyword}{typedef}\ std::size\_t\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a2250815f042d86cb48c8e8fb960db280}{size\_type}};}
+\DoxyCodeLine{00725\ \ \ \textcolor{keyword}{typedef}\ std::ptrdiff\_t\ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a390bc09fb087d94423c42cf3428f0a24}{difference\_type}};}
+\DoxyCodeLine{00726\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a0973991f7b26d4113d52aa57284e0360}{pointer}};}
+\DoxyCodeLine{00727\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_aa225f4ea011fce1e792423ad02d5de01}{const\_pointer}};}
+\DoxyCodeLine{00728\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a0c3b4937cc7a495af864800176e3b9ca}{reference}};}
+\DoxyCodeLine{00729\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\&\ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a2f2cd14e4335018c07585467d579207a}{const\_reference}};}
+\DoxyCodeLine{00730\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a2188bac5dd2a2208a02c9dc934acb451}{value\_type}};}
+\DoxyCodeLine{00731\ }
+\DoxyCodeLine{00732\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ U>}
+\DoxyCodeLine{00733\ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1aligned__allocator_1_1rebind}{rebind}}}
+\DoxyCodeLine{00734\ \ \ \{}
+\DoxyCodeLine{00735\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a8cee18d68ccd7d93588a0c08233f9be6}{aligned\_allocator<U>}}\ \mbox{\hyperlink{struct_eigen_1_1aligned__allocator_1_1rebind_aed3b0e11c4712793af0e508d9d8f4ade}{other}};}
+\DoxyCodeLine{00736\ \ \ \};}
+\DoxyCodeLine{00737\ }
+\DoxyCodeLine{00738\ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a8cee18d68ccd7d93588a0c08233f9be6}{aligned\_allocator}}()\ :\ \mbox{\hyperlink{namespacestd}{std}}::allocator<\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}>()\ \{\}}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a7076a7a6ccb57759a910860135253543}{aligned\_allocator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a8cee18d68ccd7d93588a0c08233f9be6}{aligned\_allocator}}\&\ other)\ :\ \mbox{\hyperlink{namespacestd}{std}}::allocator<\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}>(other)\ \{\}}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ U>}
+\DoxyCodeLine{00743\ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a19b1a156baf134359d088dc9127fc2c1}{aligned\_allocator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a8cee18d68ccd7d93588a0c08233f9be6}{aligned\_allocator<U>}}\&\ other)\ :\ \mbox{\hyperlink{namespacestd}{std}}::allocator<\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}>(other)\ \{\}}
+\DoxyCodeLine{00744\ }
+\DoxyCodeLine{00745\ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a9718dcf6d11a462d6cdb41cb0df04921}{\string~aligned\_allocator}}()\ \{\}}
+\DoxyCodeLine{00746\ }
+\DoxyCodeLine{00747\ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a0973991f7b26d4113d52aa57284e0360}{pointer}}\ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a11f921b8c551f8f89c5b6252a2cbfac0}{allocate}}(\mbox{\hyperlink{class_eigen_1_1aligned__allocator_a2250815f042d86cb48c8e8fb960db280}{size\_type}}\ num,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \textcolor{comment}{/*hint*/}\ =\ 0)}
+\DoxyCodeLine{00748\ \ \ \{}
+\DoxyCodeLine{00749\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_ab9cbaa75a3a4be427063623e8f390085}{internal::check\_size\_for\_overflow<T>}}(num);}
+\DoxyCodeLine{00750\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a2250815f042d86cb48c8e8fb960db280}{size\_type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ =\ num\ *\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}});}
+\DoxyCodeLine{00751\ \textcolor{preprocessor}{\#if\ EIGEN\_COMP\_GNUC\_STRICT\ \&\&\ EIGEN\_GNUC\_AT\_LEAST(7,0)}}
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{comment}{//\ workaround\ gcc\ bug\ https://gcc.gnu.org/bugzilla/show\_bug.cgi?id=87544}}
+\DoxyCodeLine{00753\ \ \ \ \ \textcolor{comment}{//\ It\ triggered\ eigen/Eigen/src/Core/util/Memory.h:189:12:\ warning:\ argument\ 1\ value\ '18446744073709551612'\ exceeds\ maximum\ object\ size\ 9223372036854775807}}
+\DoxyCodeLine{00754\ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}>=std::size\_t((std::numeric\_limits<std::ptrdiff\_t>::max)()))}
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00756\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00757\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{class_eigen_1_1aligned__allocator_a0973991f7b26d4113d52aa57284e0360}{pointer}}\textcolor{keyword}{>}(\ \mbox{\hyperlink{namespace_eigen_1_1internal_a085e514c677ac3bb48f3c3674a372865}{internal::aligned\_malloc}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})\ );}
+\DoxyCodeLine{00759\ \ \ \}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_ae00326806b7ba19c141c6c61a5f7b1ad}{deallocate}}(\mbox{\hyperlink{class_eigen_1_1aligned__allocator_a0973991f7b26d4113d52aa57284e0360}{pointer}}\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \mbox{\hyperlink{class_eigen_1_1aligned__allocator_a2250815f042d86cb48c8e8fb960db280}{size\_type}}\ \textcolor{comment}{/*num*/})}
+\DoxyCodeLine{00762\ \ \ \{}
+\DoxyCodeLine{00763\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_adad153f95799bcc02d86235418c0a73f}{internal::aligned\_free}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{00764\ \ \ \}}
+\DoxyCodeLine{00765\ \};}
+\DoxyCodeLine{00766\ }
+\DoxyCodeLine{00767\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ Cache\ sizes\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00768\ }
+\DoxyCodeLine{00769\ \textcolor{preprocessor}{\#if\ !defined(EIGEN\_NO\_CPUID)}}
+\DoxyCodeLine{00770\ \textcolor{preprocessor}{\#\ \ if\ EIGEN\_COMP\_GNUC\ \&\&\ EIGEN\_ARCH\_i386\_OR\_x86\_64}}
+\DoxyCodeLine{00771\ \textcolor{preprocessor}{\#\ \ \ \ if\ defined(\_\_PIC\_\_)\ \&\&\ EIGEN\_ARCH\_i386}}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Case\ for\ x86\ with\ PIC}}
+\DoxyCodeLine{00773\ \textcolor{preprocessor}{\#\ \ \ \ \ \ define\ EIGEN\_CPUID(abcd,func,id)\ \(\backslash\)}}
+\DoxyCodeLine{00774\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_\ ("{}xchgl\ \%\%ebx,\ \%k1;cpuid;\ xchgl\ \%\%ebx,\%k1"{}:\ "{}=a"{}\ (abcd[0]),\ "{}=\&r"{}\ (abcd[1]),\ "{}=c"{}\ (abcd[2]),\ "{}=d"{}\ (abcd[3])\ :\ "{}a"{}\ (func),\ "{}c"{}\ (id));}}
+\DoxyCodeLine{00775\ \textcolor{preprocessor}{\#\ \ \ \ elif\ defined(\_\_PIC\_\_)\ \&\&\ EIGEN\_ARCH\_x86\_64}}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Case\ for\ x64\ with\ PIC.\ In\ theory\ this\ is\ only\ a\ problem\ with\ recent\ gcc\ and\ with\ medium\ or\ large\ code\ model,\ not\ with\ the\ default\ small\ code\ model.}}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \ \textcolor{comment}{//\ However,\ we\ cannot\ detect\ which\ code\ model\ is\ used,\ and\ the\ xchg\ overhead\ is\ negligible\ anyway.}}
+\DoxyCodeLine{00778\ \textcolor{preprocessor}{\#\ \ \ \ \ \ define\ EIGEN\_CPUID(abcd,func,id)\ \(\backslash\)}}
+\DoxyCodeLine{00779\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_\ ("{}xchg\{q\}\(\backslash\)t\{\%\%\}rbx,\ \%q1;\ cpuid;\ xchg\{q\}\(\backslash\)t\{\%\%\}rbx,\ \%q1"{}:\ "{}=a"{}\ (abcd[0]),\ "{}=\&r"{}\ (abcd[1]),\ "{}=c"{}\ (abcd[2]),\ "{}=d"{}\ (abcd[3])\ :\ "{}0"{}\ (func),\ "{}2"{}\ (id));}}
+\DoxyCodeLine{00780\ \textcolor{preprocessor}{\#\ \ \ \ else}}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Case\ for\ x86\_64\ or\ x86\ w/o\ PIC}}
+\DoxyCodeLine{00782\ \textcolor{preprocessor}{\#\ \ \ \ \ \ define\ EIGEN\_CPUID(abcd,func,id)\ \(\backslash\)}}
+\DoxyCodeLine{00783\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \_\_asm\_\_\ \_\_volatile\_\_\ ("{}cpuid"{}:\ "{}=a"{}\ (abcd[0]),\ "{}=b"{}\ (abcd[1]),\ "{}=c"{}\ (abcd[2]),\ "{}=d"{}\ (abcd[3])\ :\ "{}0"{}\ (func),\ "{}2"{}\ (id)\ );}}
+\DoxyCodeLine{00784\ \textcolor{preprocessor}{\#\ \ \ \ endif}}
+\DoxyCodeLine{00785\ \textcolor{preprocessor}{\#\ \ elif\ EIGEN\_COMP\_MSVC}}
+\DoxyCodeLine{00786\ \textcolor{preprocessor}{\#\ \ \ \ if\ (EIGEN\_COMP\_MSVC\ >\ 1500)\ \&\&\ EIGEN\_ARCH\_i386\_OR\_x86\_64}}
+\DoxyCodeLine{00787\ \textcolor{preprocessor}{\#\ \ \ \ \ \ define\ EIGEN\_CPUID(abcd,func,id)\ \_\_cpuidex((int*)abcd,func,id)}}
+\DoxyCodeLine{00788\ \textcolor{preprocessor}{\#\ \ \ \ endif}}
+\DoxyCodeLine{00789\ \textcolor{preprocessor}{\#\ \ endif}}
+\DoxyCodeLine{00790\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00791\ }
+\DoxyCodeLine{00792\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceinternal}{internal}}\ \{}
+\DoxyCodeLine{00793\ }
+\DoxyCodeLine{00794\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_CPUID}}
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ cpuid\_is\_vendor(\textcolor{keywordtype}{int}\ abcd[4],\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ vendor[3])}
+\DoxyCodeLine{00797\ \{}
+\DoxyCodeLine{00798\ \ \ \textcolor{keywordflow}{return}\ abcd[1]==vendor[0]\ \&\&\ abcd[3]==vendor[1]\ \&\&\ abcd[2]==vendor[2];}
+\DoxyCodeLine{00799\ \}}
+\DoxyCodeLine{00800\ }
+\DoxyCodeLine{00801\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ queryCacheSizes\_intel\_direct(\textcolor{keywordtype}{int}\&\ l1,\ \textcolor{keywordtype}{int}\&\ l2,\ \textcolor{keywordtype}{int}\&\ l3)}
+\DoxyCodeLine{00802\ \{}
+\DoxyCodeLine{00803\ \ \ \textcolor{keywordtype}{int}\ abcd[4];}
+\DoxyCodeLine{00804\ \ \ l1\ =\ l2\ =\ l3\ =\ 0;}
+\DoxyCodeLine{00805\ \ \ \textcolor{keywordtype}{int}\ cache\_id\ =\ 0;}
+\DoxyCodeLine{00806\ \ \ \textcolor{keywordtype}{int}\ cache\_type\ =\ 0;}
+\DoxyCodeLine{00807\ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00808\ \ \ \ \ abcd[0]\ =\ abcd[1]\ =\ abcd[2]\ =\ abcd[3]\ =\ 0;}
+\DoxyCodeLine{00809\ \ \ \ \ EIGEN\_CPUID(abcd,0x4,cache\_id);}
+\DoxyCodeLine{00810\ \ \ \ \ cache\_type\ \ =\ (abcd[0]\ \&\ 0x0F)\ >>\ 0;}
+\DoxyCodeLine{00811\ \ \ \ \ \textcolor{keywordflow}{if}(cache\_type==1||cache\_type==3)\ \textcolor{comment}{//\ data\ or\ unified\ cache}}
+\DoxyCodeLine{00812\ \ \ \ \ \{}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ cache\_level\ =\ (abcd[0]\ \&\ 0xE0)\ >>\ 5;\ \ \textcolor{comment}{//\ A[7:5]}}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ ways\ \ \ \ \ \ \ \ =\ (abcd[1]\ \&\ 0xFFC00000)\ >>\ 22;\ \textcolor{comment}{//\ B[31:22]}}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ partitions\ \ =\ (abcd[1]\ \&\ 0x003FF000)\ >>\ 12;\ \textcolor{comment}{//\ B[21:12]}}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__enumerable__thread__specific_8cpp_aeda6e5e890eb884f1bccf8e647ae1ca8}{line\_size}}\ \ \ =\ (abcd[1]\ \&\ 0x00000FFF)\ >>\ \ 0;\ \textcolor{comment}{//\ B[11:0]}}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sets\ \ \ \ \ \ \ \ =\ (abcd[2]);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ C[31:0]}}
+\DoxyCodeLine{00818\ }
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ cache\_size\ =\ (ways+1)\ *\ (partitions+1)\ *\ (\mbox{\hyperlink{test__enumerable__thread__specific_8cpp_aeda6e5e890eb884f1bccf8e647ae1ca8}{line\_size}}+1)\ *\ (sets+1);}
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(cache\_level)}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 1:\ l1\ =\ cache\_size;\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00824\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 2:\ l2\ =\ cache\_size;\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 3:\ l3\ =\ cache\_size;\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00828\ \ \ \ \ \}}
+\DoxyCodeLine{00829\ \ \ \ \ cache\_id++;}
+\DoxyCodeLine{00830\ \ \ \}\ \textcolor{keywordflow}{while}(cache\_type>0\ \&\&\ cache\_id<16);}
+\DoxyCodeLine{00831\ \}}
+\DoxyCodeLine{00832\ }
+\DoxyCodeLine{00833\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ queryCacheSizes\_intel\_codes(\textcolor{keywordtype}{int}\&\ l1,\ \textcolor{keywordtype}{int}\&\ l2,\ \textcolor{keywordtype}{int}\&\ l3)}
+\DoxyCodeLine{00834\ \{}
+\DoxyCodeLine{00835\ \ \ \textcolor{keywordtype}{int}\ abcd[4];}
+\DoxyCodeLine{00836\ \ \ abcd[0]\ =\ abcd[1]\ =\ abcd[2]\ =\ abcd[3]\ =\ 0;}
+\DoxyCodeLine{00837\ \ \ l1\ =\ l2\ =\ l3\ =\ 0;}
+\DoxyCodeLine{00838\ \ \ EIGEN\_CPUID(abcd,0x00000002,0);}
+\DoxyCodeLine{00839\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *\ bytes\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}\ *\textcolor{keyword}{>}(abcd)+2;}
+\DoxyCodeLine{00840\ \ \ \textcolor{keywordtype}{bool}\ check\_for\_p2\_core2\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00841\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<14;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})}
+\DoxyCodeLine{00842\ \ \ \{}
+\DoxyCodeLine{00843\ \ \ \ \ \textcolor{keywordflow}{switch}(bytes[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}])}
+\DoxyCodeLine{00844\ \ \ \ \ \{}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x0A:\ l1\ =\ 8;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ 0Ah\ \ \ data\ L1\ cache,\ 8\ KB,\ 2\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x0C:\ l1\ =\ 16;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 0Ch\ \ \ data\ L1\ cache,\ 16\ KB,\ 4\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x0E:\ l1\ =\ 24;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 0Eh\ \ \ data\ L1\ cache,\ 24\ KB,\ 6\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x10:\ l1\ =\ 16;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 10h\ \ \ data\ L1\ cache,\ 16\ KB,\ 4\ ways,\ 32\ byte\ lines\ (IA-\/64)}}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x15:\ l1\ =\ 16;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 15h\ \ \ code\ L1\ cache,\ 16\ KB,\ 4\ ways,\ 32\ byte\ lines\ (IA-\/64)}}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x2C:\ l1\ =\ 32;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 2Ch\ \ \ data\ L1\ cache,\ 32\ KB,\ 8\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x30:\ l1\ =\ 32;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 30h\ \ \ code\ L1\ cache,\ 32\ KB,\ 8\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x60:\ l1\ =\ 16;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 60h\ \ \ data\ L1\ cache,\ 16\ KB,\ 8\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x66:\ l1\ =\ 8;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ 66h\ \ \ data\ L1\ cache,\ 8\ KB,\ 4\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x67:\ l1\ =\ 16;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 67h\ \ \ data\ L1\ cache,\ 16\ KB,\ 4\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x68:\ l1\ =\ 32;\ \textcolor{keywordflow}{break};\ \ \textcolor{comment}{//\ 68h\ \ \ data\ L1\ cache,\ 32\ KB,\ 4\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x1A:\ l2\ =\ 96;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 96\ KB,\ 6\ ways,\ 64\ byte\ lines\ (IA-\/64)}}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x22:\ l3\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 512\ KB,\ 4\ ways\ (!),\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x23:\ l3\ =\ 1024;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 1024\ KB,\ 8\ ways,\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x25:\ l3\ =\ 2048;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 2048\ KB,\ 8\ ways,\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x29:\ l3\ =\ 4096;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 4096\ KB,\ 8\ ways,\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x39:\ l2\ =\ 128;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 128\ KB,\ 4\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x3A:\ l2\ =\ 192;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 192\ KB,\ 6\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x3B:\ l2\ =\ 128;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 128\ KB,\ 2\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x3C:\ l2\ =\ 256;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 256\ KB,\ 4\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x3D:\ l2\ =\ 384;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 384\ KB,\ 6\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x3E:\ l2\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 512\ KB,\ 4\ ways,\ 64\ byte\ lines,\ sectored}}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x40:\ l2\ =\ 0;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ no\ integrated\ L2\ cache\ (P6\ core)\ or\ L3\ cache\ (P4\ core)}}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x41:\ l2\ =\ 128;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 128\ KB,\ 4\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x42:\ l2\ =\ 256;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 256\ KB,\ 4\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x43:\ l2\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 512\ KB,\ 4\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x44:\ l2\ =\ 1024;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 1024\ KB,\ 4\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x45:\ l2\ =\ 2048;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 2048\ KB,\ 4\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x46:\ l3\ =\ 4096;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 4096\ KB,\ 4\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x47:\ l3\ =\ 8192;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 8192\ KB,\ 8\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x48:\ l2\ =\ 3072;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 3072\ KB,\ 12\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00876\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x49:\ \textcolor{keywordflow}{if}(l2!=0)\ l3\ =\ 4096;\ \textcolor{keywordflow}{else}\ \{check\_for\_p2\_core2=\textcolor{keyword}{true};\ l3\ =\ l2\ =\ 4096;\}\ \textcolor{keywordflow}{break};\textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 4096\ KB,\ 16\ ways,\ 64\ byte\ lines\ (P4)\ or\ L2\ for\ core2}}
+\DoxyCodeLine{00877\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x4A:\ l3\ =\ 6144;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 6144\ KB,\ 12\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x4B:\ l3\ =\ 8192;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 8192\ KB,\ 16\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x4C:\ l3\ =\ 12288;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 12288\ KB,\ 12\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00880\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x4D:\ l3\ =\ 16384;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 16384\ KB,\ 16\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x4E:\ l2\ =\ 6144;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 6144\ KB,\ 24\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x78:\ l2\ =\ 1024;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 1024\ KB,\ 4\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x79:\ l2\ =\ 128;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 128\ KB,\ 8\ ways,\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x7A:\ l2\ =\ 256;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 256\ KB,\ 8\ ways,\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x7B:\ l2\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 512\ KB,\ 8\ ways,\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x7C:\ l2\ =\ 1024;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 1024\ KB,\ 8\ ways,\ 64\ byte\ lines,\ dual-\/sectored}}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x7D:\ l2\ =\ 2048;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 2048\ KB,\ 8\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x7E:\ l2\ =\ 256;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 256\ KB,\ 8\ ways,\ 128\ byte\ lines,\ sect.\ (IA-\/64)}}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x7F:\ l2\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 512\ KB,\ 2\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x80:\ l2\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 512\ KB,\ 8\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x81:\ l2\ =\ 128;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 128\ KB,\ 8\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x82:\ l2\ =\ 256;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 256\ KB,\ 8\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x83:\ l2\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 512\ KB,\ 8\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x84:\ l2\ =\ 1024;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 1024\ KB,\ 8\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x85:\ l2\ =\ 2048;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 2048\ KB,\ 8\ ways,\ 32\ byte\ lines}}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x86:\ l2\ =\ 512;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 512\ KB,\ 4\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x87:\ l2\ =\ 1024;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L2\ cache,\ 1024\ KB,\ 8\ ways,\ 64\ byte\ lines}}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x88:\ l3\ =\ 2048;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 2048\ KB,\ 4\ ways,\ 64\ byte\ lines\ (IA-\/64)}}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x89:\ l3\ =\ 4096;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 4096\ KB,\ 4\ ways,\ 64\ byte\ lines\ (IA-\/64)}}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x8A:\ l3\ =\ 8192;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 8192\ KB,\ 4\ ways,\ 64\ byte\ lines\ (IA-\/64)}}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0x8D:\ l3\ =\ 3072;\ \textcolor{keywordflow}{break};\ \ \ \textcolor{comment}{//\ code\ and\ data\ L3\ cache,\ 3072\ KB,\ 12\ ways,\ 128\ byte\ lines\ (IA-\/64)}}
+\DoxyCodeLine{00902\ }
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00904\ \ \ \ \ \}}
+\DoxyCodeLine{00905\ \ \ \}}
+\DoxyCodeLine{00906\ \ \ \textcolor{keywordflow}{if}(check\_for\_p2\_core2\ \&\&\ l2\ ==\ l3)}
+\DoxyCodeLine{00907\ \ \ \ \ l3\ =\ 0;}
+\DoxyCodeLine{00908\ \ \ l1\ *=\ 1024;}
+\DoxyCodeLine{00909\ \ \ l2\ *=\ 1024;}
+\DoxyCodeLine{00910\ \ \ l3\ *=\ 1024;}
+\DoxyCodeLine{00911\ \}}
+\DoxyCodeLine{00912\ }
+\DoxyCodeLine{00913\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ queryCacheSizes\_intel(\textcolor{keywordtype}{int}\&\ l1,\ \textcolor{keywordtype}{int}\&\ l2,\ \textcolor{keywordtype}{int}\&\ l3,\ \textcolor{keywordtype}{int}\ max\_std\_funcs)}
+\DoxyCodeLine{00914\ \{}
+\DoxyCodeLine{00915\ \ \ \textcolor{keywordflow}{if}(max\_std\_funcs>=4)}
+\DoxyCodeLine{00916\ \ \ \ \ queryCacheSizes\_intel\_direct(l1,l2,l3);}
+\DoxyCodeLine{00917\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00918\ \ \ \ \ queryCacheSizes\_intel\_codes(l1,l2,l3);}
+\DoxyCodeLine{00919\ \}}
+\DoxyCodeLine{00920\ }
+\DoxyCodeLine{00921\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ queryCacheSizes\_amd(\textcolor{keywordtype}{int}\&\ l1,\ \textcolor{keywordtype}{int}\&\ l2,\ \textcolor{keywordtype}{int}\&\ l3)}
+\DoxyCodeLine{00922\ \{}
+\DoxyCodeLine{00923\ \ \ \textcolor{keywordtype}{int}\ abcd[4];}
+\DoxyCodeLine{00924\ \ \ abcd[0]\ =\ abcd[1]\ =\ abcd[2]\ =\ abcd[3]\ =\ 0;}
+\DoxyCodeLine{00925\ \ \ EIGEN\_CPUID(abcd,0x80000005,0);}
+\DoxyCodeLine{00926\ \ \ l1\ =\ (abcd[2]\ >>\ 24)\ *\ 1024;\ \textcolor{comment}{//\ C[31:24]\ =\ L1\ size\ in\ KB}}
+\DoxyCodeLine{00927\ \ \ abcd[0]\ =\ abcd[1]\ =\ abcd[2]\ =\ abcd[3]\ =\ 0;}
+\DoxyCodeLine{00928\ \ \ EIGEN\_CPUID(abcd,0x80000006,0);}
+\DoxyCodeLine{00929\ \ \ l2\ =\ (abcd[2]\ >>\ 16)\ *\ 1024;\ \textcolor{comment}{//\ C[31;16]\ =\ l2\ cache\ size\ in\ KB}}
+\DoxyCodeLine{00930\ \ \ l3\ =\ ((abcd[3]\ \&\ 0xFFFC000)\ >>\ 18)\ *\ 512\ *\ 1024;\ \textcolor{comment}{//\ D[31;18]\ =\ l3\ cache\ size\ in\ 512KB}}
+\DoxyCodeLine{00931\ \}}
+\DoxyCodeLine{00932\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00933\ }
+\DoxyCodeLine{00936\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3a3f70166790e15844d6b9804f84f952}{queryCacheSizes}}(\textcolor{keywordtype}{int}\&\ l1,\ \textcolor{keywordtype}{int}\&\ l2,\ \textcolor{keywordtype}{int}\&\ l3)}
+\DoxyCodeLine{00937\ \{}
+\DoxyCodeLine{00938\ \textcolor{preprocessor}{\ \ \#ifdef\ EIGEN\_CPUID}}
+\DoxyCodeLine{00939\ \ \ \textcolor{keywordtype}{int}\ abcd[4];}
+\DoxyCodeLine{00940\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ GenuineIntel[]\ =\ \{0x756e6547,\ 0x49656e69,\ 0x6c65746e\};}
+\DoxyCodeLine{00941\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ AuthenticAMD[]\ =\ \{0x68747541,\ 0x69746e65,\ 0x444d4163\};}
+\DoxyCodeLine{00942\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ AMDisbetter\_[]\ =\ \{0x69444d41,\ 0x74656273,\ 0x21726574\};\ \textcolor{comment}{//\ "{}AMDisbetter!"{}}}
+\DoxyCodeLine{00943\ }
+\DoxyCodeLine{00944\ \ \ \textcolor{comment}{//\ identify\ the\ CPU\ vendor}}
+\DoxyCodeLine{00945\ \ \ EIGEN\_CPUID(abcd,0x0,0);}
+\DoxyCodeLine{00946\ \ \ \textcolor{keywordtype}{int}\ max\_std\_funcs\ =\ abcd[1];}
+\DoxyCodeLine{00947\ \ \ \textcolor{keywordflow}{if}(cpuid\_is\_vendor(abcd,GenuineIntel))}
+\DoxyCodeLine{00948\ \ \ \ \ queryCacheSizes\_intel(l1,l2,l3,max\_std\_funcs);}
+\DoxyCodeLine{00949\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(cpuid\_is\_vendor(abcd,AuthenticAMD)\ ||\ cpuid\_is\_vendor(abcd,AMDisbetter\_))}
+\DoxyCodeLine{00950\ \ \ \ \ queryCacheSizes\_amd(l1,l2,l3);}
+\DoxyCodeLine{00951\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00952\ \ \ \ \ \textcolor{comment}{//\ by\ default\ let's\ use\ Intel's\ API}}
+\DoxyCodeLine{00953\ \ \ \ \ queryCacheSizes\_intel(l1,l2,l3,max\_std\_funcs);}
+\DoxyCodeLine{00954\ }
+\DoxyCodeLine{00955\ \ \ \textcolor{comment}{//\ here\ is\ the\ list\ of\ other\ vendors:}}
+\DoxyCodeLine{00956\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}VIA\ VIA\ VIA\ "{})}}
+\DoxyCodeLine{00957\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}CyrixInstead"{})}}
+\DoxyCodeLine{00958\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}CentaurHauls"{})}}
+\DoxyCodeLine{00959\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}GenuineTMx86"{})}}
+\DoxyCodeLine{00960\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}TransmetaCPU"{})}}
+\DoxyCodeLine{00961\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}RiseRiseRise"{})}}
+\DoxyCodeLine{00962\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}Geode\ by\ NSC"{})}}
+\DoxyCodeLine{00963\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}SiS\ SiS\ SiS\ "{})}}
+\DoxyCodeLine{00964\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}UMC\ UMC\ UMC\ "{})}}
+\DoxyCodeLine{00965\ \textcolor{comment}{//\ \ \ ||cpuid\_is\_vendor(abcd,"{}NexGenDriven"{})}}
+\DoxyCodeLine{00966\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00967\ \ \ l1\ =\ l2\ =\ l3\ =\ -\/1;}
+\DoxyCodeLine{00968\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00969\ \}}
+\DoxyCodeLine{00970\ }
+\DoxyCodeLine{00973\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespace_eigen_1_1internal_abc24477d9f0a7445aa8ece2b5b7a0b7b}{queryL1CacheSize}}()}
+\DoxyCodeLine{00974\ \{}
+\DoxyCodeLine{00975\ \ \ \textcolor{keywordtype}{int}\ l1(-\/1),\ l2,\ l3;}
+\DoxyCodeLine{00976\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a3a3f70166790e15844d6b9804f84f952}{queryCacheSizes}}(l1,l2,l3);}
+\DoxyCodeLine{00977\ \ \ \textcolor{keywordflow}{return}\ l1;}
+\DoxyCodeLine{00978\ \}}
+\DoxyCodeLine{00979\ }
+\DoxyCodeLine{00982\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab12a6ee511234693252cf02dfef07899}{queryTopLevelCacheSize}}()}
+\DoxyCodeLine{00983\ \{}
+\DoxyCodeLine{00984\ \ \ \textcolor{keywordtype}{int}\ l1,\ l2(-\/1),\ l3(-\/1);}
+\DoxyCodeLine{00985\ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a3a3f70166790e15844d6b9804f84f952}{queryCacheSizes}}(l1,l2,l3);}
+\DoxyCodeLine{00986\ \ \ \textcolor{keywordflow}{return}\ (std::max)(l2,l3);}
+\DoxyCodeLine{00987\ \}}
+\DoxyCodeLine{00988\ }
+\DoxyCodeLine{00989\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00990\ }
+\DoxyCodeLine{00991\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00992\ }
+\DoxyCodeLine{00993\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_MEMORY\_H}}
+
+\end{DoxyCode}

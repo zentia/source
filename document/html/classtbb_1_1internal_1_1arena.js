@@ -1,0 +1,35 @@
+var classtbb_1_1internal_1_1arena =
+[
+    [ "base_type", "classtbb_1_1internal_1_1arena.html#acd0c8a22c63cd214ec4e713f4254ce8e", null ],
+    [ "pool_state_t", "classtbb_1_1internal_1_1arena.html#ab857c6609471eb555d295529945bc738", null ],
+    [ "new_work_type", "classtbb_1_1internal_1_1arena.html#a2380e7751924d1199ffab7b2ee29ddee", [
+      [ "work_spawned", "classtbb_1_1internal_1_1arena.html#a2380e7751924d1199ffab7b2ee29ddeea2109ea81736367212fa797959b4b4381", null ],
+      [ "wakeup", "classtbb_1_1internal_1_1arena.html#a2380e7751924d1199ffab7b2ee29ddeeac92fe41bfa3a02ea67d83232c9f88b90", null ],
+      [ "work_enqueued", "classtbb_1_1internal_1_1arena.html#a2380e7751924d1199ffab7b2ee29ddeea49e498ff35aa2bbce4de87dfd7faab04", null ]
+    ] ],
+    [ "arena", "classtbb_1_1internal_1_1arena.html#ad3b28deb1fcb30cb533ea7b655819d6b", null ],
+    [ "advertise_new_work", "classtbb_1_1internal_1_1arena.html#a7153d90d34c57f57a5a44495a0c6c30d", null ],
+    [ "allocate_arena", "classtbb_1_1internal_1_1arena.html#ad42305a844f6c9dc93b6d1c8c0302238", null ],
+    [ "allocation_size", "classtbb_1_1internal_1_1arena.html#a88bd4bed45e6ca7bcba05e568717be3b", null ],
+    [ "enqueue_task", "classtbb_1_1internal_1_1arena.html#a8b6f5b56aed218f491d9c4f9b4a0bcf6", null ],
+    [ "free_arena", "classtbb_1_1internal_1_1arena.html#a3de7953b535cd3180e421ddb49eb5a50", null ],
+    [ "has_enqueued_tasks", "classtbb_1_1internal_1_1arena.html#af08a4622c323ad8863e0008af620b28c", null ],
+    [ "is_busy_or_empty", "classtbb_1_1internal_1_1arena.html#a3402230064cf16a79b9b2e9874df4d6f", null ],
+    [ "is_out_of_work", "classtbb_1_1internal_1_1arena.html#a9f25e058648c12ff7a0093b30fd79351", null ],
+    [ "is_recall_requested", "classtbb_1_1internal_1_1arena.html#a62798c142914ef1e42d6a2b2c7eed643", null ],
+    [ "mailbox", "classtbb_1_1internal_1_1arena.html#aa0c057046899d3ab934c8aaf66b92673", null ],
+    [ "num_arena_slots", "classtbb_1_1internal_1_1arena.html#a315d666efe28ecd0fb6aa70f2da0eb37", null ],
+    [ "num_workers_active", "classtbb_1_1internal_1_1arena.html#a1aa6d247ff51a1ee9ada4197fdf3abdb", null ],
+    [ "occupy_free_slot", "classtbb_1_1internal_1_1arena.html#af5ba2478b86e7618cdd0cedfb473121a", null ],
+    [ "occupy_free_slot_in_range", "classtbb_1_1internal_1_1arena.html#a74271175755dfa2e746c23a34e0e42ac", null ],
+    [ "on_thread_leaving", "classtbb_1_1internal_1_1arena.html#a6bc30944090909d219ac8b95cadc0439", null ],
+    [ "process", "classtbb_1_1internal_1_1arena.html#aa5f5c1e842ab59a4e4f127f013578882", null ],
+    [ "restore_priority_if_need", "classtbb_1_1internal_1_1arena.html#a33644ebee7b2f7b472fc6fdca10eff2b", null ],
+    [ "my_slots", "classtbb_1_1internal_1_1arena.html#a388cbceb772b63b69ee84d775b210504", null ],
+    [ "out_of_arena", "classtbb_1_1internal_1_1arena.html#a9ece68a6099229bd2c152b7421851671", null ],
+    [ "ref_external", "classtbb_1_1internal_1_1arena.html#a0b9c64f0781f7c6337bc109d9867829a", null ],
+    [ "ref_external_bits", "classtbb_1_1internal_1_1arena.html#a3cfbb5823b437dabaaaf99f1bba615be", null ],
+    [ "ref_worker", "classtbb_1_1internal_1_1arena.html#af7e9255877d3efd5966031efe1fe3edf", null ],
+    [ "SNAPSHOT_EMPTY", "classtbb_1_1internal_1_1arena.html#a06d6b9eb47d6cf8a95f468f410e6769c", null ],
+    [ "SNAPSHOT_FULL", "classtbb_1_1internal_1_1arena.html#a5388bc046062943dcca75cdfeedc1cad", null ]
+];

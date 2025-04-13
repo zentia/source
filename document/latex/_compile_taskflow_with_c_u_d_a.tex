@@ -1,0 +1,177 @@
+\doxysection{Compile Taskflow with CUDA}
+\hypertarget{_compile_taskflow_with_c_u_d_a}{}\label{_compile_taskflow_with_c_u_d_a}\index{Compile Taskflow with CUDA@{Compile Taskflow with CUDA}}
+\hypertarget{_compile_taskflow_with_c_u_d_a_InstallCUDACompiler}{}\doxysubsection{\texorpdfstring{Install CUDA Compiler}{Install CUDA Compiler}}\label{_compile_taskflow_with_c_u_d_a_InstallCUDACompiler}
+To compile Taskflow with CUDA code, you need a {\ttfamily nvcc} compiler. Please visit the official page of \href{https://developer.nvidia.com/cuda-downloads}{\texttt{ Downloading CUDA Toolkit}}.\hypertarget{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDADirectly}{}\doxysubsection{\texorpdfstring{Compile Source Code Directly}{Compile Source Code Directly}}\label{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDADirectly}
+Taskflow\textquotesingle{}s GPU programming interface for CUDA is \doxylink{classtf_1_1cuda_flow}{tf\+::cuda\+Flow}. Consider the following {\ttfamily simple.\+cu} program that launches a single kernel function to output a message\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_8hpp}{taskflow/taskflow.hpp}}>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <taskflow/cudaflow.hpp>}\ \ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <taskflow/cuda/for\_each.hpp>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}**\ argv)\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ task1\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}cpu\ task"{}});}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ task2\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ create\ a\ cudaFlow\ of\ a\ single-\/threaded\ task}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow}{tf::cudaFlow}}\ cf;}
+\DoxyCodeLine{\ \ \ \ cf.\mbox{\hyperlink{classtf_1_1cuda_flow_ac2906cb0002fc411a983d100a3d58d62}{single\_task}}([]\ \_\_device\_\_\ ()\ \{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}hello\ cudaFlow!\(\backslash\)n"{}});\ \});}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ launch\ the\ cudaflow\ through\ a\ stream}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\ \ \ \ cf.run(stream);}
+\DoxyCodeLine{\ \ \ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}gpu\ task"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ task1.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(task2);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The easiest way to compile Taskflow with CUDA code (e.\+g., cuda\+Flow, kernels) is to use @nvcc\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ nvcc\ -\/\mbox{\hyperlink{namespacestd}{std}}=\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}++17\ -\/I\ \mbox{\hyperlink{ittnotify__static_8h_a7016119bc831a22d1a351d56128518ed}{path}}/to/\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}/\ -\/-\/extended-\/\mbox{\hyperlink{sugar_8h_aa2bc5aa57d417f3226228d9058ab9f20}{lambda}}\ simple.cu\ -\/o\ simple}
+\DoxyCodeLine{\string~\$\ ./simple}
+\DoxyCodeLine{hello\ cudaFlow!}
+
+\end{DoxyCode}
+\hypertarget{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDASeparately}{}\doxysubsection{\texorpdfstring{Compile Source Code Separately}{Compile Source Code Separately}}\label{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDASeparately}
+Large GPU applications often compile a program into separate objects and link them together to form an executable or a library. You can compile your CPU code and GPU code separately with Taskflow using {\ttfamily nvcc} and other compilers (such as {\ttfamily g++} and {\ttfamily clang++}). Consider the following example that defines two tasks on two different pieces ({\ttfamily main.\+cpp} and {\ttfamily cudaflow.\+cpp}) of source code\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ main.cpp}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_8hpp}{taskflow/taskflow.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ make\_cudaflow(\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\&\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});\ \ \textcolor{comment}{//\ create\ a\ cudaFlow\ task}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ task1\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}main.cpp!\(\backslash\)n"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}cpu\ task"{}});}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ task2\ =\ make\_cudaflow(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ task1.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(task2);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ cudaflow.cpp}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_8hpp}{taskflow/taskflow.hpp}}>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <taskflow/cudaflow.hpp>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ make\_cudaflow(\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\&\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}})\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ create\ a\ cudaFlow\ of\ a\ single-\/threaded\ task}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow}{tf::cudaFlow}}\ cf;}
+\DoxyCodeLine{\ \ \ \ cf.\mbox{\hyperlink{classtf_1_1cuda_flow_ac2906cb0002fc411a983d100a3d58d62}{single\_task}}([]\ \_\_device\_\_\ ()\ \{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}cudaflow.cpp!\(\backslash\)n"{}});\ \});}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ launch\ the\ cudaflow\ through\ a\ stream}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\ \ \ \ cf.run(stream);}
+\DoxyCodeLine{\ \ \ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}gpu\ task"{}});}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Compile each source to an object ({\ttfamily g++} as an example)\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}++\ -\/\mbox{\hyperlink{namespacestd}{std}}=\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}++17\ -\/I\ \mbox{\hyperlink{ittnotify__static_8h_a7016119bc831a22d1a351d56128518ed}{path}}/to/\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}\ -\/\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.cpp\ -\/o\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.o}
+\DoxyCodeLine{\string~\$\ nvcc\ -\/\mbox{\hyperlink{namespacestd}{std}}=\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}++17\ -\/-\/extended-\/\mbox{\hyperlink{sugar_8h_aa2bc5aa57d417f3226228d9058ab9f20}{lambda}}\ -\/\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ cu\ -\/I\ \mbox{\hyperlink{ittnotify__static_8h_a7016119bc831a22d1a351d56128518ed}{path}}/to/\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ -\/dc\ cudaflow.cpp\ -\/o\ cudaflow.o}
+\DoxyCodeLine{\string~\$\ ls}
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ now\ we\ have\ the\ two\ compiled\ .o\ objects,\ main.o\ and\ cudaflow.o}}
+\DoxyCodeLine{\mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.o\ cudaflow.o\ }
+
+\end{DoxyCode}
+
+
+The {\ttfamily -\/-\/extended-\/lambda} option tells {\ttfamily nvcc} to generate GPU code for the lambda defined with {\ttfamily {\bfseries{device}}}. The {\ttfamily -\/x cu} tells {\ttfamily nvcc} to treat the input files as {\ttfamily }.cu files containing both CPU and GPU code. By default, {\ttfamily nvcc} treats {\ttfamily }.cpp files as CPU-\/only code. This option is required to have {\ttfamily nvcc} generate device code here, but it is also a handy way to avoid renaming source files in larger projects. The {\ttfamily –dc} option tells {\ttfamily nvcc} to generate device code for later linking.
+
+You may also need to specify the target architecture to tell {\ttfamily nvcc} to target on a compatible SM architecture using the option -\/arch. For instance, the following command requires device code linking to have compute capability 7.\+5 or later\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ nvcc\ -\/\mbox{\hyperlink{namespacestd}{std}}=\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}++17\ -\/-\/extended-\/\mbox{\hyperlink{sugar_8h_aa2bc5aa57d417f3226228d9058ab9f20}{lambda}}\ -\/\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ cu\ -\/arch=sm\_75\ -\/I\ \mbox{\hyperlink{ittnotify__static_8h_a7016119bc831a22d1a351d56128518ed}{path}}/to/\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ -\/dc\ cudaflow.cpp\ -\/o\ cudaflow.o}
+
+\end{DoxyCode}
+\hypertarget{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDANaiveLinking}{}\doxysubsubsection{\texorpdfstring{Link Objects Using nvcc}{Link Objects Using nvcc}}\label{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDANaiveLinking}
+Using {\ttfamily nvcc} to link compiled object code is nothing special but replacing the normal compiler with {\ttfamily nvcc} and it takes care of all the necessary steps\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ nvcc\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.o\ cudaflow.o\ -\/o\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ run\ the\ main\ program\ }}
+\DoxyCodeLine{\string~\$\ ./\mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}}
+\DoxyCodeLine{\mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.cpp!}
+\DoxyCodeLine{cudaflow.cpp!}
+
+\end{DoxyCode}
+\hypertarget{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDADifferentLinkers}{}\doxysubsubsection{\texorpdfstring{Link Objects Using Different Linkers}{Link Objects Using Different Linkers}}\label{_compile_taskflow_with_c_u_d_a_CompileTaskflowWithCUDADifferentLinkers}
+You can choose to use a compiler other than {\ttfamily nvcc} for the final link step. Since your CPU compiler does not know how to link CUDA device code, you have to add a step in your build to have {\ttfamily nvcc} link the CUDA device code, using the option {\ttfamily -\/dlink\+:} 
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ nvcc\ -\/o\ gpuCode.o\ -\/dlink\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.o\ cudaflow.o}
+
+\end{DoxyCode}
+
+
+This step links all the {\itshape device object code} and places it into {\ttfamily gpu\+Code.\+o}.
+
+\begin{DoxyAttention}{注意}
+Note that this step does not link the CPU object code and discards the CPU object code in {\ttfamily main.\+o} and {\ttfamily cudaflow.\+o}.
+\end{DoxyAttention}
+To complete the link to an executable, you can use, for example, {\ttfamily ld} or {\ttfamily g++}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ replace\ /usr/local/cuda/lib64\ with\ your\ own\ CUDA\ library\ installation\ path}}
+\DoxyCodeLine{\string~\$\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}++\ -\/pthread\ -\/\mbox{\hyperlink{_l_l_t__example_8cpp_a2913877890361a28ee108aafe462ee93}{L}}\ /usr/local/cuda/lib64/\ -\/lcudart\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ gpuCode.o\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.o\ cudaflow.o\ -\/o\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ run\ the\ main\ program}}
+\DoxyCodeLine{\string~\$\ ./\mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}}
+\DoxyCodeLine{\mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}.cpp!}
+\DoxyCodeLine{cudaflow.cpp!}
+
+\end{DoxyCode}
+
+
+We give {\ttfamily g++} all of the objects again because it needs the CPU object code, which is not in {\ttfamily gpu\+Code.\+o}. The device code stored in the original objects, {\ttfamily main.\+o} and {\ttfamily cudaflow.\+o}, does not conflict with the code in {\ttfamily gpu\+Code.\+o}. {\ttfamily g++} ignores device code because it does not know how to link it, and the device code in {\ttfamily gpu\+Code.\+o} is already linked and ready to go.
+
+\begin{DoxyAttention}{注意}
+This intentional ignorance is extremely useful in large builds where intermediate objects may have both CPU and GPU code. In this case, we just let the GPU and CPU linkers each do its own job, noting that the CPU linker is always the last one we run. The CUDA \doxylink{classtf_1_1_runtime}{Runtime} API library is automatically linked when we use {\ttfamily nvcc} for linking, but we must explicitly link it ({\ttfamily -\/lcudart}) when using another linker. 
+\end{DoxyAttention}

@@ -1,0 +1,35 @@
+var classinternal_1_1reserving__port =
+[
+    [ "reserving_port_operation", "classinternal_1_1reserving__port_1_1reserving__port__operation.html", "classinternal_1_1reserving__port_1_1reserving__port__operation" ],
+    [ "class_type", "classinternal_1_1reserving__port.html#a9b46ad0bc4c0a11f40fdfff5fe3b9f40", null ],
+    [ "handler_type", "classinternal_1_1reserving__port.html#a27272ddf819d1932c8c3988e7c5c3f5b", null ],
+    [ "input_type", "classinternal_1_1reserving__port.html#ac07b82db2ba68fff390b5b50fe6360fc", null ],
+    [ "predecessor_type", "classinternal_1_1reserving__port.html#ac92964c242df5e3a29f85abdadb6f047", null ],
+    [ "op_type", "classinternal_1_1reserving__port.html#adb04add030d4ac7ee9ddf397cb62a854", [
+      [ "reg_pred", "classinternal_1_1reserving__port.html#adb04add030d4ac7ee9ddf397cb62a854afb4a7f92b305be34a297608df68899a1", null ],
+      [ "rem_pred", "classinternal_1_1reserving__port.html#adb04add030d4ac7ee9ddf397cb62a854aa856e12ddc34a4edcfcce4ca9f6b7e5e", null ],
+      [ "res_item", "classinternal_1_1reserving__port.html#adb04add030d4ac7ee9ddf397cb62a854af7909a53491054e35ecdb789cafc2dc8", null ],
+      [ "rel_res", "classinternal_1_1reserving__port.html#adb04add030d4ac7ee9ddf397cb62a854a6b859e5d70da0f44156b4a2d04556087", null ],
+      [ "con_res", "classinternal_1_1reserving__port.html#adb04add030d4ac7ee9ddf397cb62a854a02729db677b0b40e1f570c0b3ebbfd71", null ]
+    ] ],
+    [ "reserving_port", "classinternal_1_1reserving__port.html#a15a3f9e257690ac58bb0dda39df52edb", null ],
+    [ "reserving_port", "classinternal_1_1reserving__port.html#a2f50f6eafc20c32a58a0303730566262", null ],
+    [ "consume", "classinternal_1_1reserving__port.html#acb41c2ff4d38eb3208d07008f0112bd3", null ],
+    [ "graph_reference", "classinternal_1_1reserving__port.html#aafb0e45b289c1ea2ee1e7a348fe3329b", null ],
+    [ "handle_operations", "classinternal_1_1reserving__port.html#a4abef89b744417d1e26aaf203a11ac73", null ],
+    [ "register_predecessor", "classinternal_1_1reserving__port.html#af417cb4aae5dce7a71864a9af67a2f09", null ],
+    [ "release", "classinternal_1_1reserving__port.html#a1512cd5ccce5a48237f6b7863c2e4d7b", null ],
+    [ "remove_predecessor", "classinternal_1_1reserving__port.html#a25d0efcb0b51e19a68ebdbe814c12386", null ],
+    [ "reserve", "classinternal_1_1reserving__port.html#ac02581b7a0c4d42ce9fc4e61f120b96b", null ],
+    [ "reset_receiver", "classinternal_1_1reserving__port.html#afc02910b8c224b3fed52d531f198db53", null ],
+    [ "set_join_node_pointer", "classinternal_1_1reserving__port.html#a56af6567da024b4e86776cbf7ef1aa5f", null ],
+    [ "try_put_task", "classinternal_1_1reserving__port.html#a5b0e9e04e971a484f68d490d172db1d4", null ],
+    [ "internal::aggregating_functor< class_type, reserving_port_operation >", "classinternal_1_1reserving__port.html#a897299af6ea77cc23b7dd3f56727292e", null ],
+    [ "internal::broadcast_cache", "classinternal_1_1reserving__port.html#a1360e38efe396058978cf3754ad620f5", null ],
+    [ "internal::round_robin_cache", "classinternal_1_1reserving__port.html#acbd9ac2610587a99cd7d43344297cc49", null ],
+    [ "run_and_put_task", "classinternal_1_1reserving__port.html#abaf9bf74ca5f2854d09f5f07337280eb", null ],
+    [ "my_aggregator", "classinternal_1_1reserving__port.html#aa8d612ac260e2a89747eb536c6cc3fa0", null ],
+    [ "my_join", "classinternal_1_1reserving__port.html#ae5fd18d9235fca2bdca9527a9e61e00d", null ],
+    [ "my_predecessors", "classinternal_1_1reserving__port.html#a6c0ae5c40fa8828b6202bf3509ea02cf", null ],
+    [ "reserved", "classinternal_1_1reserving__port.html#a201f35eeb34efe72b0b1db496a199bd2", null ]
+];

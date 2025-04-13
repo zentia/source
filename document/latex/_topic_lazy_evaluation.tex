@@ -1,0 +1,102 @@
+\doxysubsubsection{Lazy Evaluation and Aliasing}
+\hypertarget{_topic_lazy_evaluation}{}\label{_topic_lazy_evaluation}\index{Lazy Evaluation and Aliasing@{Lazy Evaluation and Aliasing}}
+Executive summary\+: \doxylink{namespace_eigen}{Eigen} has intelligent compile-\/time mechanisms to enable lazy evaluation and removing temporaries where appropriate. It will handle aliasing automatically in most cases, for example with matrix products. The automatic behavior can be overridden manually by using the \doxylink{class_eigen_1_1_matrix_base_a5df64c66228ba75bbc66db2584185527}{Matrix\+Base\+::eval()} and \doxylink{class_eigen_1_1_matrix_base_a2c1085de7645f23f240876388457da0b}{Matrix\+Base\+::noalias()} methods.
+
+When you write a line of code involving a complex expression such as
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_tutorial___advanced_initialization___three_ways_8cpp_a41fdd9e057fe4da2425ee385b574be93}{mat1}}\ =\ mat2\ +\ mat3\ *\ (mat4\ +\ mat5);\ }
+
+\end{DoxyCode}
+
+
+\doxylink{namespace_eigen}{Eigen} determines automatically, for each sub-\/expression, whether to evaluate it into a temporary variable. Indeed, in certain cases it is better to evaluate immediately a sub-\/expression into a temporary variable, while in other cases it is better to avoid that.
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} traditional math library without expression templates always evaluates all sub-\/expressions into temporaries. So with this code,
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{benchmarks_2deferred__pipeline_2pthread_8cpp_a38a426a3f468937c7f8aa11daeb67ed7}{vec1}}\ =\ vec2\ +\ vec3;\ }
+
+\end{DoxyCode}
+
+
+a traditional library would evaluate {\ttfamily vec2} + vec3 into a temporary {\ttfamily vec4} and then copy {\ttfamily vec4} into {\ttfamily vec1}. This is of course inefficient\+: the arrays are traversed twice, so there are a lot of useless load/store operations.
+
+Expression-\/templates-\/based libraries can avoid evaluating sub-\/expressions into temporaries, which in many cases results in large speed improvements. This is called {\itshape lazy evaluation} as an expression is getting evaluated as late as possible, instead of immediately. However, most other expression-\/templates-\/based libraries {\itshape always} choose lazy evaluation. There are two problems with that\+: first, lazy evaluation is not always a good choice for performance; second, lazy evaluation can be very dangerous, for example with matrix products\+: doing {\ttfamily matrix = matrix\texorpdfstring{$\ast$}{*}matrix} gives a wrong result if the matrix product is lazy-\/evaluated, because of the way matrix product works.
+
+For these reasons, \doxylink{namespace_eigen}{Eigen} has intelligent compile-\/time mechanisms to determine automatically when to use lazy evaluation, and when on the contrary it should evaluate immediately into a temporary variable.
+
+So in the basic example,
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{matrix1\ =\ matrix2\ +\ matrix3;\ }
+
+\end{DoxyCode}
+
+
+\doxylink{namespace_eigen}{Eigen} chooses lazy evaluation. Thus the arrays are traversed only once, producing optimized code. If you really want to force immediate evaluation, use \doxylink{class_eigen_1_1_matrix_base_a5df64c66228ba75bbc66db2584185527}{eval()}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{matrix1\ =\ (matrix2\ +\ matrix3).\mbox{\hyperlink{sparse__permutations_8cpp_abf03ad46cd5db5b4eabad69a86a13a6c}{eval}}();\ }
+
+\end{DoxyCode}
+
+
+Here is now a more involved example\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{matrix1\ =\ -\/matrix2\ +\ matrix3\ +\ 5\ *\ matrix4;\ }
+
+\end{DoxyCode}
+
+
+\doxylink{namespace_eigen}{Eigen} chooses lazy evaluation at every stage in that example, which is clearly the correct choice. In fact, lazy evaluation is the "{}default choice"{} and \doxylink{namespace_eigen}{Eigen} will choose it except in a few circumstances.
+
+{\bfseries{The first circumstance}} in which \doxylink{namespace_eigen}{Eigen} chooses immediate evaluation, is when it sees an assignment {\ttfamily a = b;} and the expression {\ttfamily b} has the evaluate-\/before-\/assigning \doxylink{group__flags}{flag}. The most important example of such an expression is the \doxylink{class_eigen_1_1_product}{matrix product expression}. For example, when you do
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{external_2taskflow_2benchmarks_2wavefront_2main_8cpp_aed60820750f2ab1bf9dd99bc0a9eaab8}{matrix}}\ =\ \mbox{\hyperlink{external_2taskflow_2benchmarks_2wavefront_2main_8cpp_aed60820750f2ab1bf9dd99bc0a9eaab8}{matrix}}\ *\ \mbox{\hyperlink{external_2taskflow_2benchmarks_2wavefront_2main_8cpp_aed60820750f2ab1bf9dd99bc0a9eaab8}{matrix}};\ }
+
+\end{DoxyCode}
+
+
+\doxylink{namespace_eigen}{Eigen} first evaluates {\ttfamily matrix \texorpdfstring{$\ast$}{*} matrix} into a temporary matrix, and then copies it into the original {\ttfamily matrix}. This guarantees a correct result as we saw above that lazy evaluation gives wrong results with matrix products. It also doesn\textquotesingle{}t cost much, as the cost of the matrix product itself is much higher.
+
+What if you know that the result does no alias the operand of the product and want to force lazy evaluation? Then use \doxylink{class_eigen_1_1_matrix_base_a2c1085de7645f23f240876388457da0b}{.noalias()} instead. Here is an example\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{matrix1.noalias()\ =\ matrix2\ *\ matrix2;\ }
+
+\end{DoxyCode}
+
+
+Here, since we know that matrix2 is not the same matrix as matrix1, we know that lazy evaluation is not dangerous, so we may force lazy evaluation. Concretely, the effect of noalias() here is to bypass the evaluate-\/before-\/assigning \doxylink{group__flags}{flag}.
+
+{\bfseries{The second circumstance}} in which \doxylink{namespace_eigen}{Eigen} chooses immediate evaluation, is when it sees a nested expression such as {\ttfamily a + b} where {\ttfamily b} is already an expression having the evaluate-\/before-\/nesting \doxylink{group__flags}{flag}. Again, the most important example of such an expression is the \doxylink{class_eigen_1_1_product}{matrix product expression}. For example, when you do
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{matrix1\ =\ matrix2\ +\ matrix3\ *\ matrix4;\ }
+
+\end{DoxyCode}
+
+
+the product {\ttfamily matrix3 \texorpdfstring{$\ast$}{*} matrix4} gets evaluated immediately into a temporary matrix. Indeed, experiments showed that it is often beneficial for performance to evaluate immediately matrix products when they are nested into bigger expressions.
+
+{\bfseries{The third circumstance}} in which \doxylink{namespace_eigen}{Eigen} chooses immediate evaluation, is when its cost model shows that the total cost of an operation is reduced if a sub-\/expression gets evaluated into a temporary. Indeed, in certain cases, an intermediate result is sufficiently costly to compute and is reused sufficiently many times, that is worth "{}caching"{}. Here is an example\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{matrix1\ =\ matrix2\ *\ (matrix3\ +\ matrix4);\ }
+
+\end{DoxyCode}
+
+
+Here, provided the matrices have at least 2 rows and 2 columns, each coefficienct of the expression {\ttfamily matrix3 + matrix4} is going to be used several times in the matrix product. Instead of computing the sum everytime, it is much better to compute it once and store it in a temporary variable. \doxylink{namespace_eigen}{Eigen} understands this and evaluates {\ttfamily matrix3 + matrix4} into a temporary variable before evaluating the product. 

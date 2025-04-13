@@ -1,5 +1,5 @@
-#include <luisa/core/logging.h>
-#include <luisa/runtime/device.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/device.h>
 
 namespace luisa::compute {
 

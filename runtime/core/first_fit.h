@@ -1,6 +1,6 @@
 #pragma once
 
-#include <luisa/core/stl/string.h>
+#include <runtime/core/stl/string.h>
 
 namespace luisa {
 class MemorySanitizer;

@@ -1,0 +1,4 @@
+var structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__stat__dhp =
+[
+    [ "update_desc_allocator", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__stat__dhp.html#abfef4b43119948d9381649fc4d016c60", null ]
+];

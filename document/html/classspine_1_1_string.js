@@ -1,0 +1,28 @@
+var classspine_1_1_string =
+[
+    [ "String", "classspine_1_1_string.html#a019ebb6019d432b229de945094d7d312", null ],
+    [ "String", "classspine_1_1_string.html#a882fbf2d21627d24cff71b6180566cdd", null ],
+    [ "String", "classspine_1_1_string.html#a0d505691bad53519fb644ae5ad051b84", null ],
+    [ "~String", "classspine_1_1_string.html#a81221c0a287053b61324b93f843ba49b", null ],
+    [ "append", "classspine_1_1_string.html#a9ac15fee0bcaa5a01590b5f977a951a4", null ],
+    [ "append", "classspine_1_1_string.html#a108df54a5bf1800ecced616221c11b5e", null ],
+    [ "append", "classspine_1_1_string.html#a94a6604945a10fdf4b8574c312b94589", null ],
+    [ "append", "classspine_1_1_string.html#a24d7b0ee30773b93355603f747a48dc3", null ],
+    [ "buffer", "classspine_1_1_string.html#a7a6a5c45e2a732eb90cedf07434315b0", null ],
+    [ "isEmpty", "classspine_1_1_string.html#a8f667117a263cb9f536c57c49a52cac7", null ],
+    [ "lastIndexOf", "classspine_1_1_string.html#afcd839cf1b073e8e52bf1f40cfdf5523", null ],
+    [ "length", "classspine_1_1_string.html#a9202816c29d44fa9aba519445312b05a", null ],
+    [ "operator=", "classspine_1_1_string.html#a3923d9f628e8c313652733a244480dfb", null ],
+    [ "operator=", "classspine_1_1_string.html#a2e4f04a38cc403fdc8a34577094003f5", null ],
+    [ "own", "classspine_1_1_string.html#a8bd3a98fc89171add3041648ac898702", null ],
+    [ "own", "classspine_1_1_string.html#a83d95fb1a412b1ac51cfb27a69533732", null ],
+    [ "startsWith", "classspine_1_1_string.html#aa09e1f3a358f17e9a010178a7d46929e", null ],
+    [ "substring", "classspine_1_1_string.html#ab411e1794ae9f425bd9ba643897406a3", null ],
+    [ "substring", "classspine_1_1_string.html#a0a56489f76a8af780c8cfaf31faa49d4", null ],
+    [ "unown", "classspine_1_1_string.html#a80c02248739a47c08f6645c51ce9c6a6", null ],
+    [ "operator!=", "classspine_1_1_string.html#a28fce3ff1b5d3968810078a07b9a54e3", null ],
+    [ "operator==", "classspine_1_1_string.html#a4c528050f322dbaf326e012349c3cd34", null ],
+    [ "_buffer", "classspine_1_1_string.html#aba8181e932da0af377ba002d8a30d9d5", null ],
+    [ "_length", "classspine_1_1_string.html#a8e3318c3584371b883bd06a0e415eefd", null ],
+    [ "_tempowner", "classspine_1_1_string.html#a9f736db749f5aaac7aa7b579a7397a80", null ]
+];

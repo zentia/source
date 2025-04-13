@@ -1,0 +1,344 @@
+\doxysection{backref.\+cpp}
+\hypertarget{backref_8cpp_source}{}\label{backref_8cpp_source}\index{external/taskflow/3rd-\/party/tbb/src/tbbmalloc/backref.cpp@{external/taskflow/3rd-\/party/tbb/src/tbbmalloc/backref.cpp}}
+\mbox{\hyperlink{backref_8cpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ \ Copyright\ (c)\ 2005-\/2020\ Intel\ Corporation}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ \ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ \ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ \ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tbbmalloc__internal_8h}{tbbmalloc\_internal.h}}"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <new>}\ \ \ \ \ \ \ \ \textcolor{comment}{/*\ for\ placement\ new\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacerml}{rml}}\ \{}
+\DoxyCodeLine{00021\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacerml_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{comment}{/*********\ backreferences\ ***********************/}}
+\DoxyCodeLine{00025\ \textcolor{comment}{/*\ Each\ slab\ block\ and\ each\ large\ memory\ object\ header\ contains\ BackRefIdx}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ that\ points\ out\ in\ some\ BackRefBlock\ which\ points\ back\ to\ this\ block\ or\ header.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00028\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a91f7edc927ea22aa8f687535fc5719ab}{BackRefBlock}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classrml_1_1internal_1_1_block_i}{BlockI}}\ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a91f7edc927ea22aa8f687535fc5719ab}{BackRefBlock}}\ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a9aaf4a088f063a1ad52450b7ecf3cd4a}{nextForUse}};\ \ \ \ \ \textcolor{comment}{//\ the\ next\ in\ the\ chain\ of\ blocks\ with\ free\ items}}
+\DoxyCodeLine{00030\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_free_object}{FreeObject}}\ \ \ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_aab153bf44a6c9b07206b5abfae634d74}{bumpPtr}};\ \ \ \ \ \ \ \ \textcolor{comment}{//\ bump\ pointer\ moves\ from\ the\ end\ to\ the\ beginning\ of\ the\ block}}
+\DoxyCodeLine{00031\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_free_object}{FreeObject}}\ \ \ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}};}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{comment}{//\ list\ of\ all\ blocks\ that\ were\ allocated\ from\ raw\ mem\ (i.e.,\ not\ from\ backend)}}
+\DoxyCodeLine{00033\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a91f7edc927ea22aa8f687535fc5719ab}{BackRefBlock}}\ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a3146d43eaf943ceda2744654b14a3a95}{nextRawMemBlock}};}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{int}\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ae6d43d3e534a616b93db1cb47b6412be}{allocatedCount}};\ \textcolor{comment}{//\ the\ number\ of\ objects\ allocated}}
+\DoxyCodeLine{00035\ \ \ \ \ BackRefIdx::master\_t\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a3ac5cefd2215816e92d99a885b6bd2ac}{myNum}};\ \ \ \textcolor{comment}{//\ the\ index\ in\ the\ master}}
+\DoxyCodeLine{00036\ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex}{MallocMutex}}\ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a1b67556fdb0253d4b70ed1ae8bbade9f}{blockMutex}};}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{comment}{//\ true\ if\ this\ block\ has\ been\ added\ to\ the\ listForUse\ chain,}}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{comment}{//\ modifications\ protected\ by\ masterMutex}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ac53e52fc6fc3861b2482326a1fbe7a4c}{addedToForUse}};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a91f7edc927ea22aa8f687535fc5719ab}{BackRefBlock}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a91f7edc927ea22aa8f687535fc5719ab}{BackRefBlock}}\ *blockToUse,\ intptr\_t\ num)\ :}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a9aaf4a088f063a1ad52450b7ecf3cd4a}{nextForUse}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_aab153bf44a6c9b07206b5abfae634d74}{bumpPtr}}((\mbox{\hyperlink{structrml_1_1internal_1_1_free_object}{FreeObject}}*)((uintptr\_t)blockToUse\ +\ \mbox{\hyperlink{namespacerml_1_1internal_ab92a44f5c0d4ae24554856afbba1943d}{slabSize}}\ -\/\ sizeof(\mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}}*))),}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a3146d43eaf943ceda2744654b14a3a95}{nextRawMemBlock}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}),\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ae6d43d3e534a616b93db1cb47b6412be}{allocatedCount}}(0),\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a3ac5cefd2215816e92d99a885b6bd2ac}{myNum}}(num),}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ac53e52fc6fc3861b2482326a1fbe7a4c}{addedToForUse}}(\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}})\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ memset(\&\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a1b67556fdb0253d4b70ed1ae8bbade9f}{blockMutex}},\ 0,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{class_malloc_mutex}{MallocMutex}}));}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(!(num\ >>\ CHAR\_BIT*\textcolor{keyword}{sizeof}(BackRefIdx::master\_t)),}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}index\ in\ BackRefMaster\ must\ fit\ to\ BackRefIdx::master"{}});}
+\DoxyCodeLine{00049\ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ clean\ all\ but\ header}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a5ead9463c799a7dd21ce45a45df08972}{zeroSet}}()\ \{\ memset(\textcolor{keyword}{this}+1,\ 0,\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}}-\/\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a91f7edc927ea22aa8f687535fc5719ab}{BackRefBlock}}));\ \}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{bytes}}\ =\ \mbox{\hyperlink{namespacerml_1_1internal_ab92a44f5c0d4ae24554856afbba1943d}{slabSize}};}
+\DoxyCodeLine{00053\ \};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ max\ number\ of\ backreference\ pointers\ in\ slab\ block}}
+\DoxyCodeLine{00056\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}}\ =\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}}-\/\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}))/\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*);}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master}{BackRefMaster}}\ \{}
+\DoxyCodeLine{00059\ \textcolor{comment}{/*\ On\ 64-\/bit\ systems\ a\ slab\ block\ can\ hold\ up\ to\ \string~2K\ back\ pointers\ to\ slab\ blocks}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ *\ or\ large\ objects,\ so\ it\ can\ address\ at\ least\ 32MB.\ The\ master\ array\ of\ 256KB}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ *\ holds\ 32K\ pointers\ to\ such\ blocks,\ addressing\ \string~1\ TB.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ *\ On\ 32-\/bit\ systems\ there\ is\ \string~4K\ back\ pointers\ in\ a\ slab\ block,\ so\ \string~64MB\ can\ be\ addressed.}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ *\ The\ master\ array\ of\ 8KB\ holds\ 2K\ pointers\ to\ leaves,\ so\ \string~128\ GB\ can\ addressed.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ae3ed89c63a09f14c403ceb935c6da3b2}{bytes}}\ =\ \textcolor{keyword}{sizeof}(uintptr\_t)>4?\ 256*1024\ :\ 8*1024;}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a1484fb5a1e861f14992095948b4664d7}{dataSz}};}
+\DoxyCodeLine{00067\ \textcolor{comment}{/*\ space\ is\ reserved\ for\ master\ table\ and\ 4\ leaves}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ taking\ into\ account\ VirtualAlloc\ allocation\ granularity\ */}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a32e7eaa4675dec7919b8d677ce6fe87f}{leaves}}\ =\ 4;}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_aa1b53cdcefd14c8ab0602338c16b5d7a}{masterSize}}\ =\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ae3ed89c63a09f14c403ceb935c6da3b2}{BackRefMaster::bytes}}+\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a32e7eaa4675dec7919b8d677ce6fe87f}{leaves}}*\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}};}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ The\ size\ of\ memory\ request\ for\ a\ few\ more\ leaf\ blocks;}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ selected\ to\ match\ VirtualAlloc\ granularity}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab5554c421d8ac4681fa4b4dfb648fae2}{blockSpaceSize}}\ =\ 64*1024;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{classrml_1_1internal_1_1_backend}{Backend}}\ \ \ \ \ \ \ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_af68bf2659143664763f07a7d51c0cbcd}{backend}};}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ \ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}};\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ defined,\ use\ it\ for\ allocations}}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ \ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}};\ \ \ \ \ \textcolor{comment}{//\ the\ chain\ of\ data\ blocks\ with\ free\ items}}
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ \ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a07a91cd9468d527c29f0d34629a1d108}{allRawMemBlocks}};}
+\DoxyCodeLine{00079\ \ \ \ \ intptr\_t\ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a59e996d668d7fe06962ca638bda21534}{lastUsed}};\ \ \ \ \ \ \ \textcolor{comment}{//\ index\ of\ the\ last\ used\ block}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ac9e364354e486ba970a2d30aabb647a1}{rawMemUsed}};}
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex}{MallocMutex}}\ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a8afc87758bb7294abf4dfd36330a4e28}{requestNewSpaceMutex}};}
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ \ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab909e19b8aef53ce7299d98f0dc2722a}{backRefBl}}[1];\ \ \ \textcolor{comment}{//\ the\ real\ size\ of\ the\ array\ is\ dataSz}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a056dffdc21ba76ee2ddac9c01f2ef2dd}{findFreeBlock}}();}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a37ff8568740208b7e96498e34b02cfb0}{addToForUseList}}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *bl);}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a95aa7e0acc7e9849781dc1d4a73acd5c}{initEmptyBackRefBlock}}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *newBl);}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a3665e2685e73543736ddffb5a8495b48}{requestNewSpace}}();}
+\DoxyCodeLine{00088\ \};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a1484fb5a1e861f14992095948b4664d7}{BackRefMaster::dataSz}}}
+\DoxyCodeLine{00091\ \ \ \ \ =\ 1+(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ae3ed89c63a09f14c403ceb935c6da3b2}{BackRefMaster::bytes}}-\/\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master}{BackRefMaster}}))/\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}*);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{static}\ \mbox{\hyperlink{class_malloc_mutex}{MallocMutex}}\ \mbox{\hyperlink{namespacerml_1_1internal_ac8446788353fda90199e03f1101a1ff4}{masterMutex}};}
+\DoxyCodeLine{00094\ \textcolor{keyword}{static}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master}{BackRefMaster}}\ *\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespacerml_1_1internal_a35c262cb0badff1e3b2a9df6357a344a}{initBackRefMaster}}(\mbox{\hyperlink{classrml_1_1internal_1_1_backend}{Backend}}\ *backend)}
+\DoxyCodeLine{00097\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{bool}\ rawMemUsed;}
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master}{BackRefMaster}}\ *master\ =}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master}{BackRefMaster}}*)backend-\/>\mbox{\hyperlink{classrml_1_1internal_1_1_backend_af43a5f0fc5038a3e60d58602b696af87}{getBackRefSpace}}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_aa1b53cdcefd14c8ab0602338c16b5d7a}{BackRefMaster::masterSize}},}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&rawMemUsed);}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\ master)}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00104\ \ \ \ \ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_af68bf2659143664763f07a7d51c0cbcd}{backend}}\ =\ backend;}
+\DoxyCodeLine{00105\ \ \ \ \ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}}\ =\ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a07a91cd9468d527c29f0d34629a1d108}{allRawMemBlocks}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00106\ \ \ \ \ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ac9e364354e486ba970a2d30aabb647a1}{rawMemUsed}}\ =\ rawMemUsed;}
+\DoxyCodeLine{00107\ \ \ \ \ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a59e996d668d7fe06962ca638bda21534}{lastUsed}}\ =\ -\/1;}
+\DoxyCodeLine{00108\ \ \ \ \ memset(\&master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a8afc87758bb7294abf4dfd36330a4e28}{requestNewSpaceMutex}},\ 0,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{class_malloc_mutex}{MallocMutex}}));}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a32e7eaa4675dec7919b8d677ce6fe87f}{BackRefMaster::leaves}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *bl\ =\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}*)((uintptr\_t)master\ +\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ae3ed89c63a09f14c403ceb935c6da3b2}{BackRefMaster::bytes}}\ +\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}*\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}});}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ bl-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a5ead9463c799a7dd21ce45a45df08972}{zeroSet}}();}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a95aa7e0acc7e9849781dc1d4a73acd5c}{initEmptyBackRefBlock}}(bl);}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a37ff8568740208b7e96498e34b02cfb0}{addToForUseList}}(bl);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ active\ leaf\ is\ not\ needed\ in\ listForUse}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ master-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}\ =\ bl;}
+\DoxyCodeLine{00117\ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{//\ backRefMaster\ is\ read\ in\ getBackRef,\ so\ publish\ it\ in\ consistent\ state}}
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{_synchronize_8h_a19886ee3899c0a2435ea9840116ea325}{FencedStore}}((intptr\_t\&)\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}},\ (intptr\_t)master);}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacerml_1_1internal_aa12c65924c02c876057332f2f2d4df6b}{destroyBackRefMaster}}(\mbox{\hyperlink{classrml_1_1internal_1_1_backend}{Backend}}\ *backend)}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}})\ \{\ \textcolor{comment}{//\ Is\ initBackRefMaster()\ called?}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *curr=\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>allRawMemBlocks;\ curr;\ )\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *next\ =\ curr-\/>nextRawMemBlock;}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ allRawMemBlocks\ list\ is\ only\ for\ raw\ mem\ blocks}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ backend-\/>\mbox{\hyperlink{classrml_1_1internal_1_1_backend_a8ba8f8b651bc7235e57afe20369e1f76}{putBackRefSpace}}(curr,\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab5554c421d8ac4681fa4b4dfb648fae2}{BackRefMaster::blockSpaceSize}},}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*rawMemUsed=*/}\textcolor{keyword}{true});}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ curr\ =\ next;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ backend-\/>\mbox{\hyperlink{classrml_1_1internal_1_1_backend_a8ba8f8b651bc7235e57afe20369e1f76}{putBackRefSpace}}(\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}},\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_aa1b53cdcefd14c8ab0602338c16b5d7a}{BackRefMaster::masterSize}},}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>rawMemUsed);}
+\DoxyCodeLine{00135\ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a37ff8568740208b7e96498e34b02cfb0}{BackRefMaster::addToForUseList}}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *bl)}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ \ \ bl-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a9aaf4a088f063a1ad52450b7ecf3cd4a}{nextForUse}}\ =\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}};}
+\DoxyCodeLine{00141\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}}\ =\ bl;}
+\DoxyCodeLine{00142\ \ \ \ \ bl-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ac53e52fc6fc3861b2482326a1fbe7a4c}{addedToForUse}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a95aa7e0acc7e9849781dc1d4a73acd5c}{BackRefMaster::initEmptyBackRefBlock}}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *newBl)}
+\DoxyCodeLine{00146\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ intptr\_t\ nextLU\ =\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a59e996d668d7fe06962ca638bda21534}{lastUsed}}+1;}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{new}\ (newBl)\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}(newBl,\ nextLU);}
+\DoxyCodeLine{00149\ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(nextLU\ <\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a1484fb5a1e861f14992095948b4664d7}{dataSz}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00150\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab909e19b8aef53ce7299d98f0dc2722a}{backRefBl}}[nextLU]\ =\ newBl;}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{comment}{//\ lastUsed\ is\ read\ in\ getBackRef,\ and\ access\ to\ backRefBl[lastUsed]}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{comment}{//\ is\ possible\ only\ after\ checking\ backref\ against\ current\ lastUsed}}
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{_synchronize_8h_a19886ee3899c0a2435ea9840116ea325}{FencedStore}}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a59e996d668d7fe06962ca638bda21534}{lastUsed}},\ nextLU);}
+\DoxyCodeLine{00154\ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a3665e2685e73543736ddffb5a8495b48}{BackRefMaster::requestNewSpace}}()}
+\DoxyCodeLine{00157\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{bool}\ isRawMemUsed;}
+\DoxyCodeLine{00159\ \ \ \ \ \mbox{\hyperlink{_customize_8h_a65d0dcc10d4bd982cf2171e170c01d14}{MALLOC\_STATIC\_ASSERT}}(!(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab5554c421d8ac4681fa4b4dfb648fae2}{blockSpaceSize}}\ \%\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}}),}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Must\ request\ space\ for\ whole\ number\ of\ blocks."{}});}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>dataSz\ <=\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a59e996d668d7fe06962ca638bda21534}{lastUsed}}\ +\ 1)\ \textcolor{comment}{//\ no\ space\ in\ master}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ only\ one\ thread\ at\ a\ time\ may\ add\ blocks}}
+\DoxyCodeLine{00166\ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex_1_1scoped__lock}{MallocMutex::scoped\_lock}}\ newSpaceLock(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a8afc87758bb7294abf4dfd36330a4e28}{requestNewSpaceMutex}});}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}})\ \textcolor{comment}{//\ double\ check\ that\ only\ one\ block\ is\ available}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00170\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *newBl\ =}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}*)\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_af68bf2659143664763f07a7d51c0cbcd}{backend}}-\/>getBackRefSpace(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab5554c421d8ac4681fa4b4dfb648fae2}{blockSpaceSize}},\ \&isRawMemUsed);}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordflow}{if}\ (!newBl)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{//\ touch\ a\ page\ for\ the\ 1st\ time\ without\ taking\ masterMutex\ ...}}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *bl\ =\ newBl;\ (uintptr\_t)bl\ <\ (uintptr\_t)newBl\ +\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab5554c421d8ac4681fa4b4dfb648fae2}{blockSpaceSize}};}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ bl\ =\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}*)((uintptr\_t)bl\ +\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}}))}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ bl-\/>zeroSet();}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex_1_1scoped__lock}{MallocMutex::scoped\_lock}}\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}(\mbox{\hyperlink{namespacerml_1_1internal_ac8446788353fda90199e03f1101a1ff4}{masterMutex}});\ \textcolor{comment}{//\ ...\ and\ share\ under\ lock}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ numOfUnusedIdxs\ =\ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>dataSz\ -\/\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a59e996d668d7fe06962ca638bda21534}{lastUsed}}\ -\/\ 1;}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{if}\ (numOfUnusedIdxs\ <=\ 0)\ \{\ \textcolor{comment}{//\ no\ space\ in\ master\ under\ lock,\ roll\ back}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_af68bf2659143664763f07a7d51c0cbcd}{backend}}-\/>putBackRefSpace(newBl,\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab5554c421d8ac4681fa4b4dfb648fae2}{blockSpaceSize}},\ isRawMemUsed);}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{comment}{//\ It's\ possible\ that\ only\ part\ of\ newBl\ is\ used,\ due\ to\ lack\ of\ indices\ in\ master.}}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ This\ is\ OK\ as\ such\ underutilization\ is\ possible\ only\ once\ for\ backreferneces\ table.}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordtype}{int}\ blocksToUse\ =\ \mbox{\hyperlink{datatypes_8h_ac6afabdc09a49a433ee19d8a9486056d}{min}}(numOfUnusedIdxs,\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_ab5554c421d8ac4681fa4b4dfb648fae2}{blockSpaceSize}}\ /\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}});}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ use\ the\ first\ block\ in\ the\ batch\ to\ maintain\ the\ list\ of\ "{}raw"{}\ memory}}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{comment}{//\ to\ be\ released\ at\ shutdown}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordflow}{if}\ (isRawMemUsed)\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ newBl-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a3146d43eaf943ceda2744654b14a3a95}{nextRawMemBlock}}\ =\ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>allRawMemBlocks;}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>allRawMemBlocks\ =\ newBl;}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *bl\ =\ newBl;\ blocksToUse>0;}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ bl\ =\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}*)((uintptr\_t)bl\ +\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a8091cca7a466952f3c3ad16aaaea583c}{BackRefBlock::bytes}}),\ blocksToUse-\/-\/)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a95aa7e0acc7e9849781dc1d4a73acd5c}{initEmptyBackRefBlock}}(bl);}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}-\/>allocatedCount\ ==\ \mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}})}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}\ =\ bl;\ \textcolor{comment}{//\ active\ leaf\ is\ not\ needed\ in\ listForUse}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a37ff8568740208b7e96498e34b02cfb0}{addToForUseList}}(bl);}
+\DoxyCodeLine{00203\ \ \ \ \ \}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00205\ \}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a056dffdc21ba76ee2ddac9c01f2ef2dd}{BackRefMaster::findFreeBlock}}()}
+\DoxyCodeLine{00208\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}-\/>allocatedCount\ <\ \mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}})}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}};}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}})\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ use\ released\ list}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex_1_1scoped__lock}{MallocMutex::scoped\_lock}}\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}(\mbox{\hyperlink{namespacerml_1_1internal_ac8446788353fda90199e03f1101a1ff4}{masterMutex}});}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}-\/>allocatedCount\ ==\ \mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}}\ \&\&\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}})\ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}\ =\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}};}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}}\ =\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}}-\/>nextForUse;}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}-\/>addedToForUse,\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}}-\/>addedToForUse\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00221\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ allocate\ new\ data\ node}}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a3665e2685e73543736ddffb5a8495b48}{requestNewSpace}}())}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a6d81be17f225786695e938cf39d316a8}{active}};}
+\DoxyCodeLine{00225\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \textcolor{keywordtype}{void}\ *\mbox{\hyperlink{namespacerml_1_1internal_a674d3a46d675ee1887142a9118f48927}{getBackRef}}(\mbox{\hyperlink{classrml_1_1internal_1_1_back_ref_idx}{BackRefIdx}}\ backRefIdx)}
+\DoxyCodeLine{00228\ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ !backRefMaster\ means\ no\ initialization\ done,\ so\ it\ can't\ be\ valid\ memory}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ see\ addEmptyBackRefBlock\ for\ fences\ around\ lastUsed}}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{_synchronize_8h_a0792980ea26344eaf2fc0a4112b5d848}{FencedLoad}}((intptr\_t\&)\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}})}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ ||\ backRefIdx.getMaster()\ >\ \mbox{\hyperlink{_synchronize_8h_a0792980ea26344eaf2fc0a4112b5d848}{FencedLoad}}(\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>lastUsed)}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ ||\ backRefIdx.getOffset()\ >=\ \mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}})}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordflow}{return}\ *(\textcolor{keywordtype}{void}**)((uintptr\_t)\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>backRefBl[backRefIdx.getMaster()]}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}})+backRefIdx.getOffset()*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{00237\ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacerml_1_1internal_aa5ddbf0f60817126c51b54ca648caf34}{setBackRef}}(\mbox{\hyperlink{classrml_1_1internal_1_1_back_ref_idx}{BackRefIdx}}\ backRefIdx,\ \textcolor{keywordtype}{void}\ *newPtr)}
+\DoxyCodeLine{00240\ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(backRefIdx.getMaster()<=\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>lastUsed\ \&\&\ backRefIdx.getOffset()<\mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}},}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00243\ \ \ \ \ *(\textcolor{keywordtype}{void}**)((uintptr\_t)\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>backRefBl[backRefIdx.getMaster()]}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}})\ +\ backRefIdx.getOffset()*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*))\ =\ newPtr;}
+\DoxyCodeLine{00245\ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \mbox{\hyperlink{classrml_1_1internal_1_1_back_ref_idx}{BackRefIdx}}\ BackRefIdx::newBackRef(\textcolor{keywordtype}{bool}\ largeObj)}
+\DoxyCodeLine{00248\ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *blockToUse;}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordtype}{void}\ **toUse;}
+\DoxyCodeLine{00251\ \ \ \ \ \mbox{\hyperlink{classrml_1_1internal_1_1_back_ref_idx}{BackRefIdx}}\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}};}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordtype}{bool}\ lastBlockFirstUsed\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}},\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ blockToUse\ =\ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>findFreeBlock();}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!blockToUse)}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classrml_1_1internal_1_1_back_ref_idx}{BackRefIdx}}();}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ toUse\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \{\ \textcolor{comment}{//\ the\ block\ is\ locked\ to\ find\ a\ reference}}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex_1_1scoped__lock}{MallocMutex::scoped\_lock}}\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}(blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a1b67556fdb0253d4b70ed1ae8bbade9f}{blockMutex}});}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}})\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ toUse\ =\ (\textcolor{keywordtype}{void}**)blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}};}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}}\ =\ blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}}-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_free_object_adee876800dbeeb0dc522da323d709452}{next}};}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(!blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}}\ ||}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((uintptr\_t)blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}}>=(uintptr\_t)blockToUse}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (uintptr\_t)blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}}\ <}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (uintptr\_t)blockToUse\ +\ \mbox{\hyperlink{namespacerml_1_1internal_ab92a44f5c0d4ae24554856afbba1943d}{slabSize}}),\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ae6d43d3e534a616b93db1cb47b6412be}{allocatedCount}}\ <\ \mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}})\ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ toUse\ =\ (\textcolor{keywordtype}{void}**)blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_aab153bf44a6c9b07206b5abfae634d74}{bumpPtr}};}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_aab153bf44a6c9b07206b5abfae634d74}{bumpPtr}}\ =}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (FreeObject*)((uintptr\_t)blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_aab153bf44a6c9b07206b5abfae634d74}{bumpPtr}}\ -\/\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ae6d43d3e534a616b93db1cb47b6412be}{allocatedCount}}\ ==\ \mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}}-\/1)\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}((uintptr\_t)blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_aab153bf44a6c9b07206b5abfae634d74}{bumpPtr}}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <\ (uintptr\_t)blockToUse+\textcolor{keyword}{sizeof}(BackRefBlock),}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_aab153bf44a6c9b07206b5abfae634d74}{bumpPtr}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (toUse)\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ae6d43d3e534a616b93db1cb47b6412be}{allocatedCount}}\ \&\&\ !\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a9a1a0022000174dd1350ccc82e53a90b}{listForUse}})}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lastBlockFirstUsed\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ae6d43d3e534a616b93db1cb47b6412be}{allocatedCount}}++;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ lock\ scope}}
+\DoxyCodeLine{00287\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (!toUse);}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{comment}{//\ The\ first\ thread\ that\ uses\ the\ last\ block\ requests\ new\ space\ in\ advance;}}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{comment}{//\ possible\ failures\ are\ ignored.}}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordflow}{if}\ (lastBlockFirstUsed)}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_master_a3665e2685e73543736ddffb5a8495b48}{requestNewSpace}}();}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.master\ =\ blockToUse-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a3ac5cefd2215816e92d99a885b6bd2ac}{myNum}};}
+\DoxyCodeLine{00294\ \ \ \ \ \mbox{\hyperlink{namespacedetail_a0414a8c27708e113938314ad3b0dbe4c}{uintptr\_t}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ ((\mbox{\hyperlink{namespacedetail_a0414a8c27708e113938314ad3b0dbe4c}{uintptr\_t}})toUse\ -\/\ ((\mbox{\hyperlink{namespacedetail_a0414a8c27708e113938314ad3b0dbe4c}{uintptr\_t}})blockToUse\ +\ \textcolor{keyword}{sizeof}(BackRefBlock)))/\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*);}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ Is\ offset\ too\ big?}}
+\DoxyCodeLine{00297\ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(!(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ >>\ 15),\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00298\ \ \ \ \ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.offset\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}};}
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keywordflow}{if}\ (largeObj)\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.largeObj\ =\ largeObj;}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}};}
+\DoxyCodeLine{00302\ \}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacerml_1_1internal_ab8e65fb38698f5544e2b1fa3127bec85}{removeBackRef}}(\mbox{\hyperlink{classrml_1_1internal_1_1_back_ref_idx}{BackRefIdx}}\ backRefIdx)}
+\DoxyCodeLine{00305\ \{}
+\DoxyCodeLine{00306\ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(!backRefIdx.isInvalid(),\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00307\ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(backRefIdx.getMaster()<=\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>lastUsed}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ backRefIdx.getOffset()<\mbox{\hyperlink{namespacerml_1_1internal_ad953c8aaae1fbd1ade85f71dc5b42c5d}{BR\_MAX\_CNT}},\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00309\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}}\ *currBlock\ =\ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>backRefBl[backRefIdx.getMaster()];}
+\DoxyCodeLine{00310\ \ \ \ \ \mbox{\hyperlink{structrml_1_1internal_1_1_free_object}{FreeObject}}\ *freeObj\ =\ (\mbox{\hyperlink{structrml_1_1internal_1_1_free_object}{FreeObject}}*)((uintptr\_t)currBlock\ +\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block}{BackRefBlock}})}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ backRefIdx.getOffset()*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{00312\ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(((uintptr\_t)freeObj>(uintptr\_t)currBlock\ \&\&}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (uintptr\_t)freeObj<(uintptr\_t)currBlock\ +\ \mbox{\hyperlink{namespacerml_1_1internal_ab92a44f5c0d4ae24554856afbba1943d}{slabSize}}),\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00314\ \ \ \ \ \{}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex_1_1scoped__lock}{MallocMutex::scoped\_lock}}\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}(currBlock-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a1b67556fdb0253d4b70ed1ae8bbade9f}{blockMutex}});}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ freeObj-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_free_object_adee876800dbeeb0dc522da323d709452}{next}}\ =\ currBlock-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}};}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_customize_8h_ab07698dd675204d120111c1300b4185c}{MALLOC\_ASSERT}}(!freeObj-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_free_object_adee876800dbeeb0dc522da323d709452}{next}}\ ||}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((uintptr\_t)freeObj-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_free_object_adee876800dbeeb0dc522da323d709452}{next}}\ >\ (uintptr\_t)currBlock}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (uintptr\_t)freeObj-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_free_object_adee876800dbeeb0dc522da323d709452}{next}}\ <}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (uintptr\_t)currBlock\ +\ \mbox{\hyperlink{namespacerml_1_1internal_ab92a44f5c0d4ae24554856afbba1943d}{slabSize}}),\ \mbox{\hyperlink{tbbmalloc__internal_8h_a3b823c1707df8bd6d7d8b7cdb8b6dc6d}{ASSERT\_TEXT}});}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ currBlock-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_a0d4531d7a4e9574a733d3c0104f10627}{freeList}}\ =\ freeObj;}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ currBlock-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ae6d43d3e534a616b93db1cb47b6412be}{allocatedCount}}-\/-\/;}
+\DoxyCodeLine{00324\ \ \ \ \ \}}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{comment}{//\ TODO:\ do\ we\ need\ double-\/check\ here?}}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{if}\ (!currBlock-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ac53e52fc6fc3861b2482326a1fbe7a4c}{addedToForUse}}\ \&\&\ currBlock!=\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>active)\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_malloc_mutex_1_1scoped__lock}{MallocMutex::scoped\_lock}}\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}(\mbox{\hyperlink{namespacerml_1_1internal_ac8446788353fda90199e03f1101a1ff4}{masterMutex}});}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!currBlock-\/>\mbox{\hyperlink{structrml_1_1internal_1_1_back_ref_block_ac53e52fc6fc3861b2482326a1fbe7a4c}{addedToForUse}}\ \&\&\ currBlock!=\mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>active)}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacerml_1_1internal_a3920c53f230d8d80896acc801700669b}{backRefMaster}}-\/>addToForUseList(currBlock);}
+\DoxyCodeLine{00331\ \ \ \ \ \}}
+\DoxyCodeLine{00332\ \}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \textcolor{comment}{/*********\ End\ of\ backreferences\ ***********************/}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00337\ \}\ \textcolor{comment}{//\ namespace\ rml}}
+\DoxyCodeLine{00338\ }
+
+\end{DoxyCode}

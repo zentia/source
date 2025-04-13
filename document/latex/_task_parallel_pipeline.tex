@@ -1,0 +1,662 @@
+\doxysection{Task-\/parallel Pipeline}
+\hypertarget{_task_parallel_pipeline}{}\label{_task_parallel_pipeline}\index{Task-\/parallel Pipeline@{Task-\/parallel Pipeline}}
+Taskflow provides a {\itshape task-\/parallel} pipeline programming framework for you to implement a pipeline algorithm. Pipeline parallelism refers to a parallel execution of multiple data tokens through a linear chain of pipes or stages. Each stage processes the data token sent from the previous stage, applies the given callable to that data token, and then sends the result to the next stage. Multiple data tokens can be processed simultaneously across different stages.\hypertarget{_task_parallel_pipeline_TaskParallelPipelineIncludeHeaderFile}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_task_parallel_pipeline_TaskParallelPipelineIncludeHeaderFile}
+You need to include the header file, {\ttfamily taskflow/algorithm/pipeline.hpp}, for implementing task-\/parallel pipeline algorithms.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_2algorithm_2pipeline_8hpp}{taskflow/algorithm/pipeline.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_task_parallel_pipeline_UnderstandPipelineScheduling}{}\doxysubsection{\texorpdfstring{Understand the Pipeline Scheduling Framework}{Understand the Pipeline Scheduling Framework}}\label{_task_parallel_pipeline_UnderstandPipelineScheduling}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} \doxylink{classtf_1_1_pipeline}{tf\+::\+Pipeline} object is a {\itshape composable} graph to create a {\itshape pipeline scheduling framework} through a module task in a taskflow (see \doxylink{ComposableTasking}{Composable Tasking}). Unlike the conventional pipeline programming frameworks (e.\+g., Intel \doxylink{struct_t_b_b}{TBB} Parallel Pipeline), Taskflow\textquotesingle{}s pipeline algorithm does not provide any data abstraction, which often restricts users from optimizing data layouts in their applications, but a flexible framework for users to customize their application data atop an efficient pipeline scheduling framework.
+
+The figure above gives an example of our pipeline scheduling framework. The framework consists of three {\itshape pipes} (serial-\/parallel-\/serial stages) and four {\itshape lines} (maximum parallelism), where each line processes at most one data token. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} pipeline of three pipes and four lines will propagate each data token through a sequential chain of three pipes and can simultaneously process up to four data tokens at the four lines. Each edge represents a task dependency. For example, the edge from {\ttfamily pipe-\/0} to {\ttfamily pipe-\/1} in line {\ttfamily 0} represents the task dependency between the first and the second pipes in the first line; the edge from {\ttfamily pipe-\/0} in line {\ttfamily 0} to {\ttfamily pipe-\/0} in line {\ttfamily 1} represents the task dependency between two adjacent lines when processing two data tokens at the same pipe. Each pipe can be either a {\itshape serial} type or a {\itshape parallel} type, where a serial pipe processes data tokens sequentially and a parallel pipe processes different data tokens simultaneously.
+
+\begin{DoxyAttention}{注意}
+Due to the nature of pipeline, Taskflow requires the first pipe to be a serial type. The pipeline scheduling algorithm operates in a circular fashion with a factor of line count.
+\end{DoxyAttention}
+\hypertarget{_task_parallel_pipeline_CreateATaskParallelPipelineModuleTask}{}\doxysubsection{\texorpdfstring{Create a Task-\/parallel Pipeline Module Task}{Create a Task-\/parallel Pipeline Module Task}}\label{_task_parallel_pipeline_CreateATaskParallelPipelineModuleTask}
+Taskflow leverages modern C++ and template techniques to strike a balance between the {\itshape expressiveness} and {\itshape generality} in designing the pipeline programming model. In general, there are three steps to create a task-\/parallel pipeline application\+:
+
+
+\begin{DoxyEnumerate}
+\item Define the pipeline structure (e.\+g., pipe type, pipe callable, stopping rule, line count)
+\item Define the data storage and layout, if needed for the application
+\item Define the pipeline taskflow graph using composition
+\end{DoxyEnumerate}
+
+The following code creates a pipeline scheduling framework using the example from the previous section. The framework schedules a total of five {\itshape scheduling tokens} labeled from 0 to 4. The first pipe stores the token identifier in a custom data storage, {\ttfamily buffer}, and each of the rest pipes adds one to the input data from the result of the previous pipe and stores the result into the corresponding line entry in the buffer.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ 2:\ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ 3:}
+\DoxyCodeLine{\ 4:\ \textcolor{comment}{//\ maximum\ parallelism\ -\/\ each\ line\ processes\ one\ token\ at\ a\ time}}
+\DoxyCodeLine{\ 5:\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\_lines\ =\ 4;}
+\DoxyCodeLine{\ 6:}
+\DoxyCodeLine{\ 7:\ \textcolor{comment}{//\ custom\ data\ storage}}
+\DoxyCodeLine{\ 8:\ std::array<int,\ num\_lines>\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}};}
+\DoxyCodeLine{\ 9:}
+\DoxyCodeLine{10:\ \textcolor{comment}{//\ the\ pipeline\ consists\ of\ three\ pipes\ (serial-\/parallel-\/serial)}}
+\DoxyCodeLine{11:\ \textcolor{comment}{//\ and\ up\ to\ four\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{12:\ \mbox{\hyperlink{classtf_1_1_pipeline}{tf::Pipeline}}\ pl(num\_lines,}
+\DoxyCodeLine{13:\ \ \ \mbox{\hyperlink{classtf_1_1_pipe}{tf::Pipe}}\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](\mbox{\hyperlink{classtf_1_1_pipeflow}{tf::Pipeflow}}\&\ pf)\ \{}
+\DoxyCodeLine{14:\ \ \ \ \ \textcolor{comment}{//\ generate\ only\ 5\ scheduling\ tokens}}
+\DoxyCodeLine{15:\ \ \ \ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ 5)\ \{}
+\DoxyCodeLine{16:\ \ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{17:\ \ \ \ \ \}}
+\DoxyCodeLine{18:\ \ \ \ \ \textcolor{comment}{//\ save\ the\ result\ of\ this\ pipe\ into\ the\ buffer}}
+\DoxyCodeLine{19:\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{20:\ \ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}pipe\ 0:\ input\ token\ =\ \%zu\(\backslash\)n"{}},\ pf.token());}
+\DoxyCodeLine{21:\ \ \ \ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ pf.token();}
+\DoxyCodeLine{22:\ \ \ \ \ \}}
+\DoxyCodeLine{23:\ \ \ \}\},}
+\DoxyCodeLine{24:}
+\DoxyCodeLine{25:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564adf13a99b035d6f0bce4f44ab18eec8eb}{tf::PipeType::PARALLEL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{26:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{27:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipe\ 1:\ input\ buffer[\%zu]\ =\ \%d\(\backslash\)n"{}},}
+\DoxyCodeLine{28:\ \ \ \ \ \ \ pf.line(),\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]}
+\DoxyCodeLine{29:\ \ \ \ \ );}
+\DoxyCodeLine{30:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{31:\ \ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ +\ 1;}
+\DoxyCodeLine{32:\ \ \ \}\},}
+\DoxyCodeLine{33:}
+\DoxyCodeLine{34:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{35:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{36:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipe\ 2:\ input\ buffer[\%zu]\ =\ \%d\(\backslash\)n"{}},}
+\DoxyCodeLine{37:\ \ \ \ \ \ \ pf.line(),\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]}
+\DoxyCodeLine{38:\ \ \ \ \ );}
+\DoxyCodeLine{39:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{40:\ \ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ +\ 1;}
+\DoxyCodeLine{41:\ \ \ \}\}}
+\DoxyCodeLine{42:\ );}
+\DoxyCodeLine{43:}
+\DoxyCodeLine{44:\ \textcolor{comment}{//\ build\ the\ pipeline\ graph\ using\ composition}}
+\DoxyCodeLine{45:\ tf::Task\ pipeline\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.composed\_of(pl).name(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{46:}
+\DoxyCodeLine{47:\ \textcolor{comment}{//\ execute\ the\ taskflow}}
+\DoxyCodeLine{48:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Debrief\+:
+
+\begin{DoxyItemize}
+\item Lines 4-\/5 define the structure of the pipeline scheduling framework \item Line 8 defines the data storage as an one-\/dimensional array of {\ttfamily num\+\_\+lines} integers \item Line 12 defines the number of lines in the pipeline \item Lines 13-\/23 define the first serial pipe, which will stop the pipeline scheduling at the fifth token \item Lines 25-\/32 define the second parallel pipe \item Lines 34-\/41 define the third serial pipe \item Line 45 defines the pipeline taskflow graph using composition \item Line 48 executes the taskflow\end{DoxyItemize}
+Taskflow leverages \doxylink{RuntimeTasking}{Interact with the Runtime} and \doxylink{ComposableTasking}{Composable Tasking} to implement the pipeline scheduling framework. The taskflow graph of this pipeline example is shown as follows, where 1) one condition task is used to decide which runtime task to run and 2) four runtime tasks are used to schedule tokens at four parallel lines, respectively.
+
+In this example, we customize the data storage, {\ttfamily buffer}, as an one-\/dimensional array of 4 integers, since the pipeline structure defines only four parallel lines. Each entry of {\ttfamily buffer} stores stores the data being processed in the corresponding line. For example, {\ttfamily buffer\mbox{[}1\mbox{]}} stores the processed data at line {\ttfamily 1}. The following figure shows the data layout of {\ttfamily buffer}.
+
+\begin{DoxyAttention}{注意}
+In practice, you may need to add padding to the data type of the buffer or align it with the cacheline size to avoid false sharing. If the data type varies at different pipes, you can use @std\+\_\+variant to store the data types in a uniform storage.
+\end{DoxyAttention}
+For each scheduling token, you can use \doxylink{classtf_1_1_pipeflow_afee054e6a99965d4b3e36ff903227e6c}{tf\+::\+Pipeflow\+::line()} to get its line identifier and \doxylink{classtf_1_1_pipeflow_a4914c1f381a3016e98285b019cf60d6d}{tf\+::\+Pipeflow\+::pipe()} to get its pipe identifier. For example, if a scheduling token is at the third pipe of the forth line, \doxylink{classtf_1_1_pipeflow_afee054e6a99965d4b3e36ff903227e6c}{tf\+::\+Pipeflow\+::line()} will return {\ttfamily 3} and \doxylink{classtf_1_1_pipeflow_a4914c1f381a3016e98285b019cf60d6d}{tf\+::\+Pipeflow\+::pipe()} will return {\ttfamily 2} (index starts from 0). To stop the execution of the pipeline, you need to call \doxylink{classtf_1_1_pipeflow_a830b7f204cb87fff17e8d424918d9453}{tf\+::\+Pipeflow\+::stop()} at the first pipe. Once the stop signal has been triggered, the pipeline will stop scheduling any new tokens after the callable. As we can see from this example, \doxylink{classtf_1_1_pipeline}{tf\+::\+Pipeline} gives you the full control to customize your application data on top of a pipeline scheduling framework.
+
+\begin{DoxyAttention}{注意}
+
+\begin{DoxyEnumerate}
+\item Calling \doxylink{classtf_1_1_pipeflow_a830b7f204cb87fff17e8d424918d9453}{tf\+::\+Pipeflow\+::stop()} not at the first pipe has no effect on the pipeline scheduling.
+\item In most cases, std\+::thread\+::hardware\+\_\+concurrency is a good number for line count.
+\end{DoxyEnumerate}
+\end{DoxyAttention}
+Our pipeline algorithm schedules tokens in a {\itshape circular} manner, with a factor of {\ttfamily num\+\_\+lines}. That is, token {\ttfamily t} will be processed at line {\ttfamily t \% num\+\_\+lines}. The following snippet shows one of the possible outputs of this pipeline program\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 0}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer[0]\ =\ 0}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer[0]\ =\ 1}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 1}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer[1]\ =\ 1}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer[1]\ =\ 2}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 2}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer[2]\ =\ 2}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer[2]\ =\ 3}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 3}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer[3]\ =\ 3}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer[3]\ =\ 4}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 4}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer[0]\ =\ 4}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer[0]\ =\ 5}
+
+\end{DoxyCode}
+
+
+There are a total of five tokens running through three pipes. Each pipes prints its input data value, except the first pipe that prints its token identifier. Since the second pipe is a parallel pipe, the output can interleave.\hypertarget{_task_parallel_pipeline_ConnectWithTasks}{}\doxysubsection{\texorpdfstring{Connect Pipeline with Other Tasks}{Connect Pipeline with Other Tasks}}\label{_task_parallel_pipeline_ConnectWithTasks}
+You can connect the pipeline module task with other tasks to create a taskflow application that embeds one or multiple pipeline algorithms. We describe three common examples below\+:
+\begin{DoxyItemize}
+\item \doxysectlink{_task_parallel_pipeline_IterateAPipeline}{Example 1\+: Iterate a Pipeline}{2}
+\item \doxysectlink{_task_parallel_pipeline_ConcatenateTwoPipelines}{Example 2\+: Concatenate Two Pipelines}{2}
+\item \doxysectlink{_task_parallel_pipeline_DefineMultipleTaskParallelPipelines}{Example 3\+: Define Multiple Parallel Pipelines}{2}
+\end{DoxyItemize}\hypertarget{_task_parallel_pipeline_IterateAPipeline}{}\doxysubsubsection{\texorpdfstring{Example 1\+: Iterate a Pipeline}{Example 1\+: Iterate a Pipeline}}\label{_task_parallel_pipeline_IterateAPipeline}
+This example emulates a data streaming application that iteratively runs a stream of data through a pipeline using conditional tasking. The taskflow graph consists of one pipeline module task and one condition task. The pipeline module task processes a stream of data. The condition task decides the availability of data and reruns the pipeline when the next stream of data becomes available. ~\newline
+
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ 2:\ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ 3:}
+\DoxyCodeLine{\ 4:\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\_lines\ =\ 4;\ \ \textcolor{comment}{//\ maximum\ parallelism\ of\ the\ pipeline}}
+\DoxyCodeLine{\ 5:\ }
+\DoxyCodeLine{\ 6:\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 0;}
+\DoxyCodeLine{\ 7:\ \textcolor{comment}{//\ custom\ data\ storage}}
+\DoxyCodeLine{\ 8:\ std::array<int,\ num\_lines>\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}};}
+\DoxyCodeLine{\ 9:}
+\DoxyCodeLine{10:\ \textcolor{comment}{//\ the\ pipeline\ consists\ of\ three\ pipes\ (serial-\/parallel-\/serial)}}
+\DoxyCodeLine{11:\ \textcolor{comment}{//\ and\ up\ to\ four\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{12:\ \mbox{\hyperlink{classtf_1_1_pipeline}{tf::Pipeline}}\ pl(num\_lines,}
+\DoxyCodeLine{13:\ \ \ \mbox{\hyperlink{classtf_1_1_pipe}{tf::Pipe}}\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](\mbox{\hyperlink{classtf_1_1_pipeflow}{tf::Pipeflow}}\&\ pf)\ \{}
+\DoxyCodeLine{14:\ \ \ \ \ \textcolor{comment}{//\ only\ 5\ scheduling\ tokens\ are\ processed}}
+\DoxyCodeLine{15:\ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++\ ==\ 5)\ \{}
+\DoxyCodeLine{16:\ \ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{17:\ \ \ \ \ \}}
+\DoxyCodeLine{18:\ \ \ \ \ \textcolor{comment}{//\ save\ the\ result\ of\ this\ pipe\ into\ the\ buffer}}
+\DoxyCodeLine{19:\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{20:\ \ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}stage\ 0:\ input\ token\ =\ \%zu\(\backslash\)n"{}},\ pf.token());}
+\DoxyCodeLine{21:\ \ \ \ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ pf.token();}
+\DoxyCodeLine{22:\ \ \ \ \ \}}
+\DoxyCodeLine{23:\ \ \ \}\},}
+\DoxyCodeLine{24:}
+\DoxyCodeLine{25:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564adf13a99b035d6f0bce4f44ab18eec8eb}{tf::PipeType::PARALLEL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{26:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{27:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}stage\ 1:\ input\ buffer[\%zu]\ =\ \%d\(\backslash\)n"{}},}
+\DoxyCodeLine{28:\ \ \ \ \ \ \ pf.line(),\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]}
+\DoxyCodeLine{29:\ \ \ \ \ );}
+\DoxyCodeLine{30:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{31:\ \ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ +\ 1;}
+\DoxyCodeLine{32:\ \ \ \}\},}
+\DoxyCodeLine{33:}
+\DoxyCodeLine{34:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{35:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{36:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}stage\ 2:\ input\ buffer[\%zu]\ =\ \%d\(\backslash\)n"{}},}
+\DoxyCodeLine{37:\ \ \ \ \ \ \ pf.line(),\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]}
+\DoxyCodeLine{38:\ \ \ \ \ );}
+\DoxyCodeLine{39:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{40:\ \ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ +\ 1;}
+\DoxyCodeLine{41:\ \ \ \}\}}
+\DoxyCodeLine{42:\ );}
+\DoxyCodeLine{43:\ }
+\DoxyCodeLine{44:\ tf::Task\ \mbox{\hyperlink{namespacectll_ae0b75fc19857a1308e5181ce1b8d707c}{conditional}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \&\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]()\{}
+\DoxyCodeLine{45:\ \ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;}
+\DoxyCodeLine{46:\ \ \ \textcolor{keywordflow}{if}\ (++\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ <\ 2)\ \{\ \ }
+\DoxyCodeLine{47:\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Rerun\ the\ pipeline\(\backslash\)n"{}};}
+\DoxyCodeLine{48:\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{49:\ \ \ \}}
+\DoxyCodeLine{50:\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{51:\ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{52:\ \ \ \}}
+\DoxyCodeLine{53:\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}conditional"{}});}
+\DoxyCodeLine{54:}
+\DoxyCodeLine{55:\ \textcolor{comment}{//\ build\ the\ pipeline\ graph\ using\ composition}}
+\DoxyCodeLine{56:\ tf::Task\ pipeline\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.\mbox{\hyperlink{classtf_1_1_task_ab38be520fe700cb4ca1f312308a95585}{composed\_of}}(pl)}
+\DoxyCodeLine{57:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1_task_a08ada0425b490997b6ff7f310107e5e3}{name}}(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{58:\ tf::Task\ initial\ \ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}initial\(\backslash\)n"{}};\ \ \})}
+\DoxyCodeLine{59:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}initial"{}});}
+\DoxyCodeLine{60:\ tf::Task\ stop\ \ \ \ \ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}stop\(\backslash\)n"{}};\ \})}
+\DoxyCodeLine{61:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .name(\textcolor{stringliteral}{"{}stop"{}});}
+\DoxyCodeLine{62:}
+\DoxyCodeLine{63:\ \textcolor{comment}{//\ specify\ the\ graph\ dependency}}
+\DoxyCodeLine{64:\ initial.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(pipeline);}
+\DoxyCodeLine{65:\ pipeline.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(conditional);}
+\DoxyCodeLine{66:\ \mbox{\hyperlink{namespacectll_ae0b75fc19857a1308e5181ce1b8d707c}{conditional}}.precede(pipeline,\ stop);}
+\DoxyCodeLine{67:}
+\DoxyCodeLine{68:\ \textcolor{comment}{//\ execute\ the\ taskflow}}
+\DoxyCodeLine{69:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Debrief\+:
+
+\begin{DoxyItemize}
+\item Lines 4-\/5 define the structure of the pipeline scheduling framework \item Line 8 defines the data storage as an one-\/dimensional array ({\ttfamily num\+\_\+lines} integers) \item Line 12 defines the number of lines in the pipeline \item Lines 13-\/23 define the first serial pipe, which will stop the pipeline scheduling when {\ttfamily i} is {\ttfamily 5} ~\newline
+ \item Lines 25-\/32 define the second parallel pipe \item Lines 34-\/41 define the third serial pipe \item Lines 44-\/53 define a condition task which returns 0 when {\ttfamily N} is less than {\ttfamily 2}, otherwise returns {\ttfamily 1} \item Line 45 resets variable {\ttfamily i} \item Lines 56-\/57 define the pipeline graph using composition \item Lines 58-\/61 define two static tasks \item Line 64-\/66 define the task dependency \item Line 69 executes the taskflow\end{DoxyItemize}
+The taskflow graph of this pipeline example is illustrated as follows\+:
+
+The following snippet shows one of the possible outputs\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{initial}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 0}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[0]\ =\ 0}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[0]\ =\ 1}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 1}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[1]\ =\ 1}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[1]\ =\ 2}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 2}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[2]\ =\ 2}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[2]\ =\ 3}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 3}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[3]\ =\ 3}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[3]\ =\ 4}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 4}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[0]\ =\ 4}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[0]\ =\ 5}
+\DoxyCodeLine{Rerun\ the\ pipeline}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 5}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[1]\ =\ 5}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[1]\ =\ 6}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 6}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[2]\ =\ 6}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[2]\ =\ 7}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 7}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[3]\ =\ 7}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[3]\ =\ 8}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 8}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[0]\ =\ 8}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[0]\ =\ 9}
+\DoxyCodeLine{stage\ 0:\ input\ token\ =\ 9}
+\DoxyCodeLine{stage\ 1:\ input\ buffer[1]\ =\ 9}
+\DoxyCodeLine{stage\ 2:\ input\ buffer[1]\ =\ 10}
+\DoxyCodeLine{stop}
+
+\end{DoxyCode}
+
+
+The pipeline runs twice as controlled by the condition task {\ttfamily conditional}. The starting token in the second run of the pipeline is {\ttfamily 5} rather than {\ttfamily 0} because the pipeline keeps a stateful number of tokens. The last token is {\ttfamily 9}, which means the pipeline processes in total {\ttfamily 10} scheduling tokens. The first five tokens (token {\ttfamily 0} to {\ttfamily 4}) are processed in the first run, and the remaining five tokens (token {\ttfamily 5} to {\ttfamily 9}) are processed in the second run. In the condition task, we use {\ttfamily N} as a decision-\/making counter to process the next stream of data.\hypertarget{_task_parallel_pipeline_ConcatenateTwoPipelines}{}\doxysubsubsection{\texorpdfstring{Example 2\+: Concatenate Two Pipelines}{Example 2\+: Concatenate Two Pipelines}}\label{_task_parallel_pipeline_ConcatenateTwoPipelines}
+This example demonstrates two concatenated pipelines where a sequence of data tokens run synchronously from one pipeline to another pipeline. The first pipeline task precedes the second pipeline task.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{\ 2:\ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ 3:}
+\DoxyCodeLine{\ 4:\ \textcolor{comment}{//\ define\ the\ maximum\ parallelism\ of\ the\ pipeline}}
+\DoxyCodeLine{\ 5:\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\_lines\ =\ 4;}
+\DoxyCodeLine{\ 6:}
+\DoxyCodeLine{\ 7:\ \textcolor{comment}{//\ custom\ data\ storage}}
+\DoxyCodeLine{\ 8:\ std::array<int,\ num\_lines>\ buffer\_1;}
+\DoxyCodeLine{\ 9:\ std::array<int,\ num\_lines>\ buffer\_2;}
+\DoxyCodeLine{10:\ }
+\DoxyCodeLine{11:\ \textcolor{comment}{//\ the\ pipeline\_1\ consists\ of\ three\ pipes\ (serial-\/parallel-\/serial)}}
+\DoxyCodeLine{12:\ \textcolor{comment}{//\ and\ up\ to\ four\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{13:\ \mbox{\hyperlink{classtf_1_1_pipeline}{tf::Pipeline}}\ pl\_1(num\_lines,}
+\DoxyCodeLine{14:\ \ \ \mbox{\hyperlink{classtf_1_1_pipe}{tf::Pipe}}\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&buffer\_1](\mbox{\hyperlink{classtf_1_1_pipeflow}{tf::Pipeflow}}\&\ pf)\ \textcolor{keyword}{mutable}\{}
+\DoxyCodeLine{15:\ \ \ \ \ \textcolor{comment}{//\ generate\ only\ 4\ scheduling\ tokens}}
+\DoxyCodeLine{16:\ \ \ \ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ 4)\ \{}
+\DoxyCodeLine{17:\ \ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{18:\ \ \ \ \ \}}
+\DoxyCodeLine{19:\ \ \ \ \ \textcolor{comment}{//\ save\ the\ result\ of\ this\ pipe\ into\ the\ buffer}}
+\DoxyCodeLine{20:\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{21:\ \ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ \%zu\(\backslash\)n"{}},\ pf.token());}
+\DoxyCodeLine{22:\ \ \ \ \ \ \ buffer\_1[pf.line()]\ =\ pf.token();}
+\DoxyCodeLine{23:\ \ \ \ \ \}}
+\DoxyCodeLine{24:\ \ \ \}\},}
+\DoxyCodeLine{25:}
+\DoxyCodeLine{26:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564adf13a99b035d6f0bce4f44ab18eec8eb}{tf::PipeType::PARALLEL}},\ [\&buffer\_1](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{27:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{28:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{29:\ \ \ \ \ \ \ pf.line(),\ buffer\_1[pf.line()]}
+\DoxyCodeLine{30:\ \ \ \ \ );}
+\DoxyCodeLine{31:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{32:\ \ \ \ \ buffer\_1[pf.line()]\ =\ buffer\_1[pf.line()]\ +\ 1;}
+\DoxyCodeLine{33:\ \ \ \}\},}
+\DoxyCodeLine{34:}
+\DoxyCodeLine{35:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&buffer\_1](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{36:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{37:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{38:\ \ \ \ \ \ \ pf.line(),\ buffer\_1[pf.line()]}
+\DoxyCodeLine{39:\ \ \ \ \ );}
+\DoxyCodeLine{40:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{41:\ \ \ \ \ buffer\_1[pf.line()]\ =\ buffer\_1[pf.line()]\ +\ 1;}
+\DoxyCodeLine{42:\ \ \ \}\}}
+\DoxyCodeLine{43:\ );}
+\DoxyCodeLine{44:\ \ }
+\DoxyCodeLine{45:\ \textcolor{comment}{//\ the\ pipeline\_2\ consists\ of\ three\ pipes\ (serial-\/parallel-\/serial)}}
+\DoxyCodeLine{46:\ \textcolor{comment}{//\ and\ up\ to\ four\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{47:\ tf::Pipeline\ pl\_2(num\_lines,}
+\DoxyCodeLine{48:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ }
+\DoxyCodeLine{49:\ \ \ [\&buffer\_2,\ \&buffer\_1](tf::Pipeflow\&\ pf)\ \textcolor{keyword}{mutable}\{}
+\DoxyCodeLine{50:\ \ \ \ \ \textcolor{comment}{//\ generate\ only\ 4\ scheduling\ tokens}}
+\DoxyCodeLine{51:\ \ \ \ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ 4)\ \{}
+\DoxyCodeLine{52:\ \ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{53:\ \ \ \ \ \}}
+\DoxyCodeLine{54:\ \ \ \ \ \textcolor{comment}{//\ save\ the\ result\ of\ this\ pipe\ into\ the\ buffer}}
+\DoxyCodeLine{55:\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{56:\ \ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}pipeline\ 2,\ pipe\ 0:\ input\ value\ =\ \%d\(\backslash\)n"{}},\ buffer\_1[pf.line()]);}
+\DoxyCodeLine{57:\ \ \ \ \ \ \ buffer\_2[pf.line()]\ =\ buffer\_1[pf.line()];}
+\DoxyCodeLine{58:\ \ \ \ \ \}}
+\DoxyCodeLine{59:\ \ \ \}\},}
+\DoxyCodeLine{60:}
+\DoxyCodeLine{61:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564adf13a99b035d6f0bce4f44ab18eec8eb}{tf::PipeType::PARALLEL}},\ [\&buffer\_2](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{62:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{63:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 2,\ pipe\ 1:\ input\ buffer\_2[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{64:\ \ \ \ \ \ \ pf.line(),\ buffer\_2[pf.line()]}
+\DoxyCodeLine{65:\ \ \ \ \ );}
+\DoxyCodeLine{66:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ 1}}
+\DoxyCodeLine{67:\ \ \ \ \ buffer\_2[pf.line()]\ =\ buffer\_2[pf.line()]\ +\ 1;}
+\DoxyCodeLine{68:\ \ \ \}\},}
+\DoxyCodeLine{69:}
+\DoxyCodeLine{70:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&buffer\_2](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{71:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{72:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{73:\ \ \ \ \ \ \ pf.line(),\ buffer\_2[pf.line()]}
+\DoxyCodeLine{74:\ \ \ \ \ );}
+\DoxyCodeLine{75:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ 1}}
+\DoxyCodeLine{76:\ \ \ \ \ buffer\_2[pf.line()]\ =\ buffer\_2[pf.line()]\ +\ 1;}
+\DoxyCodeLine{77:\ \ \ \}\}}
+\DoxyCodeLine{78:\ );}
+\DoxyCodeLine{79:}
+\DoxyCodeLine{80:\ \textcolor{comment}{//\ build\ the\ pipeline\ graph\ using\ composition}}
+\DoxyCodeLine{81:\ tf::Task\ pipeline\_1\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.composed\_of(pl\_1).name(\textcolor{stringliteral}{"{}pipeline\_1"{}});}
+\DoxyCodeLine{82:\ tf::Task\ pipeline\_2\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.composed\_of(pl\_2).name(\textcolor{stringliteral}{"{}pipeline\_2"{}});}
+\DoxyCodeLine{83:}
+\DoxyCodeLine{84:\ \textcolor{comment}{//\ specify\ the\ graph\ dependency}}
+\DoxyCodeLine{85:\ pipeline\_1.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(pipeline\_2);}
+\DoxyCodeLine{86:\ \ }
+\DoxyCodeLine{87:\ \textcolor{comment}{//\ execute\ the\ taskflow}}
+\DoxyCodeLine{88:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Debrief\+:
+
+\begin{DoxyItemize}
+\item Line 8 defines the data storage ({\ttfamily num\+\_\+lines} integers) for pipeline {\ttfamily pl\+\_\+1} \item Line 9 defines the data storage ({\ttfamily num\+\_\+lines} integers) for pipeline {\ttfamily pl\+\_\+2} \item Lines 14-\/24 define the first serial pipe in {\ttfamily pl\+\_\+1} \item Lines 26-\/33 define the second parallel pipe in {\ttfamily pl\+\_\+1} \item Lines 35-\/42 define the third serial pipe in {\ttfamily pl\+\_\+1} \item Lines 48-\/59 define the first serial pipe in {\ttfamily pl\+\_\+2} that takes the results of {\ttfamily pl\+\_\+1} as inputs \item Lines 61-\/68 define the second parallel pipe in {\ttfamily pl\+\_\+2} \item Lines 70-\/77 define the third serial pipe in {\ttfamily pl\+\_\+2} \item Lines 81-\/82 define the pipeline graphs using composition \item Line 85 defines the task dependency \item Line 88 runs the taskflow\end{DoxyItemize}
+The taskflow graph of this pipeline example is illustrated as follows\+:
+
+The following snippet shows one of the possible outputs\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 0}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[0]\ =\ 0}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[0]\ =\ 1}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 1}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[1]\ =\ 1}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[1]\ =\ 2}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 2}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[2]\ =\ 2}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[2]\ =\ 3}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 3}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[3]\ =\ 3}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[3]\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ value\ =\ 2}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[0]\ =\ 2}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 3:\ input\ buffer\_2[0]\ =\ 3}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ value\ =\ 3}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[1]\ =\ 3}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 3:\ input\ buffer\_2[1]\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ value\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[2]\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 3:\ input\ buffer\_2[2]\ =\ 5}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ value\ =\ 5}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[3]\ =\ 5}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 3:\ input\ buffer\_2[3]\ =\ 6}
+
+\end{DoxyCode}
+
+
+The output of pipelines {\ttfamily pl\+\_\+1} and {\ttfamily pl\+\_\+2} can be different from run to run because their second pipes are both parallel types. Due to the task dependency between {\ttfamily pipeline\+\_\+1} and {\ttfamily pipeline\+\_\+2}, the output of {\ttfamily pl\+\_\+1} precedes the output of {\ttfamily pl\+\_\+2}.\hypertarget{_task_parallel_pipeline_DefineMultipleTaskParallelPipelines}{}\doxysubsubsection{\texorpdfstring{Example 3\+: Define Multiple Parallel Pipelines}{Example 3\+: Define Multiple Parallel Pipelines}}\label{_task_parallel_pipeline_DefineMultipleTaskParallelPipelines}
+This example creates two independent pipelines that run in parallel on different data sets.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{\ 2:\ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ 3:}
+\DoxyCodeLine{\ 4:\ \textcolor{comment}{//\ define\ the\ maximum\ parallelism\ of\ the\ pipeline}}
+\DoxyCodeLine{\ 5:\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\_lines\ =\ 4;}
+\DoxyCodeLine{\ 6:}
+\DoxyCodeLine{\ 7:\ \textcolor{comment}{//\ custom\ data\ storage}}
+\DoxyCodeLine{\ 8:\ std::array<int,\ num\_lines>\ buffer\_1;}
+\DoxyCodeLine{\ 9:\ std::array<int,\ num\_lines>\ buffer\_2;}
+\DoxyCodeLine{10:\ }
+\DoxyCodeLine{11:\ \textcolor{comment}{//\ the\ pipeline\_1\ consists\ of\ three\ pipes\ (serial-\/parallel-\/serial)}}
+\DoxyCodeLine{12:\ \textcolor{comment}{//\ and\ up\ to\ four\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{13:\ \mbox{\hyperlink{classtf_1_1_pipeline}{tf::Pipeline}}\ pl\_1(num\_lines,}
+\DoxyCodeLine{14:\ \ \ \mbox{\hyperlink{classtf_1_1_pipe}{tf::Pipe}}\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&buffer\_1](\mbox{\hyperlink{classtf_1_1_pipeflow}{tf::Pipeflow}}\&\ pf)\ \textcolor{keyword}{mutable}\{}
+\DoxyCodeLine{15:\ \ \ \ \ \textcolor{comment}{//\ generate\ only\ 5\ scheduling\ tokens}}
+\DoxyCodeLine{16:\ \ \ \ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ 5)\ \{}
+\DoxyCodeLine{17:\ \ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{18:\ \ \ \ \ \}}
+\DoxyCodeLine{19:\ \ \ \ \ \textcolor{comment}{//\ save\ the\ result\ of\ this\ pipe\ into\ the\ buffer}}
+\DoxyCodeLine{20:\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{21:\ \ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ \%zu\(\backslash\)n"{}},\ pf.token());}
+\DoxyCodeLine{22:\ \ \ \ \ \ \ buffer\_1[pf.line()]\ =\ pf.token();}
+\DoxyCodeLine{23:\ \ \ \ \ \}}
+\DoxyCodeLine{24:\ \ \ \}\},}
+\DoxyCodeLine{25:}
+\DoxyCodeLine{26:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564adf13a99b035d6f0bce4f44ab18eec8eb}{tf::PipeType::PARALLEL}},\ [\&buffer\_1](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{27:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{28:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{29:\ \ \ \ \ \ \ pf.line(),\ buffer\_1[pf.line()]}
+\DoxyCodeLine{30:\ \ \ \ \ );}
+\DoxyCodeLine{31:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{32:\ \ \ \ \ buffer\_1[pf.line()]\ =\ buffer\_1[pf.line()]\ +\ 1;}
+\DoxyCodeLine{33:\ \ \ \}\},}
+\DoxyCodeLine{34:}
+\DoxyCodeLine{35:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&buffer\_1](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{36:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{37:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{38:\ \ \ \ \ \ \ pf.line(),\ buffer\_1[pf.line()]}
+\DoxyCodeLine{39:\ \ \ \ \ );}
+\DoxyCodeLine{40:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{41:\ \ \ \ \ buffer\_1[pf.line()]\ =\ buffer\_1[pf.line()]\ +\ 1;}
+\DoxyCodeLine{42:\ \ \ \}\}}
+\DoxyCodeLine{43:\ );}
+\DoxyCodeLine{44:\ \ }
+\DoxyCodeLine{45:\ \textcolor{comment}{//\ the\ pipeline\_2\ consists\ of\ three\ pipes\ (serial-\/parallel-\/serial)}}
+\DoxyCodeLine{46:\ \textcolor{comment}{//\ and\ up\ to\ four\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{47:\ tf::Pipeline\ pl\_2(num\_lines,}
+\DoxyCodeLine{48:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&buffer\_2](tf::Pipeflow\&\ pf)\ \textcolor{keyword}{mutable}\{}
+\DoxyCodeLine{49:\ \ \ \ \ \textcolor{comment}{//\ generate\ only\ 2\ scheduling\ tokens}}
+\DoxyCodeLine{50:\ \ \ \ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ 5)\ \{}
+\DoxyCodeLine{51:\ \ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{52:\ \ \ \ \ \}}
+\DoxyCodeLine{53:\ \ \ \ \ \textcolor{comment}{//\ save\ the\ result\ of\ this\ pipe\ into\ the\ buffer}}
+\DoxyCodeLine{54:\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{55:\ \ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}pipeline\ 2,\ pipe\ 0:\ input\ token\ =\ \%zu\(\backslash\)n"{}},\ pf.token());}
+\DoxyCodeLine{56:\ \ \ \ \ \ \ buffer\_2[pf.line()]\ =\ \textcolor{stringliteral}{"{}pipeline"{}};}
+\DoxyCodeLine{57:\ \ \ \ \ \}}
+\DoxyCodeLine{58:\ \ \ \}\},}
+\DoxyCodeLine{59:}
+\DoxyCodeLine{60:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564adf13a99b035d6f0bce4f44ab18eec8eb}{tf::PipeType::PARALLEL}},\ [\&buffer\_2](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{61:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{62:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 2,\ pipe\ 1:\ input\ buffer\_2[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{63:\ \ \ \ \ \ \ pf.line(),\ buffer\_2[pf.line()]}
+\DoxyCodeLine{64:\ \ \ \ \ );}
+\DoxyCodeLine{65:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ concatenating\ "{}\_"{}}}
+\DoxyCodeLine{66:\ \ \ \ \ buffer\_2[pf.line()]\ =\ buffer\_2[pf.line()];}
+\DoxyCodeLine{67:\ \ \ \}\},}
+\DoxyCodeLine{68:}
+\DoxyCodeLine{69:\ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&buffer\_2](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{70:\ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{71:\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[\%zu]\ =\ \%d\(\backslash\)n"{}},\ }
+\DoxyCodeLine{72:\ \ \ \ \ \ \ pf.line(),\ buffer\_2[pf.line()]}
+\DoxyCodeLine{73:\ \ \ \ \ );}
+\DoxyCodeLine{74:\ \ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ concatenating\ "{}2"{}}}
+\DoxyCodeLine{75:\ \ \ \ \ buffer\_2[pf.line()]\ =\ buffer\_2[pf.line()];}
+\DoxyCodeLine{76:\ \ \ \}\}}
+\DoxyCodeLine{77:\ );}
+\DoxyCodeLine{78:}
+\DoxyCodeLine{79:\ tf::Task\ pipeline\_1\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.\mbox{\hyperlink{classtf_1_1_task_ab38be520fe700cb4ca1f312308a95585}{composed\_of}}(pl\_1)}
+\DoxyCodeLine{80:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1_task_a08ada0425b490997b6ff7f310107e5e3}{name}}(\textcolor{stringliteral}{"{}pipeline\_1"{}});}
+\DoxyCodeLine{81:\ tf::Task\ pipeline\_2\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.\mbox{\hyperlink{classtf_1_1_task_ab38be520fe700cb4ca1f312308a95585}{composed\_of}}(pl\_2)}
+\DoxyCodeLine{82:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1_task_a08ada0425b490997b6ff7f310107e5e3}{name}}(\textcolor{stringliteral}{"{}pipeline\_2"{}});}
+\DoxyCodeLine{83:\ tf::Task\ initial\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}initial"{}};\ \})}
+\DoxyCodeLine{84:\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}initial"{}});}
+\DoxyCodeLine{85:}
+\DoxyCodeLine{86:\ initial.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(pipeline\_1,\ pipeline\_2);}
+\DoxyCodeLine{87:\ \ }
+\DoxyCodeLine{88:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Debrief\+:
+
+\begin{DoxyItemize}
+\item Line 8 defines the data storage ({\ttfamily num\+\_\+lines} integers) for pipeline {\ttfamily pl\+\_\+1} \item Line 9 defines the data storage ({\ttfamily num\+\_\+lines} integers) for pipeline {\ttfamily pl\+\_\+2} \item Lines 14-\/24 define the first serial pipe in {\ttfamily pl\+\_\+1} \item Lines 26-\/33 define the second parallel pipe in {\ttfamily pl\+\_\+1} \item Lines 35-\/42 define the third serial pipe in {\ttfamily pl\+\_\+1} \item Lines 48-\/58 define the first serial pipe in {\ttfamily pl\+\_\+2} \item Lines 60-\/67 define the second parallel pipe in {\ttfamily pl\+\_\+2} \item Lines 69-\/76 define the third serial pipe in {\ttfamily pl\+\_\+2} \item Lines 79-\/82 define the pipeline graphs using composition \item Lines 83-\/84 define a static task. \item Line 86 defines the task dependency \item Line 88 runs the taskflow\end{DoxyItemize}
+The taskflow graph of this pipeline example is illustrated as follows\+:
+
+The following snippet shows one of the possible outputs\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{initial}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 0:\ input\ token\ =\ 0}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ buffer\_2[0]\ =\ 0}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[0]\ =\ 1}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 0}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[0]\ =\ 0}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[0]\ =\ 1}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 1}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[1]\ =\ 1}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 2}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[2]\ =\ 2}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 3}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[3]\ =\ 3}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 0:\ input\ token\ =\ 4}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 1:\ input\ buffer\_1[0]\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 0:\ input\ token\ =\ 1}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ buffer\_2[1]\ =\ 1}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 0:\ input\ buffer\_2[1]\ =\ 2}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 0:\ input\ token\ =\ 2}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ buffer\_2[2]\ =\ 2}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[2]\ =\ 3}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 0:\ input\ token\ =\ 3}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ buffer\_2[3]\ =\ 3}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[3]\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 0:\ input\ token\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 1:\ input\ buffer\_2[0]\ =\ 4}
+\DoxyCodeLine{pipeline\ 2,\ pipe\ 2:\ input\ buffer\_2[0]\ =\ 5}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[1]\ =\ 2}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[2]\ =\ 3}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[3]\ =\ 4}
+\DoxyCodeLine{pipeline\ 1,\ pipe\ 2:\ input\ buffer\_1[0]\ =\ 5}
+
+\end{DoxyCode}
+
+
+Because pipeline {\ttfamily pl\+\_\+1} and pipeline {\ttfamily pl\+\_\+2} are running in parallel, their outputs may interleave.\hypertarget{_task_parallel_pipeline_ResetPipeline}{}\doxysubsection{\texorpdfstring{Reset a Pipeline}{Reset a Pipeline}}\label{_task_parallel_pipeline_ResetPipeline}
+Our pipeline scheduling framework keeps a {\itshape stateful} number of scheduled tokens at each submitted run. You can reset the pipeline to the initial state using \doxylink{classtf_1_1_pipeline_a311d874b98de6f0def8a7d869e8d15bd}{tf\+::\+Pipeline\+::reset()}, where the number of scheduled tokens will start from zero in the next run. Borrowed from \doxysectlink{_task_parallel_pipeline_IterateAPipeline}{Example 1\+: Iterate a Pipeline}{2}, the program below resets the pipeline at the second iteration (inside the condition task) so the scheduling token will start from zero in the next run.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ define\ the\ maximum\ parallelism\ of\ the\ pipeline}}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\_lines\ =\ 4;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ custom\ data\ storage}}
+\DoxyCodeLine{std::array<int,\ num\_lines>\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ the\ pipeline\ consists\ of\ three\ pipes\ (serial-\/parallel-\/serial)}}
+\DoxyCodeLine{\textcolor{comment}{//\ and\ up\ to\ four\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_pipeline}{tf::Pipeline}}\ pl(num\_lines,}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_pipe}{tf::Pipe}}\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](\mbox{\hyperlink{classtf_1_1_pipeflow}{tf::Pipeflow}}\&\ pf)\ \textcolor{keyword}{mutable}\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ generate\ only\ 5\ scheduling\ tokens}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ 5)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ save\ the\ result\ of\ this\ pipe\ into\ the\ buffer}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}pipe\ 0:\ input\ token\ =\ \%zu\(\backslash\)n"{}},\ pf.token());}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ pf.token();}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}\},}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564adf13a99b035d6f0bce4f44ab18eec8eb}{tf::PipeType::PARALLEL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{stringliteral}{"{}pipe\ 1:\ input\ buffer\_1[\%zu]\ =\ \%d\(\backslash\)n"{}},\ pf.line(),\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]}
+\DoxyCodeLine{\ \ \ \ );}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ +\ 1;}
+\DoxyCodeLine{\ \ \}\},}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{stringliteral}{"{}pipe\ 2:\ input\ buffer[\%zu][\%zu]\ =\ \%d\(\backslash\)n"{}},\ pf.line(),\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]}
+\DoxyCodeLine{\ \ \ \ );}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ propagate\ the\ previous\ result\ to\ this\ pipe\ by\ adding\ one}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ =\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}[pf.line()]\ +\ 1;}
+\DoxyCodeLine{\ \ \}\}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{\ }
+\DoxyCodeLine{tf::Task\ \mbox{\hyperlink{namespacectll_ae0b75fc19857a1308e5181ce1b8d707c}{conditional}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (++\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ <\ 2)\ \{}
+\DoxyCodeLine{\ \ \ \ pl.reset();}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Rerun\ the\ pipeline\(\backslash\)n"{}};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}conditional"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{tf::Task\ pipeline\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.\mbox{\hyperlink{classtf_1_1_task_ab38be520fe700cb4ca1f312308a95585}{composed\_of}}(pl)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1_task_a08ada0425b490997b6ff7f310107e5e3}{name}}(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{tf::Task\ initial\ \ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}initial"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}initial"{}});}
+\DoxyCodeLine{tf::Task\ stop\ \ \ \ \ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}stop"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}stop"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{initial.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(pipeline);}
+\DoxyCodeLine{pipeline.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(conditional);}
+\DoxyCodeLine{\mbox{\hyperlink{namespacectll_ae0b75fc19857a1308e5181ce1b8d707c}{conditional}}.precede(pipeline,\ stop);}
+\DoxyCodeLine{\ }
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+The following snippet shows one of the possible outputs\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{initial}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 0}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[0]\ =\ 0}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[0]\ =\ 1}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 1}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[1]\ =\ 1}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[1]\ =\ 2}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 2}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[2]\ =\ 2}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[2]\ =\ 3}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 3}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[3]\ =\ 3}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[3]\ =\ 4}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 4}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[0]\ =\ 4}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[0]\ =\ 5}
+\DoxyCodeLine{Rerun\ the\ pipeline}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 0}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[0]\ =\ 0}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[0]\ =\ 1}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 1}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[1]\ =\ 1}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[1]\ =\ 2}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 2}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[2]\ =\ 2}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[2]\ =\ 3}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 3}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[3]\ =\ 3}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[3]\ =\ 4}
+\DoxyCodeLine{pipe\ 0:\ input\ token\ =\ 4}
+\DoxyCodeLine{pipe\ 1:\ input\ buffer\_1[0]\ =\ 4}
+\DoxyCodeLine{pipe\ 2:\ input\ buffer\_1[0]\ =\ 5}
+\DoxyCodeLine{stop}
+
+\end{DoxyCode}
+
+
+The output can be different from run to run, since the second pipe is a parallel type. At the second iteration from the condition task, we reset the pipeline so the token identifier starts from {\ttfamily 0} rather than {\ttfamily 5}.\hypertarget{_task_parallel_pipeline_TaskParallelPipelineLearnMore}{}\doxysubsection{\texorpdfstring{Learn More about Taskflow Pipeline}{Learn More about Taskflow Pipeline}}\label{_task_parallel_pipeline_TaskParallelPipelineLearnMore}
+Visit the following pages to learn more about pipeline\+:
+
+
+\begin{DoxyItemize}
+\item \doxylink{TaskParallelScalablePipeline}{Task-\/parallel Scalable Pipeline}
+\item \doxylink{DataParallelPipeline}{Data-\/parallel Pipeline}
+\item \doxylink{TextProcessingPipeline}{Text Processing Pipeline}
+\item \doxylink{GraphProcessingPipeline}{Graph Processing Pipeline}
+\item \doxylink{TaskflowProcessingPipeline}{Taskflow Processing Pipeline} 
+\end{DoxyItemize}

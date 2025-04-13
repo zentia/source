@@ -1,0 +1,4 @@
+var _spine_controller_after_paint_callback_8java =
+[
+    [ "com.esotericsoftware.spine.android.callbacks.SpineControllerAfterPaintCallback", "interfacecom_1_1esotericsoftware_1_1spine_1_1android_1_1callbacks_1_1_spine_controller_after_paint_callback.html", "interfacecom_1_1esotericsoftware_1_1spine_1_1android_1_1callbacks_1_1_spine_controller_after_paint_callback" ]
+];

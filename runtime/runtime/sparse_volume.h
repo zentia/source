@@ -71,7 +71,7 @@ public:
         if (level >= _mip_levels) [[unlikely]] {
             detail::error_volume_invalid_mip_levels(level, _mip_levels);
         }
-        auto mip_size = luisa::max(_size >> level, 1u);
+        auto mip_size = (luisa::max)(_size >> level, 1u);
         return VolumeView<T>{native_handle(), handle(), _storage, level, mip_size};
     }
     [[nodiscard]] auto view() const noexcept {

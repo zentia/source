@@ -1,11 +1,11 @@
 #pragma once
 
-#include <luisa/backends/ext/raster_ext_interface.h>
-#include <luisa/runtime/buffer.h>
-#include <luisa/core/spin_mutex.h>
-#include <luisa/runtime/raster/raster_state.h>
-#include <luisa/runtime/raster/raster_shader.h>
-#include <luisa/runtime/raster/depth_buffer.h>
+#include <runtime/backends/ext/raster_ext_interface.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/core/spin_mutex.h>
+#include <runtime/runtime/raster/raster_state.h>
+#include <runtime/runtime/raster/raster_shader.h>
+#include <runtime/runtime/raster/depth_buffer.h>
 
 namespace lc::validation {
 class Stream;

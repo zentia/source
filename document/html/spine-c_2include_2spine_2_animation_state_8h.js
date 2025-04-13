@@ -1,0 +1,37 @@
+var spine_c_2include_2spine_2_animation_state_8h =
+[
+    [ "spTrackEntry", "structsp_track_entry.html", "structsp_track_entry" ],
+    [ "spAnimationState", "structsp_animation_state.html", "structsp_animation_state" ],
+    [ "spAnimationStateListener", "spine-c_2include_2spine_2_animation_state_8h.html#a9809a4fb5602cfbaa78a2ea8f1e2e481", null ],
+    [ "spEventType", "spine-c_2include_2spine_2_animation_state_8h.html#af477ae8fac9110c539327195c0a97cb8", [
+      [ "SP_ANIMATION_START", "spine-c_2include_2spine_2_animation_state_8h.html#af477ae8fac9110c539327195c0a97cb8a3a3e9539208ef255d3e7b0d0b5dd7148", null ],
+      [ "SP_ANIMATION_INTERRUPT", "spine-c_2include_2spine_2_animation_state_8h.html#af477ae8fac9110c539327195c0a97cb8a98a9bc213d027f6b9a37e8cfbbeb3d02", null ],
+      [ "SP_ANIMATION_END", "spine-c_2include_2spine_2_animation_state_8h.html#af477ae8fac9110c539327195c0a97cb8a61d4e14f20218c1805b7768d40d9e864", null ],
+      [ "SP_ANIMATION_COMPLETE", "spine-c_2include_2spine_2_animation_state_8h.html#af477ae8fac9110c539327195c0a97cb8a7b89c778e4304b9eeea7fc50fadf404d", null ],
+      [ "SP_ANIMATION_DISPOSE", "spine-c_2include_2spine_2_animation_state_8h.html#af477ae8fac9110c539327195c0a97cb8a978406b21d7756c9346e19b92381d8e4", null ],
+      [ "SP_ANIMATION_EVENT", "spine-c_2include_2spine_2_animation_state_8h.html#af477ae8fac9110c539327195c0a97cb8ae07d4e53c9ea33556c1d31cf27437f54", null ]
+    ] ],
+    [ "spAnimationState_addAnimation", "spine-c_2include_2spine_2_animation_state_8h.html#a757ae402de223d4cae49056f59488e32", null ],
+    [ "spAnimationState_addAnimationByName", "spine-c_2include_2spine_2_animation_state_8h.html#a445978dffe9bf5284ae8f53d849bd2d6", null ],
+    [ "spAnimationState_addEmptyAnimation", "spine-c_2include_2spine_2_animation_state_8h.html#a936be7dfe2747f0f95ac075075136af8", null ],
+    [ "spAnimationState_apply", "spine-c_2include_2spine_2_animation_state_8h.html#a2d430bba783d0e4492f64dbb35f6ff13", null ],
+    [ "spAnimationState_clearListenerNotifications", "spine-c_2include_2spine_2_animation_state_8h.html#aab1eab26185f88a94de5d3cee9e6ff5d", null ],
+    [ "spAnimationState_clearNext", "spine-c_2include_2spine_2_animation_state_8h.html#a97cfd6b87cc12344f8f0bbd0d00b9bae", null ],
+    [ "spAnimationState_clearTrack", "spine-c_2include_2spine_2_animation_state_8h.html#ad97f38c1c097082d2de7a2ad15d38a59", null ],
+    [ "spAnimationState_clearTracks", "spine-c_2include_2spine_2_animation_state_8h.html#af6a9cabfd64d28abc1b58a1e4bffc2f5", null ],
+    [ "spAnimationState_create", "spine-c_2include_2spine_2_animation_state_8h.html#ac6a37e2d133d955c106ab508261d484e", null ],
+    [ "spAnimationState_dispose", "spine-c_2include_2spine_2_animation_state_8h.html#a912d529120bf8783940c3903ff258854", null ],
+    [ "spAnimationState_disposeStatics", "spine-c_2include_2spine_2_animation_state_8h.html#ae089847f7874294437e87ea48e396fb9", null ],
+    [ "spAnimationState_getCurrent", "spine-c_2include_2spine_2_animation_state_8h.html#afdf87e18a88323903b08954c5095e22d", null ],
+    [ "spAnimationState_setAnimation", "spine-c_2include_2spine_2_animation_state_8h.html#a6123f21cabe0dcd514e3c22aa76ee38c", null ],
+    [ "spAnimationState_setAnimationByName", "spine-c_2include_2spine_2_animation_state_8h.html#a886473af828c2ec1222f62ea8aa5e470", null ],
+    [ "spAnimationState_setEmptyAnimation", "spine-c_2include_2spine_2_animation_state_8h.html#a5db804e44467795a423db13597d04bf4", null ],
+    [ "spAnimationState_setEmptyAnimations", "spine-c_2include_2spine_2_animation_state_8h.html#a532954a9940a7bdca61f6a52aff1c832", null ],
+    [ "spAnimationState_update", "spine-c_2include_2spine_2_animation_state_8h.html#a686c59b39a163986710905efd2a6b581", null ],
+    [ "spTrackEntry_getAnimationTime", "spine-c_2include_2spine_2_animation_state_8h.html#a98dd12e558738dd9119e319cd9542d55", null ],
+    [ "spTrackEntry_getTrackComplete", "spine-c_2include_2spine_2_animation_state_8h.html#ad22537ca2d0c9611563b6b3bffff8c6f", null ],
+    [ "spTrackEntry_isNextReady", "spine-c_2include_2spine_2_animation_state_8h.html#a67d790b1ea7bad8fb4d8fe8c3598eab2", null ],
+    [ "spTrackEntry_resetRotationDirections", "spine-c_2include_2spine_2_animation_state_8h.html#a3f1e741868200ae4f5e99b70b4c2934d", null ],
+    [ "spTrackEntry_setMixDuration", "spine-c_2include_2spine_2_animation_state_8h.html#a1417d50db79b970eb46d14aad34768a4", null ],
+    [ "spTrackEntry_wasApplied", "spine-c_2include_2spine_2_animation_state_8h.html#ad9289e9400b210a50b7db2e67f393383", null ]
+];

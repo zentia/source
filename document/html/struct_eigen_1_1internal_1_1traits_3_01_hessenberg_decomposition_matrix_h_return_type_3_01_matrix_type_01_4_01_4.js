@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1traits_3_01_hessenberg_decomposition_matrix_h_return_type_3_01_matrix_type_01_4_01_4 =
+[
+    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01_hessenberg_decomposition_matrix_h_return_type_3_01_matrix_type_01_4_01_4.html#a61ecfbcb348b94ba026196609af64ca4", null ]
+];

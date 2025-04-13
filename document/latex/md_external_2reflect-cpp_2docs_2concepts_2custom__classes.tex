@@ -1,0 +1,119 @@
+\chapter{Custom classes}
+\hypertarget{md_external_2reflect-cpp_2docs_2concepts_2custom__classes}{}\label{md_external_2reflect-cpp_2docs_2concepts_2custom__classes}\index{Custom classes@{Custom classes}}
+\label{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md532}%
+\Hypertarget{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md532}%
+
+
+Reflection implies that all your fields are public. But in object-\/oriented programming, you often don\textquotesingle{}t want that. If your class is more than a trivial, behaviorless struct, you often want to make your fields private.
+
+If you want your class to be supported by reflect-\/cpp, it needs to have the following\+:
+
+1) It needs to publicly define a type called {\ttfamily Reflection\+Type} using {\ttfamily using} or {\ttfamily typedef}. 2) It needs to have a constructor that accepts your {\ttfamily Reflection\+Type} as an argument. 3) It needs to contain a method called {\ttfamily reflection} that returns said {\ttfamily Reflection\+Type} (or a reference thereto).
+
+If you class fulfills these three conditions, then it is fully supported by all serialization and deserialization routines in reflect-\/cpp.
+
+Please be aware that due to limitations of the Avro format, it is a good idea to always have a struct as your {\ttfamily Reflection\+Type} when using Avro to avoid infinite recursions.
+
+If you absolutely do not want to make any changes to your original class, you can implement a \href{https://github.com/getml/reflect-cpp/blob/main/docs/custom_parser.md}{\texttt{ custom parser}}.\hypertarget{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md533}{}\doxysection{\texorpdfstring{Example 1\+: Using an Impl struct}{Example 1\+: Using an Impl struct}}\label{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md533}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }PersonImpl\ \{}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}firstName"{}},\ std::string>\ first\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}lastName"{}},\ std::string>\ last\_name;}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{class\ }Person\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ 1)\ Publicly\ define\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keyword}{using\ }ReflectionType\ =\ PersonImpl;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ 2)\ Constructor\ that\ accepts\ your\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ \ \ Person(\textcolor{keyword}{const}\ PersonImpl\&\ \_impl):\ \mbox{\hyperlink{time__cpq__throughput__test_8cpp_a93f492677a2617aa7e14de9cf7e75597}{impl}}(\_impl)\ \{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \string~Person()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ 3)\ Method\ called\ \`{}reflection`\ that\ returns\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keyword}{const}\ ReflectionType\&\ reflection()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{time__cpq__throughput__test_8cpp_a93f492677a2617aa7e14de9cf7e75597}{impl}};\ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ ...add\ some\ more\ methods\ here...}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ PersonImpl\ \mbox{\hyperlink{time__cpq__throughput__test_8cpp_a93f492677a2617aa7e14de9cf7e75597}{impl}};}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+\hypertarget{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md534}{}\doxysection{\texorpdfstring{Example 2\+: Matching variables, the safe way}{Example 2\+: Matching variables, the safe way}}\label{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md534}
+{\ttfamily \doxylink{structrfl_1_1_field}{rfl\+::\+Field}} is designed in a way that you have to explicitly initialize every the field (using {\ttfamily \doxylink{namespacerfl_a60245360f93e0751cf1ed0b160e57b94}{rfl\+::default\+\_\+value}}, if necessary), otherwise you will get a compile-\/time error.
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} frequent error that happens during serialization/deserialization is that programmers add a field to their class ({\ttfamily Person} in this example), but forget to update their serialization routine.
+
+The example as shown below will protect you from any such errors, as all fields will have to be explicitly initialized, otherwise you will get a compile-\/time error. If you add a new field to {\ttfamily Person} you will have to add it to {\ttfamily Person\+Impl} as well and then explicitly initialize it in the constructor.
+
+Don\textquotesingle{}t worry {\ttfamily operator()} in {\ttfamily \doxylink{structrfl_1_1_field}{rfl\+::\+Field}} is inlined. There won\textquotesingle{}t be any runtime overhead.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }PersonImpl\ \{}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}firstName"{}},\ std::string>\ first\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}lastName"{}},\ std::string>\ last\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}age"{}},\ \textcolor{keywordtype}{int}>\ \mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{class\ }Person\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ 1)\ Publicly\ define\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keyword}{using\ }ReflectionType\ =\ PersonImpl;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ 2)\ Constructor\ that\ accepts\ your\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ This\ as\ the\ additional\ benefit\ that\ not\ only\ the\ types,}}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ but\ also\ the\ names\ of\ the\ fields\ will\ be\ checked\ at\ compile\ time.}}
+\DoxyCodeLine{\ \ \ \ \ \ Person(\textcolor{keyword}{const}\ PersonImpl\&\ \_impl):\ first\_name(\_impl.first\_name),}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ last\_name(\_impl.last\_name),\ \mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}}(\_impl.\mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}})\ \{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \string~Person()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ 3)\ Method\ called\ \`{}reflection`\ that\ returns\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ \ \ ReflectionType\ reflection()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PersonImpl\{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ .first\_name\ =\ first\_name,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ .last\_name\ =\ last\_name,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ .age\ =\ \mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}}\};}
+\DoxyCodeLine{\ \ \ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ ...add\ some\ more\ methods\ here...}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\ \ \ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}firstName"{}},\ std::string>\ first\_name;}
+\DoxyCodeLine{\ \ \ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}lastName"{}},\ std::string>\ last\_name;}
+\DoxyCodeLine{\ \ \ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}age"{}},\ \textcolor{keywordtype}{int}>\ \mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}};}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+\hypertarget{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md535}{}\doxysection{\texorpdfstring{Example 3\+: Matching variables, the unsafe way}{Example 3\+: Matching variables, the unsafe way}}\label{md_external_2reflect-cpp_2docs_2concepts_2custom__classes_autotoc_md535}
+If, for any reason, you absolutely cannot change the fields of your class, you have to make sure that all classes are properly initialized or face runtime errors.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }PersonImpl\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ ...\ same\ as\ in\ Example\ 1\ or\ 2}}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{class\ }Person\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ 1)\ Publicly\ define\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }ReflectionType\ =\ PersonImpl;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ 2)\ Constructor\ that\ accepts\ your\ \`{}ReflectionType`}}
+\DoxyCodeLine{\ \ \ \ Person(\textcolor{keyword}{const}\ PersonImpl\&\ \_impl):\ first\_name(\_impl.first\_name()),}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ last\_name(\_impl.last\_name()),\ \mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}}(\_impl.\mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}}())\ \{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ ...\ same\ as\ in\ Example\ 2}}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\ \ \ \ \ \ std::string\ first\_name;}
+\DoxyCodeLine{\ \ \ \ \ \ std::string\ last\_name;}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacectre_af1ab492eac22f0bfaebe58d37347ce28a7d637d275668ed6d41a9b97e6ad3a556}{age}};}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+ 

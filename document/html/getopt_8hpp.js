@@ -1,0 +1,37 @@
+var getopt_8hpp =
+[
+    [ "_getopt_data_a", "struct__getopt__data__a.html", "struct__getopt__data__a" ],
+    [ "_getopt_data_w", "struct__getopt__data__w.html", "struct__getopt__data__w" ],
+    [ "_CRT_SECURE_NO_WARNINGS", "getopt_8hpp.html#af08ec37a8c99d747fb60fa15bc28678b", null ],
+    [ "_GETOPT_THROW", "getopt_8hpp.html#a0e1f57718084987510b18a3ec12e9f39", null ],
+    [ "ENUM_ORDERING", "getopt_8hpp.html#aa52faa17a41970fda6e68b8c70368347", [
+      [ "REQUIRE_ORDER", "getopt_8hpp.html#aa52faa17a41970fda6e68b8c70368347a0e73a0691c110b1442d8364d1d12eccc", null ],
+      [ "PERMUTE", "getopt_8hpp.html#aa52faa17a41970fda6e68b8c70368347acfdde4b47c27f4efbd832e1ac7f8a8fc", null ],
+      [ "RETURN_IN_ORDER", "getopt_8hpp.html#aa52faa17a41970fda6e68b8c70368347a3c56550bfafe809d9214b863b69c31c5", null ]
+    ] ],
+    [ "_getopt_initialize_a", "getopt_8hpp.html#a648fd2b43d95122d681983d11148e064", null ],
+    [ "_getopt_initialize_w", "getopt_8hpp.html#a5ac9a124ba2569217946c16d4f2d355a", null ],
+    [ "_getopt_internal_a", "getopt_8hpp.html#a8c8d04b97557a3bea0691284add46f31", null ],
+    [ "_getopt_internal_r_a", "getopt_8hpp.html#aeb70649197728072a457fa359e277f66", null ],
+    [ "_getopt_internal_r_w", "getopt_8hpp.html#a7a370e6af5af84eb53fba51802c5595c", null ],
+    [ "_getopt_internal_w", "getopt_8hpp.html#afce3aa274c9363dd4a9f028486fb011f", null ],
+    [ "_getopt_long_only_r_a", "getopt_8hpp.html#a7e6c6af1407d858a705c550f8cda8783", null ],
+    [ "_getopt_long_only_r_w", "getopt_8hpp.html#af6ac884269e397dabfec72a66cb943bc", null ],
+    [ "_getopt_long_r_a", "getopt_8hpp.html#ac385cc4e868f2fda7fef93a882141f73", null ],
+    [ "_getopt_long_r_w", "getopt_8hpp.html#a4685bbbe9463e8d013ca87b39bd54a57", null ],
+    [ "exchange_a", "getopt_8hpp.html#aeba1228966e59741c7f8dbc86e80c419", null ],
+    [ "exchange_w", "getopt_8hpp.html#a71b927b22f698ae0566fb59cbfe0b469", null ],
+    [ "getopt_a", "getopt_8hpp.html#aab15fd50dca216d9bd593dc8e92ee002", null ],
+    [ "getopt_long_a", "getopt_8hpp.html#a81750951a01eda0d8d65de1acf14630e", null ],
+    [ "getopt_long_only_a", "getopt_8hpp.html#a53316778cf236ddb24bd48a58090c540", null ],
+    [ "getopt_long_only_w", "getopt_8hpp.html#aae5473eb6aa4cf987b1ab3ea267f4d95", null ],
+    [ "getopt_long_w", "getopt_8hpp.html#a4bf625b8d4e55e13fb0fdaf9b715fe34", null ],
+    [ "getopt_w", "getopt_8hpp.html#a3f396a0ea9178e13cd4d401121937230", null ],
+    [ "getopt_data_a", "getopt_8hpp.html#a5b48f31d103319834f264aaf1f29d899", null ],
+    [ "getopt_data_w", "getopt_8hpp.html#a23bf9515dbd7c7740de5f8e8ef62c9f6", null ],
+    [ "optarg_a", "getopt_8hpp.html#af2dba0020be24ca989548857625110d6", null ],
+    [ "optarg_w", "getopt_8hpp.html#a10f38b343501001d68bda3e7884c3f1f", null ],
+    [ "opterr", "getopt_8hpp.html#ae30f05ee1e2e5652f174a35c7875d25e", null ],
+    [ "optind", "getopt_8hpp.html#ad5e1c16213bbee2d5e8cc363309f418c", null ],
+    [ "optopt", "getopt_8hpp.html#a475b8db98445da73e5f62a1ef6324b95", null ]
+];

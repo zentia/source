@@ -1,0 +1,28 @@
+var imgui__impl__dx9_8cpp =
+[
+    [ "ImGui_ImplDX9_Data", "struct_im_gui___impl_d_x9___data.html", "struct_im_gui___impl_d_x9___data" ],
+    [ "CUSTOMVERTEX", "struct_c_u_s_t_o_m_v_e_r_t_e_x.html", "struct_c_u_s_t_o_m_v_e_r_t_e_x" ],
+    [ "ImGui_ImplDX9_ViewportData", "struct_im_gui___impl_d_x9___viewport_data.html", "struct_im_gui___impl_d_x9___viewport_data" ],
+    [ "D3DFVF_CUSTOMVERTEX", "imgui__impl__dx9_8cpp.html#a6bd9a594223c54eab984d8abd6a4cf63", null ],
+    [ "IMGUI_COL_TO_DX9_ARGB", "imgui__impl__dx9_8cpp.html#a29cd686aa95d07c3167516de916efb9e", null ],
+    [ "ImGui_ImplDX9_CheckFormatSupport", "imgui__impl__dx9_8cpp.html#a6849c784fd294fdaca53ee5dcaab1863", null ],
+    [ "ImGui_ImplDX9_CopyTextureRegion", "imgui__impl__dx9_8cpp.html#a405eb6a0fad3960f2bd742ffa8ac5310", null ],
+    [ "ImGui_ImplDX9_CreateDeviceObjects", "imgui__impl__dx9_8cpp.html#aecce01ad4b6c159c2556e58829d6cdfd", null ],
+    [ "ImGui_ImplDX9_CreateDeviceObjectsForPlatformWindows", "imgui__impl__dx9_8cpp.html#ae43f707459fcf3f6ea25e0aadfb81225", null ],
+    [ "ImGui_ImplDX9_CreateFontsTexture", "imgui__impl__dx9_8cpp.html#ad73ce3cbbcfa73053cded146b4e94c1a", null ],
+    [ "ImGui_ImplDX9_CreateWindow", "imgui__impl__dx9_8cpp.html#ac02a491e6680281a68374e982b93c8c0", null ],
+    [ "ImGui_ImplDX9_DestroyWindow", "imgui__impl__dx9_8cpp.html#ae7b38328a916740b5d6a2d23e54cad3c", null ],
+    [ "ImGui_ImplDX9_GetBackendData", "imgui__impl__dx9_8cpp.html#a7d4a627084dae9975dcce23791c52b67", null ],
+    [ "ImGui_ImplDX9_Init", "imgui__impl__dx9_8cpp.html#a0413f4dbb5cbe0c394bd7a06275ede50", null ],
+    [ "ImGui_ImplDX9_InitMultiViewportSupport", "imgui__impl__dx9_8cpp.html#aac6a3927084442d252f0d3558c4435ab", null ],
+    [ "ImGui_ImplDX9_InvalidateDeviceObjects", "imgui__impl__dx9_8cpp.html#a804e9baf417a8919403b887f2a53d1ff", null ],
+    [ "ImGui_ImplDX9_InvalidateDeviceObjectsForPlatformWindows", "imgui__impl__dx9_8cpp.html#a223701ab9a9dd6f3bcb08779238c96aa", null ],
+    [ "ImGui_ImplDX9_NewFrame", "imgui__impl__dx9_8cpp.html#a3a0dcb8a903e9924d3e0ab2c5c37b060", null ],
+    [ "ImGui_ImplDX9_RenderDrawData", "imgui__impl__dx9_8cpp.html#add0a144ea811488449d56a3317f20017", null ],
+    [ "ImGui_ImplDX9_RenderWindow", "imgui__impl__dx9_8cpp.html#aa73a3c4d41a554cc1cca09c448cf577f", null ],
+    [ "ImGui_ImplDX9_SetupRenderState", "imgui__impl__dx9_8cpp.html#ad4d3f534b44bf108b8a17ce951dbcdfb", null ],
+    [ "ImGui_ImplDX9_SetWindowSize", "imgui__impl__dx9_8cpp.html#a94d4026b31b006db01fc08ae75d3b450", null ],
+    [ "ImGui_ImplDX9_Shutdown", "imgui__impl__dx9_8cpp.html#a5e30073c13a72eb3d578541e796cf646", null ],
+    [ "ImGui_ImplDX9_ShutdownMultiViewportSupport", "imgui__impl__dx9_8cpp.html#ad34e79d35523d11cc3eed821a213a361", null ],
+    [ "ImGui_ImplDX9_SwapBuffers", "imgui__impl__dx9_8cpp.html#ab1922637d0dfa57792ebae391dfc6b9d", null ]
+];

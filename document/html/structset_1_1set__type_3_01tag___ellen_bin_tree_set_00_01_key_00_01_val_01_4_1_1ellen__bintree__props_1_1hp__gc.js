@@ -1,0 +1,6 @@
+var structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1ellen__bintree__props_1_1hp__gc =
+[
+    [ "internal_node", "structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1ellen__bintree__props_1_1hp__gc.html#a7e50372fab1f749d6a6d9192eb1e4588", null ],
+    [ "leaf_node", "structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1ellen__bintree__props_1_1hp__gc.html#af3954e7e5fa7148582622151c4ba060d", null ],
+    [ "update_desc", "structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1ellen__bintree__props_1_1hp__gc.html#afd3226c7b7b0e5f344c48214b3415cb4", null ]
+];

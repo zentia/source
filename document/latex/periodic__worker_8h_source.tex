@@ -1,0 +1,64 @@
+\doxysection{periodic\+\_\+worker.\+h}
+\hypertarget{periodic__worker_8h_source}{}\label{periodic__worker_8h_source}\index{runtime/spdlog/include/spdlog/details/periodic\_worker.h@{runtime/spdlog/include/spdlog/details/periodic\_worker.h}}
+\mbox{\hyperlink{periodic__worker_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright(c)\ 2015-\/present,\ Gabi\ Melman\ \&\ spdlog\ contributors.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Distributed\ under\ the\ MIT\ License\ (http://opensource.org/licenses/MIT)}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ periodic\ worker\ thread\ -\/\ periodically\ executes\ the\ given\ callback\ function.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ RAII\ over\ the\ owned\ thread:}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ \ \ \ creates\ the\ thread\ on\ construction.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ \ \ \ stops\ and\ joins\ the\ thread\ on\ destruction\ (if\ the\ thread\ is\ executing\ a\ callback,\ wait\ for\ it}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ \ \ \ to\ finish\ first).}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <chrono>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <condition\_variable>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <functional>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <thread>}}
+\DoxyCodeLine{00018\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog}{spdlog}}\ \{}
+\DoxyCodeLine{00019\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog_1_1details}{details}}\ \{}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }\mbox{\hyperlink{common_8h_a52ddbd25f1bb074a1b09e10a3e5b177d}{SPDLOG\_API}}\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_ab6ef69c680ef45e3fa1e7f0317fbd45c}{periodic\_worker}}\ \{}
+\DoxyCodeLine{00022\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Rep,\ \textcolor{keyword}{typename}\ Period>}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_ab6ef69c680ef45e3fa1e7f0317fbd45c}{periodic\_worker}}(\textcolor{keyword}{const}\ std::function<\textcolor{keywordtype}{void}()>\ \&callback\_fun,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::chrono::duration<Rep,\ Period>\ interval)\ \{}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_aac9f19d5e901e36dfb81b041eaf447b1}{active\_}}\ =\ (interval\ >\ std::chrono::duration<Rep,\ Period>::zero());}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_aac9f19d5e901e36dfb81b041eaf447b1}{active\_}})\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_a0c26348e6a38396bf3f344740fb9fcb9}{worker\_thread\_}}\ =\ std::thread([\textcolor{keyword}{this},\ callback\_fun,\ interval]()\ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;;)\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::unique\_lock<std::mutex>\ lock(this-\/>\mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_a1b020d6430739d78ede1ff0ec33222f8}{mutex\_}});}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>\mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_aebc9486f51314a59520ff3ac1f601672}{cv\_}}.wait\_for(lock,\ interval,\ [\textcolor{keyword}{this}]\ \{\ return\ !this-\/>active\_;\ \}))\ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};\ \ \textcolor{comment}{//\ active\_\ ==\ false,\ so\ exit\ this\ thread}}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ callback\_fun();}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00040\ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ std::thread\ \&\mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_abedfaad253c54ec00b0bed7305e76b6b}{get\_thread}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_a0c26348e6a38396bf3f344740fb9fcb9}{worker\_thread\_}};\ \}}
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_a43b4294bd9a547727864ff18da48b775}{periodic\_worker}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_ab6ef69c680ef45e3fa1e7f0317fbd45c}{periodic\_worker}}\ \&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00043\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_ab6ef69c680ef45e3fa1e7f0317fbd45c}{periodic\_worker}}\ \&\mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_acab115235924f5813ae99bf638bbcbc9}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_ab6ef69c680ef45e3fa1e7f0317fbd45c}{periodic\_worker}}\ \&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ stop\ the\ worker\ thread\ and\ join\ it}}
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_ab6ef69c680ef45e3fa1e7f0317fbd45c}{\string~periodic\_worker}}();}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_aac9f19d5e901e36dfb81b041eaf447b1}{active\_}};}
+\DoxyCodeLine{00049\ \ \ \ \ std::thread\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_a0c26348e6a38396bf3f344740fb9fcb9}{worker\_thread\_}};}
+\DoxyCodeLine{00050\ \ \ \ \ std::mutex\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_a1b020d6430739d78ede1ff0ec33222f8}{mutex\_}};}
+\DoxyCodeLine{00051\ \ \ \ \ std::condition\_variable\ \mbox{\hyperlink{classspdlog_1_1details_1_1periodic__worker_aebc9486f51314a59520ff3ac1f601672}{cv\_}};}
+\DoxyCodeLine{00052\ \};}
+\DoxyCodeLine{00053\ \}\ \ \textcolor{comment}{//\ namespace\ details}}
+\DoxyCodeLine{00054\ \}\ \ \textcolor{comment}{//\ namespace\ spdlog}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#ifdef\ SPDLOG\_HEADER\_ONLY}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \ \ \#include\ "{}\mbox{\hyperlink{periodic__worker-inl_8h}{periodic\_worker-\/inl.h}}"{}}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

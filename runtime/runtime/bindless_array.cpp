@@ -1,8 +1,8 @@
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/shader.h>
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/runtime/bindless_array.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/shader.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/runtime/bindless_array.h>
+#include <runtime/core/logging.h>
 
 namespace luisa::compute {
 

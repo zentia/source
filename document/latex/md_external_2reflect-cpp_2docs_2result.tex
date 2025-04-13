@@ -1,0 +1,136 @@
+\chapter{\texorpdfstring{$<$}{<}tt\texorpdfstring{$>$}{>}rfl\+::Result\texorpdfstring{$<$}{<}/tt\texorpdfstring{$>$}{>}}
+\hypertarget{md_external_2reflect-cpp_2docs_2result}{}\label{md_external_2reflect-cpp_2docs_2result}\index{$<$tt$>$rfl::Result$<$/tt$>$@{$<$tt$>$rfl::Result$<$/tt$>$}}
+\label{md_external_2reflect-cpp_2docs_2result_autotoc_md619}%
+\Hypertarget{md_external_2reflect-cpp_2docs_2result_autotoc_md619}%
+
+
+In this documentation, we have, on several occasions, read a JSON string like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ homer\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Person>}}(json\_string).value();}
+
+\end{DoxyCode}
+
+
+However, so far we have not elaborated on why {\ttfamily .\doxylink{imgui__impl__opengl3__loader_8h_abe8e049f756b5ba547bda825af81b645}{value()}} is necessary. Why can\textquotesingle{}t we just do this?
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ homer\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Person>}}(json\_string);}
+
+\end{DoxyCode}
+
+
+The reason is that parsing a JSON string is something that might fail. We do not know much about the string that put into there. It might not be a valid JSON. And even if it is a valid JSON, then it might not conform to the assumptions that we have made about it and laid out in the type system in the form of various structs and containers.
+
+{\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}} handles this by returning an {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}} type. {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}} is a way of error handling without exceptions. This is needed for two reasons\+:
+
+1) Exceptions are controversial, because they add another, hidden control path to your program that it hard to follow or predict. For this reasons, and others, the Google C++ style guide \href{https://google.github.io/styleguide/cppguide.html\#Exceptions}{\texttt{ disallows exceptions altogether}}. Modern programming languages like Go and Rust don\textquotesingle{}t even support them in the first place. The C++ standards committee has recognized this and introduced \href{https://en.cppreference.com/w/cpp/utility/expected}{\texttt{ std\+::expected}} in C++-\/23. However, reflect-\/cpp is a library for C++-\/20 and until that changes, we need to implement our own result type.
+
+2) In some cases, you want to signal to the parser that is fine if some things go wrong. {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}} is the way to do that.
+
+If you do not care about these objections to exceptions, you can just call {\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}\texorpdfstring{$<$}{<}...\texorpdfstring{$>$}{>}(json\+\_\+string).\doxylink{imgui__impl__opengl3__loader_8h_abe8e049f756b5ba547bda825af81b645}{value()}}, which throws an exception, if the result type contains an error and be done with it.
+
+{\bfseries{Note}}\+: If you want to use {\ttfamily std\+::expected} instead of our own Result type, you can pass {\ttfamily -\/DREFLECTCPP\+\_\+\+USE\+\_\+\+STD\+\_\+\+EXPECTED} during compilation. This requires C++-\/23 support and may not be supported on all C++ compilers.\hypertarget{md_external_2reflect-cpp_2docs_2result_autotoc_md620}{}\doxysection{\texorpdfstring{What is {\ttfamily rfl\+::\+Result}?}{What is {\ttfamily rfl\+::\+Result}?}}\label{md_external_2reflect-cpp_2docs_2result_autotoc_md620}
+{\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}} is similar to {\ttfamily std\+::optional} it that it contains an object that may or may not be there. However, unlike {\ttfamily std\+::optional}, it does not simply contain {\ttfamily std\+::nullopt} if the operation has not been successful. Instead, it contains an {\ttfamily \doxylink{classrfl_1_1_error}{rfl\+::\+Error}} with a clear error message.
+
+In laying out our structs an containers, about the the type system, we are making {\itshape requirements} about the JSON input we are expecting from the outside world. {\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}(...)} checks whether these requirements are met. If the requirements are met, {\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}} returns T wrapped inside {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}}. If they are not met, it returns {\ttfamily \doxylink{classrfl_1_1_error}{rfl\+::\+Error}} containing an error message explaining what went wrong.\hypertarget{md_external_2reflect-cpp_2docs_2result_autotoc_md621}{}\doxysection{\texorpdfstring{Using {\ttfamily rfl\+::\+Result} for parsing}{Using {\ttfamily rfl\+::\+Result} for parsing}}\label{md_external_2reflect-cpp_2docs_2result_autotoc_md621}
+Suppose you have a vector with 1000 user-\/supplied configurations\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ configs\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<std::vector<Config>}}>(json\_string);}
+
+\end{DoxyCode}
+
+
+Chances are that the user of your software has made as mistake in at least some of these configurations. If you set it up as shown above, {\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}} will fail if one or more {\ttfamily Config} items contain an error. But sometimes you don\textquotesingle{}t want that. Sometimes you want your software to proceed with the remaining 999 configurations and gently point out to the user that some of the configurations were faulty.
+
+The solution is to this instead\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ configs\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<std::vector<rfl::Result<Config>}}>>(json\_string);}
+
+\end{DoxyCode}
+
+
+This means {\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}} is going to cut the end-\/users of your software some slack. But it also means that you, as the programmer, have to handle the fact that some of the configs might contain errors.
+
+Below, we will show you how to do that.\hypertarget{md_external_2reflect-cpp_2docs_2result_autotoc_md622}{}\doxysection{\texorpdfstring{Monadic operations}{Monadic operations}}\label{md_external_2reflect-cpp_2docs_2result_autotoc_md622}
+From the point of view of category theory, {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}} is both a functor and a monad (actually, all monads are functors).
+
+This is reflected in its member functions {\ttfamily .transform(...)} and {\ttfamily .and\+\_\+then(...)}.
+
+{\ttfamily .transform(...)} requires a function {\ttfamily F} of the type {\ttfamily T -\/\texorpdfstring{$>$}{>} U}. If the {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}} contains a type {\ttfamily T}, then {\ttfamily r.\+transform(f)} {\itshape will} return an {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}U\texorpdfstring{$>$}{>}} containing a type {\ttfamily U}, otherwise it will return an {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}U\texorpdfstring{$>$}{>}} containing an error.
+
+{\ttfamily .and\+\_\+then(...)} requires a function {\ttfamily F} of the type {\ttfamily T -\/\texorpdfstring{$>$}{>} \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}U\texorpdfstring{$>$}{>}}. If the {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}} contains a type {\ttfamily T}, then {\ttfamily r.\+and\+\_\+then(f)} {\itshape might} return an {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}U\texorpdfstring{$>$}{>}} containing a type {\ttfamily U}, depending on whether {\ttfamily f} failed. If {\ttfamily r} already contained an error, then {\ttfamily r.\+and\+\_\+then(f)} will surely return an {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}U\texorpdfstring{$>$}{>}} containing an error.
+
+Throughout reflect-\/cpp\textquotesingle{}s code, these functions are widely used by the parser. For instance, consider how we are reading {\ttfamily std\+::unique\+\_\+ptr\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}} (note that this is somewhat simplified)\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ to\_ptr\ =\ [](\textcolor{keyword}{auto}\&\&\ \_t)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<T>(std::move(\_t));}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{return}\ Parser<T>::read(\_r,\ \_var).transform(to\_ptr);}
+
+\end{DoxyCode}
+
+
+This code works as follows\+: First, we read in a type {\ttfamily T}, which is something that might fail. However, we know 100\% that once we have {\ttfamily T} we can surely wrap it inside a pointer, so we can call {\ttfamily .transform(...)}.
+
+On the other hand, consider the implementation of {\ttfamily \doxylink{namespacerfl_1_1json_ad44cd984a06c20921fc621d115e17cab}{rfl\+::json\+::load}}, which loads a JSON from a file\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{Result<T>\ \mbox{\hyperlink{namespacerfl_1_1avro_a4be4d6284b774eb98e95ffb8f735be75}{load}}(\textcolor{keyword}{const}\ std::string\&\ \_fname)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacerfl_1_1io_abef8f6773d8fd7258ba35772521c371a}{rfl::io::load\_string}}(\_fname).and\_then(\mbox{\hyperlink{json_2write__and__read_8hpp_a120a0c0f4f8f27e389e841e6f5f6efcd}{read<T>}});}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+This code works as follows\+: First, we read in the text file using {\ttfamily \doxylink{namespacerfl_1_1io_abef8f6773d8fd7258ba35772521c371a}{rfl\+::io\+::load\+\_\+string}}. This an operation that might fail (maybe the file doesn\textquotesingle{}t exist, maybe it isn\textquotesingle{}t readable, ...). Then we have to to parse its contents using {\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}}. Again, this is an operation that might fail (might not be a proper JSON, might not conform to our requirements, ...). Therefore, we have to call {\ttfamily .and\+\_\+then(...)}.\hypertarget{md_external_2reflect-cpp_2docs_2result_autotoc_md623}{}\doxysection{\texorpdfstring{Retrieving values or errors}{Retrieving values or errors}}\label{md_external_2reflect-cpp_2docs_2result_autotoc_md623}
+If you want the underlying value of type T, you can use {\ttfamily .\doxylink{imgui__impl__opengl3__loader_8h_abe8e049f756b5ba547bda825af81b645}{value(...)}}. Note that this throws an exception, if {\ttfamily \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}} contains an error.
+
+If you are 100\% sure that the result does not contain error, you can also call the operator {\ttfamily \texorpdfstring{$\ast$}{*}}. This will lead to undefined behavior, if you are wrong.
+
+If you want the underlying value of type T or some kind of default value, you can call {\ttfamily .value\+\_\+or(your\+\_\+default\+\_\+value)}.
+
+If you want to retrieve the error, you can call {\ttfamily .error()}, which will return a value of type {\ttfamily \doxylink{classrfl_1_1_error}{rfl\+::\+Error}}.
+
+If you want to check whether the result contains an error, you can just use the bool operator\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{if}\ (my\_result)\ \{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ my\_result\ cannot\ contain\ an\ error,}}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ so\ it\ is\ okay\ to\ call\ operator\ *.}}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}\ =\ *my\_result;}
+\DoxyCodeLine{\}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ my\_result\ must\ contain\ an\ error.}}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespacespdlog_1_1level_a335eabf5eff13482903eb26be08f3861a4d723e295b98a75c1263d85fc165045f}{err}}\ =\ my\_result.error();}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\hypertarget{md_external_2reflect-cpp_2docs_2result_autotoc_md624}{}\doxysection{\texorpdfstring{{\ttfamily rfl\+::error}}{{\ttfamily rfl\+::error}}}\label{md_external_2reflect-cpp_2docs_2result_autotoc_md624}
+{\ttfamily \doxylink{namespacerfl_a6625864c6c297dfdc3d3c3ee3181dd8c}{rfl\+::error}("{}error message"{})} is a simple utility function for {\ttfamily \doxylink{structrfl_1_1_unexpected}{rfl\+::\+Unexpected}\texorpdfstring{$<$}{<}Error\texorpdfstring{$>$}{>}(Error("{}error message"{}))}.\hypertarget{md_external_2reflect-cpp_2docs_2result_autotoc_md625}{}\doxysection{\texorpdfstring{{\ttfamily .or\+\_\+else(...)}, {\ttfamily .transform\+\_\+error(...)}}{{\ttfamily .or\+\_\+else(...)}, {\ttfamily .transform\+\_\+error(...)}}}\label{md_external_2reflect-cpp_2docs_2result_autotoc_md625}
+{\ttfamily r.\+or\+\_\+else(f)} expects a function {\ttfamily f} for type {\ttfamily Error -\/\texorpdfstring{$>$}{>} \doxylink{classrfl_1_1_result}{rfl\+::\+Result}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}}. It returns {\ttfamily r} if {\ttfamily r} did not contain an error and the results of {\ttfamily f} otherwise.
+
+{\ttfamily r.\+transform\+\_\+error(f)} expects a function {\ttfamily f} for type {\ttfamily Error -\/\texorpdfstring{$>$}{>} Error}.
+
+This is often used to produce better error messages\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ embellish\_error\ =\ [\&](\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacehttplib_a46ff5da925971ebebf2c5693e367f24a}{Error}}\&\ \_e)\ -\/>\ \mbox{\hyperlink{classrfl_1_1_result}{rfl::Result<T>}}\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacerfl_a6625864c6c297dfdc3d3c3ee3181dd8c}{rfl::error}}(\textcolor{stringliteral}{"{}Failed\ to\ parse\ field\ '"{}}\ +\ \mbox{\hyperlink{ittnotify__static_8h_aeeaf6235e69da2907f537f67e598fc9d}{key}}\ +\ \textcolor{stringliteral}{"{}':\ "{}}\ +\ \_e.what());}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{\textcolor{keywordflow}{return}\ Parser<T>::read(\_r,\ \&\_var).\mbox{\hyperlink{classrfl_1_1_result_a19e6dc6bc58d0ed3555f9d448ce6d78c}{transform\_error}}(embellish\_error);}
+
+\end{DoxyCode}
+ 

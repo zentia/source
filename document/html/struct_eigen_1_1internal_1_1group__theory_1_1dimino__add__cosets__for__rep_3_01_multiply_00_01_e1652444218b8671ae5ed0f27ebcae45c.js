@@ -1,0 +1,5 @@
+var struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e1652444218b8671ae5ed0f27ebcae45c =
+[
+    [ "type", "struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e1652444218b8671ae5ed0f27ebcae45c.html#a8c01a5346029860ab8aa1aa4a14d96b9", null ],
+    [ "global_flags", "struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e1652444218b8671ae5ed0f27ebcae45c.html#a442657c6c4ea7abaaacd5b775d1d1fad", null ]
+];

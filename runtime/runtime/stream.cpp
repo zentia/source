@@ -1,9 +1,9 @@
 #include <utility>
 
-#include <luisa/core/logging.h>
-#include <luisa/core/magic_enum.h>
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/stream.h>
+#include <runtime/core/logging.h>
+#include <runtime/core/magic_enum.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/stream.h>
 
 namespace luisa::compute {
 

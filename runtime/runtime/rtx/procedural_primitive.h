@@ -1,8 +1,8 @@
 #pragma once
 
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/buffer.h>
-#include <luisa/runtime/rtx/aabb.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/runtime/rtx/aabb.h>
 
 namespace luisa::compute {
 

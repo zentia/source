@@ -1,0 +1,4 @@
+var structtest__framework__unit__tests_1_1test__test__suite__ref_1_1run__all__and__print__results__should__respect__silent__mode =
+[
+    [ "operator()", "structtest__framework__unit__tests_1_1test__test__suite__ref_1_1run__all__and__print__results__should__respect__silent__mode.html#ad87b5f9a623ec15224cf343b811e61a7", null ]
+];

@@ -1,0 +1,242 @@
+\doxysection{Limit the Maximum Concurrency}
+\hypertarget{_limit_the_maximum_concurrency}{}\label{_limit_the_maximum_concurrency}\index{Limit the Maximum Concurrency@{Limit the Maximum Concurrency}}
+This chapters discusses how to limit the concurrency or the maximum number of workers in your Taskflow applications.\hypertarget{_limit_the_maximum_concurrency_DefineASemaphore}{}\doxysubsection{\texorpdfstring{Define a Semaphore}{Define a Semaphore}}\label{_limit_the_maximum_concurrency_DefineASemaphore}
+Taskflow provides a mechanism, \doxylink{classtf_1_1_semaphore}{tf\+::\+Semaphore}, for you to limit the maximum concurrency in a section of tasks. You can let a task acquire/release one or multiple semaphores before/after executing its work. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} task can acquire and release a semaphore, or just acquire or just release it. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} \doxylink{classtf_1_1_semaphore}{tf\+::\+Semaphore} object starts with an initial value. As long as that value is above 0, tasks can acquire the semaphore and do their work. If the value is 0 or less, a task trying to acquire the semaphore will not run but goes to a waiting list of that semaphore. When the semaphore is released by another task, it reschedules all tasks on that waiting list.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(8);\ \ \ \textcolor{comment}{//\ create\ an\ executor\ of\ 8\ workers}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ \mbox{\hyperlink{classsemaphore}{semaphore}}(1);\ \textcolor{comment}{//\ create\ a\ semaphore\ with\ initial\ value\ of\ 1}}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::vector<tf::Task>\ tasks\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}A"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}B"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}C"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}D"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}E"{}}\ <<\ std::endl;\ \})}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \&\ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}\ :\ tasks)\ \{\ \ \textcolor{comment}{//\ each\ task\ acquires\ and\ release\ the\ semaphore}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}.acquire(semaphore);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}.release(semaphore);}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+The above example creates five tasks with no dependencies between them. Under normal circumstances, the five tasks would be executed concurrently. However, this example has a semaphore with initial value of 1, and all tasks need to acquire that semaphore before running and release that semaphore after they are done. This organization limits the number of concurrently running tasks to only one. One possible output is shown below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ the\ output\ is\ a\ sequential\ chain\ of\ five\ tasks}}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}}
+\DoxyCodeLine{\mbox{\hyperlink{sandbox_2strassen_2omp_8cpp_a4bfa035cad7c3258704669810cd5de5d}{E}}}
+\DoxyCodeLine{\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}}}
+\DoxyCodeLine{\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+It is your responsibility to ensure the semaphore stays alive during the execution of tasks that acquire and release it. The executor and taskflow do not manage lifetime of any semaphores.
+\end{DoxyAttention}
+For the same example above, we can limit the semaphore concurrency to another value different from 1, say 3, which will limit only three workers to run the five tasks, {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}, {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}, {\ttfamily C}, {\ttfamily D}, and {\ttfamily E}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(8);\ \ \ \textcolor{comment}{//\ create\ an\ executor\ of\ 8\ workers}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ \mbox{\hyperlink{classsemaphore}{semaphore}}(3);\ \textcolor{comment}{//\ create\ a\ semaphore\ with\ initial\ value\ of\ 3}}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::vector<tf::Task>\ tasks\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}A"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}B"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}C"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}D"{}}\ <<\ std::endl;\ \}),}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}E"{}}\ <<\ std::endl;\ \})}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \&\ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}\ :\ tasks)\ \{\ \ \textcolor{comment}{//\ each\ task\ acquires\ and\ release\ the\ semaphore}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}.acquire(semaphore);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}.release(semaphore);}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ One\ possible\ output:\ A,\ B,\ and\ C\ run\ concurrently,\ D\ and\ E\ run\ concurrently}}
+\DoxyCodeLine{ABC}
+\DoxyCodeLine{ED}
+
+\end{DoxyCode}
+
+
+Semaphores are powerful for limiting the maximum concurrency of not only a section of tasks but also different sections of tasks. Specifically, you can have one task acquire a semaphore and have another task release that semaphore to impose concurrency on subgraphs of tasks. The following example serializes the execution of five pairs of tasks using a semaphore rather than explicit dependencies.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(4);\ \ \textcolor{comment}{//\ creates\ an\ executor\ of\ 4\ workers}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ \mbox{\hyperlink{classsemaphore}{semaphore}}(1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 5;}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ =\ 0;\ \ \textcolor{comment}{//\ non-\/atomic\ integer\ counter}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{cxx11__tensor__map_8cpp_a7f507fea02198f6cb81c86640c7b1a4e}{f}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}++;\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}from-\/"{}}\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ +\ std::to\_string(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}));}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}++;\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}to-\/"{}}\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ +\ std::to\_string(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}));}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{cxx11__tensor__map_8cpp_a7f507fea02198f6cb81c86640c7b1a4e}{f}}.precede(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{cxx11__tensor__map_8cpp_a7f507fea02198f6cb81c86640c7b1a4e}{f}}.acquire(semaphore);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.release(semaphore);}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{assert(\mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ ==\ 2*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+
+\end{DoxyCode}
+
+
+Without semaphores, each pair of tasks, e.\+g., {\ttfamily from-\/0 -\/\texorpdfstring{$>$}{>} to-\/0}, will run independently and concurrently. However, the program forces each {\ttfamily from} task to acquire the semaphore before running its work and not to release it until its paired {\ttfamily to} task is done. This constraint forces each pair of tasks to run sequentially, while the order of which pair runs first is up to the scheduler.\hypertarget{_limit_the_maximum_concurrency_UseSemaphoresAcrossDifferentTasks}{}\doxysubsection{\texorpdfstring{Use Semaphores Across Different Tasks}{Use Semaphores Across Different Tasks}}\label{_limit_the_maximum_concurrency_UseSemaphoresAcrossDifferentTasks}
+You can use semaphores to limit the concurrency across different sections of taskflow graphs. When you submit multiple taskflows to an executor, the executor view them as a bag of dependent tasks. It does not matter which task in which taskflow graph acquires or releases a semaphore.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(8);\ \ \ \textcolor{comment}{//\ create\ an\ executor\ of\ 8\ workers}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ taskflow1;}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ taskflow2;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ \mbox{\hyperlink{classsemaphore}{semaphore}}(1);\ \textcolor{comment}{//\ create\ a\ semaphore\ with\ initial\ value\ of\ 1}}
+\DoxyCodeLine{}
+\DoxyCodeLine{taskflow1.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]()\{std::cout\ <<\ \textcolor{stringliteral}{"{}task\ in\ taskflow1"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ .acquire(\mbox{\hyperlink{classsemaphore}{semaphore}})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ .release(\mbox{\hyperlink{classsemaphore}{semaphore}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{taskflow2.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]()\{std::cout\ <<\ \textcolor{stringliteral}{"{}task\ in\ taskflow2"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{namespacetbb_adb86d08473679d6fe0eabcdc766ffe3aaa92646b4dc7618530d3a9f51dd10a418}{acquire}}(semaphore)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ .release(semaphore);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(taskflow1);}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(taskflow2);}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{wait\_for\_all}}();}
+
+\end{DoxyCode}
+
+
+The above examples creates one task from each taskflow and submits the two taskflows to the executor. Again, under normal circumstances, the two tasks can run concurrently, but the semaphore restricts one worker to run the two task sequentially in arbitrary order.\hypertarget{_limit_the_maximum_concurrency_DefineAConflictGraph}{}\doxysubsection{\texorpdfstring{Define a Conflict Graph}{Define a Conflict Graph}}\label{_limit_the_maximum_concurrency_DefineAConflictGraph}
+One important application of \doxylink{classtf_1_1_semaphore}{tf\+::\+Semaphore} is {\itshape conflict-\/aware scheduling} using a conflict graph. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} conflict graph is a {\itshape undirected} graph where each vertex represents a task and each edge represents a conflict between a pair of tasks. When a task conflicts with another task, they cannot run together. Consider the conflict graph below, task {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} conflicts with task {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and task {\ttfamily C} (and vice versa), meaning that {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} cannot run together with {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and {\ttfamily C} whereas {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and {\ttfamily C} can run together.
+
+We can create one semaphore of one concurrency for each edge in the conflict graph and let the two tasks of that edge acquire the semaphore. This organization forces the two tasks to not run concurrently.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ conflict\_AB(1);}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ conflict\_AC(1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}A"{}}\ <<\ std::endl;\ \});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}B"{}}\ <<\ std::endl;\ \});}
+\DoxyCodeLine{tf::Task\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}C"{}}\ <<\ std::endl;\ \});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ describe\ the\ conflict\ between\ A\ and\ B}}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.acquire(conflict\_AB).release(conflict\_AB);}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}.acquire(conflict\_AB).release(conflict\_AB);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ describe\ the\ conflict\ between\ A\ and\ C}}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.acquire(conflict\_AC).release(conflict\_AC);}
+\DoxyCodeLine{\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}.acquire(conflict\_AC).release(conflict\_AC);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ One\ possible\ output:\ B\ and\ C\ run\ concurrently\ after\ A}}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}}
+\DoxyCodeLine{BC}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} task can acquire and release multiple semaphores. When the executor runs a task, it will try to acquire all semaphores needed by that task. When the executor finishes that task, it will release all acquired semaphores by that task.
+\end{DoxyAttention}
+\hypertarget{_limit_the_maximum_concurrency_ResetASemaphore}{}\doxysubsection{\texorpdfstring{Reset a Semaphore}{Reset a Semaphore}}\label{_limit_the_maximum_concurrency_ResetASemaphore}
+You can reset a semaphore to its initial state using \doxylink{classtf_1_1_semaphore_ad0f7801055550b20b8c2ae6d6099f220}{tf\+::\+Semaphore\+::reset()}, or set a new maximum value with \doxylink{classtf_1_1_semaphore_a3193f673011ac0a8527284fa8f68ee6a}{tf\+::\+Semaphore\+::reset(size\+\_\+t new\+\_\+max\+\_\+value)}. The method \doxylink{classtf_1_1_semaphore_a8ba4d8f7a70fe36b883eb0ad1aa8dcd1}{tf\+::\+Semaphore\+::value()} allows you to query the current value of the semaphore, which represents the number of available acquisitions.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ \mbox{\hyperlink{classsemaphore}{semaphore}}(4);}
+\DoxyCodeLine{assert(\mbox{\hyperlink{classsemaphore}{semaphore}}.value()\ ==\ 4\ \&\&\ \mbox{\hyperlink{classsemaphore}{semaphore}}.max\_value()\ ==\ 4);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ reset\ the\ semaphore\ to\ a\ new\ value}}
+\DoxyCodeLine{\mbox{\hyperlink{classsemaphore}{semaphore}}.reset(11);}
+\DoxyCodeLine{assert(\mbox{\hyperlink{classsemaphore}{semaphore}}.value()\ ==\ 11\ \&\&\ \mbox{\hyperlink{classsemaphore}{semaphore}}.max\_value()\ ==\ 11);}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+When a semaphore is acquired more times than its maximum value, an exception will be thrown.
+\end{DoxyAttention}
+\hypertarget{_limit_the_maximum_concurrency_UnderstandTheLimitationOfSemaphores}{}\doxysubsection{\texorpdfstring{Understand the Limitation of Semaphores}{Understand the Limitation of Semaphores}}\label{_limit_the_maximum_concurrency_UnderstandTheLimitationOfSemaphores}
+Currently, \doxylink{classtf_1_1_semaphore}{tf\+::\+Semaphore} has limited support for exception handling and taskflow cancellation. If a task throws an exception or the taskflow is canceled, subsequent acquire and release operations on the semaphore may result in undefined behavior. To ensure correct behavior, you should call \doxylink{classtf_1_1_semaphore_ad0f7801055550b20b8c2ae6d6099f220}{tf\+::\+Semaphore\+::reset} before reusing the semaphore in the next run. For instance, in the code below, when task {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} throws an exception, the executor will cancel the execution of the taskflow. That is, tasks {\ttfamily C} and {\ttfamily D} will not run, and thus no task will release the acquired semaphore. To resolve this situation, we must reset the semaphore to a clean state for the next run.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_semaphore}{tf::Semaphore}}\ \mbox{\hyperlink{classsemaphore}{semaphore}}(1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}exception"{}});\ \});}
+\DoxyCodeLine{tf::Task\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\});}
+\DoxyCodeLine{tf::Task\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\});}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.precede(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}});}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}.precede(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});}
+\DoxyCodeLine{\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}.precede(\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.acquire(semaphore);}
+\DoxyCodeLine{\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}}.release(semaphore);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ current\ semaphore\ has\ a\ value\ of\ 1}}
+\DoxyCodeLine{assert(semaphore.value()\ ==\ 1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ when\ B\ throws\ the\ exception,\ D\ will\ not\ run\ and\ thus\ semaphore\ is\ not\ released}}
+\DoxyCodeLine{\textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).get();}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\textcolor{keywordflow}{catch}(std::runtime\_error\&\ \mbox{\hyperlink{_cwise__array__power__array_8cpp_a9cb86ff854760bf91a154f2724a9101d}{e}})\ \{}
+\DoxyCodeLine{\ \ std::cout\ <<\ \mbox{\hyperlink{_cwise__array__power__array_8cpp_a9cb86ff854760bf91a154f2724a9101d}{e}}.what()\ <<\ std::endl;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ since\ A\ acquired\ the\ semaphore,\ its\ value\ is\ 0}}
+\DoxyCodeLine{assert(semaphore.value()\ ==\ 0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ reset\ the\ semaphore\ to\ a\ clean\ state\ before\ running\ the\ taskflow\ again}}
+\DoxyCodeLine{semaphore.reset();}
+\DoxyCodeLine{assert(semaphore.value()\ ==\ 1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).get();}
+
+\end{DoxyCode}
+ 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <luisa/runtime/shader.h>
-#include <luisa/runtime/raster/raster_state.h>
-#include <luisa/runtime/raster/depth_buffer.h>
-#include <luisa/backends/ext/raster_ext_interface.h>
+#include <runtime/runtime/shader.h>
+#include <runtime/runtime/raster/raster_state.h>
+#include <runtime/runtime/raster/depth_buffer.h>
+#include <runtime/backends/ext/raster_ext_interface.h>
 
 namespace luisa::compute {
 

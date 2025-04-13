@@ -1,0 +1,92 @@
+\doxysection{cds\+::threading 命名空间参考}
+\hypertarget{namespacecds_1_1threading}{}\label{namespacecds_1_1threading}\index{cds::threading@{cds::threading}}
+
+
+Threading support  
+
+
+\doxysubsubsection*{函数}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename RCUtag$>$ }\\cds\+::urcu\+::details\+::thread\+\_\+data$<$ RCUtag $>$ \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{namespacecds_1_1threading_a6c2a3a0d302150172c491c69cc616c49}{get\+RCU}} ()
+\begin{DoxyCompactList}\small\item\em Returns RCU thread specific data (thread GC) for current thread \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{详细描述}
+Threading support 
+
+\label{namespacecds_1_1threading_cds_threading}%
+\Hypertarget{namespacecds_1_1threading_cds_threading}%
+The {\ttfamily CDS} library requires support from the threads. Each garbage collector manages a control structure on the per-\/thread basis. The library does not dictate any thread model. To embed the library to your application you should choose appropriate implementation of {\ttfamily cds\+::threading\+::\+Manager} interface or should provide yourself. The {\ttfamily cds\+::threading\+::\+Manager} interface manages {\ttfamily cds\+::threading\+::\+Thread\+Data} structure that contains GC\textquotesingle{}s thread specific data.
+
+Any {\ttfamily cds\+::threading\+::\+Manager} implementation is a singleton and it must be accessible from any thread and from any point of your application. Note that you should not mix different implementation of the {\ttfamily cds\+::threading\+::\+Manager} in your application.
+
+Before compiling of your application you may define one of {\ttfamily CDS\+\_\+\+THREADING\+\_\+xxx} macro in \doxylink{external_2libcds_2cds_2user__setup_2threading_8h}{cds/user\+\_\+setup/threading.\+h} file\+:
+\begin{DoxyItemize}
+\item {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+AUTODETECT} -\/ auto-\/detect appropriate threading model for your platform and compiler. This is predefined value of threading model in {\ttfamily \doxylink{external_2libcds_2cds_2user__setup_2threading_8h}{cds/user\+\_\+setup/threading.\+h}}.
+\item {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+WIN\+\_\+\+TLS} -\/ use {\ttfamily cds\+::threading\+::wintls\+::\+Manager} implementation based on Windows TLS API. Intended for Windows and Microsoft Visual C++ only. This is default threading model for Windows and MS Visual C++.
+\item {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+MSVC} -\/ use {\ttfamily cds\+::threading\+::msvc\+::\+Manager} implementation based on Microsoft Visual C++ {\ttfamily \+\_\+\+\_\+declspec(thread)} declaration. Intended for Windows and Microsoft Visual C++ only. This macro should be explicitly specified if you want to use {\ttfamily \+\_\+\+\_\+declspec(thread)} keyword.
+\item {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+PTHREAD} -\/ use {\ttfamily cds\+::threading\+::pthread\+::\+Manager} implementation based on pthread thread-\/specific data functions {\ttfamily pthread\+\_\+getspecific} / {\ttfamily pthread\+\_\+setspecific}. Intended for GCC and clang compilers. This is default threading model for GCC and clang.
+\item {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+GCC} -\/ use {\ttfamily cds\+::threading\+::gcc\+::\+Manager} implementation based on GCC {\ttfamily \+\_\+\+\_\+thread} keyword. Intended for GCC compiler only. Note, that GCC compiler supports {\ttfamily \+\_\+\+\_\+thread} keyword properly not for all platforms and even not for all GCC version. This macro should be explicitly specified if you want to use {\ttfamily \+\_\+\+\_\+thread} keyword.
+\item {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+CXX11} -\/ use {\ttfamily cds\+::threading\+::cxx11\+::\+Manager} implementation based on {\ttfamily thread\+\_\+local} keyword introduced in C++11 standard. May be used only if your compiler supports C++11 thread-\/local storage.
+\item {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+USER\+\_\+\+DEFINED} -\/ use user-\/provided threading model.
+\end{DoxyItemize}
+
+These macros select appropriate implementation of {\ttfamily cds\+::threading\+::\+Manager} class. The child namespaces of \doxylink{namespacecds_1_1threading}{cds\+::threading} provide suitable implementation and import it to \doxylink{namespacecds_1_1threading}{cds\+::threading} by using {\ttfamily using} directive (or by using inline namespace if the compiler supports it). So, if you need to call threading manager functions directly you should refer to {\ttfamily cds\+::threading\+::\+Manager} class.
+
+\begin{DoxyNote}{注解}
+Usually, you should not use {\ttfamily cds\+::threading\+::\+Manager} instance directly. You may specify {\ttfamily CDS\+\_\+\+THREADING\+\_\+xxx} macro when building, everything else will setup automatically when you initialize the library, see \doxylink{defs.h_cds_how_to_use}{How to use libcds}.
+\end{DoxyNote}
+The interface of {\ttfamily cds\+::threading\+::\+Manager} class is the following\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{class\ }Manager\ \{}
+\DoxyCodeLine{\textcolor{keyword}{public}:}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Initialize\ manager\ (called\ by\ cds::Initialize())}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Terminate\ manager\ (called\ by\ cds::Terminate())}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ fini();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Checks\ whether\ current\ thread\ is\ attached\ to\ \(\backslash\)p\ libcds\ feature\ or\ not.}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ isThreadAttached();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ This\ method\ must\ be\ called\ in\ beginning\ of\ thread\ execution}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ (called\ by\ ctor\ of\ GC\ thread\ object,\ for\ example,\ by\ ctor\ of\ cds::gc::HP::thread\_gc)}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ attachThread();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ This\ method\ must\ be\ called\ in\ end\ of\ thread\ execution}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ (called\ by\ dtor\ of\ GC\ thread\ object,\ for\ example,\ by\ dtor\ of\ cds::gc::HP::thread\_gc)}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ detachThread();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Get\ cds::gc::DHP\ thread\ GC\ implementation\ for\ current\ thread;}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ gc::DHP::thread\_gc\_impl\&\ \ \ getDHPGC();}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+The library\textquotesingle{}s core (dynamic linked library) is free of usage of user-\/supplied {\ttfamily cds\+::threading\+::\+Manager} code. {\ttfamily cds\+::threading\+::\+Manager} is necessary for header-\/only part of {\ttfamily CDS} library.
+
+Each thread that uses {\ttfamily libcds} data structures should be attached to threading\+::\+Manager before using lock-\/free data structs. See \doxylink{defs.h_cds_how_to_use}{How to use} section for details
+
+{\bfseries{Note for Windows}}
+
+When you use Garbage Collectors (GC) provided by {\ttfamily libcds} in your dll that dynamically loaded by {\ttfamily Load\+Library} then there is no way to use {\ttfamily \+\_\+\+\_\+declspec(thread)} declaration to support threading model for {\ttfamily libcds}. MSDN says\+:
+
+\begin{DoxyItemize}
+\item If a DLL declares any nonlocal data or object as \+\_\+\+\_\+declspec( thread ), it can cause a protection fault if dynamically loaded. After the DLL is loaded with {\ttfamily Load\+Library}, it causes system failure whenever the code references the nonlocal \+\_\+\+\_\+declspec( thread ) data. Because the global variable space for a thread is allocated at run time, the size of this space is based on a calculation of the requirements of the application plus the requirements of all the DLLs that are statically linked. When you use {\ttfamily Load\+Library}, there is no way to extend this space to allow for the thread local variables declared with \+\_\+\+\_\+declspec( thread ). Use the TLS APIs, such as Tls\+Alloc, in your DLL to allocate TLS if the DLL might be loaded with Load\+Library.\end{DoxyItemize}
+Thus, in case when {\ttfamily libcds} or a dll that depends on {\ttfamily libcds} is loaded dynamically by calling {\ttfamily Load\+Library} explicitly, you should not use {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+MSVC} macro. Instead, you should build your dll projects with {\ttfamily CDS\+\_\+\+THREADING\+\_\+\+WIN\+\_\+\+TLS} only. 
+
+\doxysubsection{函数说明}
+\Hypertarget{namespacecds_1_1threading_a6c2a3a0d302150172c491c69cc616c49}\index{cds::threading@{cds::threading}!getRCU@{getRCU}}
+\index{getRCU@{getRCU}!cds::threading@{cds::threading}}
+\doxysubsubsection{\texorpdfstring{getRCU()}{getRCU()}}
+{\footnotesize\ttfamily \label{namespacecds_1_1threading_a6c2a3a0d302150172c491c69cc616c49} 
+template$<$typename RCUtag$>$ \\
+cds\+::urcu\+::details\+::thread\+\_\+data$<$ RCUtag $>$ \texorpdfstring{$\ast$}{*} cds\+::threading\+::get\+RCU (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+
+
+Returns RCU thread specific data (thread GC) for current thread 
+
+Template argument {\ttfamily RCUtag} is one of \doxylink{namespacecds_1_1urcu_cds_urcu_tags}{RCU tags} 

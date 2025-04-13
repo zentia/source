@@ -1,0 +1,27 @@
+var structrfl_1_1json_1_1schema_1_1_type =
+[
+    [ "AllOf", "structrfl_1_1json_1_1schema_1_1_type_1_1_all_of.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_all_of" ],
+    [ "AnyOf", "structrfl_1_1json_1_1schema_1_1_type_1_1_any_of.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_any_of" ],
+    [ "Boolean", "structrfl_1_1json_1_1schema_1_1_type_1_1_boolean.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_boolean" ],
+    [ "ExclusiveMaximum", "structrfl_1_1json_1_1schema_1_1_type_1_1_exclusive_maximum.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_exclusive_maximum" ],
+    [ "ExclusiveMinimum", "structrfl_1_1json_1_1schema_1_1_type_1_1_exclusive_minimum.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_exclusive_minimum" ],
+    [ "FixedSizeTypedArray", "structrfl_1_1json_1_1schema_1_1_type_1_1_fixed_size_typed_array.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_fixed_size_typed_array" ],
+    [ "Integer", "structrfl_1_1json_1_1schema_1_1_type_1_1_integer.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_integer" ],
+    [ "Maximum", "structrfl_1_1json_1_1schema_1_1_type_1_1_maximum.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_maximum" ],
+    [ "Minimum", "structrfl_1_1json_1_1schema_1_1_type_1_1_minimum.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_minimum" ],
+    [ "Null", "structrfl_1_1json_1_1schema_1_1_type_1_1_null.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_null" ],
+    [ "Number", "structrfl_1_1json_1_1schema_1_1_type_1_1_number.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_number" ],
+    [ "Object", "structrfl_1_1json_1_1schema_1_1_type_1_1_object.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_object" ],
+    [ "OneOf", "structrfl_1_1json_1_1schema_1_1_type_1_1_one_of.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_one_of" ],
+    [ "Reference", "structrfl_1_1json_1_1schema_1_1_type_1_1_reference.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_reference" ],
+    [ "Regex", "structrfl_1_1json_1_1schema_1_1_type_1_1_regex.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_regex" ],
+    [ "String", "structrfl_1_1json_1_1schema_1_1_type_1_1_string.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_string" ],
+    [ "StringEnum", "structrfl_1_1json_1_1schema_1_1_type_1_1_string_enum.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_string_enum" ],
+    [ "StringMap", "structrfl_1_1json_1_1schema_1_1_type_1_1_string_map.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_string_map" ],
+    [ "Tuple", "structrfl_1_1json_1_1schema_1_1_type_1_1_tuple.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_tuple" ],
+    [ "TypedArray", "structrfl_1_1json_1_1schema_1_1_type_1_1_typed_array.html", "structrfl_1_1json_1_1schema_1_1_type_1_1_typed_array" ],
+    [ "NumericType", "structrfl_1_1json_1_1schema_1_1_type.html#a8bae6822d513e9d33bff947107c3681f", null ],
+    [ "ReflectionType", "structrfl_1_1json_1_1schema_1_1_type.html#a0e7ab816c18dd207891bf267a6c92b04", null ],
+    [ "reflection", "structrfl_1_1json_1_1schema_1_1_type.html#af56a5081f3fce5d7d69869c8e1310ebc", null ],
+    [ "value", "structrfl_1_1json_1_1schema_1_1_type.html#ae8597139038ce71e2930289f9e7b1667", null ]
+];

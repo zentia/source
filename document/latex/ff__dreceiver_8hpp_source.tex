@@ -1,0 +1,396 @@
+\doxysection{ff\+\_\+dreceiver.\+hpp}
+\hypertarget{ff__dreceiver_8hpp_source}{}\label{ff__dreceiver_8hpp_source}\index{external/taskflow/3rd-\/party/ff/distributed/ff\_dreceiver.hpp@{external/taskflow/3rd-\/party/ff/distributed/ff\_dreceiver.hpp}}
+\mbox{\hyperlink{ff__dreceiver_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ ***************************************************************************}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ \ FastFlow\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ \ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License\ version\ 3\ as}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ \ published\ by\ the\ Free\ Software\ Foundation.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ \ Starting\ from\ version\ 3.0.1\ FastFlow\ is\ dual\ licensed\ under\ the\ GNU\ LGPLv3}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ \ or\ MIT\ License\ (https://github.com/ParaGroup/WindFlow/blob/vers3.x/LICENSE.MIT)}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ \ This\ program\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but\ WITHOUT}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ \ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of\ MERCHANTABILITY\ or}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ \ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ License\ for\ more\ details.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ along\ with\ this\ program;\ if\ not,\ write\ to\ the\ Free\ Software\ Foundation,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ Inc.,\ 59\ Temple\ Place\ -\/\ Suite\ 330,\ Boston,\ MA\ 02111-\/1307,\ USA.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ ****************************************************************************}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00020\ \textcolor{comment}{/*\ Authors:\ }}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ \ \ Nicolo'\ Tonci}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ \ \ Massimo\ Torquati}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#ifndef\ FF\_DRECEIVER\_H}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ FF\_DRECEIVER\_H}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff_8hpp}{ff/ff.hpp}}>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff__network_8hpp}{ff/distributed/ff\_network.hpp}}>}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff__dgroups_8hpp}{ff/distributed/ff\_dgroups.hpp}}>}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <sys/socket.h>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <sys/un.h>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <sys/types.h>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <sys/uio.h>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <arpa/inet.h>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <cereal/cereal.hpp>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <cereal/archives/portable\_binary.hpp>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <cereal/types/vector.hpp>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <cereal/types/polymorphic.hpp>}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{using\ namespace\ }\mbox{\hyperlink{namespaceff}{ff}};}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classff__dreceiver_a0cd0080faef5d936607c9e590bbfc330}{ff\_dreceiver}}:\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structff_1_1ff__monode__t_af884543f90b7d72bd7a918404f528b37}{ff\_monode\_t}}<message\_t>\ \{\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00048\ \ \ \ \ std::map<int,\ ChannelType>\ \mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{/*static\ int\ sendRoutingTable(const\ int\ sck,\ const\ std::vector<int>\&\ dest)\{}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ \ \ \ \ \ \ dataBuffer\ buff;\ std::ostream\ oss(\&buff);}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ \ \ \ \ \ \ cereal::PortableBinaryOutputArchive\ oarchive(oss);}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ \ \ \ \ \ \ oarchive\ <<\ dest;}}
+\DoxyCodeLine{00054\ \textcolor{comment}{}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ \ \ \ \ \ \ size\_t\ sz\ =\ htobe64(buff.getLen());}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ \ \ \ \ \ \ struct\ iovec\ iov[2];}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ \ \ \ \ \ \ iov[0].iov\_base\ =\ \&sz;}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ \ \ \ \ \ \ \ iov[0].iov\_len\ =\ sizeof(sz);}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ \ \ \ \ \ \ \ iov[1].iov\_base\ =\ buff.getPtr();}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ \ \ \ \ \ \ iov[1].iov\_len\ =\ buff.getLen();}}
+\DoxyCodeLine{00061\ \textcolor{comment}{}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ \ \ \ \ \ \ if\ (writevn(sck,\ iov,\ 2)\ <\ 0)\{}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ error("{}Error\ writing\ on\ socket\ the\ routing\ Table\(\backslash\)n"{});}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ return\ -\/1;}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00066\ \textcolor{comment}{}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ \ \ \ \ return\ 0;}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ \ \}*/}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_a856c64a51447df397b1cd368fb87a6fb}{handshakeHandler}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ sck)\{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ricevo\ l'handshake\ e\ mi\ salvo\ che\ tipo\ di\ connessione\ è}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}};}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8}{ChannelType}}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}};}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }iovec\ iov[2];\ }
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ iov[0].iov\_base\ =\ \&\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}};\ iov[0].iov\_len\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8}{ChannelType}});}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ iov[1].iov\_base\ =\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}};\ iov[1].iov\_len\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{ff__network_8hpp_a985478372220b838029fe818ae136e59}{readvn}}(sck,\ iov,\ 2))\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ -\/1:\ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ reading\ from\ socket\(\backslash\)n"{}});\ \textcolor{comment}{//\ fatal\ error}}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \ 0:\ \textcolor{keywordflow}{return}\ -\/1;\ \textcolor{comment}{//\ connection\ close}}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ =\ be64toh(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}});}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ groupName[\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}];}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ff__network_8hpp_a903ecfbb7c245e559abc686c2b1e50a4}{readn}}(sck,\ groupName,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}})\ <\ 0)\{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ reading\ from\ socket\ groupName\(\backslash\)n"{}});\ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}}[sck]\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}};}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;\ \textcolor{comment}{//this-\/>sendRoutingTable(sck,\ reachableDestinations);}}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff__dreceiver_a70223e5b2f000114ed01d9727231184e}{registerLogicalEOS}}(\textcolor{keywordtype}{int}\ sender)\{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ this-\/>\mbox{\hyperlink{classff_1_1ff__monode_abe1b8acb3c5ce1e30e51dcdd8b8f1dfd}{get\_num\_outchannels}}();\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(\textcolor{keyword}{new}\ \mbox{\hyperlink{structmessage__t}{message\_t}}(sender,\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}),\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{00097\ \ \ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff__dreceiver_a56d6d14709b5b0151c7da92725eec1ca}{registerEOS}}(\textcolor{keywordtype}{int}\ sck)\{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_a2359b37cb6e3c29770dae8bbe5d178f5}{neos}}++;}
+\DoxyCodeLine{00101\ \ \ \ \ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff__dreceiver_a62918b5adb71c320a36a33313ed5c79a}{forward}}(\mbox{\hyperlink{structmessage__t}{message\_t}}*\ task,\ \textcolor{keywordtype}{int})\{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (task-\/>chid\ ==\ -\/1)\ \mbox{\hyperlink{classff_1_1ff__monode_ae59d2a9cd3ea5da022c8d0438cfe867d}{ff\_send\_out}}(task);}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(task,\ this-\/>\mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}}[task-\/>chid]);\ \textcolor{comment}{//\ assume\ the\ routing\ table\ is\ consistent\ WARNING!!!}}
+\DoxyCodeLine{00106\ \ \ \ \ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_ac1095219eef0a7038596741c55fe64d9}{handleBatch}}(\textcolor{keywordtype}{int}\ sck)\{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ requestSize;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(\mbox{\hyperlink{ff__network_8hpp_a903ecfbb7c245e559abc686c2b1e50a4}{readn}}(sck,\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\&requestSize),\ \textcolor{keyword}{sizeof}(requestSize)))\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ -\/1:\ \{\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ perror(\textcolor{stringliteral}{"{}readn"{}});}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Something\ went\ wrong\ in\ receiving\ the\ number\ of\ tasks!\(\backslash\)n"{}});}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ 0:\ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ always\ sending\ back\ the\ acknowledgement}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ff__network_8hpp_a0198c9ba9b34b09776ac087e9588750d}{writen}}(sck,\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\&\mbox{\hyperlink{classff__dreceiver_af28568ef7045d5f9a4a31b1677a66bc6}{ACK}}),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structack__t}{ack\_t}}))\ <\ 0)\{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (errno\ !=\ ECONNRESET\ \&\&\ errno\ !=\ EPIPE)\ \{}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ sending\ back\ ACK\ to\ the\ sender\ (errno=\%d)\(\backslash\)n"{}},errno);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8}{ChannelType}}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}}[sck];}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ requestSize\ =\ ntohl(requestSize);}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ requestSize;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff__dreceiver_ad0eb380ce6b77727c74d9593656fa866}{handleRequest}}(sck,\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})<0)\ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00131\ \ \ \ \ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_ad0eb380ce6b77727c74d9593656fa866}{handleRequest}}(\textcolor{keywordtype}{int}\ sck,\ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8}{ChannelType}}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})\{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ sender;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ chid;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sz;}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }iovec\ iov[3];}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ iov[0].iov\_base\ =\ \&sender;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ iov[0].iov\_len\ =\ \textcolor{keyword}{sizeof}(sender);}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ iov[1].iov\_base\ =\ \&chid;}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ iov[1].iov\_len\ =\ \textcolor{keyword}{sizeof}(chid);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ iov[2].iov\_base\ =\ \&sz;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ iov[2].iov\_len\ =\ \textcolor{keyword}{sizeof}(sz);}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (\mbox{\hyperlink{ff__network_8hpp_a985478372220b838029fe818ae136e59}{readvn}}(sck,\ iov,\ 3))\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ -\/1:\ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ reading\ from\ socket\ errno=\%d\(\backslash\)n"{}},errno);\ \textcolor{comment}{//\ fatal\ error}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \ 0:\ \textcolor{keywordflow}{return}\ -\/1;\ \textcolor{comment}{//\ connection\ close}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ convert\ values\ to\ host\ byte\ order}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ sender\ =\ ntohl(sender);}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ chid\ \ \ =\ ntohl(chid);}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ sz\ \ \ \ \ =\ be64toh(sz);}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sz\ >\ 0)\{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ buff\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{char}\ [sz];}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ assert(buff);}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{ff__network_8hpp_a903ecfbb7c245e559abc686c2b1e50a4}{readn}}(sck,\ buff,\ sz)\ <\ 0)\{}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ reading\ from\ socket\ in\ handleRequest\(\backslash\)n"{}});}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{delete}\ []\ buff;}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structmessage__t}{message\_t}}*\ \mbox{\hyperlink{classff_1_1ff__node_a06adec50580f200b0edde2e66ae5152a}{out}}\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{structmessage__t}{message\_t}}(buff,\ sz,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ assert(\mbox{\hyperlink{classff_1_1ff__node_a06adec50580f200b0edde2e66ae5152a}{out}});}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__node_a06adec50580f200b0edde2e66ae5152a}{out}}-\/>feedback\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ ==\ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8ac53d16911739e991ff812058af14979c}{ChannelType::FBK}};}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__node_a06adec50580f200b0edde2e66ae5152a}{out}}-\/>sender\ =\ sender;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__node_a06adec50580f200b0edde2e66ae5152a}{out}}-\/>chid\ \ \ =\ chid;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classff__dreceiver_a62918b5adb71c320a36a33313ed5c79a}{forward}}(out,\ sck);}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{comment}{//logical\ EOS}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (chid\ ==\ -\/2)\{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_a70223e5b2f000114ed01d9727231184e}{registerLogicalEOS}}(sender);}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{comment}{//pyshical\ EOS}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_a56d6d14709b5b0151c7da92725eec1ca}{registerEOS}}(sck);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00184\ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_a0cd0080faef5d936607c9e590bbfc330}{ff\_dreceiver}}(\mbox{\hyperlink{structff__endpoint}{ff\_endpoint}}\ \mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classff__dreceiver_a39e21b1f0387ff37c141e008318b8aad}{input\_channels}},\ std::map<int,\ int>\ \mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}}\ =\ \{std::make\_pair(0,0)\},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}}=-\/1)}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classff__dreceiver_a39e21b1f0387ff37c141e008318b8aad}{input\_channels}}(\mbox{\hyperlink{classff__dreceiver_a39e21b1f0387ff37c141e008318b8aad}{input\_channels}}),\ \mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}}(\mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}}),\ \mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}}(\mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}}),\ \mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}}(\mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}})\ \{\}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_a5eb3291d3daef20275247bc5b2e233b7}{svc\_init}}()\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}}!=-\/1)}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{mapping__utils_8hpp_a55cc056711b4071b978f875d18914b44}{ff\_mapThreadToCpu}}(\mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}});}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ LOCAL}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}}=socket(AF\_LOCAL,\ SOCK\_STREAM,\ 0))\ <\ 0)\{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ creating\ the\ socket\(\backslash\)n"{}});}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }sockaddr\_un\ serv\_addr;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ memset(\&serv\_addr,\ \textcolor{charliteral}{'0'},\ \textcolor{keyword}{sizeof}(serv\_addr));}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ serv\_addr.sun\_family\ =\ AF\_LOCAL;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ strncpy(serv\_addr.sun\_path,\ \mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}}.address.c\_str(),\ \mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}}.address.size()+1);}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ REMOTE}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}}=socket(AF\_INET,\ SOCK\_STREAM,\ 0))\ <\ 0)\{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ creating\ the\ socket\(\backslash\)n"{}});}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ enable\ =\ 1;}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ enable\ the\ reuse\ of\ the\ address}}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (setsockopt(\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}},\ SOL\_SOCKET,\ SO\_REUSEADDR,\ \&enable,\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}))\ <\ 0)}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}setsockopt(SO\_REUSEADDR)\ failed\(\backslash\)n"{}});}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }sockaddr\_in\ serv\_addr;}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ serv\_addr.sin\_family\ =\ AF\_INET;\ }
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ serv\_addr.sin\_addr.s\_addr\ =\ INADDR\_ANY;\ \textcolor{comment}{//\ still\ listening\ from\ any\ interface}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ serv\_addr.sin\_port\ =\ htons(\ \mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}}.port\ );}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (bind(\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}},\ (\textcolor{keyword}{struct}\ sockaddr*)\&serv\_addr,\textcolor{keyword}{sizeof}(serv\_addr))\ <\ 0)\{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ binding\(\backslash\)n"{}});}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (listen(\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}},\ \mbox{\hyperlink{config_8hpp_a9b022fc5b40ccd132da8c3e5b01db934}{MAXBACKLOG}})\ <\ 0)\{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ listening\(\backslash\)n"{}});}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00232\ \ \ \ \ \}}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff__dreceiver_afd5dfc16d3cd6c6b9238abdb8ba20fb0}{svc\_end}}()\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ close(this-\/>\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}});\ \ \ \ \ \ }
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\#ifdef\ LOCAL}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ unlink(this-\/>\mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}}.address.c\_str());}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00239\ \ \ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{comment}{/*\ }}
+\DoxyCodeLine{00241\ \textcolor{comment}{\ \ \ \ \ \ \ \ Here\ i\ should\ not\ care\ of\ input\ type\ nor\ input\ data\ since\ they\ come\ from\ a\ socket\ listener.}}
+\DoxyCodeLine{00242\ \textcolor{comment}{\ \ \ \ \ \ \ \ Everything\ will\ be\ handled\ inside\ a\ while\ true\ in\ the\ body\ of\ this\ node\ where\ data\ is\ pulled\ from\ network}}
+\DoxyCodeLine{00243\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00244\ \ \ \ \ \mbox{\hyperlink{structmessage__t}{message\_t}}\ *\mbox{\hyperlink{classff__dreceiver_af53fd299a323a8cca17cfd69897a0f34}{svc}}(\mbox{\hyperlink{structmessage__t}{message\_t}}*\ task)\ \{\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ fd\_set\ \mbox{\hyperlink{namespaceset}{set}},\ tmpset;}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ intialize\ both\ sets\ (master,\ temp)}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ FD\_ZERO(\&\mbox{\hyperlink{namespaceset}{set}});}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ FD\_ZERO(\&tmpset);}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ listen\ socket\ to\ the\ master\ set}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ FD\_SET(this-\/>\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}},\ \&\mbox{\hyperlink{namespaceset}{set}});}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ hold\ the\ greater\ descriptor}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ fdmax\ =\ this-\/>\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}};\ }
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\mbox{\hyperlink{classff__dreceiver_a2359b37cb6e3c29770dae8bbe5d178f5}{neos}}\ <\ \mbox{\hyperlink{classff__dreceiver_a39e21b1f0387ff37c141e008318b8aad}{input\_channels}})\{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ copy\ the\ master\ set\ to\ the\ temporary}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ tmpset\ =\ \mbox{\hyperlink{namespaceset}{set}};}
+\DoxyCodeLine{00259\ }
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(select(fdmax+1,\ \&tmpset,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}))\{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ -\/1:\ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ on\ selecting\ socket\(\backslash\)n"{}});\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structff_1_1ff__monode__t_a4a57165500150f93c85b94ba82f6eacb}{EOS}};}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \ 0:\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ idx=0;\ idx\ <=\ fdmax;\ idx++)\{}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (FD\_ISSET(idx,\ \&tmpset))\{}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (idx\ ==\ this-\/>\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}})\ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ connfd\ =\ accept(this-\/>\mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}},\ (\textcolor{keyword}{struct}\ sockaddr*)\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ,\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (connfd\ ==\ -\/1)\{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}Error\ accepting\ client\(\backslash\)n"{}});}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ FD\_SET(connfd,\ \&\mbox{\hyperlink{namespaceset}{set}});}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(connfd\ >\ fdmax)\ fdmax\ =\ connfd;}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classff__dreceiver_a856c64a51447df397b1cd368fb87a6fb}{handshakeHandler}}(connfd);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>\mbox{\hyperlink{classff__dreceiver_ac1095219eef0a7038596741c55fe64d9}{handleBatch}}(idx)\ <\ 0)\{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ close(idx);}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ FD\_CLR(idx,\ \&\mbox{\hyperlink{namespaceset}{set}});}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ the\ maximum\ file\ descriptor}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (idx\ ==\ fdmax)}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ ii=(fdmax-\/1);ii>=0;-\/-\/ii)}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (FD\_ISSET(ii,\ \&\mbox{\hyperlink{namespaceset}{set}}))\{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fdmax\ =\ ii;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ this-\/>\mbox{\hyperlink{structff_1_1ff__monode__t_a4a57165500150f93c85b94ba82f6eacb}{EOS}};}
+\DoxyCodeLine{00299\ \ \ \ \ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classff__dreceiver_a2359b37cb6e3c29770dae8bbe5d178f5}{neos}}\ =\ 0;}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classff__dreceiver_a39e21b1f0387ff37c141e008318b8aad}{input\_channels}};}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_a877172af8bfb7df5956b8ebc182f38d3}{listen\_sck}};}
+\DoxyCodeLine{00305\ \ \ \ \ \mbox{\hyperlink{structff__endpoint}{ff\_endpoint}}\ \mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}};\ \ \ \ }
+\DoxyCodeLine{00306\ \ \ \ \ std::map<int,\ int>\ \mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}};}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}};}
+\DoxyCodeLine{00308\ \ \ \ \ \mbox{\hyperlink{structack__t}{ack\_t}}\ \mbox{\hyperlink{classff__dreceiver_af28568ef7045d5f9a4a31b1677a66bc6}{ACK}};}
+\DoxyCodeLine{00309\ \};}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classff__dreceiver_h_a7468ceab94e64705f46cf846d9336acb}{ff\_dreceiverH}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classff__dreceiver_a0cd0080faef5d936607c9e590bbfc330}{ff\_dreceiver}}\ \{}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{comment}{//std::map<int,\ bool>\ isInternalConnection;}}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classff__dreceiver_h_a5eda83a8b9220a55f25e7523a2891e1b}{internalNEos}}\ =\ 0,\ \mbox{\hyperlink{classff__dreceiver_h_ac43479f4d483e1eef909402fef0c9741}{externalNEos}}\ =\ 0;}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{classff__dreceiver_h_ad1b6310edbf87d7c0e3cfdfb3dfe596d}{next\_rr\_destination}}\ =\ 0;}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff__dreceiver_h_a308e32a8cd5f8ca0edacb4889b893b67}{registerLogicalEOS}}(\textcolor{keywordtype}{int}\ sender)\{}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ this-\/>\mbox{\hyperlink{classff_1_1ff__monode_abe1b8acb3c5ce1e30e51dcdd8b8f1dfd}{get\_num\_outchannels}}()-\/1;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(\textcolor{keyword}{new}\ \mbox{\hyperlink{structmessage__t}{message\_t}}(sender,\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}),\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{00321\ \ \ \ \ \}}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff__dreceiver_h_a1ecacc5d2668a0fc6c0eb745eb07c043}{registerEOS}}(\textcolor{keywordtype}{int}\ sck)\{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_a2359b37cb6e3c29770dae8bbe5d178f5}{neos}}++;}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ internalConn\ =\ std::count\_if(\mbox{\hyperlink{namespacestd_aec76fc52a775d29bc4058c8e1405045a}{std::begin}}(\mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}}),}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacestd_a35f71a4c49ddf38bb590177e3a4b2598}{std::end}}\ \ (\mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}}),}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [](std::pair<int,\ ChannelType>\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \{\textcolor{keywordflow}{return}\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.second\ ==\ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8afd5a5f51ce25953f3db2c7e93eb7864a}{ChannelType::INT}};\});}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}}[sck]\ !=\ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8afd5a5f51ce25953f3db2c7e93eb7864a}{ChannelType::INT}})\{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ logical\ EOS!!}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*for(int\ i\ =\ 0;\ i\ <\ this-\/>get\_num\_outchannels()-\/1;\ i++)}}
+\DoxyCodeLine{00332\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ff\_send\_out(new\ message\_t(0,0),\ i);*/}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (++\mbox{\hyperlink{classff__dreceiver_h_ac43479f4d483e1eef909402fef0c9741}{externalNEos}}\ ==\ (\mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}}.size()-\/internalConn))}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ this-\/>\mbox{\hyperlink{classff_1_1ff__monode_abe1b8acb3c5ce1e30e51dcdd8b8f1dfd}{get\_num\_outchannels}}()-\/1;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(this-\/>\mbox{\hyperlink{structff_1_1ff__monode__t_a4a57165500150f93c85b94ba82f6eacb}{EOS}},\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//ff\_send\_out\_to(new\ message\_t(0,0),\ this-\/>get\_num\_outchannels()-\/1);\ }}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (++\mbox{\hyperlink{classff__dreceiver_h_a5eda83a8b9220a55f25e7523a2891e1b}{internalNEos}}\ ==\ internalConn)}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(this-\/>\mbox{\hyperlink{structff_1_1ff__monode__t_a4a57165500150f93c85b94ba82f6eacb}{EOS}},\ this-\/>\mbox{\hyperlink{classff_1_1ff__monode_abe1b8acb3c5ce1e30e51dcdd8b8f1dfd}{get\_num\_outchannels}}()-\/1);}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00345\ \ \ \ \ \}}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{/*virtual\ int\ handshakeHandler(const\ int\ sck)\{}}
+\DoxyCodeLine{00348\ \textcolor{comment}{\ \ \ \ \ \ \ \ size\_t\ size;}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ \ \ \ \ \ \ \ struct\ iovec\ iov;\ iov.iov\_base\ =\ \&size;\ iov.iov\_len\ =\ sizeof(size);}}
+\DoxyCodeLine{00350\ \textcolor{comment}{\ \ \ \ \ \ \ \ switch\ (readvn(sck,\ \&iov,\ 1))\ \{}}
+\DoxyCodeLine{00351\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ case\ -\/1:\ error("{}Error\ reading\ from\ socket\(\backslash\)n"{});\ //\ fatal\ error}}
+\DoxyCodeLine{00352\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ case\ \ 0:\ return\ -\/1;\ //\ connection\ close}}
+\DoxyCodeLine{00353\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00354\ \textcolor{comment}{}}
+\DoxyCodeLine{00355\ \textcolor{comment}{\ \ \ \ \ \ \ \ size\ =\ be64toh(size);}}
+\DoxyCodeLine{00356\ \textcolor{comment}{}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ \ \ \ \ \ \ char\ groupName[size];}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ \ \ \ \ \ \ if\ (readn(sck,\ groupName,\ size)\ <\ 0)\{}}
+\DoxyCodeLine{00359\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ error("{}Error\ reading\ from\ socket\ groupName\(\backslash\)n"{});\ return\ -\/1;}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ \ \ \ \ \ \ \}}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ \ \ \ \ \ \ bool\ internalGroup\ =\ internalGroupsNames.contains(std::string(groupName,size));}}
+\DoxyCodeLine{00363\ \textcolor{comment}{}}
+\DoxyCodeLine{00364\ \textcolor{comment}{\ \ \ \ \ \ \ \ isInternalConnection[sck]\ =\ internalGroup;\ //\ save\ somewhere\ the\ fact\ that\ this\ sck\ represent\ an\ internal\ connection}}
+\DoxyCodeLine{00365\ \textcolor{comment}{}}
+\DoxyCodeLine{00366\ \textcolor{comment}{\ \ \ \ \ \ \ \ if\ (internalGroup)\ return\ this-\/>sendRoutingTable(sck,\ internalDestinations);}}
+\DoxyCodeLine{00367\ \textcolor{comment}{}}
+\DoxyCodeLine{00368\ \textcolor{comment}{\ \ \ \ \ \ \ \ std::vector<int>\ reachableDestinations;}}
+\DoxyCodeLine{00369\ \textcolor{comment}{\ \ \ \ \ \ \ \ for(const\ auto\&\ [key,\ value]\ :\ \ this-\/>routingTable)\ reachableDestinations.push\_back(key);}}
+\DoxyCodeLine{00370\ \textcolor{comment}{\ \ \ \ \ \ \ \ return\ this-\/>sendRoutingTable(sck,\ reachableDestinations);}}
+\DoxyCodeLine{00371\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{00372\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff__dreceiver_h_ac7afd0b8372aba3b19de46c19e30c38c}{forward}}(\mbox{\hyperlink{structmessage__t}{message\_t}}*\ task,\ \textcolor{keywordtype}{int}\ sck)\{}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff__dreceiver_ac6d433143ae40096adceb64ae9bcc737}{sck2ChannelType}}[sck]\ ==\ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8afd5a5f51ce25953f3db2c7e93eb7864a}{ChannelType::INT}})\ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(task,\ this-\/>\mbox{\hyperlink{classff_1_1ff__monode_abe1b8acb3c5ce1e30e51dcdd8b8f1dfd}{get\_num\_outchannels}}()-\/1);}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (task-\/>\mbox{\hyperlink{structmessage__t_a5ddf2f3048b3ea4711d079b6bfd8a77c}{chid}}\ !=\ -\/1)\ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(task,\ this-\/>\mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}}[task-\/>chid]);}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__monode_a6ef67c53214dde2219d9071c77ee99ee}{ff\_send\_out\_to}}(task,\ \mbox{\hyperlink{classff__dreceiver_h_ad1b6310edbf87d7c0e3cfdfb3dfe596d}{next\_rr\_destination}});}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_h_ad1b6310edbf87d7c0e3cfdfb3dfe596d}{next\_rr\_destination}}\ =\ (\mbox{\hyperlink{classff__dreceiver_h_ad1b6310edbf87d7c0e3cfdfb3dfe596d}{next\_rr\_destination}}\ +\ 1)\ \%\ (this-\/>\mbox{\hyperlink{classff_1_1ff__monode_abe1b8acb3c5ce1e30e51dcdd8b8f1dfd}{get\_num\_outchannels}}()-\/1);}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00381\ \ \ \ \ \}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00384\ \ \ \ \ \mbox{\hyperlink{classff__dreceiver_h_a7468ceab94e64705f46cf846d9336acb}{ff\_dreceiverH}}(\mbox{\hyperlink{structff__endpoint}{ff\_endpoint}}\ \mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classff__dreceiver_a39e21b1f0387ff37c141e008318b8aad}{input\_channels}},\ std::map<int,\ int>\ \mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}}\ =\ \{\{0,0\}\},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}}=-\/1)\ }
+\DoxyCodeLine{00385\ \ \ \ \ :\ \mbox{\hyperlink{classff__dreceiver}{ff\_dreceiver}}(\mbox{\hyperlink{classff__dreceiver_a73c66ec2b46df219f67f356285eb9f97}{acceptAddr}},\ \mbox{\hyperlink{classff__dreceiver_a39e21b1f0387ff37c141e008318b8aad}{input\_channels}},\ \mbox{\hyperlink{classff__dreceiver_adf626b031284b09e750d274d27e8caae}{routingTable}},\ \mbox{\hyperlink{classff__dreceiver_a2b3fa2611891d63857e5a2c249e06552}{coreid}})\{}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \};}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

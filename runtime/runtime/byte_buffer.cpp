@@ -1,7 +1,7 @@
-#include <luisa/runtime/byte_buffer.h>
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/shader.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/byte_buffer.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/shader.h>
+#include <runtime/core/logging.h>
 
 namespace luisa::compute {
 

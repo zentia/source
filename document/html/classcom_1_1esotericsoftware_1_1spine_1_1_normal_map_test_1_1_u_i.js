@@ -1,0 +1,27 @@
+var classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i =
+[
+    [ "UI", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a557491b2fcb2a4b8e6a9d076119e2a27", null ],
+    [ "checkbox", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a028d177db350d6106c9b27b78af4ff95", null ],
+    [ "create", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a416ef71d267d1660b5ffc4c8862c7449", null ],
+    [ "slider", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a4b50b13e7b162776ecd15480da209039", null ],
+    [ "ambientColorB", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a520d76e884d2e51b232cd6c110c0c48f", null ],
+    [ "ambientColorG", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a9da6d9414a2244ae2a0fc6204b6e2020", null ],
+    [ "ambientColorR", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a9e9bd3c6ce6f483bd983e8e9838c0904", null ],
+    [ "ambientIntensity", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a472f33f3832ca861dae792d99748fc1d", null ],
+    [ "attenuationX", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a15f7448f00d896f56316a56d89b0de40", null ],
+    [ "attenuationY", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#acda1dd8c1907cbb977107d427799235f", null ],
+    [ "attenuationZ", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#ad213d7d058b679fe2508a7631e17ea47", null ],
+    [ "lightColorB", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a3d8ef915f1bb76cba14c37f9fe7782ab", null ],
+    [ "lightColorG", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a80e548c92aa221bc7fdf064c9e07049b", null ],
+    [ "lightColorR", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#abe0e5549e66143dc3241859b83f9a08b", null ],
+    [ "lightZ", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a4674e7fab67894b8d1f3b9fa2d029484", null ],
+    [ "prefs", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a3ffb526057a090b18106672099b852d0", null ],
+    [ "root", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a861bfc6d3aa7caae34d6ef11cf7f6dd2", null ],
+    [ "skin", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a8a3271579ac974eb17ebaf216b32a76f", null ],
+    [ "stage", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#af10f7350403e658e6a3be249ee2b0cb0", null ],
+    [ "strength", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a49e7d9565858bf8264c72ba9f5f1d55a", null ],
+    [ "useNormals", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a2972ed45f1fd2b4cb6cb0362969c94a3", null ],
+    [ "useShadow", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a3e05db9f459ab56d693c336accead216", null ],
+    [ "window", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a3a3865f6c8f4b34cbdda195251c5972f", null ],
+    [ "yInvert", "classcom_1_1esotericsoftware_1_1spine_1_1_normal_map_test_1_1_u_i.html#a30fc411f005dd165125487ce68c3ab2b", null ]
+];

@@ -1,0 +1,805 @@
+\doxysection{vector\+\_\+multimap.\+h}
+\hypertarget{vector__multimap_8h_source}{}\label{vector__multimap_8h_source}\index{runtime/EASTL/include/EASTL/vector\_multimap.h@{runtime/EASTL/include/EASTL/vector\_multimap.h}}
+\mbox{\hyperlink{vector__multimap_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (c)\ Electronic\ Arts\ Inc.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ file\ implements\ vector\_multimap.\ It\ acts\ much\ like\ std::multimap,\ except\ }}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ its\ underlying\ representation\ is\ a\ random\ access\ container\ such\ as\ vector.\ }}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ These\ containers\ are\ sometimes\ also\ known\ as\ "{}sorted\ vectors."{}\ \ }}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ vector\_maps\ have\ an\ advantage\ over\ conventional\ maps\ in\ that\ their\ memory}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ is\ contiguous\ and\ node-\/less.\ The\ result\ is\ that\ lookups\ are\ faster,\ more\ }}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ cache\ friendly\ (which\ potentially\ more\ so\ benefits\ speed),\ and\ the\ container}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ uses\ less\ memory.\ The\ downside\ is\ that\ inserting\ new\ items\ into\ the\ container}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ is\ slower\ if\ they\ are\ inserted\ in\ random\ order\ instead\ of\ in\ sorted\ order.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ This\ tradeoff\ is\ well-\/worth\ it\ for\ many\ cases.\ Note\ that\ vector\_multimap\ allows}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ you\ to\ use\ a\ deque\ or\ other\ random\ access\ container\ which\ may\ perform}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ better\ for\ you\ than\ vector.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ Note\ that\ with\ vector\_set,\ vector\_multiset,\ vector\_map,\ vector\_multimap}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ that\ the\ modification\ of\ the\ container\ potentially\ invalidates\ all\ }}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ existing\ iterators\ into\ the\ container,\ unlike\ what\ happens\ with\ conventional}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ sets\ and\ maps.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ This\ type\ could\ conceptually\ use\ a\ eastl::array\ as\ its\ underlying\ container,}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ however\ the\ current\ design\ requires\ an\ allocator\ aware\ container.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ Consider\ using\ a\ fixed\_vector\ instead.}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#ifndef\ EASTL\_VECTOR\_MULTIMAP\_H}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ EASTL\_VECTOR\_MULTIMAP\_H}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{config_8h}{EASTL/internal/config.h}}>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{allocator_8h}{EASTL/allocator.h}}>}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2functional_8h}{EASTL/functional.h}}>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2vector_8h}{EASTL/vector.h}}>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2utility_8h}{EASTL/utility.h}}>}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2algorithm_8h}{EASTL/algorithm.h}}>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{initializer__list_8h}{EASTL/initializer\_list.h}}>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#if\ defined(EA\_PRAGMA\_ONCE\_SUPPORTED)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ once\ }\textcolor{comment}{//\ Some\ compilers\ (e.g.\ VC++)\ benefit\ significantly\ from\ using\ this.\ We've\ measured\ 3-\/4\%\ build\ speed\ improvements\ in\ apps\ as\ a\ result.}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl}{eastl}}}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \ \ \#ifndef\ EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_NAME}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_NAME\ EASTL\_DEFAULT\_NAME\_PREFIX\ "{}\ vector\_multimap"{}\ }\textcolor{comment}{//\ Unless\ the\ user\ overrides\ something,\ this\ is\ "{}EASTL\ vector\_multimap"{}.}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \ \ \#ifndef\ EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_ALLOCATOR}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_ALLOCATOR\ allocator\_type(EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_NAME)}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{typename}\ Value,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classeastl_1_1multimap__value__compare_ac87d21fc23a32d36dc525859bb901ce4}{multimap\_value\_compare}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}}
+\DoxyCodeLine{00076\ \ \ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_ac87d21fc23a32d36dc525859bb901ce4}{multimap\_value\_compare}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ \{\}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_a568baf4491f1c9f60fd91c52d4939ae1}{operator()}}(\textcolor{keyword}{const}\ Value\&\ a,\ \textcolor{keyword}{const}\ Value\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00082\ \textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ Compare::operator()(a.first,\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.first);\ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_ae5cbc46e743ea7ff1162b732064631ea}{operator()}}(\textcolor{keyword}{const}\ Value\&\ a,\ \textcolor{keyword}{const}\ Key\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00085\ \textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ Compare::operator()(a.first,\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_abd0e612e3c693d773ca2c783421e7d8e}{operator()}}(\textcolor{keyword}{const}\ Key\&\ a,\ \textcolor{keyword}{const}\ Value\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00088\ \textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ Compare::operator()(a,\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.first);\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_a629fdfb93e7e9ad89b626d99814cf845}{operator()}}(\textcolor{keyword}{const}\ Key\&\ a,\ \textcolor{keyword}{const}\ Key\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00091\ \textcolor{keyword}{\ \ \ \ \ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ Compare::operator()(a,\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});\ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \};\ \textcolor{comment}{//\ multimap\_value\_compare}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Key,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Compare\ =\ eastl::less<Key>,\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Allocator\ =\ EASTLAllocatorType,}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ RandomAccessContainer\ =\ eastl::vector<eastl::pair<Key,\ T>,\ Allocator>\ >}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap}}\ :\ \textcolor{keyword}{protected}\ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_ac87d21fc23a32d36dc525859bb901ce4}{multimap\_value\_compare}}<Key,\ eastl::pair<Key,\ T>,\ Compare>,\ \textcolor{keyword}{public}\ RandomAccessContainer}
+\DoxyCodeLine{00123\ \ \ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ RandomAccessContainer\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}};}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<Key,\ T,\ Compare,\ Allocator,\ RandomAccessContainer>}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}};}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ Allocator\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}};}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ Key\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}};}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a74446e9208d8a51b0aba37ac2562bd80}{mapped\_type}};}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<Key,\ T>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}};}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}};}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_ac87d21fc23a32d36dc525859bb901ce4}{multimap\_value\_compare<Key,\ value\_type,\ Compare>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}};}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3b8747ae0cc08d3ca42e30c7cf715f01}{pointer}};}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a9502a5c4e2701c08ccda6554c8152469}{const\_pointer}};}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a48d2747d044d10ece0ef625c3623caa6}{reference}};}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ac4181cbf016ae97ace69a708f1686204}{const\_reference}};}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector_a9a4bd3c39e730716ee2d1d47a4a16b69}{base\_type::size\_type}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ab43e30b92bb3a5ecadc2559ed0c9fc2c}{size\_type}};}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector_a9c2033f20147f0b7b7f96b6a5a3fac7c}{base\_type::difference\_type}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a82e797430939dbdffac417954614c9c9}{difference\_type}};}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector_a4bae2bde2429116a3cb0e31b2168ccbe}{base\_type::iterator}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}};}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector_a3a759b38ee8d484ebc815837929e40d7}{base\_type::const\_iterator}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}};}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector_ac7c3e5adac670f6570d47644290ba743}{base\_type::reverse\_iterator}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3318c6f7fa225cebaff89df8427be51f}{reverse\_iterator}};}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector_a3ad797338e94ec2ff6ee0ae2383f16fb}{base\_type::const\_reverse\_iterator}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6e010c0003188122ccb3084c45987800}{const\_reverse\_iterator}};}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classeastl_1_1vector_ad7ab43fd769db571fb21979c68a425db}{base\_type::begin}};}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classeastl_1_1vector_a93842cc5c185eeeb78b07051ca85642e}{base\_type::end}};}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structeastl_1_1_vector_base_ace1691c085f1dd577f3e4619adc29803}{base\_type::get\_allocator}};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ an\ empty\ ctor\ and\ a\ ctor\ that\ takes\ an\ allocator\ instead\ of\ one\ for\ both}}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ because\ this\ way\ our\ RandomAccessContainer\ wouldn't\ be\ required\ to\ have\ an\ constructor}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ that\ takes\ allocator\_type.\ }}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap}}();}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6d7c7d04f5801adbe5a957600470b82d}{vector\_multimap}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}});}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ab77a2d6f6ae58d67c22eff522618b4ff}{vector\_multimap}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ comp,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}}\ =\ \mbox{\hyperlink{vector__multimap_8h_ae183202d7fddb7cbc537f3e46371de22}{EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_ALLOCATOR}});}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6f782937b6f89d9cedd653a5154a29b2}{vector\_multimap}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7e0de70820ddd51cef1ab772550d4d34}{vector\_multimap}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a1851ec97306befd1ee1f0d76ca4b666d}{vector\_multimap}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}});}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a271ae1a6d3fbbc730563286b591be17a}{vector\_multimap}}(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ compare\ =\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}(),\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}}\ =\ \mbox{\hyperlink{vector__multimap_8h_ae183202d7fddb7cbc537f3e46371de22}{EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_ALLOCATOR}});}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ InputIterator>}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a016c74efc54187337dad41e42a7e3eb9}{vector\_multimap}}(InputIterator\ first,\ InputIterator\ last);\ \textcolor{comment}{//\ allocator\ arg\ removed\ because\ VC7.1\ fails\ on\ the\ default\ arg.\ To\ do:\ Make\ a\ second\ version\ of\ this\ function\ without\ a\ default\ arg.}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ InputIterator>}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7f9b499fcbf189f982814d81e46bb9a9}{vector\_multimap}}(InputIterator\ first,\ InputIterator\ last,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ compare);\ \textcolor{comment}{//\ allocator\ arg\ removed\ because\ VC7.1\ fails\ on\ the\ default\ arg.\ To\ do:\ Make\ a\ second\ version\ of\ this\ function\ without\ a\ default\ arg.}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a834c89331f5c48f28998383bb987f456}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3bf065a319e25a6b3f05097aaad88dd6}{operator=}}(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist);}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a87ffb5f82452d84ca78305a7e1231b87}{operator=}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a547462542340173a36e97bc449460073}{swap}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ac2cdd45470a4d0e2de154927b4d89d85}{key\_comp}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3f43eac1b2281fa06a5fe283a54c078a}{key\_comp}}();}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0b6c46f02500bd60d5628fa3da71844e}{value\_comp}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a2f6ac338b507947efb59a107e5e1c114}{value\_comp}}();}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Inherited\ from\ base\ class:}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ allocator\_type\&\ get\_allocator();}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ void\ \ \ \ \ \ \ \ \ \ \ \ set\_allocator(const\ allocator\_type\&\ allocator);}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ iterator\ \ \ \ \ \ \ begin();}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_iterator\ begin()\ const;}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_iterator\ cbegin()\ const;}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ iterator\ \ \ \ \ \ \ end();}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_iterator\ end()\ const;}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_iterator\ cend()\ const;}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ reverse\_iterator\ \ \ \ \ \ \ rbegin();}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_reverse\_iterator\ rbegin()\ const;}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_reverse\_iterator\ crbegin()\ const;}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ reverse\_iterator\ \ \ \ \ \ \ rend();}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_reverse\_iterator\ rend()\ const;}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\_reverse\_iterator\ crend()\ const;}}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ size\_type\ size()\ const;}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ bool\ \ \ \ \ \ empty()\ const;}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ void\ \ \ \ \ \ clear();}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a088b4cbb807fa097ee14a9ef3db252dc}{emplace}}(Args\&\&...\ args);}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}...\ Args>\ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6b1001ef52a0dabc1c11a13745d7562c}{emplace\_hint}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position,\ Args\&\&...\ args);}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});\ \ \ \textcolor{comment}{//\ The\ signature\ of\ this\ function\ was\ change\ in\ EASTL\ v2.05.00\ from\ (the\ mistaken)\ pair<iterator,\ bool>\ to\ (the\ correct)\ iterator.}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}\ =\ eastl::enable\_if\_t<eastl::is\_constructible\_v<value\_type,\ P\&\&>>>}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a35803f943bb59a3a861dc7248473a52b}{insert}}(P\&\&\ otherValue);}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a1f8fd958868b888c3ca3622709999203}{insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ otherValue);}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5ee340fbd3d38aaa325c0497234aef8e}{insert}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\&\ otherValue);}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a65b28e76827e69a7c077958cbc10192e}{insert}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a715f91b966a61939004ca85a25bad621}{insert}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a30162d30d9b3114e1148aa70ec771dd5}{insert}}(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist);}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ InputIterator>}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ad5ce6f504b3f2971372dd9c170fe2c4d}{insert}}(InputIterator\ first,\ InputIterator\ last);}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a9a55d3700573ca8fdba374bd3cb6dfc7}{erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position);}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5b4191fcbe97c75753cb8f0d3c90d305}{erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ first,\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ last);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ab43e30b92bb3a5ecadc2559ed0c9fc2c}{size\_type}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a18d3f0df3f33ec68d0345a6b50d8673b}{erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k);}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3318c6f7fa225cebaff89df8427be51f}{reverse\_iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a688cf599f6b0e60ac70cdd4558823eaa}{erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a6e010c0003188122ccb3084c45987800}{const\_reverse\_iterator}}\ position);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3318c6f7fa225cebaff89df8427be51f}{reverse\_iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af470cc0a2ca89528a06dbbda7737aaf6}{erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a6e010c0003188122ccb3084c45987800}{const\_reverse\_iterator}}\ first,\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6e010c0003188122ccb3084c45987800}{const\_reverse\_iterator}}\ last);}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a50816700da0a046f15d6a66af9fac2fc}{find}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a904baf708c29c7ec73a1f9999cae6c03}{find}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ BinaryPredicate>}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6e6bbd338b0c08cbd8c400431b237d78}{find\_as}}(\textcolor{keyword}{const}\ U\&\ u,\ BinaryPredicate\ predicate);}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ BinaryPredicate>}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a23e4200e8abf9812d6f58143cf9d58c8}{find\_as}}(\textcolor{keyword}{const}\ U\&\ u,\ BinaryPredicate\ predicate)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ab43e30b92bb3a5ecadc2559ed0c9fc2c}{size\_type}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a93b2c4c0fb311d9f4a5f54f7639c3e29}{count}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a36b26b4c4de77a49286dbcca2eda6698}{lower\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k);}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ac0d3648130b7f012a519b05aa819ca71}{lower\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a8faa9bc53ab60c2429739447e4f50274}{upper\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k);}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ade5b9c4392c88a8981df80d543ad3ad2}{upper\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<iterator,\ iterator>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a468c67937dd5f7816d54df25ffdca58a}{equal\_range}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k);}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<const\_iterator,\ const\_iterator>}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae755ded97db810020ac41cb1066b268f}{equal\_range}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<iterator,\ iterator>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a564129c2945f1ee68f026566fd821189}{equal\_range\_small}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Defined\ inline\ because\ VC7.1\ is\ broken\ for\ when\ it's\ defined\ outside.}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ itLower(\mbox{\hyperlink{classeastl_1_1vector__multimap_a36b26b4c4de77a49286dbcca2eda6698}{lower\_bound}}(k));}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ \ \ \ \ \ \ itUpper(itLower);}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}((itUpper\ !=\ \mbox{\hyperlink{classeastl_1_1vector_a93842cc5c185eeeb78b07051ca85642e}{end}}())\ \&\&\ !value\_compare::operator()(k,\ *itUpper))}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++itUpper;}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<iterator,\ iterator>}}(itLower,\ itUpper);}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<const\_iterator,\ const\_iterator>}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_acfca9d4c76d41c31c9c177752a935d25}{equal\_range\_small}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Functions\ which\ are\ disallowed\ due\ to\ being\ unsafe.\ }}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_af6701b6a3a20992eb5b8c63402911866}{push\_back}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a48d2747d044d10ece0ef625c3623caa6}{reference}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3d887d8ec164dbf665a7e8c3cc39a2f8}{push\_back}}()\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a25a96f953c5d51f21c42c777d610a26c}{push\_back\_uninitialized}}()\ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a48d2747d044d10ece0ef625c3623caa6}{reference}}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a83944990ffba3119ae4d5b8c52ab00c2}{emplace\_back}}(Args\&\&...)\ \ \ \ \ \ \ \ \ \ \ \ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE(rparolin):\ It\ is\ undefined\ behaviour\ if\ user\ code\ fails\ to\ ensure\ the\ container}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ invariants\ are\ respected\ by\ performing\ an\ explicit\ call\ to\ 'sort'\ before\ any\ other}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ operations\ on\ the\ container\ are\ performed\ that\ do\ not\ clear\ the\ elements.}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 'push\_back\_unsorted'\ and\ 'emplace\_back\_unsorted'\ do\ not\ satisfy\ container\ invariants}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ being\ sorted.\ We\ provide\ these\ overloads\ explicitly\ labelled\ as\ '\_unsorted'\ as\ an}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ optimization\ opportunity\ when\ batch\ inserting\ elements\ so\ users\ can\ defer\ the\ cost\ of}}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ sorting\ the\ container\ once\ when\ all\ elements\ are\ contained.\ This\ was\ done\ to\ clarify}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ intent\ of\ code\ by\ leaving\ a\ trace\ that\ a\ manual\ call\ to\ sort\ is\ required.}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Args>\ \textcolor{keyword}{decltype}(\textcolor{keyword}{auto})\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ab160b0882d59652e93a09130ff508280}{push\_back\_unsorted}}(Args\&\&...\ args)\ \ \ \ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector_a40cfbb61f3c141d373f2d96a1b5a3235}{base\_type::push\_back}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);\ \}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Args>\ \textcolor{keyword}{decltype}(\textcolor{keyword}{auto})\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a97ce60136d1bc9aab0844ece9f31553e}{emplace\_back\_unsorted}}(Args\&\&...\ args)\ }
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector_a7207fd2670e5b751c4d351a91aaa429f}{base\_type::emplace\_back}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);\ \}}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \};\ \textcolor{comment}{//\ vector\_multimap}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{comment}{//\ vector\_multimap}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}()}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(C()),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}()}
+\DoxyCodeLine{00302\ \ \ \ \ \{}
+\DoxyCodeLine{00303\ \textcolor{preprocessor}{\ \ \ \ \#if\ EASTL\_NAME\_ENABLED}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_vector_base_ace1691c085f1dd577f3e4619adc29803}{get\_allocator}}().set\_name(\mbox{\hyperlink{vector__multimap_8h_a8b21301e9d36fe9c28afaf344178e6f8}{EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_NAME}});}
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00306\ \ \ \ \ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(C()),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00312\ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Empty}}
+\DoxyCodeLine{00314\ \ \ \ \ \}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ comp,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(comp),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00320\ \ \ \ \ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Empty}}
+\DoxyCodeLine{00322\ \ \ \ \ \}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00328\ \ \ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Empty}}
+\DoxyCodeLine{00330\ \ \ \ \ \}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ careful\ to\ only\ copy\ /\ move\ the\ distinct\ base\ sub-\/objects\ of\ x:}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(static\_cast<\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&>(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{namespaceeastl}{eastl}}::\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{move}}(static\_cast<\mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}\&\&>(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})))}
+\DoxyCodeLine{00337\ \ \ \ \ \{}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Empty.\ Note:\ x\ is\ left\ with\ empty\ contents\ but\ its\ original\ value\_compare\ instead\ of\ the\ default\ one.}}
+\DoxyCodeLine{00339\ \ \ \ \ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ careful\ to\ only\ copy\ /\ move\ the\ distinct\ base\ sub-\/objects\ of\ x:}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(static\_cast<\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&>(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{namespaceeastl}{eastl}}::\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{move}}(static\_cast<\mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}\&\&>(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})),\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00346\ \ \ \ \ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Empty.\ Note:\ x\ is\ left\ with\ empty\ contents\ but\ its\ original\ value\_compare\ instead\ of\ the\ default\ one.}}
+\DoxyCodeLine{00348\ \ \ \ \ \}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ compare,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_abb54a3e1cb042477879a55b1f529592e}{allocator\_type}}\&\ \mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(compare),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{classeastl_1_1allocator}{allocator}})}
+\DoxyCodeLine{00354\ \ \ \ \ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(ilist.\mbox{\hyperlink{classstd_1_1initializer__list_a9764f0e67f30359f99762af6f8c2e401}{begin}}(),\ ilist.\mbox{\hyperlink{classstd_1_1initializer__list_ae81976034149945787979d065b5bbbec}{end}}());}
+\DoxyCodeLine{00356\ \ \ \ \ \}}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ InputIterator>}
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(InputIterator\ first,\ InputIterator\ last)}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}()),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{vector__multimap_8h_ae183202d7fddb7cbc537f3e46371de22}{EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_ALLOCATOR}})}
+\DoxyCodeLine{00363\ \ \ \ \ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(first,\ last);}
+\DoxyCodeLine{00365\ \ \ \ \ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ InputIterator>}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a7a0b17cd1f2d2e2bdb28c4d02e51b0f6}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::vector\_multimap}}(InputIterator\ first,\ InputIterator\ last,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\ compare)}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}(compare),\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a55041f5f6e71d64216e33ce29bbb97da}{base\_type}}(\mbox{\hyperlink{vector__multimap_8h_ae183202d7fddb7cbc537f3e46371de22}{EASTL\_VECTOR\_MULTIMAP\_DEFAULT\_ALLOCATOR}})}
+\DoxyCodeLine{00372\ \ \ \ \ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(first,\ last);}
+\DoxyCodeLine{00374\ \ \ \ \ \}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::this\_type}}\&}
+\DoxyCodeLine{00379\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a834c89331f5c48f28998383bb987f456}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00380\ \ \ \ \ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ base\_type::operator=(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ value\_compare::operator=(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00384\ \ \ \ \ \}}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::this\_type}}\&}
+\DoxyCodeLine{00389\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a834c89331f5c48f28998383bb987f456}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::operator=}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00390\ \ \ \ \ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ base\_type::operator=(\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}));}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{eastl::swap}};}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}),\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}));}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00395\ \ \ \ \ \}}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::this\_type}}\&}
+\DoxyCodeLine{00400\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a834c89331f5c48f28998383bb987f456}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::operator=}}(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist)}
+\DoxyCodeLine{00401\ \ \ \ \ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ base\_type::clear();}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(ilist.\mbox{\hyperlink{classstd_1_1initializer__list_a9764f0e67f30359f99762af6f8c2e401}{begin}}(),\ ilist.\mbox{\hyperlink{classstd_1_1initializer__list_ae81976034149945787979d065b5bbbec}{end}}());}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00405\ \ \ \ \ \}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a547462542340173a36e97bc449460073}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::swap}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a54f19e8ea842ce13db4d08b118fd2b22}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00410\ \ \ \ \ \{}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ base\_type::swap(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{eastl::swap}};}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}),\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}));}
+\DoxyCodeLine{00414\ \ \ \ \ \}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::key\_compare}}\&}
+\DoxyCodeLine{00419\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ac2cdd45470a4d0e2de154927b4d89d85}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::key\_comp}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00420\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\textcolor{keyword}{>}(*this);}
+\DoxyCodeLine{00422\ \ \ \ \ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::key\_compare}}\&}
+\DoxyCodeLine{00427\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_ac2cdd45470a4d0e2de154927b4d89d85}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::key\_comp}}()}
+\DoxyCodeLine{00428\ \ \ \ \ \{}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a79ff46c2bf7dd3163593a79a2c713cad}{key\_compare}}\&\textcolor{keyword}{>}(*this);}
+\DoxyCodeLine{00430\ \ \ \ \ \}}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00434\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::value\_compare}}\&}
+\DoxyCodeLine{00435\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0b6c46f02500bd60d5628fa3da71844e}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::value\_comp}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00436\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*this);}
+\DoxyCodeLine{00438\ \ \ \ \ \}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::value\_compare}}\&}
+\DoxyCodeLine{00443\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0b6c46f02500bd60d5628fa3da71844e}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::value\_comp}}()}
+\DoxyCodeLine{00444\ \ \ \ \ \{}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*this);}
+\DoxyCodeLine{00446\ \ \ \ \ \}}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00452\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a088b4cbb807fa097ee14a9ef3db252dc}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::emplace}}(Args\&\&...\ args)}
+\DoxyCodeLine{00453\ \ \ \ \ \{}
+\DoxyCodeLine{00454\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ EASTL\_USE\_FORWARD\_WORKAROUND}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);\ \ \textcolor{comment}{//\ Workaround\ for\ compiler\ bug\ in\ VS2013\ which\ results\ in\ a\ compiler\ internal\ crash\ while\ compiling\ this\ code.}}
+\DoxyCodeLine{00456\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00458\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00460\ \ \ \ \ \}}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}...\ Args>\ }
+\DoxyCodeLine{00464\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00465\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6b1001ef52a0dabc1c11a13745d7562c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::emplace\_hint}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position,\ Args\&\&...\ args)}
+\DoxyCodeLine{00466\ \ \ \ \ \{}
+\DoxyCodeLine{00467\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ EASTL\_USE\_FORWARD\_WORKAROUND}}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);\ \ \textcolor{comment}{//\ Workaround\ for\ compiler\ bug\ in\ VS2013\ which\ results\ in\ a\ compiler\ internal\ crash\ while\ compiling\ this\ code.}}
+\DoxyCodeLine{00469\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Args>}}(args)...);}
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(position,\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00473\ \ \ \ \ \}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00477\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00478\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00479\ \ \ \ \ \{}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ itUB(\mbox{\hyperlink{namespaceeastl_a26743733e04b17942682ac9eb777b7d8}{upper\_bound}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.first));}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::insert(itUB,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00482\ \ \ \ \ \}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}>}
+\DoxyCodeLine{00487\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00488\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(P\&\&\ otherValue)}
+\DoxyCodeLine{00489\ \ \ \ \ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<P>}}(otherValue));}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ itUB(\mbox{\hyperlink{namespaceeastl_a26743733e04b17942682ac9eb777b7d8}{upper\_bound}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.first));}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::insert(itUB,\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00493\ \ \ \ \ \}}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00497\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00498\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ otherValue)}
+\DoxyCodeLine{00499\ \ \ \ \ \{}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}(\mbox{\hyperlink{namespaceeastl_a76f2f41eabf21b6161d9b759556b5da4}{eastl::pair\_first\_construct}},\ otherValue);}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ itUB(\mbox{\hyperlink{namespaceeastl_a26743733e04b17942682ac9eb777b7d8}{upper\_bound}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.first));}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::insert(itUB,\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00503\ \ \ \ \ \}}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00507\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00508\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\&\ otherValue)}
+\DoxyCodeLine{00509\ \ \ \ \ \{}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}(\mbox{\hyperlink{namespaceeastl_a76f2f41eabf21b6161d9b759556b5da4}{eastl::pair\_first\_construct}},\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(otherValue));}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{iterator}}\ itUB(\mbox{\hyperlink{namespaceeastl_a26743733e04b17942682ac9eb777b7d8}{upper\_bound}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.first));}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::insert(itUB,\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00513\ \ \ \ \ \}}
+\DoxyCodeLine{00514\ }
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00517\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00518\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00519\ \ \ \ \ \{}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ assume\ that\ the\ user\ knows\ what\ he\ is\ doing\ and\ has\ supplied\ us\ with}}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ a\ position\ that\ is\ right\ where\ value\ should\ be\ inserted\ (put\ in\ front\ of).\ }}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ do\ a\ test\ to\ see\ if\ the\ position\ is\ correct.\ If\ so\ then\ we\ insert,\ }}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ not\ then\ we\ ignore\ the\ input\ position.\ However,\ }}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((position\ ==\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}())\ ||\ !value\_compare::operator()(*position,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}))\ \ \textcolor{comment}{//\ If\ value\ is\ <=\ the\ element\ at\ position...}}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((position\ ==\ \mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}())\ ||\ !value\_compare::operator()(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ *(position\ -\/\ 1)))\ \textcolor{comment}{//\ If\ value\ is\ >=\ the\ element\ before\ position...}}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::insert(position,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ this\ case\ we\ have\ an\ incorrect\ position.\ We\ fall\ back\ to\ the\ regular\ insert\ function.}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00533\ \ \ \ \ \}}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00537\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00538\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1vector__multimap_aca705e1fba4f600bb56dc77cd54f1502}{value\_type}}\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00539\ \ \ \ \ \{}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((position\ ==\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}())\ ||\ !value\_compare::operator()(*position,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}))\ \ \textcolor{comment}{//\ If\ value\ is\ <=\ the\ element\ at\ position...}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((position\ ==\ \mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}())\ ||\ !value\_compare::operator()(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ *(position\ -\/\ 1)))\ \textcolor{comment}{//\ If\ value\ is\ >=\ the\ element\ before\ position...}}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::insert(position,\ \mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ In\ this\ case\ we\ have\ an\ incorrect\ position.\ We\ fall\ back\ to\ the\ regular\ insert\ function.}}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00548\ \ \ \ \ \}}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00552\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist)}
+\DoxyCodeLine{00553\ \ \ \ \ \{}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{insert}}(ilist.\mbox{\hyperlink{classstd_1_1initializer__list_a9764f0e67f30359f99762af6f8c2e401}{begin}}(),\ ilist.\mbox{\hyperlink{classstd_1_1initializer__list_ae81976034149945787979d065b5bbbec}{end}}());}
+\DoxyCodeLine{00555\ \ \ \ \ \}}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00559\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ InputIterator>}
+\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a39985bc7d4b197cde5cfad15d139340c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::insert}}(InputIterator\ first,\ InputIterator\ last)}
+\DoxyCodeLine{00561\ \ \ \ \ \{}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ To\ consider:\ Improve\ the\ speed\ of\ this\ by\ getting\ the\ length\ of\ the\ }}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ input\ range\ and\ resizing\ our\ container\ to\ that\ size}}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ before\ doing\ the\ insertions.\ We\ can't\ use\ reserve}}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ because\ we\ don't\ know\ if\ we\ are\ using\ a\ vector\ or\ not.}}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ Alternatively,\ force\ the\ user\ to\ do\ the\ reservation.}}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ To\ consider:\ When\ inserting\ values\ that\ come\ from\ a\ container}}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ like\ this\ container,\ use\ the\ property\ that\ they\ are\ }}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ known\ to\ be\ sorted\ and\ speed\ up\ the\ inserts\ here.}}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ first\ !=\ last;\ ++first)}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ base\_type::insert(\mbox{\hyperlink{namespaceeastl_a26743733e04b17942682ac9eb777b7d8}{upper\_bound}}((*first).first),\ *first);}
+\DoxyCodeLine{00572\ \ \ \ \ \}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00577\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a9a55d3700573ca8fdba374bd3cb6dfc7}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ position)\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00578\ \ \ \ \ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Note\ that\ we\ return\ iterator\ and\ not\ void.\ This\ allows\ for\ more\ efficient\ use\ of\ }}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ container\ and\ is\ consistent\ with\ the\ C++\ language\ defect\ report\ \#130\ (DR\ 130)}}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::erase(position);}
+\DoxyCodeLine{00582\ \ \ \ \ \}}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00586\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00587\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a9a55d3700573ca8fdba374bd3cb6dfc7}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ first,\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ last)}
+\DoxyCodeLine{00588\ \ \ \ \ \{}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ base\_type::erase(first,\ last);}
+\DoxyCodeLine{00590\ \ \ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ }
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ab43e30b92bb3a5ecadc2559ed0c9fc2c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::size\_type}}}
+\DoxyCodeLine{00595\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a9a55d3700573ca8fdba374bd3cb6dfc7}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::erase}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)}
+\DoxyCodeLine{00596\ \ \ \ \ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<iterator,\ iterator>}}\ pairIts(\mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{equal\_range}}(k));}
+\DoxyCodeLine{00598\ }
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}}\ !=\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}})}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \ \ base\_type::erase(pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}},\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}});}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classeastl_1_1vector__multimap_ab43e30b92bb3a5ecadc2559ed0c9fc2c}{size\_type}})\mbox{\hyperlink{namespaceeastl_ab917da722315c1690092f5014763fa32}{eastl::distance}}(pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}},\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}});\ \textcolor{comment}{//\ This\ can\ result\ in\ any\ value\ >=\ 0.}}
+\DoxyCodeLine{00603\ \ \ \ \ \}}
+\DoxyCodeLine{00604\ }
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00607\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3318c6f7fa225cebaff89df8427be51f}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::reverse\_iterator}}}
+\DoxyCodeLine{00608\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a9a55d3700573ca8fdba374bd3cb6dfc7}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a6e010c0003188122ccb3084c45987800}{const\_reverse\_iterator}}\ position)\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00609\ \ \ \ \ \{}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3318c6f7fa225cebaff89df8427be51f}{reverse\_iterator}}(base\_type::erase((++position).base()));}
+\DoxyCodeLine{00611\ \ \ \ \ \}}
+\DoxyCodeLine{00612\ }
+\DoxyCodeLine{00613\ }
+\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00615\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3318c6f7fa225cebaff89df8427be51f}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::reverse\_iterator}}}
+\DoxyCodeLine{00616\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a9a55d3700573ca8fdba374bd3cb6dfc7}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::erase}}(\mbox{\hyperlink{classeastl_1_1vector__multimap_a6e010c0003188122ccb3084c45987800}{const\_reverse\_iterator}}\ first,\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6e010c0003188122ccb3084c45987800}{const\_reverse\_iterator}}\ last)}
+\DoxyCodeLine{00617\ \ \ \ \ \{}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a3318c6f7fa225cebaff89df8427be51f}{reverse\_iterator}}(base\_type::erase((++last).base(),\ (++first).base()));}
+\DoxyCodeLine{00619\ \ \ \ \ \}}
+\DoxyCodeLine{00620\ }
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00623\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00624\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a50816700da0a046f15d6a66af9fac2fc}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::find}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)}
+\DoxyCodeLine{00625\ \ \ \ \ \{}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<iterator,\ iterator>}}\ pairIts(\mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{equal\_range}}(k));}
+\DoxyCodeLine{00627\ }
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}}\ !=\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}})}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}};}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}();}
+\DoxyCodeLine{00631\ \ \ \ \ \}}
+\DoxyCodeLine{00632\ }
+\DoxyCodeLine{00633\ }
+\DoxyCodeLine{00634\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}}}
+\DoxyCodeLine{00636\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a50816700da0a046f15d6a66af9fac2fc}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::find}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00637\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<const\_iterator,\ const\_iterator>}}\ pairIts(\mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{equal\_range}}(k));}
+\DoxyCodeLine{00639\ }
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}}\ !=\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}})}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}};}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}();}
+\DoxyCodeLine{00643\ \ \ \ \ \}}
+\DoxyCodeLine{00644\ }
+\DoxyCodeLine{00645\ }
+\DoxyCodeLine{00646\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00647\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ BinaryPredicate>}
+\DoxyCodeLine{00648\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}}}
+\DoxyCodeLine{00649\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6e6bbd338b0c08cbd8c400431b237d78}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::find\_as}}(\textcolor{keyword}{const}\ U\&\ u,\ BinaryPredicate\ predicate)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00650\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_ac87d21fc23a32d36dc525859bb901ce4}{multimap\_value\_compare<U,\ value\_type,\ BinaryPredicate>}}\ predicate\_cmp(predicate);}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<const\_iterator,\ const\_iterator>}}\ pairIts(\mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{eastl::equal\_range}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ u,\ predicate\_cmp));}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}}\ !=\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}})\ ?\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}}\ :\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}();}
+\DoxyCodeLine{00654\ \ \ \ \ \}}
+\DoxyCodeLine{00655\ }
+\DoxyCodeLine{00656\ }
+\DoxyCodeLine{00657\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00658\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}\ BinaryPredicate>}
+\DoxyCodeLine{00659\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00660\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a6e6bbd338b0c08cbd8c400431b237d78}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::find\_as}}(\textcolor{keyword}{const}\ U\&\ u,\ BinaryPredicate\ predicate)}
+\DoxyCodeLine{00661\ \ \ \ \ \{}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1multimap__value__compare_ac87d21fc23a32d36dc525859bb901ce4}{multimap\_value\_compare<U,\ value\_type,\ BinaryPredicate>}}\ predicate\_cmp(predicate);}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<iterator,\ iterator>}}\ pairIts(\mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{eastl::equal\_range}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ u,\ predicate\_cmp));}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}}\ !=\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}})\ ?\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}}\ :\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}();}
+\DoxyCodeLine{00665\ \ \ \ \ \}}
+\DoxyCodeLine{00666\ }
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00669\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ab43e30b92bb3a5ecadc2559ed0c9fc2c}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::size\_type}}}
+\DoxyCodeLine{00670\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a93b2c4c0fb311d9f4a5f54f7639c3e29}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::count}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00671\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<const\_iterator,\ const\_iterator>}}\ pairIts(\mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{equal\_range}}(k));}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{classeastl_1_1vector__multimap_ab43e30b92bb3a5ecadc2559ed0c9fc2c}{size\_type}})\mbox{\hyperlink{namespaceeastl_ab917da722315c1690092f5014763fa32}{eastl::distance}}(pairIts.\mbox{\hyperlink{structeastl_1_1pair_a7aa043b3e72260dd5949e30bc1c5feb9}{first}},\ pairIts.\mbox{\hyperlink{structeastl_1_1pair_a3f9a64c60bc843bdfdd48de6bb7cee1a}{second}});\ }
+\DoxyCodeLine{00674\ \ \ \ \ \}}
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00677\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00678\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00679\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a36b26b4c4de77a49286dbcca2eda6698}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::lower\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)}
+\DoxyCodeLine{00680\ \ \ \ \ \{}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a6354b0cbfcb8a4e59967dd315a9ef847}{eastl::lower\_bound}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ k,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00682\ \ \ \ \ \}}
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ }
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00686\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}}}
+\DoxyCodeLine{00687\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a36b26b4c4de77a49286dbcca2eda6698}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::lower\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00688\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a6354b0cbfcb8a4e59967dd315a9ef847}{eastl::lower\_bound}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ k,\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00690\ \ \ \ \ \}}
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ }
+\DoxyCodeLine{00693\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00694\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}}
+\DoxyCodeLine{00695\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a8faa9bc53ab60c2429739447e4f50274}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::upper\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)}
+\DoxyCodeLine{00696\ \ \ \ \ \{}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a26743733e04b17942682ac9eb777b7d8}{eastl::upper\_bound}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ k,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00698\ \ \ \ \ \}}
+\DoxyCodeLine{00699\ }
+\DoxyCodeLine{00700\ }
+\DoxyCodeLine{00701\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00702\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}}\ }
+\DoxyCodeLine{00703\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a8faa9bc53ab60c2429739447e4f50274}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::upper\_bound}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00704\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a26743733e04b17942682ac9eb777b7d8}{eastl::upper\_bound}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ k,\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00706\ \ \ \ \ \}}
+\DoxyCodeLine{00707\ }
+\DoxyCodeLine{00708\ }
+\DoxyCodeLine{00709\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00710\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<typename\ vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_ae51871bed45c54f168c6fd09c6617333}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator}}>}
+\DoxyCodeLine{00711\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a468c67937dd5f7816d54df25ffdca58a}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::equal\_range}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)}
+\DoxyCodeLine{00712\ \ \ \ \ \{}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{eastl::equal\_range}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ k,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00714\ \ \ \ \ \}}
+\DoxyCodeLine{00715\ }
+\DoxyCodeLine{00716\ }
+\DoxyCodeLine{00717\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00718\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<typename\ vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}}>}
+\DoxyCodeLine{00719\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a468c67937dd5f7816d54df25ffdca58a}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::equal\_range}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00720\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a08a1427015a9a2f1bcbcb0c4cc912715}{eastl::equal\_range}}(\mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}(),\ k,\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classeastl_1_1vector__multimap_a5916b33e6bfa36b477d42b00123d05e7}{value\_compare}}\&\textcolor{keyword}{>}(*\textcolor{keyword}{this}));}
+\DoxyCodeLine{00722\ \ \ \ \ \}}
+\DoxyCodeLine{00723\ }
+\DoxyCodeLine{00724\ }
+\DoxyCodeLine{00725\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00726\ \textcolor{comment}{\ \ \ \ //\ VC++\ fails\ to\ compile\ this\ when\ defined\ here,\ saying\ the\ function\ isn't\ a\ member\ of\ vector\_multimap.}}
+\DoxyCodeLine{00727\ \textcolor{comment}{\ \ \ \ template\ <typename\ K,\ typename\ T,\ typename\ C,\ typename\ A,\ typename\ RAC>}}
+\DoxyCodeLine{00728\ \textcolor{comment}{\ \ \ \ inline\ eastl::pair<typename\ vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator,\ typename\ vector\_multimap<K,\ T,\ C,\ A,\ RAC>::iterator>}}
+\DoxyCodeLine{00729\ \textcolor{comment}{\ \ \ \ vector\_multimap<K,\ T,\ C,\ A,\ RAC>::equal\_range\_small(const\ key\_type\&\ k)}}
+\DoxyCodeLine{00730\ \textcolor{comment}{\ \ \ \ \{}}
+\DoxyCodeLine{00731\ \textcolor{comment}{\ \ \ \ \ \ \ \ const\ iterator\ itLower(lower\_bound(k));}}
+\DoxyCodeLine{00732\ \textcolor{comment}{\ \ \ \ \ \ \ \ iterator\ \ \ \ \ \ \ itUpper(itLower);}}
+\DoxyCodeLine{00733\ \textcolor{comment}{}}
+\DoxyCodeLine{00734\ \textcolor{comment}{\ \ \ \ \ \ \ \ while((itUpper\ !=\ end())\ \&\&\ !value\_compare::operator()(k,\ *itUpper))}}
+\DoxyCodeLine{00735\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ ++itUpper;}}
+\DoxyCodeLine{00736\ \textcolor{comment}{}}
+\DoxyCodeLine{00737\ \textcolor{comment}{\ \ \ \ \ \ \ \ return\ eastl::pair<iterator,\ iterator>(itLower,\ itUpper);}}
+\DoxyCodeLine{00738\ \textcolor{comment}{\ \ \ \ \}}}
+\DoxyCodeLine{00739\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00740\ }
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00743\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<typename\ vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::const\_iterator}}>}
+\DoxyCodeLine{00744\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a564129c2945f1ee68f026566fd821189}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>::equal\_range\_small}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_af8fec2df79a546b35a4c9bc2e7327330}{key\_type}}\&\ k)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00745\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ itLower(\mbox{\hyperlink{namespaceeastl_a6354b0cbfcb8a4e59967dd315a9ef847}{lower\_bound}}(k));}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap_a0028bebf494d7cd35e235fae1b97f526}{const\_iterator}}\ \ \ \ \ \ \ itUpper(itLower);}
+\DoxyCodeLine{00748\ }
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}((itUpper\ !=\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}())\ \&\&\ !value\_compare::operator()(k,\ *itUpper))}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \ \ \ ++itUpper;}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structeastl_1_1pair}{eastl::pair<const\_iterator,\ const\_iterator>}}(itLower,\ itUpper);}
+\DoxyCodeLine{00753\ \ \ \ \ \}}
+\DoxyCodeLine{00754\ }
+\DoxyCodeLine{00755\ }
+\DoxyCodeLine{00756\ }
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00759\ \ \ \ \ \textcolor{comment}{//\ global\ operators}}
+\DoxyCodeLine{00761\ }
+\DoxyCodeLine{00762\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00763\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a927b4cbb10494e27e349b89c6fcde665}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ a,\ }
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ }
+\DoxyCodeLine{00765\ \ \ \ \ \{}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (a.\mbox{\hyperlink{classeastl_1_1vector_a90f324e93bfbd2d3a06ce9f0661b4863}{size}}()\ ==\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.size())\ \&\&\ \mbox{\hyperlink{namespaceeastl_a727607e28900e7ea1f778a77a75dad1e}{eastl::equal}}(\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.begin(),\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.end(),\ a.\mbox{\hyperlink{classeastl_1_1vector_ad7ab43fd769db571fb21979c68a425db}{begin}}());}
+\DoxyCodeLine{00767\ \ \ \ \ \}}
+\DoxyCodeLine{00768\ }
+\DoxyCodeLine{00769\ }
+\DoxyCodeLine{00770\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00771\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a289733486746877431e53fcf9adbf633}{operator<}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ a,}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00773\ \ \ \ \ \{}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ab64f96b0d49c1cd5c3d19d188b558d59}{eastl::lexicographical\_compare}}(a.\mbox{\hyperlink{classeastl_1_1vector_ad7ab43fd769db571fb21979c68a425db}{begin}}(),\ a.\mbox{\hyperlink{classeastl_1_1vector_a93842cc5c185eeeb78b07051ca85642e}{end}}(),\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.begin(),\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.end(),\ a.\mbox{\hyperlink{classeastl_1_1vector__multimap_a0b6c46f02500bd60d5628fa3da71844e}{value\_comp}}());}
+\DoxyCodeLine{00775\ \ \ \ \ \}}
+\DoxyCodeLine{00776\ }
+\DoxyCodeLine{00777\ }
+\DoxyCodeLine{00778\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00779\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a89ff22bd2be381c89895174f2aacd819}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ a,}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00781\ \ \ \ \ \{}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(a\ ==\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00783\ \ \ \ \ \}}
+\DoxyCodeLine{00784\ }
+\DoxyCodeLine{00785\ }
+\DoxyCodeLine{00786\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00787\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a26383d9098fb1b90256105f8990bb0c6}{operator>}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ a,}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00789\ \ \ \ \ \{}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ <\ a;}
+\DoxyCodeLine{00791\ \ \ \ \ \}}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ }
+\DoxyCodeLine{00794\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00795\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a2b38d59a0faf07bfa368e2c20dd5caae}{operator<=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ a,}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00797\ \ \ \ \ \{}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ <\ a);}
+\DoxyCodeLine{00799\ \ \ \ \ \}}
+\DoxyCodeLine{00800\ }
+\DoxyCodeLine{00801\ }
+\DoxyCodeLine{00802\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00803\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_ad7c33d73b84e2428c6927a335dbc1778}{operator>=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ a,}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00805\ \ \ \ \ \{}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(a\ <\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00807\ \ \ \ \ \}}
+\DoxyCodeLine{00808\ }
+\DoxyCodeLine{00809\ }
+\DoxyCodeLine{00810\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ C,\ \textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ RAC>}
+\DoxyCodeLine{00811\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(\mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ a,}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1vector__multimap}{vector\_multimap<K,\ T,\ C,\ A,\ RAC>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00813\ \ \ \ \ \{}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classeastl_1_1vector__multimap_a547462542340173a36e97bc449460073}{swap}}(\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00815\ \ \ \ \ \}}
+\DoxyCodeLine{00816\ }
+\DoxyCodeLine{00817\ }
+\DoxyCodeLine{00818\ \}\ \textcolor{comment}{//\ namespace\ eastl}}
+\DoxyCodeLine{00819\ }
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ Header\ include\ guard}}
+\DoxyCodeLine{00822\ }
+\DoxyCodeLine{00823\ }
+\DoxyCodeLine{00824\ }
+\DoxyCodeLine{00825\ }
+\DoxyCodeLine{00826\ }
+\DoxyCodeLine{00827\ }
+\DoxyCodeLine{00828\ }
+\DoxyCodeLine{00829\ }
+\DoxyCodeLine{00830\ }
+\DoxyCodeLine{00831\ }
+\DoxyCodeLine{00832\ }
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ }
+\DoxyCodeLine{00835\ }
+\DoxyCodeLine{00836\ }
+\DoxyCodeLine{00837\ }
+\DoxyCodeLine{00838\ }
+\DoxyCodeLine{00839\ }
+\DoxyCodeLine{00840\ }
+\DoxyCodeLine{00841\ }
+\DoxyCodeLine{00842\ }
+\DoxyCodeLine{00843\ }
+
+\end{DoxyCode}

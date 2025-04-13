@@ -1,0 +1,26 @@
+var spine_glfw_8cpp =
+[
+    [ "blend_mode_t", "structblend__mode__t.html", "structblend__mode__t" ],
+    [ "STB_IMAGE_IMPLEMENTATION", "spine-glfw_8cpp.html#a18372412ad2fc3ce1e3240b3cf0efe78", null ],
+    [ "compile_shader", "spine-glfw_8cpp.html#af47678ea5b0d5135790ce98b234f1a50", null ],
+    [ "matrix_ortho_projection", "spine-glfw_8cpp.html#aced14684f8a68b0cf6b674feb13c89cd", null ],
+    [ "mesh_create", "spine-glfw_8cpp.html#aedbeba6f5f1f31437a11df06a87c0b40", null ],
+    [ "mesh_dispose", "spine-glfw_8cpp.html#a89e8653d914f42d6d008fb4b5521d168", null ],
+    [ "mesh_draw", "spine-glfw_8cpp.html#a94afe68201e7639d1396c55880d1b6de", null ],
+    [ "mesh_update", "spine-glfw_8cpp.html#ab38e4c5ea85037e98cd7bc2a9466c5df", null ],
+    [ "renderer_create", "spine-glfw_8cpp.html#a58cfb2950eb51a96204dfdcea5e61ade", null ],
+    [ "renderer_dispose", "spine-glfw_8cpp.html#ac4ca0e459b27bce888afba28ffe5a152", null ],
+    [ "renderer_draw", "spine-glfw_8cpp.html#a019b58207c2ac63801f26e24767f954b", null ],
+    [ "renderer_draw_lite", "spine-glfw_8cpp.html#a6a469f71887b58ce2b931e4fa183f97c", null ],
+    [ "renderer_set_viewport_size", "spine-glfw_8cpp.html#a482f082360900319388ad94a8112eb62", null ],
+    [ "shader_create", "spine-glfw_8cpp.html#a73357b5a9ae336f0a7426072950f55a2", null ],
+    [ "shader_dispose", "spine-glfw_8cpp.html#a1afdcc56370e31184c9e576635720c3a", null ],
+    [ "shader_set_float", "spine-glfw_8cpp.html#a5f7f750493f212a7d700dbc1f2462467", null ],
+    [ "shader_set_int", "spine-glfw_8cpp.html#ab29938e8b3d839d822410c1e740942fd", null ],
+    [ "shader_set_matrix4", "spine-glfw_8cpp.html#a38efa85a640db844fc3c1794035e58a1", null ],
+    [ "shader_use", "spine-glfw_8cpp.html#aa1153096afbf7b38aa6e91f343e44dd5", null ],
+    [ "texture_dispose", "spine-glfw_8cpp.html#aec477590627f310c4f52dd6484db92fb", null ],
+    [ "texture_load", "spine-glfw_8cpp.html#a1acc2f2849c3bdad0d3206403c32d1fa", null ],
+    [ "texture_use", "spine-glfw_8cpp.html#a6369463d0da06b853965357dd394e88b", null ],
+    [ "blend_modes", "spine-glfw_8cpp.html#a96527434324359e42e123d7a1ad0e93b", null ]
+];

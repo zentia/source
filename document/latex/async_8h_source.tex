@@ -1,0 +1,106 @@
+\doxysection{async.\+h}
+\hypertarget{async_8h_source}{}\label{async_8h_source}\index{runtime/spdlog/include/spdlog/async.h@{runtime/spdlog/include/spdlog/async.h}}
+\mbox{\hyperlink{async_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright(c)\ 2015-\/present,\ Gabi\ Melman\ \&\ spdlog\ contributors.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Distributed\ under\ the\ MIT\ License\ (http://opensource.org/licenses/MIT)}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Async\ logging\ using\ global\ thread\ pool}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ All\ loggers\ created\ here\ share\ same\ global\ thread\ pool.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Each\ log\ message\ is\ pushed\ to\ a\ queue\ along\ with\ a\ shared\ pointer\ to\ the}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ logger.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ If\ a\ logger\ deleted\ while\ having\ pending\ messages\ in\ the\ queue,\ it's\ actual}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ destruction\ will\ defer}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ until\ all\ its\ messages\ are\ processed\ by\ the\ thread\ pool.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ This\ is\ because\ each\ message\ in\ the\ queue\ holds\ a\ shared\_ptr\ to\ the}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ originating\ logger.}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{async__logger_8h}{spdlog/async\_logger.h}}>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{registry_8h}{spdlog/details/registry.h}}>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{thread__pool_8h}{spdlog/details/thread\_pool.h}}>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <functional>}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog}{spdlog}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog_1_1details}{details}}\ \{}
+\DoxyCodeLine{00028\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacespdlog_1_1details_a050e412794a5af8916ef36e4ed100c25}{default\_async\_q\_size}}\ =\ 8192;}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ async\ logger\ factory\ -\/\ creates\ async\ loggers\ backed\ with\ thread\ pool.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ if\ a\ global\ thread\ pool\ doesn't\ already\ exist,\ create\ it\ with\ default\ queue}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ size\ of\ 8192\ items\ and\ single\ thread.}}
+\DoxyCodeLine{00034\ \textcolor{keyword}{template}\ <async\_overflow\_policy\ OverflowPolicy\ =\ async\_overflow\_policy::block>}
+\DoxyCodeLine{00035\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structspdlog_1_1async__factory__impl}{async\_factory\_impl}}\ \{}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Sink,\ \textcolor{keyword}{typename}...\ SinkArgs>}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{static}\ std::shared\_ptr<async\_logger>\ \mbox{\hyperlink{structspdlog_1_1async__factory__impl_aa0f44766a63a9ca2a0af4bd2b6ca1837}{create}}(std::string\ logger\_name,\ SinkArgs\ \&\&...args)\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&registry\_inst\ =\ \mbox{\hyperlink{classspdlog_1_1details_1_1registry_aa03a75101aed166275ba27d0b2235e5d}{details::registry::instance}}();}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ global\ thread\ pool\ if\ not\ already\ exists..}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&mutex\ =\ registry\_inst.tp\_mutex();}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ std::lock\_guard<std::recursive\_mutex>\ tp\_lock(mutex);}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tp\ =\ registry\_inst.get\_tp();}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tp\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ tp\ =\ std::make\_shared<details::thread\_pool>(\mbox{\hyperlink{namespacespdlog_1_1details_a050e412794a5af8916ef36e4ed100c25}{details::default\_async\_q\_size}},\ 1U);}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ registry\_inst.set\_tp(tp);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ sink\ =\ std::make\_shared<Sink>(std::forward<SinkArgs>(args)...);}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ new\_logger\ =\ std::make\_shared<async\_logger>(std::move(logger\_name),\ std::move(sink),}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::move(tp),\ OverflowPolicy);}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ registry\_inst.initialize\_logger(new\_logger);}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ new\_logger;}
+\DoxyCodeLine{00055\ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_a3ad8f6588cdc469bd303d2b3f53fc134}{async\_factory}}\ =\ \mbox{\hyperlink{structspdlog_1_1async__factory__impl}{async\_factory\_impl<async\_overflow\_policy::block>}};}
+\DoxyCodeLine{00059\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_a2744bf789dd57972a58ffac746c2a970}{async\_factory\_nonblock}}\ =\ \mbox{\hyperlink{structspdlog_1_1async__factory__impl}{async\_factory\_impl<async\_overflow\_policy::overrun\_oldest>}};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Sink,\ \textcolor{keyword}{typename}...\ SinkArgs>}
+\DoxyCodeLine{00062\ \textcolor{keyword}{inline}\ std::shared\_ptr<spdlog::logger>\ \mbox{\hyperlink{namespacespdlog_ac07cc4e00b3077855b636bc228dd6f85}{create\_async}}(std::string\ logger\_name,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SinkArgs\ \&\&...sink\_args)\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structspdlog_1_1async__factory__impl_aa0f44766a63a9ca2a0af4bd2b6ca1837}{async\_factory::create<Sink>}}(std::move(logger\_name),}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::forward<SinkArgs>(sink\_args)...);}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Sink,\ \textcolor{keyword}{typename}...\ SinkArgs>}
+\DoxyCodeLine{00069\ \textcolor{keyword}{inline}\ std::shared\_ptr<spdlog::logger>\ \mbox{\hyperlink{namespacespdlog_aede32c5f48a4b71559b03c8ceba5011b}{create\_async\_nb}}(std::string\ logger\_name,}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ SinkArgs\ \&\&...sink\_args)\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structspdlog_1_1async__factory__impl_aa0f44766a63a9ca2a0af4bd2b6ca1837}{async\_factory\_nonblock::create<Sink>}}(std::move(logger\_name),}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::forward<SinkArgs>(sink\_args)...);}
+\DoxyCodeLine{00073\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ set\ global\ thread\ pool.}}
+\DoxyCodeLine{00076\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacespdlog_afc9262edd6352dd95b60f653c3eda7ac}{init\_thread\_pool}}(\textcolor{keywordtype}{size\_t}\ q\_size,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ thread\_count,}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}()>\ on\_thread\_start,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}()>\ on\_thread\_stop)\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{auto}\ tp\ =\ std::make\_shared<details::thread\_pool>(q\_size,\ thread\_count,\ on\_thread\_start,}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ on\_thread\_stop);}
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1details_1_1registry_aa03a75101aed166275ba27d0b2235e5d}{details::registry::instance}}().\mbox{\hyperlink{classspdlog_1_1details_1_1registry_a4e5f3349b2d5d75cbd54994250fbb5a3}{set\_tp}}(std::move(tp));}
+\DoxyCodeLine{00083\ \}}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacespdlog_afc9262edd6352dd95b60f653c3eda7ac}{init\_thread\_pool}}(\textcolor{keywordtype}{size\_t}\ q\_size,}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ thread\_count,}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::function<\textcolor{keywordtype}{void}()>\ on\_thread\_start)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_afc9262edd6352dd95b60f653c3eda7ac}{init\_thread\_pool}}(q\_size,\ thread\_count,\ on\_thread\_start,\ []\ \{\});}
+\DoxyCodeLine{00089\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacespdlog_afc9262edd6352dd95b60f653c3eda7ac}{init\_thread\_pool}}(\textcolor{keywordtype}{size\_t}\ q\_size,\ \textcolor{keywordtype}{size\_t}\ thread\_count)\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{namespacespdlog_afc9262edd6352dd95b60f653c3eda7ac}{init\_thread\_pool}}(}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ q\_size,\ thread\_count,\ []\ \{\},\ []\ \{\});}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ get\ the\ global\ thread\ pool.}}
+\DoxyCodeLine{00097\ \textcolor{keyword}{inline}\ std::shared\_ptr<spdlog::details::thread\_pool>\ \mbox{\hyperlink{namespacespdlog_a16a3355d0b9d9341212a9948bb9fa362}{thread\_pool}}()\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classspdlog_1_1details_1_1registry_aa03a75101aed166275ba27d0b2235e5d}{details::registry::instance}}().\mbox{\hyperlink{classspdlog_1_1details_1_1registry_a7f9cefccc6f882c1e750601197488a5a}{get\_tp}}();}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ \}\ \ \textcolor{comment}{//\ namespace\ spdlog}}
+
+\end{DoxyCode}

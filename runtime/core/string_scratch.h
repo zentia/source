@@ -1,8 +1,8 @@
 #pragma once
 
-#include <luisa/core/dll_export.h>
-#include <luisa/core/basic_types.h>
-#include <luisa/core/stl/string.h>
+#include <runtime/core/dll_export.h>
+#include <runtime/core/basic_types.h>
+#include <runtime/core/stl/string.h>
 
 namespace luisa {
 

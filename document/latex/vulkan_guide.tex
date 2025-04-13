@@ -1,0 +1,193 @@
+\chapter{Vulkan guide}
+\hypertarget{vulkan_guide}{}\label{vulkan_guide}\index{Vulkan guide@{Vulkan guide}}
+\label{vulkan_guide_md_runtime_2glfw_2docs_2vulkan}%
+\Hypertarget{vulkan_guide_md_runtime_2glfw_2docs_2vulkan}%
+
+
+This guide is intended to fill the gaps between the official \href{https://www.khronos.org/vulkan/}{\texttt{ Vulkan resources}} and the rest of the GLFW documentation and is not a replacement for either. It assumes some familiarity with Vulkan concepts like loaders, devices, queues and surfaces and leaves it to the Vulkan documentation to explain the details of Vulkan functions.
+
+To develop for Vulkan you should download the \href{https://vulkan.lunarg.com/}{\texttt{ LunarG Vulkan SDK}} for your platform. Apart from headers and link libraries, they also provide the validation layers necessary for development.
+
+The \href{https://vulkan-tutorial.com/}{\texttt{ Vulkan Tutorial}} has more information on how to use GLFW and Vulkan. The \href{https://github.com/KhronosGroup/Vulkan-Samples}{\texttt{ Khronos Vulkan Samples}} also use GLFW, although with a small framework in between.
+
+For details on a specific Vulkan support function, see the \doxylink{group__vulkan}{Vulkan support reference}. There are also guides for the other areas of the GLFW API.
+
+
+\begin{DoxyItemize}
+\item \doxysectlink{intro_guide}{Introduction to the API}{0}
+\item \doxysectlink{window_guide}{Window guide}{0}
+\item \doxysectlink{context_guide}{Context guide}{0}
+\item \doxysectlink{monitor_guide}{Monitor guide}{0}
+\item \doxysectlink{input_guide}{Input guide}{0}
+\end{DoxyItemize}\hypertarget{vulkan_guide_vulkan_loader}{}\doxysection{\texorpdfstring{Finding the Vulkan loader}{Finding the Vulkan loader}}\label{vulkan_guide_vulkan_loader}
+GLFW itself does not ever need to be linked against the Vulkan loader.
+
+By default, GLFW will load the Vulkan loader dynamically at runtime via its standard name\+: {\ttfamily vulkan-\/1.\+dll} on Windows, {\ttfamily libvulkan.\+so.\+1} on Linux and other Unix-\/like systems and {\ttfamily libvulkan.\+1.\+dylib} on mac\+OS.
+
+@macos GLFW will also look up and search the {\ttfamily Frameworks} subdirectory of your application bundle.
+
+If your code is using a Vulkan loader with a different name or in a non-\/standard location you will need to direct GLFW to it. Pass your version of {\ttfamily vk\+Get\+Instance\+Proc\+Addr} to \doxylink{glfw_2src_2init_8c_a1712210f34c339a05adda69e3587ec00}{glfw\+Init\+Vulkan\+Loader} before initializing GLFW and it will use that function for all Vulkan entry point retrieval. This prevents GLFW from dynamically loading the Vulkan loader.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{glfw_2src_2init_8c_a1712210f34c339a05adda69e3587ec00}{glfwInitVulkanLoader}}(\mbox{\hyperlink{vulkan_8h_ae698fe946e5b75ed4a173e95133cf4f3}{vkGetInstanceProcAddr}});}
+
+\end{DoxyCode}
+
+
+@macos To make your application be redistributable you will need to set up the application bundle according to the LunarG SDK documentation. This is explained in more detail in the \href{https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html}{\texttt{ SDK documentation for mac\+OS}}.\hypertarget{vulkan_guide_vulkan_include}{}\doxysection{\texorpdfstring{Including the Vulkan header file}{Including the Vulkan header file}}\label{vulkan_guide_vulkan_include}
+To have GLFW include the Vulkan header, define \doxylink{build_guide_GLFW_INCLUDE_VULKAN}{GLFW\+\_\+\+INCLUDE\+\_\+\+VULKAN} before including the GLFW header.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ GLFW\_INCLUDE\_VULKAN}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <GLFW/glfw3.h>}}
+
+\end{DoxyCode}
+
+
+If you instead want to include the Vulkan header from a custom location or use your own custom Vulkan header then do this before the GLFW header.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <path/to/vulkan.h>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <GLFW/glfw3.h>}}
+
+\end{DoxyCode}
+
+
+Unless a Vulkan header is included, either by the GLFW header or above it, the following GLFW functions will not be declared, as depend on Vulkan types.
+
+
+\begin{DoxyItemize}
+\item \doxylink{glfw_2src_2init_8c_a1712210f34c339a05adda69e3587ec00}{glfw\+Init\+Vulkan\+Loader}
+\item \doxylink{vulkan_8c_ab1fbd7c0ba5c40c91c6b85b897364039}{glfw\+Get\+Instance\+Proc\+Address}
+\item \doxylink{vulkan_8c_a6a7033429666ac6b31d4250aeb5b37d1}{glfw\+Get\+Physical\+Device\+Presentation\+Support}
+\item \doxylink{vulkan_8c_a5a47c783767442b8b8e9ab3cf2e4959b}{glfw\+Create\+Window\+Surface}
+\end{DoxyItemize}
+
+The {\ttfamily VK\+\_\+\+USE\+\_\+\+PLATFORM\+\_\+\texorpdfstring{$\ast$}{*}\+\_\+\+KHR} macros do not need to be defined for the Vulkan part of GLFW to work. Define them only if you are using these extensions directly.\hypertarget{vulkan_guide_vulkan_support}{}\doxysection{\texorpdfstring{Querying for Vulkan support}{Querying for Vulkan support}}\label{vulkan_guide_vulkan_support}
+If you are linking directly against the Vulkan loader then you can skip this section. The canonical desktop loader library exports all Vulkan core and Khronos extension functions, allowing them to be called directly.
+
+If you are loading the Vulkan loader dynamically instead of linking directly against it, you can check for the availability of a loader and ICD with \doxylink{group__vulkan_ga72e7c3757d9ff2333181a5569bb7c403}{glfw\+Vulkan\+Supported}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{if}\ (\mbox{\hyperlink{group__vulkan_ga72e7c3757d9ff2333181a5569bb7c403}{glfwVulkanSupported}}())}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Vulkan\ is\ available,\ at\ least\ for\ compute}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+This function returns {\ttfamily GLFW\+\_\+\+TRUE} if the Vulkan loader and any minimally functional ICD was found.
+
+If one or both were not found, calling any other Vulkan related GLFW function will generate a \doxylink{group__errors_ga56882b290db23261cc6c053c40c2d08e}{GLFW\+\_\+\+API\+\_\+\+UNAVAILABLE} error.\hypertarget{vulkan_guide_vulkan_proc}{}\doxysubsection{\texorpdfstring{Querying Vulkan function pointers}{Querying Vulkan function pointers}}\label{vulkan_guide_vulkan_proc}
+To load any Vulkan core or extension function from the found loader, call \doxylink{vulkan_8c_ab1fbd7c0ba5c40c91c6b85b897364039}{glfw\+Get\+Instance\+Proc\+Address}. To load functions needed for instance creation, pass {\ttfamily NULL} as the instance.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{vulkan_8h_a00f4dadde12c1a1f1b3c32f176adfb95}{PFN\_vkCreateInstance}}\ pfnCreateInstance\ =\ (\mbox{\hyperlink{vulkan_8h_a00f4dadde12c1a1f1b3c32f176adfb95}{PFN\_vkCreateInstance}})}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{vulkan_8c_ab1fbd7c0ba5c40c91c6b85b897364039}{glfwGetInstanceProcAddress}}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}vkCreateInstance"{}});}
+
+\end{DoxyCode}
+
+
+Once you have created an instance, you can load from it all other Vulkan core functions and functions from any instance extensions you enabled.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{vulkan_8h_a8a541401813275b44363efed3223a8c5}{PFN\_vkCreateDevice}}\ pfnCreateDevice\ =\ (\mbox{\hyperlink{vulkan_8h_a8a541401813275b44363efed3223a8c5}{PFN\_vkCreateDevice}})}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{vulkan_8c_ab1fbd7c0ba5c40c91c6b85b897364039}{glfwGetInstanceProcAddress}}(instance,\ \textcolor{stringliteral}{"{}vkCreateDevice"{}});}
+
+\end{DoxyCode}
+
+
+This function in turn calls {\ttfamily vk\+Get\+Instance\+Proc\+Addr}. If that fails, the function falls back to a platform-\/specific query of the Vulkan loader (i.\+e. {\ttfamily dlsym} or {\ttfamily Get\+Proc\+Address}). If that also fails, the function returns {\ttfamily NULL}. For more information about {\ttfamily vk\+Get\+Instance\+Proc\+Addr}, see the Vulkan documentation.
+
+Vulkan also provides {\ttfamily vk\+Get\+Device\+Proc\+Addr} for loading device-\/specific versions of Vulkan function. This function can be retrieved from an instance with \doxylink{vulkan_8c_ab1fbd7c0ba5c40c91c6b85b897364039}{glfw\+Get\+Instance\+Proc\+Address}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{vulkan_8h_aa4959e0564d6e486d19974a30aca323d}{PFN\_vkGetDeviceProcAddr}}\ pfnGetDeviceProcAddr\ =\ (\mbox{\hyperlink{vulkan_8h_aa4959e0564d6e486d19974a30aca323d}{PFN\_vkGetDeviceProcAddr}})}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{vulkan_8c_ab1fbd7c0ba5c40c91c6b85b897364039}{glfwGetInstanceProcAddress}}(instance,\ \textcolor{stringliteral}{"{}vkGetDeviceProcAddr"{}});}
+
+\end{DoxyCode}
+
+
+Device-\/specific functions may execute a little faster, due to not having to dispatch internally based on the device passed to them. For more information about {\ttfamily vk\+Get\+Device\+Proc\+Addr}, see the Vulkan documentation.\hypertarget{vulkan_guide_vulkan_ext}{}\doxysection{\texorpdfstring{Querying required Vulkan extensions}{Querying required Vulkan extensions}}\label{vulkan_guide_vulkan_ext}
+To do anything useful with Vulkan you need to create an instance. If you want to use Vulkan to render to a window, you must enable the instance extensions GLFW requires to create Vulkan surfaces.
+
+To query the instance extensions required, call \doxylink{group__vulkan_gada152edc5bbbd0c2138728878632fd9c}{glfw\+Get\+Required\+Instance\+Extensions}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}};}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}**\ extensions\ =\ \mbox{\hyperlink{group__vulkan_gada152edc5bbbd0c2138728878632fd9c}{glfwGetRequiredInstanceExtensions}}(\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}});}
+
+\end{DoxyCode}
+
+
+These extensions must all be enabled when creating instances that are going to be passed to \doxylink{vulkan_8c_a6a7033429666ac6b31d4250aeb5b37d1}{glfw\+Get\+Physical\+Device\+Presentation\+Support} and \doxylink{vulkan_8c_a5a47c783767442b8b8e9ab3cf2e4959b}{glfw\+Create\+Window\+Surface}. The set of extensions will vary depending on platform and may also vary depending on graphics drivers and other factors.
+
+If it fails it will return {\ttfamily NULL} and GLFW will not be able to create Vulkan window surfaces. You can still use Vulkan for off-\/screen rendering and compute work.
+
+If successful the returned array will always include {\ttfamily VK\+\_\+\+KHR\+\_\+surface}, so if you don\textquotesingle{}t require any additional extensions you can pass this list directly to the {\ttfamily \doxylink{struct_vk_instance_create_info}{Vk\+Instance\+Create\+Info}} struct.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{struct_vk_instance_create_info}{VkInstanceCreateInfo}}\ ici;}
+\DoxyCodeLine{}
+\DoxyCodeLine{memset(\&ici,\ 0,\ \textcolor{keyword}{sizeof}(ici));}
+\DoxyCodeLine{ici.\mbox{\hyperlink{struct_vk_instance_create_info_a61acf255c166d205d753238b7ec2374a}{enabledExtensionCount}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}};}
+\DoxyCodeLine{ici.\mbox{\hyperlink{struct_vk_instance_create_info_a0646363d6acede786f5c0df7b07c9d6a}{ppEnabledExtensionNames}}\ =\ extensions;}
+\DoxyCodeLine{...}
+
+\end{DoxyCode}
+
+
+Additional extensions may be required by future versions of GLFW. You should check whether any extensions you wish to enable are already in the returned array, as it is an error to specify an extension more than once in the {\ttfamily \doxylink{struct_vk_instance_create_info}{Vk\+Instance\+Create\+Info}} struct.
+
+@macos Molten\+VK is (as of July 2022) not yet a fully conformant implementation of Vulkan. As of Vulkan SDK 1.\+3.\+216.\+0, this means you must also enable the {\ttfamily VK\+\_\+\+KHR\+\_\+portability\+\_\+enumeration} instance extension and set the {\ttfamily VK\+\_\+\+INSTANCE\+\_\+\+CREATE\+\_\+\+ENUMERATE\+\_\+\+PORTABILITY\+\_\+\+BIT\+\_\+\+KHR} bit in the instance creation info flags for Molten\+VK to show up in the list of physical devices. For more information, see the Vulkan and Molten\+VK documentation.\hypertarget{vulkan_guide_vulkan_present}{}\doxysection{\texorpdfstring{Querying for Vulkan presentation support}{Querying for Vulkan presentation support}}\label{vulkan_guide_vulkan_present}
+Not every queue family of every Vulkan device can present images to surfaces. To check whether a specific queue family of a physical device supports image presentation without first having to create a window and surface, call \doxylink{vulkan_8c_a6a7033429666ac6b31d4250aeb5b37d1}{glfw\+Get\+Physical\+Device\+Presentation\+Support}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{if}\ (\mbox{\hyperlink{vulkan_8c_a6a7033429666ac6b31d4250aeb5b37d1}{glfwGetPhysicalDevicePresentationSupport}}(instance,\ physical\_device,\ queue\_family\_index))}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Queue\ family\ supports\ image\ presentation}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The {\ttfamily VK\+\_\+\+KHR\+\_\+surface} extension additionally provides the {\ttfamily vk\+Get\+Physical\+Device\+Surface\+Support\+KHR} function, which performs the same test on an existing Vulkan surface.\hypertarget{vulkan_guide_vulkan_window}{}\doxysection{\texorpdfstring{Creating the window}{Creating the window}}\label{vulkan_guide_vulkan_window}
+Unless you will be using Open\+GL or Open\+GL ES with the same window as Vulkan, there is no need to create a context. You can disable context creation with the \doxylink{window_guide_GLFW_CLIENT_API_hint}{GLFW\+\_\+\+CLIENT\+\_\+\+API} hint.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{group__window_ga69c40728499720bef8a49aa925ea0efa}{glfwWindowHint}}(\mbox{\hyperlink{group__window_ga649309cf72a3d3de5b1348ca7936c95b}{GLFW\_CLIENT\_API}},\ \mbox{\hyperlink{glfw_2include_2_g_l_f_w_2glfw3_8h_a8f6dcdc968d214ff14779564f1389264}{GLFW\_NO\_API}});}
+\DoxyCodeLine{\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}}*\ \mbox{\hyperlink{joysticks_8c_a80de27bd7dc4e2b2ad3d5895b97a70f0}{window}}\ =\ \mbox{\hyperlink{group__window_gaaccd00fafe81e2db94e8cdf55721e055}{glfwCreateWindow}}(640,\ 480,\ \textcolor{stringliteral}{"{}Window\ Title"{}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+
+\end{DoxyCode}
+
+
+See \doxysectlink{context_guide_context_less}{Windows without contexts}{2} for more information.\hypertarget{vulkan_guide_vulkan_surface}{}\doxysection{\texorpdfstring{Creating a Vulkan window surface}{Creating a Vulkan window surface}}\label{vulkan_guide_vulkan_surface}
+You can create a Vulkan surface (as defined by the {\ttfamily VK\+\_\+\+KHR\+\_\+surface} extension) for a GLFW window with \doxylink{vulkan_8c_a5a47c783767442b8b8e9ab3cf2e4959b}{glfw\+Create\+Window\+Surface}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{glfw_2src_2internal_8h_a09787d7da5f3146095ed80ceccc2d794}{VkSurfaceKHR}}\ surface;}
+\DoxyCodeLine{\mbox{\hyperlink{vulkan_8h_abe3614d1bd40772bc2398a4a86ea4a45}{VkResult}}\ \mbox{\hyperlink{namespacespdlog_1_1level_a335eabf5eff13482903eb26be08f3861a4d723e295b98a75c1263d85fc165045f}{err}}\ =\ \mbox{\hyperlink{vulkan_8c_a5a47c783767442b8b8e9ab3cf2e4959b}{glfwCreateWindowSurface}}(instance,\ \mbox{\hyperlink{joysticks_8c_a80de27bd7dc4e2b2ad3d5895b97a70f0}{window}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \&surface);}
+\DoxyCodeLine{\textcolor{keywordflow}{if}\ (err)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Window\ surface\ creation\ failed}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+If an Open\+GL or Open\+GL ES context was created on the window, the context has ownership of the presentation on the window and a Vulkan surface cannot be created.
+
+It is your responsibility to destroy the surface. GLFW does not destroy it for you. Call {\ttfamily vk\+Destroy\+Surface\+KHR} function from the same extension to destroy it. 

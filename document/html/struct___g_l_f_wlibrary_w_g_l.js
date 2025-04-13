@@ -1,0 +1,28 @@
+var struct___g_l_f_wlibrary_w_g_l =
+[
+    [ "ARB_context_flush_control", "struct___g_l_f_wlibrary_w_g_l.html#a0dfb0fe8593c51a656900fe4e815f5c9", null ],
+    [ "ARB_create_context", "struct___g_l_f_wlibrary_w_g_l.html#aae99e060fd452f5e25b73b0da38f21ee", null ],
+    [ "ARB_create_context_no_error", "struct___g_l_f_wlibrary_w_g_l.html#acb2cb08d3e309376466bb4c512cbd939", null ],
+    [ "ARB_create_context_profile", "struct___g_l_f_wlibrary_w_g_l.html#a86f1e383f316a787812e73510f1323ef", null ],
+    [ "ARB_create_context_robustness", "struct___g_l_f_wlibrary_w_g_l.html#a44ffdd687487d33500cd0aeb2fff7ba2", null ],
+    [ "ARB_framebuffer_sRGB", "struct___g_l_f_wlibrary_w_g_l.html#aa0325e0600490c760ee9fc0cfd38d967", null ],
+    [ "ARB_multisample", "struct___g_l_f_wlibrary_w_g_l.html#a84ac200d8d815d67922ee6a1c8e90159", null ],
+    [ "ARB_pixel_format", "struct___g_l_f_wlibrary_w_g_l.html#a9e94399925bbc6e3c33aee440f7f5e59", null ],
+    [ "CreateContext", "struct___g_l_f_wlibrary_w_g_l.html#a3beb4ed4434fe80fb6ba6238fe553127", null ],
+    [ "CreateContextAttribsARB", "struct___g_l_f_wlibrary_w_g_l.html#ac8f415936a3c6bedf3ef6b87b286a88f", null ],
+    [ "DeleteContext", "struct___g_l_f_wlibrary_w_g_l.html#a835991741ad7b21480e20e0cb8c6559b", null ],
+    [ "EXT_colorspace", "struct___g_l_f_wlibrary_w_g_l.html#a8c66dbb46bed59facbd2ae64209d36e9", null ],
+    [ "EXT_create_context_es2_profile", "struct___g_l_f_wlibrary_w_g_l.html#ad1724f29f86f40e06a0a83e43a3bbcf8", null ],
+    [ "EXT_framebuffer_sRGB", "struct___g_l_f_wlibrary_w_g_l.html#ae40b12f1716dfb2ee999bf270838f7c9", null ],
+    [ "EXT_swap_control", "struct___g_l_f_wlibrary_w_g_l.html#a3ec461c42263c346818dec2757714005", null ],
+    [ "GetCurrentContext", "struct___g_l_f_wlibrary_w_g_l.html#a3c4b1005f1e726e203816da3b2b92f11", null ],
+    [ "GetCurrentDC", "struct___g_l_f_wlibrary_w_g_l.html#ae4e79a240e93a509b4989f85e0e37b36", null ],
+    [ "GetExtensionsStringARB", "struct___g_l_f_wlibrary_w_g_l.html#a77fa5387ca3ac5e3a934af07316ec836", null ],
+    [ "GetExtensionsStringEXT", "struct___g_l_f_wlibrary_w_g_l.html#a2a3c5462df803047a168c1df8001d5b2", null ],
+    [ "GetPixelFormatAttribivARB", "struct___g_l_f_wlibrary_w_g_l.html#a3b5a62766d00a71dc17b53520287ef46", null ],
+    [ "GetProcAddress", "struct___g_l_f_wlibrary_w_g_l.html#a4d96fe4402f133f48777236291590491", null ],
+    [ "instance", "struct___g_l_f_wlibrary_w_g_l.html#a27aefbd886b0871e42e4704bc3532f7f", null ],
+    [ "MakeCurrent", "struct___g_l_f_wlibrary_w_g_l.html#aa0b7d0161d91120deba20bcd55d81c10", null ],
+    [ "ShareLists", "struct___g_l_f_wlibrary_w_g_l.html#a8caddf0247f0b7f3c516e42608c1f525", null ],
+    [ "SwapIntervalEXT", "struct___g_l_f_wlibrary_w_g_l.html#aef7314e7d513532e28f01cd730820426", null ]
+];

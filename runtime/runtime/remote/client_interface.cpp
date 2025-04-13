@@ -1,9 +1,9 @@
-#include <luisa/runtime/remote/client_interface.h>
-#include <luisa/runtime/context.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/remote/client_interface.h>
+#include <runtime/runtime/context.h>
+#include <runtime/core/logging.h>
 #include "serde.hpp"
 #include "device_func.h"
-#include <luisa/ast/callable_library.h>
+#include <runtime/ast/callable_library.h>
 namespace luisa::compute {
 ClientInterface::ClientInterface(
     Context ctx,

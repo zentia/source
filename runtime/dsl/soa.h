@@ -583,7 +583,7 @@ public:
         : detail::SOAViewBase<T>{buffer, soa_offset, soa_size, elem_offset, elem_size} {
         auto buffer_end = this->buffer().offset() + soa_offset +
                           (elem_offset + elem_size) * element_stride;
-        if (!(buffer_end <= std::numeric_limits<uint>::max())) [[unlikely]] {
+        if (!(buffer_end <= (std::numeric_limits<uint>::max)())) [[unlikely]] {
             detail::error_soa_view_exceeds_uint_max();
         }
     }

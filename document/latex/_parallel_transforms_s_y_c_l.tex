@@ -1,0 +1,31 @@
+\doxysection{Parallel Transforms}
+\hypertarget{_parallel_transforms_s_y_c_l}{}\label{_parallel_transforms_s_y_c_l}\index{Parallel Transforms@{Parallel Transforms}}
+\doxylink{classtf_1_1sycl_flow}{tf\+::sycl\+Flow} provides a template method, \doxylink{classtf_1_1sycl_flow_ae278939334a90b6d58d8771e87b2e793}{tf\+::sycl\+Flow\+::transform}, for creating a task to perform parallel transforms by applying the given function to a range of item and stores the transformed result in another range.\hypertarget{_parallel_transforms_s_y_c_l_IteratorBasedParallelTransformSYCL}{}\doxysubsection{\texorpdfstring{Iterator-\/based Parallel Transforms}{Iterator-\/based Parallel Transforms}}\label{_parallel_transforms_s_y_c_l_IteratorBasedParallelTransformSYCL}
+Iterator-\/based parallel-\/transform applies the given transform function to a range of items and store the result in another range specified by two iterators, {\ttfamily first} and {\ttfamily last}. The two iterators are typically two raw pointers to the first element and the next to the last element in the range in GPU memory space. The task created by \doxylink{classtf_1_1sycl_flow_ae278939334a90b6d58d8771e87b2e793}{tf\+::sycl\+Flow\+::transform(\+I first, I last, C\&\& callable, S... srcs)} represents a kernel of parallel execution for the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (first\ !=\ last)\ \{}
+\DoxyCodeLine{\ \ *first++\ =\ callable(*src1++,\ *src2++,\ *src3++,\ ...);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The two iterators, {\ttfamily first} and {\ttfamily last}, are typically two raw pointers to the first element and the next to the last element in the range. The following example creates a {\ttfamily transform} kernel that assigns each element, starting from {\ttfamily gpu\+\_\+data} to {\ttfamily gpu\+\_\+data + 1000}, to the sum of the corresponding elements at {\ttfamily gpu\+\_\+data\+\_\+x}, {\ttfamily gpu\+\_\+data\+\_\+y}, and {\ttfamily gpu\+\_\+data\+\_\+z}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace\_on([](\mbox{\hyperlink{classtf_1_1sycl_flow}{tf::syclFlow}}\&\ sf)\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ gpu\_data[i]\ =\ gpu\_data\_x[i]\ +\ gpu\_data\_y[i]\ +\ gpu\_data\_z[i]}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1sycl_task}{tf::syclTask}}\ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}\ =\ sf.transform(}
+\DoxyCodeLine{\ \ \ \ gpu\_data,\ gpu\_data\ +\ 1000,\ }
+\DoxyCodeLine{\ \ \ \ []\ (\textcolor{keywordtype}{int}\ xi,\ \textcolor{keywordtype}{int}\ yi,\ \textcolor{keywordtype}{int}\ zi)\ \{\ \textcolor{keywordflow}{return}\ xi\ +\ yi\ +\ zi;\ \},}
+\DoxyCodeLine{\ \ \ \ gpu\_data\_x,\ gpu\_data\_y,\ gpu\_data\_z}
+\DoxyCodeLine{\ \ );\ }
+\DoxyCodeLine{\},\ \mbox{\hyperlink{tensor__benchmarks__sycl_8cc_a3cf6b70d081116fb8e9b0f56a2d69a50}{sycl\_queue}});}
+
+\end{DoxyCode}
+
+
+Each iteration is independent of each other and is assigned one kernel thread to run the callable. 

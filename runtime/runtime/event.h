@@ -44,10 +44,10 @@ public:
     }
     Event &operator=(Event const &) noexcept = delete;
     [[nodiscard]] Signal signal() const noexcept;
-    [[nodiscard]] Wait wait(uint64_t fence = std::numeric_limits<uint64_t>::max()) const noexcept;
-    [[nodiscard]] bool is_completed(uint64_t fence = std::numeric_limits<uint64_t>::max()) const noexcept;
+    [[nodiscard]] Wait wait(uint64_t fence = (std::numeric_limits<uint64_t>::max)()) const noexcept;
+    [[nodiscard]] bool is_completed(uint64_t fence = (std::numeric_limits<uint64_t>::max)()) const noexcept;
     [[nodiscard]] uint64_t last_fence() const noexcept { return _fence.load(); }
-    void synchronize(uint64_t fence = std::numeric_limits<uint64_t>::max()) const noexcept;
+    void synchronize(uint64_t fence = (std::numeric_limits<uint64_t>::max)()) const noexcept;
 };
 
 LUISA_MARK_STREAM_EVENT_TYPE(Event::Signal)

@@ -1,0 +1,111 @@
+\doxysection{Asynchronous Tasking}
+\hypertarget{_async_tasking}{}\label{_async_tasking}\index{Asynchronous Tasking@{Asynchronous Tasking}}
+This chapters discusses how to launch tasks asynchronously so that you can incorporate independent, dynamic parallelism in your taskflows.\hypertarget{_async_tasking_LaunchAsynchronousTasksFromAnExecutor}{}\doxysubsection{\texorpdfstring{Launch Asynchronous Tasks from an Executor}{Launch Asynchronous Tasks from an Executor}}\label{_async_tasking_LaunchAsynchronousTasksFromAnExecutor}
+Taskflow executor provides an STL-\/styled method, \doxylink{classtf_1_1_executor_af960048056f7c6b5bc71f4f526f05df7}{tf\+::\+Executor\+::async}, for you to run a callable object asynchronously. The method returns a @std\+\_\+future that will eventually hold the result of that function call.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::future<int>\ future\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.async([]()\{\ \textcolor{keywordflow}{return}\ 1;\ \});}
+\DoxyCodeLine{assert(future.get()\ ==\ 1);}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+Unlike std\+::async, the future object returned from \doxylink{classtf_1_1_executor_af960048056f7c6b5bc71f4f526f05df7}{tf\+::\+Executor\+::async} does not block on destruction until completing the function.
+\end{DoxyAttention}
+If you do not need the return value or use a future to synchronize the execution, you are encouraged to use \doxylink{classtf_1_1_executor_a0461cb2c459c9f9473c72af06af9c701}{tf\+::\+Executor\+::silent\+\_\+async} which returns nothing and thus has less overhead (i.\+e., no shared state management) compared to \doxylink{classtf_1_1_executor_af960048056f7c6b5bc71f4f526f05df7}{tf\+::\+Executor\+::async}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_async([]()\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ do\ some\ work\ without\ returning\ any\ result}}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+
+
+Launching asynchronous tasks from an executor is {\itshape thread-\/safe} and can be called by multiple threads both inside (i.\+e., worker) and outside the executor. Our scheduler autonomously detects whether an asynchronous task is submitted from an external thread or a worker thread and schedules its execution using work stealing.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ my\_task\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ launch\ an\ asynchronous\ task\ from\ my\_task}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.async([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ launch\ another\ asynchronous\ task\ that\ may\ be\ run\ by\ another\ worker}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.async([\&]()\{\});}
+\DoxyCodeLine{\ \ \})}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{wait\_for\_all}}();\ \ \ \textcolor{comment}{//\ wait\ for\ all\ tasks\ to\ finish}}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+Asynchronous tasks created from an executor does not belong to any taskflows. The lifetime of an asynchronous task is managed automatically by the executor that creates the task.
+\end{DoxyAttention}
+You can name an asynchronous task using the overloads, tf\+::\+Executor\+::async(const std\+::string\& name, F\&\& f) and tf\+::\+Executor\+::silent\+\_\+async(const std\+::string\& name, F\&\& f), that take a string in the first argument. Assigned names will appear in the observers of the executor.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::future<void>\ fu\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.async(\textcolor{stringliteral}{"{}async\ task"{}},\ []()\{\});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_async(\textcolor{stringliteral}{"{}silent\ async\ task"{}},\ []()\{\});}
+
+\end{DoxyCode}
+\hypertarget{_async_tasking_LaunchAsynchronousTasksFromARuntime}{}\doxysubsection{\texorpdfstring{Launch Asynchronous Tasks from a Runtime}{Launch Asynchronous Tasks from a Runtime}}\label{_async_tasking_LaunchAsynchronousTasksFromARuntime}
+You can launch asynchronous tasks from \doxylink{classtf_1_1_runtime}{tf\+::\+Runtime} using \doxylink{classtf_1_1_runtime_a5688b13034f179c4a8b2b0ebbb215051}{tf\+::\+Runtime\+::async} or \doxylink{classtf_1_1_runtime_a0ce29efa2106c8c5a1432e4a55ab2e05}{tf\+::\+Runtime\+::silent\+\_\+async}. The following code creates 100 asynchronous tasks from a runtime and joins their executions explicitly using \doxylink{classtf_1_1_runtime_afcc18484a95fd2a834940d878eaf4dfc}{tf\+::\+Runtime\+::corun\+\_\+all}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::atomic<int>\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\{0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]\ (\mbox{\hyperlink{classtf_1_1_runtime}{tf::Runtime}}\&\ rt)\{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<100;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_a0ce29efa2106c8c5a1432e4a55ab2e05}{silent\_async}}([\&]()\{\ ++\mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}};\ \}));}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_afcc18484a95fd2a834940d878eaf4dfc}{corun\_all}}();\ \ \textcolor{comment}{//\ all\ of\ the\ 100\ asynchronous\ tasks\ will\ finish\ by\ this\ join}}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ ==\ 100);}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Unlike \doxylink{classtf_1_1_subflow_a59fcac1323e70d920088dd37bd0be245}{tf\+::\+Subflow\+::join}, you can call \doxylink{classtf_1_1_runtime_afcc18484a95fd2a834940d878eaf4dfc}{tf\+::\+Runtime\+::corun\+\_\+all} multiple times to synchronize the execution of asynchronous tasks between different runs. For example, the following code spawn 100 asynchronous tasks twice and join each execution to assure the spawned 100 asynchronous tasks have properly completed.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::atomic<int>\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\{0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]\ (\mbox{\hyperlink{classtf_1_1_runtime}{tf::Runtime}}\&\ rt)\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ spawn\ 100\ asynchronous\ tasks\ and\ join}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<100;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_a0ce29efa2106c8c5a1432e4a55ab2e05}{silent\_async}}([\&]()\{\ ++\mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}};\ \}));}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_afcc18484a95fd2a834940d878eaf4dfc}{corun\_all}}();\ \ \textcolor{comment}{//\ all\ of\ the\ 100\ asynchronous\ tasks\ will\ finish\ by\ this\ join}}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ ==\ 100);}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ spawn\ another\ 100\ asynchronous\ tasks\ and\ join}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<100;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_a0ce29efa2106c8c5a1432e4a55ab2e05}{silent\_async}}([\&]()\{\ ++\mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}};\ \}));}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_afcc18484a95fd2a834940d878eaf4dfc}{corun\_all}}();\ \ \textcolor{comment}{//\ all\ of\ the\ 100\ asynchronous\ tasks\ will\ finish\ by\ this\ join}}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ ==\ 200);}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+By default, \doxylink{classtf_1_1_runtime}{tf\+::\+Runtime} does not join like \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow}. All pending asynchronous tasks spawned by \doxylink{classtf_1_1_runtime}{tf\+::\+Runtime} are no longer controllable when their parent runtime disappears. It is your responsibility to properly synchronize spawned asynchronous tasks using \doxylink{classtf_1_1_runtime_afcc18484a95fd2a834940d878eaf4dfc}{tf\+::\+Runtime\+::corun\+\_\+all}.
+
+\begin{DoxyAttention}{注意}
+Creating asynchronous tasks from a runtime allows users to efficiently implement parallel algorithms using recursion, such as parallel sort (\doxylink{classtf_1_1_flow_builder_a35e180eb63de6c9f28e43185e837a4fa}{tf\+::\+Taskflow\+::sort}), that demands dynamic parallelism at runtime. 
+\end{DoxyAttention}

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <luisa/runtime/buffer.h>
-#include <luisa/runtime/stream_event.h>
-#include <luisa/runtime/rhi/tile_modification.h>
-#include <luisa/runtime/sparse_heap.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/runtime/stream_event.h>
+#include <runtime/runtime/rhi/tile_modification.h>
+#include <runtime/runtime/sparse_heap.h>
 
 namespace luisa::compute {
 

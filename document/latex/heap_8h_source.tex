@@ -1,0 +1,466 @@
+\doxysection{heap.\+h}
+\hypertarget{heap_8h_source}{}\label{heap_8h_source}\index{runtime/EASTL/include/EASTL/heap.h@{runtime/EASTL/include/EASTL/heap.h}}
+\mbox{\hyperlink{heap_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (c)\ Electronic\ Arts\ Inc.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ file\ implements\ heap\ functionality\ much\ like\ the\ std\ C++\ heap\ algorithms.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Such\ heaps\ are\ not\ the\ same\ thing\ as\ memory\ heaps\ or\ pools,\ but\ rather\ are}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ semi-\/sorted\ random\ access\ containers\ which\ have\ the\ primary\ purpose\ of\ }}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ supporting\ the\ implementation\ of\ priority\_queue\ and\ similar\ data\ structures.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ The\ primary\ distinctions\ between\ this\ heap\ functionality\ and\ std::heap\ are:}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ \ \ -\/\ This\ heap\ exposes\ some\ extra\ functionality\ such\ as\ is\_heap\ and\ change\_heap.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ -\/\ This\ heap\ is\ more\ efficient\ than\ versions\ found\ in\ typical\ STL\ }}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ \ \ \ \ implementations\ such\ as\ STLPort,\ Microsoft,\ and\ Metrowerks.\ This\ comes}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ \ \ \ about\ due\ to\ better\ use\ of\ array\ dereferencing\ and\ branch\ prediction.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ \ \ \ \ \ You\ should\ expect\ of\ 5-\/30\%,\ depending\ on\ the\ usage\ and\ platform.}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ The\ publicly\ usable\ functions\ we\ define\ are:}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ \ \ push\_heap\ \ \ \ \ -\/-\/\ Adds\ an\ entry\ to\ a\ heap.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Same\ as\ C++\ std::push\_heap.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ \ pop\_heap\ \ \ \ \ \ -\/-\/\ Removes\ the\ top\ entry\ from\ a\ heap.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Same\ as\ C++\ std::pop\_heap.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ \ make\_heap\ \ \ \ \ -\/-\/\ Converts\ an\ array\ to\ a\ heap.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Same\ as\ C++\ std::make\_heap.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ sort\_heap\ \ \ \ \ -\/-\/\ Sorts\ a\ heap\ in\ place.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Same\ as\ C++\ std::sort\_heap.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ \ remove\_heap\ \ \ -\/-\/\ Removes\ an\ arbitrary\ entry\ from\ a\ heap.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ \ change\_heap\ \ \ -\/-\/\ Changes\ the\ priority\ of\ an\ entry\ in\ the\ heap.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ \ \ is\_heap\ \ \ \ \ \ \ -\/-\/\ Returns\ true\ if\ an\ array\ appears\ is\ in\ heap\ format.\ \ \ Same\ as\ C++11\ std::is\_heap.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ \ is\_heap\_until\ -\/-\/\ Returns\ largest\ part\ of\ the\ range\ which\ is\ a\ heap.\ \ \ \ Same\ as\ C++11\ std::is\_heap\_until.}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#ifndef\ EASTL\_HEAP\_H}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#define\ EASTL\_HEAP\_H}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{config_8h}{EASTL/internal/config.h}}>}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2iterator_8h}{EASTL/iterator.h}}>}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#include\ <stddef.h>}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#if\ defined(EA\_PRAGMA\_ONCE\_SUPPORTED)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ once\ }\textcolor{comment}{//\ Some\ compilers\ (e.g.\ VC++)\ benefit\ significantly\ from\ using\ this.\ We've\ measured\ 3-\/4\%\ build\ speed\ improvements\ in\ apps\ as\ a\ result.}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl}{eastl}}}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ promote\_heap\ (internal\ function)}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a421db7f64babc404cfa1cbe489a6cec2}{promote\_heap\_impl}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ position,\ T\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00056\ \ \ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(Distance\ parentPosition\ =\ (position\ -\/\ 1)\ >>\ 1;\ \textcolor{comment}{//\ This\ formula\ assumes\ that\ (position\ >\ 0).\ //\ We\ use\ '>>\ 1'\ instead\ of\ '/\ 2'\ because\ we\ have\ seen\ VC++\ generate\ better\ code\ with\ >>.}}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ (position\ >\ topPosition)\ \&\&\ (*(first\ +\ parentPosition)\ <\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ parentPosition\ =\ (position\ -\/\ 1)\ >>\ 1)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(*(first\ +\ parentPosition));\ \textcolor{comment}{//\ Swap\ the\ node\ with\ its\ parent.}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ position\ =\ parentPosition;}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00066\ \ \ \ \ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{promote\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ position,\ \textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00081\ \ \ \ \ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a421db7f64babc404cfa1cbe489a6cec2}{promote\_heap\_impl<RandomAccessIterator,\ Distance,\ const\ T\&,\ const\ value\_type>}}(first,\ topPosition,\ position,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00084\ \ \ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{promote\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ position,\ T\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00100\ \ \ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a421db7f64babc404cfa1cbe489a6cec2}{promote\_heap\_impl<RandomAccessIterator,\ Distance,\ T\&\&,\ value\_type>}}(first,\ topPosition,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<T>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Compare,\ \textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a421db7f64babc404cfa1cbe489a6cec2}{promote\_heap\_impl}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ position,\ T\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00108\ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(Distance\ parentPosition\ =\ (position\ -\/\ 1)\ >>\ 1;\ \textcolor{comment}{//\ This\ formula\ assumes\ that\ (position\ >\ 0).\ //\ We\ use\ '>>\ 1'\ instead\ of\ '/\ 2'\ because\ we\ have\ seen\ VC++\ generate\ better\ code\ with\ >>.}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ (position\ >\ topPosition)\ \&\&\ compare(*(first\ +\ parentPosition),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ parentPosition\ =\ (position\ -\/\ 1)\ >>\ 1)}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(*(first\ +\ parentPosition));\ \textcolor{comment}{//\ Swap\ the\ node\ with\ its\ parent.}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ position\ =\ parentPosition;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00118\ \ \ \ \ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{promote\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ position,\ \textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00134\ \ \ \ \ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a421db7f64babc404cfa1cbe489a6cec2}{promote\_heap\_impl<RandomAccessIterator,\ Distance,\ const\ T\&,\ Compare,\ const\ value\_type>}}(first,\ topPosition,\ position,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ compare);}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{promote\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ position,\ T\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00153\ \ \ \ \ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a421db7f64babc404cfa1cbe489a6cec2}{promote\_heap\_impl<RandomAccessIterator,\ Distance,\ T\&\&,\ Compare,\ value\_type>}}(first,\ topPosition,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<T>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}),\ compare);}
+\DoxyCodeLine{00156\ \ \ \ \ \}}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{comment}{//\ adjust\_heap\ (internal\ function)}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a34ba5a42c264dbe437de9afda36c2110}{adjust\_heap\_impl}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ heapSize,\ Distance\ position,\ T\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00166\ \ \ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ do\ the\ conventional\ approach\ of\ moving\ the\ position\ down\ to\ the\ }}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ bottom\ then\ inserting\ the\ value\ at\ the\ back\ and\ moving\ it\ up.}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ Distance\ childPosition\ =\ (2\ *\ position)\ +\ 2;}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ childPosition\ <\ heapSize;\ childPosition\ =\ (2\ *\ childPosition)\ +\ 2)}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(*(first\ +\ childPosition)\ <\ *(first\ +\ (childPosition\ -\/\ 1)))\ \textcolor{comment}{//\ Choose\ the\ larger\ of\ the\ two\ children.}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/childPosition;}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(*(first\ +\ childPosition));\ \textcolor{comment}{//\ Swap\ positions\ with\ this\ child.}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ position\ =\ childPosition;}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(childPosition\ ==\ heapSize)\ \textcolor{comment}{//\ If\ we\ are\ at\ the\ very\ last\ index\ of\ the\ bottom...}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(*(first\ +\ (childPosition\ -\/\ 1)));}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ position\ =\ childPosition\ -\/\ 1;}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{eastl::promote\_heap<RandomAccessIterator,\ Distance,\ T>}}(first,\ topPosition,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00186\ \ \ \ \ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{adjust\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ heapSize,\ Distance\ position,\ \textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00200\ \ \ \ \ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a34ba5a42c264dbe437de9afda36c2110}{adjust\_heap\_impl<RandomAccessIterator,\ Distance,\ const\ T\&,\ const\ value\_type>}}(first,\ topPosition,\ heapSize,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<const\ T\&>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00203\ \ \ \ \ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{adjust\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ heapSize,\ Distance\ position,\ T\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00218\ \ \ \ \ \{}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a34ba5a42c264dbe437de9afda36c2110}{adjust\_heap\_impl<RandomAccessIterator,\ Distance,\ T\&\&,\ value\_type>}}(first,\ topPosition,\ heapSize,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<T>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00221\ \ \ \ \ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Compare,\ \textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a34ba5a42c264dbe437de9afda36c2110}{adjust\_heap\_impl}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ heapSize,\ Distance\ position,\ T\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00226\ \ \ \ \ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ do\ the\ conventional\ approach\ of\ moving\ the\ position\ down\ to\ the\ }}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ bottom\ then\ inserting\ the\ value\ at\ the\ back\ and\ moving\ it\ up.}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ Distance\ childPosition\ =\ (2\ *\ position)\ +\ 2;}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ childPosition\ <\ heapSize;\ childPosition\ =\ (2\ *\ childPosition)\ +\ 2)}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(compare(*(first\ +\ childPosition),\ *(first\ +\ (childPosition\ -\/\ 1))))\ \textcolor{comment}{//\ Choose\ the\ larger\ of\ the\ two\ children.}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/childPosition;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(*(first\ +\ childPosition));\ \textcolor{comment}{//\ Swap\ positions\ with\ this\ child.}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ position\ =\ childPosition;}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(childPosition\ ==\ heapSize)\ \textcolor{comment}{//\ If\ we\ are\ at\ the\ bottom...}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ *(first\ +\ position)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(*(first\ +\ (childPosition\ -\/\ 1)));}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ position\ =\ childPosition\ -\/\ 1;}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{eastl::promote\_heap<RandomAccessIterator,\ Distance,\ T,\ Compare>}}(first,\ topPosition,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<ValueType>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}),\ compare);}
+\DoxyCodeLine{00246\ \ \ \ \ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{adjust\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ heapSize,\ Distance\ position,\ \textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00258\ \ \ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a34ba5a42c264dbe437de9afda36c2110}{adjust\_heap\_impl<RandomAccessIterator,\ Distance,\ const\ T\&,\ Compare,\ const\ value\_type>}}(first,\ topPosition,\ heapSize,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<const\ T\&>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}),\ compare);}
+\DoxyCodeLine{00261\ \ \ \ \ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{adjust\_heap}}(RandomAccessIterator\ first,\ Distance\ topPosition,\ Distance\ heapSize,\ Distance\ position,\ T\&\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}},\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00274\ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{iterator\_traits<RandomAccessIterator>::value\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a34ba5a42c264dbe437de9afda36c2110}{adjust\_heap\_impl<RandomAccessIterator,\ Distance,\ T\&\&,\ Compare,\ value\_type>}}(first,\ topPosition,\ heapSize,\ position,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<T>}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}),\ compare);}
+\DoxyCodeLine{00277\ \ \ \ \ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//\ push\_heap}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator>}
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_ab6da6605c8bb6e3b0647aceeb51b0639}{push\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last)}
+\DoxyCodeLine{00298\ \ \ \ \ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(*(last\ -\/\ 1)));}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{eastl::promote\_heap<RandomAccessIterator,\ difference\_type,\ value\_type>}}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(last\ -\/\ first\ -\/\ 1),\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<const\ value\_type>}}(tempBottom));}
+\DoxyCodeLine{00306\ \ \ \ \ \}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_ab6da6605c8bb6e3b0647aceeb51b0639}{push\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00321\ \ \ \ \ \{}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(*(last\ -\/\ 1));}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{eastl::promote\_heap<RandomAccessIterator,\ difference\_type,\ value\_type,\ Compare>}}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(last\ -\/\ first\ -\/\ 1),\ tempBottom,\ compare);}
+\DoxyCodeLine{00329\ \ \ \ \ \}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ pop\_heap}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00353\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator>}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_abd83f87c9c2f9097aad476dfd4bb3040}{pop\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last)}
+\DoxyCodeLine{00355\ \ \ \ \ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(*(last\ -\/\ 1)));}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ *(last\ -\/\ 1)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(*first);}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{eastl::adjust\_heap<RandomAccessIterator,\ difference\_type,\ value\_type>}}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(last\ -\/\ first\ -\/\ 1),\ 0,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(tempBottom));}
+\DoxyCodeLine{00363\ \ \ \ \ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_abd83f87c9c2f9097aad476dfd4bb3040}{pop\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00379\ \ \ \ \ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(*(last\ -\/\ 1)));}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ *(last\ -\/\ 1)\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(*first);}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{eastl::adjust\_heap<RandomAccessIterator,\ difference\_type,\ value\_type,\ Compare>}}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(last\ -\/\ first\ -\/\ 1),\ 0,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(tempBottom),\ compare);}
+\DoxyCodeLine{00387\ \ \ \ \ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{comment}{//\ make\_heap}}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00401\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator>}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a9eecfc9b2a1a1fc776aafc401b593c83}{make\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last)}
+\DoxyCodeLine{00403\ \ \ \ \ \{}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ do\ bottom-\/up\ heap\ construction\ as\ per\ Sedgewick.\ Such\ construction\ is\ O(n).}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}}\ heapSize\ =\ last\ -\/\ first;}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(heapSize\ >=\ 2)\ \textcolor{comment}{//\ If\ there\ is\ anything\ to\ do...\ (we\ need\ this\ check\ because\ otherwise\ the\ math\ fails\ below).}}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}}\ parentPosition\ =\ ((heapSize\ -\/\ 2)\ >>\ 1)\ +\ 1;\ \textcolor{comment}{//\ We\ use\ '>>\ 1'\ instead\ of\ '/\ 2'\ because\ we\ have\ seen\ VC++\ generate\ better\ code\ with\ >>.}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\{}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/parentPosition;}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ temp(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(*(first\ +\ parentPosition)));}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{eastl::adjust\_heap<RandomAccessIterator,\ difference\_type,\ value\_type>}}}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ parentPosition,\ heapSize,\ parentPosition,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(temp));}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}(parentPosition\ !=\ 0);}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00421\ \ \ \ \ \}}
+\DoxyCodeLine{00422\ }
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a9eecfc9b2a1a1fc776aafc401b593c83}{make\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00426\ \ \ \ \ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}}\ heapSize\ =\ last\ -\/\ first;}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(heapSize\ >=\ 2)\ \textcolor{comment}{//\ If\ there\ is\ anything\ to\ do...\ (we\ need\ this\ check\ because\ otherwise\ the\ math\ fails\ below).}}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}}\ parentPosition\ =\ ((heapSize\ -\/\ 2)\ >>\ 1)\ +\ 1;\ \textcolor{comment}{//\ We\ use\ '>>\ 1'\ instead\ of\ '/\ 2'\ because\ we\ have\ seen\ VC++\ generate\ better\ code\ with\ >>.}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/parentPosition;}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ temp(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(*(first\ +\ parentPosition)));}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{eastl::adjust\_heap<RandomAccessIterator,\ difference\_type,\ value\_type,\ Compare>}}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ parentPosition,\ heapSize,\ parentPosition,\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<value\_type>}}(temp),\ compare);}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}(parentPosition\ !=\ 0);}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00443\ \ \ \ \ \}}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{//\ sort\_heap}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator>}
+\DoxyCodeLine{00463\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a54a481cebb4bba2a1aa7a733f5d68a20}{sort\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last)}
+\DoxyCodeLine{00464\ \ \ \ \ \{}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ (last\ -\/\ first)\ >\ 1;\ -\/-\/last)\ \textcolor{comment}{//\ We\ simply\ use\ the\ heap\ to\ sort\ itself.}}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_abd83f87c9c2f9097aad476dfd4bb3040}{eastl::pop\_heap<RandomAccessIterator>}}(first,\ last);}
+\DoxyCodeLine{00467\ \ \ \ \ \}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a54a481cebb4bba2a1aa7a733f5d68a20}{sort\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00477\ \ \ \ \ \{}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ (last\ -\/\ first)\ >\ 1;\ -\/-\/last)\ \textcolor{comment}{//\ We\ simply\ use\ the\ heap\ to\ sort\ itself.}}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_abd83f87c9c2f9097aad476dfd4bb3040}{eastl::pop\_heap<RandomAccessIterator,\ Compare>}}(first,\ last,\ compare);}
+\DoxyCodeLine{00480\ \ \ \ \ \}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{comment}{//\ remove\_heap}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00500\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance>}
+\DoxyCodeLine{00501\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_ae359768fe1910e8c665b5fb143c5a9ab}{remove\_heap}}(RandomAccessIterator\ first,\ Distance\ heapSize,\ Distance\ position)}
+\DoxyCodeLine{00502\ \ \ \ \ \{}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(*(first\ +\ heapSize\ -\/\ 1));}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ *(first\ +\ heapSize\ -\/\ 1)\ =\ *(first\ +\ position);}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{eastl::adjust\_heap<RandomAccessIterator,\ difference\_type,\ value\_type>}}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(heapSize\ -\/\ 1),\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})position,\ tempBottom);}
+\DoxyCodeLine{00510\ \ \ \ \ \}}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00523\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_ae359768fe1910e8c665b5fb143c5a9ab}{remove\_heap}}(RandomAccessIterator\ first,\ Distance\ heapSize,\ Distance\ position,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00525\ \ \ \ \ \{}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(*(first\ +\ heapSize\ -\/\ 1));}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ *(first\ +\ heapSize\ -\/\ 1)\ =\ *(first\ +\ position);}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a99335227e3aec0cf68f0e7f7b61c4fb9}{eastl::adjust\_heap<RandomAccessIterator,\ difference\_type,\ value\_type,\ Compare>}}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(heapSize\ -\/\ 1),\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})position,\ tempBottom,\ compare);}
+\DoxyCodeLine{00533\ \ \ \ \ \}}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ }
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00538\ \ \ \ \ \textcolor{comment}{//\ change\_heap}}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00547\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance>}
+\DoxyCodeLine{00548\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a8f51a63693ac70dbaf20a890b95f9dc8}{change\_heap}}(RandomAccessIterator\ first,\ Distance\ heapSize,\ Distance\ position)}
+\DoxyCodeLine{00549\ \ \ \ \ \{}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_ae359768fe1910e8c665b5fb143c5a9ab}{eastl::remove\_heap<RandomAccessIterator,\ Distance>}}(first,\ heapSize,\ position);}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(*(first\ +\ heapSize\ -\/\ 1));}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{eastl::promote\_heap<RandomAccessIterator,\ difference\_type,\ value\_type>}}}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(heapSize\ -\/\ 1),\ tempBottom);}
+\DoxyCodeLine{00559\ \ \ \ \ \}}
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00567\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Distance,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a8f51a63693ac70dbaf20a890b95f9dc8}{change\_heap}}(RandomAccessIterator\ first,\ Distance\ heapSize,\ Distance\ position,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00569\ \ \ \ \ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::difference\_type}}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}};}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1iterator__traits}{eastl::iterator\_traits<RandomAccessIterator>::value\_type}}\ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}};}
+\DoxyCodeLine{00572\ }
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_ae359768fe1910e8c665b5fb143c5a9ab}{eastl::remove\_heap<RandomAccessIterator,\ Distance,\ Compare>}}(first,\ heapSize,\ position,\ compare);}
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1iterator__traits}{value\_type}}\ tempBottom(*(first\ +\ heapSize\ -\/\ 1));}
+\DoxyCodeLine{00576\ }
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a88a378473358bbdbd07127c015164a99}{eastl::promote\_heap<RandomAccessIterator,\ difference\_type,\ value\_type,\ Compare>}}}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (first,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})0,\ (\mbox{\hyperlink{structeastl_1_1iterator__traits}{difference\_type}})(heapSize\ -\/\ 1),\ tempBottom,\ compare);}
+\DoxyCodeLine{00579\ \ \ \ \ \}}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ }
+\DoxyCodeLine{00584\ \ \ \ \ \textcolor{comment}{//\ is\_heap\_until}}
+\DoxyCodeLine{00586\ }
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator>}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keyword}{inline}\ RandomAccessIterator\ \mbox{\hyperlink{namespaceeastl_ab2470e8f3cd62223f92d2bb9cef9b9f0}{is\_heap\_until}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last)}
+\DoxyCodeLine{00591\ \ \ \ \ \{}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ =\ 0;}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(RandomAccessIterator\ child\ =\ first\ +\ 1;\ child\ <\ last;\ ++child,\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ \string^=\ 1)}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(*first\ <\ *child)\ \ \textcolor{comment}{//\ We\ must\ use\ operator\ <,\ and\ are\ not\ allowed\ to\ use\ >\ or\ >=\ here.}}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ child;}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \ \ \ \ first\ +=\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}};\ \textcolor{comment}{//\ counter\ switches\ between\ 0\ and\ 1\ every\ time\ through.}}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00600\ }
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ last;}
+\DoxyCodeLine{00602\ \ \ \ \ \}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ }
+\DoxyCodeLine{00610\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00611\ \ \ \ \ \textcolor{keyword}{inline}\ RandomAccessIterator\ \mbox{\hyperlink{namespaceeastl_ab2470e8f3cd62223f92d2bb9cef9b9f0}{is\_heap\_until}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00612\ \ \ \ \ \{}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ =\ 0;}
+\DoxyCodeLine{00614\ }
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(RandomAccessIterator\ child\ =\ first\ +\ 1;\ child\ <\ last;\ ++child,\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\ \string^=\ 1)}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(compare(*first,\ *child))}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ child;}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ first\ +=\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}};\ \textcolor{comment}{//\ counter\ switches\ between\ 0\ and\ 1\ every\ time\ through.}}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ last;}
+\DoxyCodeLine{00623\ \ \ \ \ \}}
+\DoxyCodeLine{00624\ }
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ }
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{comment}{//\ is\_heap}}
+\DoxyCodeLine{00630\ }
+\DoxyCodeLine{00636\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator>}
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a95104847d051ae05a9ee749f723cbf90}{is\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last)}
+\DoxyCodeLine{00638\ \ \ \ \ \{}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{namespaceeastl_ab2470e8f3cd62223f92d2bb9cef9b9f0}{eastl::is\_heap\_until}}(first,\ last)\ ==\ last);}
+\DoxyCodeLine{00640\ \ \ \ \ \}}
+\DoxyCodeLine{00641\ }
+\DoxyCodeLine{00642\ }
+\DoxyCodeLine{00648\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RandomAccessIterator,\ \textcolor{keyword}{typename}\ Compare>}
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a95104847d051ae05a9ee749f723cbf90}{is\_heap}}(RandomAccessIterator\ first,\ RandomAccessIterator\ last,\ \mbox{\hyperlink{namespaceeastl_ae3d33fc51c4c15a85aee95335a5d336d}{Compare}}\ compare)}
+\DoxyCodeLine{00650\ \ \ \ \ \{}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{namespaceeastl_ab2470e8f3cd62223f92d2bb9cef9b9f0}{eastl::is\_heap\_until}}(first,\ last,\ compare)\ ==\ last);}
+\DoxyCodeLine{00652\ \ \ \ \ \}}
+\DoxyCodeLine{00653\ }
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \ \ \ \ \textcolor{comment}{//\ To\ consider:\ The\ following\ may\ be\ a\ faster\ implementation\ for\ most\ cases.}}
+\DoxyCodeLine{00656\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00657\ \ \ \ \ \textcolor{comment}{//\ template\ <typename\ RandomAccessIterator>}}
+\DoxyCodeLine{00658\ \ \ \ \ \textcolor{comment}{//\ inline\ bool\ is\_heap(RandomAccessIterator\ first,\ RandomAccessIterator\ last)}}
+\DoxyCodeLine{00659\ \ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00660\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ if(((uintptr\_t)(last\ -\/\ first)\ \&\ 1)\ ==\ 0)\ //\ If\ the\ range\ has\ an\ even\ number\ of\ elements...}}
+\DoxyCodeLine{00661\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ -\/-\/last;}}
+\DoxyCodeLine{00662\ \ \ \ \ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00663\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ RandomAccessIterator\ parent\ =\ first,\ child\ =\ (first\ +\ 1);}}
+\DoxyCodeLine{00664\ \ \ \ \ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00665\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ for(;\ child\ <\ last;\ child\ +=\ 2,\ ++parent)}}
+\DoxyCodeLine{00666\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{00667\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ if((*parent\ <\ *child)\ ||\ (*parent\ <\ *(child\ +\ 1)))}}
+\DoxyCodeLine{00668\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ return\ false;}}
+\DoxyCodeLine{00669\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{00670\ \ \ \ \ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00671\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ if((((uintptr\_t)(last\ -\/\ first)\ \&\ 1)\ ==\ 0)\ \&\&\ (*parent\ <\ *child))}}
+\DoxyCodeLine{00672\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ return\ false;}}
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00674\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ return\ true;}}
+\DoxyCodeLine{00675\ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \}\ \textcolor{comment}{//\ namespace\ eastl}}
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ Header\ include\ guard}}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ }
+\DoxyCodeLine{00685\ }
+
+\end{DoxyCode}

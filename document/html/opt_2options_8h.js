@@ -1,0 +1,46 @@
+var opt_2options_8h =
+[
+    [ "cds::opt::none", "structcds_1_1opt_1_1none.html", null ],
+    [ "cds::opt::select_default< Option, Default, Value >", "structcds_1_1opt_1_1select__default.html", "structcds_1_1opt_1_1select__default" ],
+    [ "cds::opt::value< Option >", "structcds_1_1opt_1_1value.html", null ],
+    [ "cds::opt::tag< Tag >", "structcds_1_1opt_1_1tag.html", null ],
+    [ "cds::opt::lock_type< Type >", "structcds_1_1opt_1_1lock__type.html", null ],
+    [ "cds::opt::sync_monitor< Type >", "structcds_1_1opt_1_1sync__monitor.html", null ],
+    [ "cds::opt::back_off< Type >", "structcds_1_1opt_1_1back__off.html", null ],
+    [ "cds::opt::gc< GC >", "structcds_1_1opt_1_1gc.html", null ],
+    [ "cds::opt::allocator< Type >", "structcds_1_1opt_1_1allocator.html", null ],
+    [ "cds::opt::node_allocator< Type >", "structcds_1_1opt_1_1node__allocator.html", null ],
+    [ "cds::opt::item_counter< Type >", "structcds_1_1opt_1_1item__counter.html", null ],
+    [ "cds::opt::alignment< Value >", "structcds_1_1opt_1_1alignment.html", null ],
+    [ "cds::opt::padding< Value >", "structcds_1_1opt_1_1padding.html", null ],
+    [ "cds::opt::stat< Type >", "structcds_1_1opt_1_1stat.html", null ],
+    [ "cds::opt::memory_model< Type >", "structcds_1_1opt_1_1memory__model.html", null ],
+    [ "cds::opt::type_traits< Type >", "structcds_1_1opt_1_1type__traits.html", null ],
+    [ "cds::opt::resizing_policy< Type >", "structcds_1_1opt_1_1resizing__policy.html", null ],
+    [ "cds::opt::copy_policy< Type >", "structcds_1_1opt_1_1copy__policy.html", null ],
+    [ "cds::opt::swap_policy< Type >", "structcds_1_1opt_1_1swap__policy.html", null ],
+    [ "cds::opt::move_policy< Type >", "structcds_1_1opt_1_1move__policy.html", null ],
+    [ "cds::opt::sort< Enable >", "structcds_1_1opt_1_1sort.html", null ],
+    [ "cds::opt::mutex_policy< Policy >", "structcds_1_1opt_1_1mutex__policy.html", null ],
+    [ "cds::opt::random_engine< Random >", "structcds_1_1opt_1_1random__engine.html", null ],
+    [ "cds::opt::free_list< FreeList >", "structcds_1_1opt_1_1free__list.html", null ],
+    [ "cds::opt::v::sequential_item_counter", "classcds_1_1opt_1_1v_1_1sequential__item__counter.html", "classcds_1_1opt_1_1v_1_1sequential__item__counter" ],
+    [ "cds::opt::v::relaxed_ordering", "structcds_1_1opt_1_1v_1_1relaxed__ordering.html", null ],
+    [ "cds::opt::v::sequential_consistent", "structcds_1_1opt_1_1v_1_1sequential__consistent.html", null ],
+    [ "cds::opt::v::default_swap_policy", "structcds_1_1opt_1_1v_1_1default__swap__policy.html", "structcds_1_1opt_1_1v_1_1default__swap__policy" ],
+    [ "cds::opt::v::assignment_move_policy", "structcds_1_1opt_1_1v_1_1assignment__move__policy.html", "structcds_1_1opt_1_1v_1_1assignment__move__policy" ],
+    [ "cds::opt::v::c_rand", "structcds_1_1opt_1_1v_1_1c__rand.html", "structcds_1_1opt_1_1v_1_1c__rand" ],
+    [ "cds::opt::make_options< OptionList, Options >", "structcds_1_1opt_1_1make__options.html", "structcds_1_1opt_1_1make__options" ],
+    [ "cds::opt::find_type_traits< DefaultOptions, Options >", "structcds_1_1opt_1_1find__type__traits.html", "structcds_1_1opt_1_1find__type__traits" ],
+    [ "cds::opt::find_option< What, Options >", "structcds_1_1opt_1_1find__option.html", "structcds_1_1opt_1_1find__option" ],
+    [ "cds::opt::select< What, Pairs >", "structcds_1_1opt_1_1select.html", "structcds_1_1opt_1_1select" ],
+    [ "cds::opt::special_alignment", "namespacecds_1_1opt.html#aa645d9d6fea0b1355513b3608efd6d9c", [
+      [ "cds::opt::no_special_alignment", "namespacecds_1_1opt.html#aa645d9d6fea0b1355513b3608efd6d9cac261da3b8c6cfb2a107588d7c6ce55ac", null ],
+      [ "cds::opt::cache_line_alignment", "namespacecds_1_1opt.html#aa645d9d6fea0b1355513b3608efd6d9ca60b877c6bb50b49d022ecfce77564167", null ]
+    ] ],
+    [ "cds::opt::special_padding", "namespacecds_1_1opt.html#a3e664c94f4a1373ec267d19df5cc3bea", [
+      [ "cds::opt::no_special_padding", "namespacecds_1_1opt.html#a3e664c94f4a1373ec267d19df5cc3beaa0884541e1d3a59c0479f0a6f16d5e5d8", null ],
+      [ "cds::opt::cache_line_padding", "namespacecds_1_1opt.html#a3e664c94f4a1373ec267d19df5cc3beaad2c97dd99643d7a2c379cc7e0750028a", null ],
+      [ "cds::opt::padding_tiny_data_only", "namespacecds_1_1opt.html#a3e664c94f4a1373ec267d19df5cc3beaaeb624e2a4069162ab9da0c8f15c7541d", null ]
+    ] ]
+];

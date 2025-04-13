@@ -1,7 +1,7 @@
 #pragma once
 
-#include <luisa/runtime/depth_format.h>
-#include <luisa/runtime/image.h>
+#include <runtime/runtime/depth_format.h>
+#include <runtime/runtime/image.h>
 
 namespace luisa::compute {
 class RasterExt;

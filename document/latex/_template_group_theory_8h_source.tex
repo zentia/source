@@ -1,0 +1,522 @@
+\doxysection{Template\+Group\+Theory.\+h}
+\hypertarget{_template_group_theory_8h_source}{}\label{_template_group_theory_8h_source}\index{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/CXX11/src/TensorSymmetry/util/TemplateGroupTheory.h@{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/CXX11/src/TensorSymmetry/util/TemplateGroupTheory.h}}
+\mbox{\hyperlink{_template_group_theory_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2013\ Christian\ Seiler\ <christian@iwakd.de>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_CXX11\_TENSORSYMMETRY\_TEMPLATEGROUPTHEORY\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_CXX11\_TENSORSYMMETRY\_TEMPLATEGROUPTHEORY\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen_1_1internal_1_1group__theory}{group\_theory}}\ \{}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{comment}{/**********************************************************************}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}Ok\ kid,\ here\ is\ where\ it\ gets\ complicated."{}}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/\ Amelia\ Pond\ in\ the\ "{}Doctor\ Who"{}\ episode}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ "{}The\ Big\ Bang"{}}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ *\ Dimino's\ algorithm}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ *\ ==================}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *\ The\ following\ is\ Dimino's\ algorithm\ in\ sequential\ form:}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ *\ Input:\ identity\ element,\ list\ of\ generators,\ equality\ check,}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ multiplication\ operation}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ *\ Output:\ list\ of\ group\ elements}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ *\ 1.\ add\ identity\ element}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ *\ 2.\ remove\ identities\ from\ list\ of\ generators}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ *\ 3.\ add\ all\ powers\ of\ first\ generator\ that\ aren't\ the}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ *\ \ \ \ identity\ element}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ *\ 4.\ go\ through\ all\ remaining\ generators:}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ a.\ if\ generator\ is\ already\ in\ the\ list\ of\ elements}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/>\ do\ nothing}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ b.\ otherwise}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i.\ \ \ remember\ current\ \#\ of\ elements}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (i.e.\ the\ size\ of\ the\ current\ subgroup)}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ii.\ \ add\ all\ current\ elements\ (which\ includes}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ the\ identity)\ each\ multiplied\ from\ right}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ with\ the\ current\ generator\ to\ the\ group}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ iii.\ add\ all\ remaining\ cosets\ that\ are\ generated}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ by\ products\ of\ the\ new\ generator\ with\ itself}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ and\ all\ other\ generators\ seen\ so\ far}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ *\ In\ functional\ form,\ this\ is\ implemented\ as\ a\ long\ set\ of\ recursive}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ *\ templates\ that\ have\ a\ complicated\ relationship.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ *\ The\ main\ interface\ for\ Dimino's\ algorithm\ is\ the\ template}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ *\ enumerate\_group\_elements.\ All\ lists\ are\ implemented\ as\ variadic}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ *\ type\_list<typename...>\ and\ numeric\_list<typename\ =\ int,\ int...>}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ *\ templates.}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ *\ 'Calling'\ templates\ is\ usually\ done\ via\ typedefs.}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ *\ This\ algorithm\ is\ an\ extended\ version\ of\ the\ basic\ version.\ The}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ *\ extension\ consists\ in\ the\ fact\ that\ each\ group\ element\ has\ a\ set}}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ *\ of\ flags\ associated\ with\ it.\ Multiplication\ of\ two\ group\ elements}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ *\ with\ each\ other\ results\ in\ a\ group\ element\ whose\ flags\ are\ the}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ *\ XOR\ of\ the\ flags\ of\ the\ previous\ elements.\ Each\ time\ the\ algorithm}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ *\ notices\ that\ a\ group\ element\ it\ just\ calculated\ is\ already\ in\ the}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ *\ list\ of\ current\ elements,\ the\ flags\ of\ both\ will\ be\ compared\ and}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ *\ added\ to\ the\ so-\/called\ 'global\ flags'\ of\ the\ group.}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ *\ The\ rationale\ behind\ this\ extension\ is\ that\ this\ allows\ not\ only}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ *\ for\ the\ description\ of\ symmetries\ between\ tensor\ indices,\ but}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ *\ also\ allows\ for\ the\ description\ of\ hermiticity,\ antisymmetry\ and}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ *\ antihermiticity.\ Negation\ and\ conjugation\ each\ are\ specific\ bit}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ *\ in\ the\ flags\ value\ and\ if\ two\ different\ ways\ to\ reach\ a\ group}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ *\ element\ lead\ to\ two\ different\ flags,\ this\ poses\ a\ constraint\ on}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ *\ the\ allowed\ values\ of\ the\ resulting\ tensor.\ For\ example,\ if\ a}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ *\ group\ element\ is\ reach\ both\ with\ and\ without\ the\ conjugation}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ *\ flags,\ it\ is\ clear\ that\ the\ resulting\ tensor\ has\ to\ be\ real.}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ *\ Note\ that\ this\ flag\ mechanism\ is\ quite\ generic\ and\ may\ have\ other}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ *\ uses\ beyond\ tensor\ properties.}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ *\ IMPORTANT:\ }}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ *\ \ \ \ \ This\ algorithm\ assumes\ the\ group\ to\ be\ finite.\ If\ you\ try\ to}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ *\ \ \ \ \ run\ it\ with\ a\ group\ that's\ infinite,\ the\ algorithm\ will\ only}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ *\ \ \ \ \ terminate\ once\ you\ hit\ a\ compiler\ limit\ (max\ template\ depth).}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ *\ \ \ \ \ Also\ note\ that\ trying\ to\ use\ this\ implementation\ to\ create\ a}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ *\ \ \ \ \ very\ large\ group\ will\ probably\ either\ make\ you\ hit\ the\ same}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ *\ \ \ \ \ limit,\ cause\ the\ compiler\ to\ segfault\ or\ at\ the\ very\ least}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ *\ \ \ \ \ take\ a\ *really*\ long\ time\ (hours,\ days,\ weeks\ -\/\ sic!)\ to}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ *\ \ \ \ \ compile.\ It\ is\ not\ recommended\ to\ plug\ in\ more\ than\ 4}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ *\ \ \ \ \ generators,\ unless\ they\ are\ independent\ of\ each\ other.}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00119\ \textcolor{keyword}{template}<\textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{_l_l_t__example_8cpp_a2913877890361a28ee108aafe462ee93}{L}}>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities}{strip\_identities}};}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00122\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00123\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00124\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},}
+\DoxyCodeLine{00125\ \ \ \textcolor{keyword}{typename}...\ ts}
+\DoxyCodeLine{00126\ >}
+\DoxyCodeLine{00127\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities}{strip\_identities}}<Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ ts...>>}
+\DoxyCodeLine{00128\ \{}
+\DoxyCodeLine{00129\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1conditional}{conditional}}<}
+\DoxyCodeLine{00130\ \ \ \ \ Equality<id,\ t>::value,}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities}{strip\_identities}}<Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<ts...>>\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__f08cc45c8ea5d12fcc4f4eb6bf8771ff_a73d675198782aaa1173882ef5635febe}{::type}},}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keyword}{typename}\ concat<type\_list<t>,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities}{strip\_identities}}<Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<ts...>>\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__f08cc45c8ea5d12fcc4f4eb6bf8771ff_a73d675198782aaa1173882ef5635febe}{::type}}>\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__f08cc45c8ea5d12fcc4f4eb6bf8771ff_a73d675198782aaa1173882ef5635febe}{::type}}}
+\DoxyCodeLine{00133\ \ \ >\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__f08cc45c8ea5d12fcc4f4eb6bf8771ff_a73d675198782aaa1173882ef5635febe}{::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__f08cc45c8ea5d12fcc4f4eb6bf8771ff_a73d675198782aaa1173882ef5635febe}{type}};}
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__f08cc45c8ea5d12fcc4f4eb6bf8771ff_a3bc8c263b2da40170d33abd10eaa8f57}{global\_flags}}\ =\ Equality<id,\ t>::global\_flags\ |\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities}{strip\_identities}}<Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<ts...>>\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__f08cc45c8ea5d12fcc4f4eb6bf8771ff_a3bc8c263b2da40170d33abd10eaa8f57}{::global\_flags}};}
+\DoxyCodeLine{00135\ \};}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00138\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00139\ \ \ \textcolor{keyword}{typename}\ \textcolor{keywordtype}{id}}
+\DoxyCodeLine{00140\ \ \ \mbox{\hyperlink{_c_x_x11_workarounds_8h_ab45e2cfb165b31ba065e92b23f88bd6d}{EIGEN\_TPL\_PP\_SPEC\_HACK\_DEFC}}(\textcolor{keyword}{typename},\ ts)}
+\DoxyCodeLine{00141\ >}
+\DoxyCodeLine{00142\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities}{strip\_identities}}<Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<\mbox{\hyperlink{_c_x_x11_workarounds_8h_aa9dea0b9a25cfa03ed5c12835b8de03f}{EIGEN\_TPL\_PP\_SPEC\_HACK\_USE}}(ts)>>}
+\DoxyCodeLine{00143\ \{}
+\DoxyCodeLine{00144\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list<>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__910db64a8d6fcf148be1d9764b935ba6_a990b0478a352c8f7f54d52eece01615b}{type}};}
+\DoxyCodeLine{00145\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1strip__identities_3_01_equality_00_01id_00_01type__910db64a8d6fcf148be1d9764b935ba6_a284923f6a08a0293a4e5544e49dd4fbe}{global\_flags}}\ =\ 0;}
+\DoxyCodeLine{00146\ \};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00161\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00162\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00163\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00164\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00165\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}},}
+\DoxyCodeLine{00166\ \ \ \textcolor{keyword}{typename}\ current\_element,}
+\DoxyCodeLine{00167\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00168\ \ \ \textcolor{keywordtype}{bool}\ dont\_add\_current\_element\ \ \ \textcolor{comment}{//\ =\ false}}
+\DoxyCodeLine{00169\ >}
+\DoxyCodeLine{00170\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements__helper}{dimino\_first\_step\_elements\_helper}}}
+\DoxyCodeLine{00171\ \#ifndef\ EIGEN\_PARSED\_BY\_DOXYGEN}
+\DoxyCodeLine{00172\ \ \ :\ \textcolor{comment}{//\ recursive\ inheritance\ is\ too\ difficult\ for\ Doxygen}}
+\DoxyCodeLine{00173\ \ \ \textcolor{keyword}{public}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements__helper}{dimino\_first\_step\_elements\_helper}}<}
+\DoxyCodeLine{00174\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00175\ \ \ \ \ Equality,}
+\DoxyCodeLine{00176\ \ \ \ \ id,}
+\DoxyCodeLine{00177\ \ \ \ \ g,}
+\DoxyCodeLine{00178\ \ \ \ \ typename\ Multiply<current\_element,\ g>::type,}
+\DoxyCodeLine{00179\ \ \ \ \ typename\ concat<elements,\ type\_list<current\_element>>::type,}
+\DoxyCodeLine{00180\ \ \ \ \ Equality<typename\ Multiply<current\_element,\ g>::type,\ id>::value}
+\DoxyCodeLine{00181\ \ \ >\ \{\};}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00184\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00185\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00186\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00187\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}},}
+\DoxyCodeLine{00188\ \ \ \textcolor{keyword}{typename}\ current\_element,}
+\DoxyCodeLine{00189\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}}
+\DoxyCodeLine{00190\ >}
+\DoxyCodeLine{00191\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements__helper}{dimino\_first\_step\_elements\_helper}}<Multiply,\ Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}},\ current\_element,\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},\ \mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>}
+\DoxyCodeLine{00192\ \#endif\ \textcolor{comment}{//\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00193\ \{}
+\DoxyCodeLine{00194\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements__helper_3_01_multiply9b4d61ec31d850d0ed180608dd79e37f_ae85a7e79fa072af334ef529c7e66785f}{type}};}
+\DoxyCodeLine{00195\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements__helper_3_01_multiply9b4d61ec31d850d0ed180608dd79e37f_a60b41b4f07cd778ad7b0be46a11b1cf9}{global\_flags}}\ =\ Equality<current\_element,\ id>::global\_flags;}
+\DoxyCodeLine{00196\ \};}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00211\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00212\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00213\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00214\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00215\ \ \ \textcolor{keyword}{typename}\ generators}
+\DoxyCodeLine{00216\ >}
+\DoxyCodeLine{00217\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements}{dimino\_first\_step\_elements}}}
+\DoxyCodeLine{00218\ \{}
+\DoxyCodeLine{00219\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1get}{get<0,\ generators>::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a6ddd9e313c93a200234882395fbe320e}{first\_generator}};}
+\DoxyCodeLine{00220\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{_json_8c_af38ca32489aef093745b4eb4673c64f3}{skip<1,\ generators>::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_add0c1d545f7aa928965c413e478a920b}{next\_generators}};}
+\DoxyCodeLine{00221\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list<first\_generator>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_ac308c5e3fd190ecc41ac6d3d9e55d268}{generators\_done}};}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements__helper}{dimino\_first\_step\_elements\_helper}}<}
+\DoxyCodeLine{00224\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00225\ \ \ \ \ Equality,}
+\DoxyCodeLine{00226\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00227\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a6ddd9e313c93a200234882395fbe320e}{first\_generator}},}
+\DoxyCodeLine{00228\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a6ddd9e313c93a200234882395fbe320e}{first\_generator}},}
+\DoxyCodeLine{00229\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list<id>}},}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keyword}{false}}
+\DoxyCodeLine{00231\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_aa173ec746139aafc70c8f913673f826d}{helper}};}
+\DoxyCodeLine{00232\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ helper::type\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a0680cf4fd6fb9846b17aa2eddd775c5c}{type}};}
+\DoxyCodeLine{00233\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a80983f85881a15eaa401cedee1436990}{global\_flags}}\ =\ helper::global\_flags;}
+\DoxyCodeLine{00234\ \};}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00256\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00257\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00258\ \ \ \textcolor{keyword}{typename}\ sub\_group\_elements,}
+\DoxyCodeLine{00259\ \ \ \textcolor{keyword}{typename}\ new\_coset\_rep,}
+\DoxyCodeLine{00260\ \ \ \textcolor{keywordtype}{bool}\ generate\_coset\ \ \ \ \ \ \textcolor{comment}{//\ =\ true}}
+\DoxyCodeLine{00261\ >}
+\DoxyCodeLine{00262\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements}{dimino\_get\_coset\_elements}}}
+\DoxyCodeLine{00263\ \{}
+\DoxyCodeLine{00264\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ apply\_op\_from\_right<Multiply,\ new\_coset\_rep,\ sub\_group\_elements>::type\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements_a90b6b7f2fdc81f9dad51ecb3cfea26fc}{type}};}
+\DoxyCodeLine{00265\ \};}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00268\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00269\ \ \ \textcolor{keyword}{typename}\ sub\_group\_elements,}
+\DoxyCodeLine{00270\ \ \ \textcolor{keyword}{typename}\ new\_coset\_rep}
+\DoxyCodeLine{00271\ >}
+\DoxyCodeLine{00272\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements}{dimino\_get\_coset\_elements}}<Multiply,\ sub\_group\_elements,\ new\_coset\_rep,\ \mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}>}
+\DoxyCodeLine{00273\ \{}
+\DoxyCodeLine{00274\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list<>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements_3_01_multiply_00_01sub6a817ae4e5806a51bb78ea524863d341_a52dff4181bccb385044a19c7fcb0b8e3}{type}};}
+\DoxyCodeLine{00275\ \};}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00291\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00292\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00293\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00294\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00295\ \ \ \textcolor{keyword}{typename}\ sub\_group\_elements,}
+\DoxyCodeLine{00296\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00297\ \ \ \textcolor{keyword}{typename}\ generators,}
+\DoxyCodeLine{00298\ \ \ \textcolor{keyword}{typename}\ rep\_element,}
+\DoxyCodeLine{00299\ \ \ \textcolor{keywordtype}{int}\ sub\_group\_size}
+\DoxyCodeLine{00300\ >}
+\DoxyCodeLine{00301\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep}{dimino\_add\_cosets\_for\_rep}};}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00304\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00305\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00306\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00307\ \ \ \textcolor{keyword}{typename}\ sub\_group\_elements,}
+\DoxyCodeLine{00308\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00309\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}},}
+\DoxyCodeLine{00310\ \ \ \textcolor{keyword}{typename}...\ gs,}
+\DoxyCodeLine{00311\ \ \ \textcolor{keyword}{typename}\ rep\_element,}
+\DoxyCodeLine{00312\ \ \ \textcolor{keywordtype}{int}\ sub\_group\_size}
+\DoxyCodeLine{00313\ >}
+\DoxyCodeLine{00314\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep}{dimino\_add\_cosets\_for\_rep}}<Multiply,\ Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ sub\_group\_elements,\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}},\ gs...>,\ rep\_element,\ sub\_group\_size>}
+\DoxyCodeLine{00315\ \{}
+\DoxyCodeLine{00316\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Multiply<rep\_element,\ g>::type\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_a25321743f0c783656afc3661325077bc}{new\_coset\_rep}};}
+\DoxyCodeLine{00317\ \ \ \textcolor{keyword}{typedef}\ contained\_in\_list\_gf<Equality,\ new\_coset\_rep,\ elements>\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_aa1ad822a7c954f50c68f4816d51a5379}{\_cil}};}
+\DoxyCodeLine{00318\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_a4f974330b86e92baa19b5f87026f78ae}{add\_coset}}\ =\ !\_cil::value;}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__get__coset__elements}{dimino\_get\_coset\_elements}}<}
+\DoxyCodeLine{00321\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00322\ \ \ \ \ sub\_group\_elements,}
+\DoxyCodeLine{00323\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_a25321743f0c783656afc3661325077bc}{new\_coset\_rep}},}
+\DoxyCodeLine{00324\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_a4f974330b86e92baa19b5f87026f78ae}{add\_coset}}}
+\DoxyCodeLine{00325\ \ \ >\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_aacbd0c209eacd22d83f250546df29512}{::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_ac0f308f8370263b654564531601b883a}{coset\_elements}};}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep}{dimino\_add\_cosets\_for\_rep}}<}
+\DoxyCodeLine{00328\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00329\ \ \ \ \ Equality,}
+\DoxyCodeLine{00330\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00331\ \ \ \ \ sub\_group\_elements,}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keyword}{typename}\ concat<elements,\ coset\_elements>::type,}
+\DoxyCodeLine{00333\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<gs...>,}
+\DoxyCodeLine{00334\ \ \ \ \ rep\_element,}
+\DoxyCodeLine{00335\ \ \ \ \ sub\_group\_size}
+\DoxyCodeLine{00336\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_ad5eaddb9edeaa7a4ec420de323a7ec9e}{\_helper}};}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \_helper::type\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_aacbd0c209eacd22d83f250546df29512}{type}};}
+\DoxyCodeLine{00339\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e632095b5337826777d5a1f8cb0eea391_aa71c801e8e4310022bab5c3c70b4331b}{global\_flags}}\ =\ \_cil::global\_flags\ |\ \_helper::global\_flags;}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \ \ \textcolor{comment}{/*\ Note\ that\ we\ don't\ have\ to\ update\ global\ flags\ here,\ since}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ \ *\ we\ will\ only\ add\ these\ elements\ if\ they\ are\ not\ part\ of}}
+\DoxyCodeLine{00343\ \textcolor{comment}{\ \ \ *\ the\ group\ already.\ But\ that\ only\ happens\ if\ the\ coset\ rep}}
+\DoxyCodeLine{00344\ \textcolor{comment}{\ \ \ *\ is\ not\ already\ in\ the\ group,\ so\ the\ check\ for\ the\ coset\ rep}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ \ *\ will\ catch\ this.}}
+\DoxyCodeLine{00346\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00347\ \};}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00350\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00351\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00352\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00353\ \ \ \textcolor{keyword}{typename}\ sub\_group\_elements,}
+\DoxyCodeLine{00354\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}}
+\DoxyCodeLine{00355\ \ \ \mbox{\hyperlink{_c_x_x11_workarounds_8h_ab45e2cfb165b31ba065e92b23f88bd6d}{EIGEN\_TPL\_PP\_SPEC\_HACK\_DEFC}}(\textcolor{keyword}{typename},\ empty),}
+\DoxyCodeLine{00356\ \ \ \textcolor{keyword}{typename}\ rep\_element,}
+\DoxyCodeLine{00357\ \ \ \textcolor{keywordtype}{int}\ sub\_group\_size}
+\DoxyCodeLine{00358\ >}
+\DoxyCodeLine{00359\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep}{dimino\_add\_cosets\_for\_rep}}<Multiply,\ Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ sub\_group\_elements,\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<\mbox{\hyperlink{_c_x_x11_workarounds_8h_aa9dea0b9a25cfa03ed5c12835b8de03f}{EIGEN\_TPL\_PP\_SPEC\_HACK\_USE}}(empty)>,\ rep\_element,\ sub\_group\_size>}
+\DoxyCodeLine{00360\ \{}
+\DoxyCodeLine{00361\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e1652444218b8671ae5ed0f27ebcae45c_a8c01a5346029860ab8aa1aa4a14d96b9}{type}};}
+\DoxyCodeLine{00362\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep_3_01_multiply_00_01_e1652444218b8671ae5ed0f27ebcae45c_a442657c6c4ea7abaaacd5b775d1d1fad}{global\_flags}}\ =\ 0;}
+\DoxyCodeLine{00363\ \};}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00379\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00380\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00381\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00382\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00383\ \ \ \textcolor{keyword}{typename}\ sub\_group\_elements,}
+\DoxyCodeLine{00384\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00385\ \ \ \textcolor{keyword}{typename}\ generators,}
+\DoxyCodeLine{00386\ \ \ \textcolor{keywordtype}{int}\ sub\_group\_size,}
+\DoxyCodeLine{00387\ \ \ \textcolor{keywordtype}{int}\ rep\_pos,}
+\DoxyCodeLine{00388\ \ \ \textcolor{keywordtype}{bool}\ stop\_condition\ \ \ \ \ \ \ \ \textcolor{comment}{//\ =\ false}}
+\DoxyCodeLine{00389\ >}
+\DoxyCodeLine{00390\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces}{dimino\_add\_all\_coset\_spaces}}}
+\DoxyCodeLine{00391\ \{}
+\DoxyCodeLine{00392\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1get}{get<rep\_pos,\ elements>::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_ac3f58e92ee2436e051e62a52256653d1}{rep\_element}};}
+\DoxyCodeLine{00393\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__cosets__for__rep}{dimino\_add\_cosets\_for\_rep}}<}
+\DoxyCodeLine{00394\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00395\ \ \ \ \ Equality,}
+\DoxyCodeLine{00396\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00397\ \ \ \ \ sub\_group\_elements,}
+\DoxyCodeLine{00398\ \ \ \ \ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00399\ \ \ \ \ generators,}
+\DoxyCodeLine{00400\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_ac3f58e92ee2436e051e62a52256653d1}{rep\_element}},}
+\DoxyCodeLine{00401\ \ \ \ \ sub\_group\_elements::count}
+\DoxyCodeLine{00402\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_ad4f264915b6d925e40aa978cd2be7567}{\_ac4r}};}
+\DoxyCodeLine{00403\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \_ac4r::type\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_af0fa4e28d09354873ed510ad7b4740dd}{new\_elements}};}
+\DoxyCodeLine{00404\ \ \ }
+\DoxyCodeLine{00405\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a2413d5b82186685a8947f5cb07ba2c50}{new\_rep\_pos}}\ =\ rep\_pos\ +\ sub\_group\_elements::count;}
+\DoxyCodeLine{00406\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a01f137f70209ed6fb7f2364205b9fb25}{new\_stop\_condition}}\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a2413d5b82186685a8947f5cb07ba2c50}{new\_rep\_pos}}\ >=\ new\_elements::count;}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces}{dimino\_add\_all\_coset\_spaces}}<}
+\DoxyCodeLine{00409\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00410\ \ \ \ \ Equality,}
+\DoxyCodeLine{00411\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00412\ \ \ \ \ sub\_group\_elements,}
+\DoxyCodeLine{00413\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_af0fa4e28d09354873ed510ad7b4740dd}{new\_elements}},}
+\DoxyCodeLine{00414\ \ \ \ \ generators,}
+\DoxyCodeLine{00415\ \ \ \ \ sub\_group\_size,}
+\DoxyCodeLine{00416\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a2413d5b82186685a8947f5cb07ba2c50}{new\_rep\_pos}},}
+\DoxyCodeLine{00417\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a01f137f70209ed6fb7f2364205b9fb25}{new\_stop\_condition}}}
+\DoxyCodeLine{00418\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_af5fa0b2b68ccfaa023d6113753a986df}{\_helper}};}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a75320f83307a37a34ab998b899c0af2c}{\_helper::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a75320f83307a37a34ab998b899c0af2c}{type}};}
+\DoxyCodeLine{00421\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a0ac8d3c4da71e1675c1cf543214698e3}{global\_flags}}\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a0ac8d3c4da71e1675c1cf543214698e3}{\_helper::global\_flags}}\ |\ \_ac4r::global\_flags;}
+\DoxyCodeLine{00422\ \};}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00425\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00426\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00427\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00428\ \ \ \textcolor{keyword}{typename}\ sub\_group\_elements,}
+\DoxyCodeLine{00429\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00430\ \ \ \textcolor{keyword}{typename}\ generators,}
+\DoxyCodeLine{00431\ \ \ \textcolor{keywordtype}{int}\ sub\_group\_size,}
+\DoxyCodeLine{00432\ \ \ \textcolor{keywordtype}{int}\ rep\_pos}
+\DoxyCodeLine{00433\ >}
+\DoxyCodeLine{00434\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces}{dimino\_add\_all\_coset\_spaces}}<Multiply,\ Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ sub\_group\_elements,\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},\ generators,\ sub\_group\_size,\ rep\_pos,\ \mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>}
+\DoxyCodeLine{00435\ \{}
+\DoxyCodeLine{00436\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_3_01_multiply_00_014e1e7100a33430204d5dd7c50ace3f17_af5b3088c8ddc0e77d1a0b9c0d8d5df0a}{type}};}
+\DoxyCodeLine{00437\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_3_01_multiply_00_014e1e7100a33430204d5dd7c50ace3f17_a775ec97825b00fbff6be5c05639be1ce}{global\_flags}}\ =\ 0;}
+\DoxyCodeLine{00438\ \};}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00452\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00453\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00454\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00455\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00456\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00457\ \ \ \textcolor{keyword}{typename}\ generators\_done,}
+\DoxyCodeLine{00458\ \ \ \textcolor{keyword}{typename}\ current\_generator,}
+\DoxyCodeLine{00459\ \ \ \textcolor{keywordtype}{bool}\ redundant\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ =\ false}}
+\DoxyCodeLine{00460\ >}
+\DoxyCodeLine{00461\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator}{dimino\_add\_generator}}}
+\DoxyCodeLine{00462\ \{}
+\DoxyCodeLine{00463\ \ \ \textcolor{comment}{/*\ this\ template\ is\ only\ called\ if\ the\ generator\ is\ not\ redundant}}
+\DoxyCodeLine{00464\ \textcolor{comment}{\ \ \ *\ =>\ all\ elements\ of\ the\ group\ multiplied\ with\ the\ new\ generator}}
+\DoxyCodeLine{00465\ \textcolor{comment}{\ \ \ *\ \ \ \ are\ going\ to\ be\ new\ elements\ of\ the\ most\ trivial\ coset\ space}}
+\DoxyCodeLine{00466\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00467\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ apply\_op\_from\_right<Multiply,\ current\_generator,\ elements>::type\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a75eb0e8b924e2e3bf734c75d43b825ee}{multiplied\_elements}};}
+\DoxyCodeLine{00468\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ concat<elements,\ multiplied\_elements>::type\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_aa9203ba4903591d0fbe3680ff03f40aa}{new\_elements}};}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a6ba640074f77cbb30bb5261acececf24}{rep\_pos}}\ =\ elements::count;}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces}{dimino\_add\_all\_coset\_spaces}}<}
+\DoxyCodeLine{00473\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00474\ \ \ \ \ Equality,}
+\DoxyCodeLine{00475\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00476\ \ \ \ \ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},\ \textcolor{comment}{//\ elements\ of\ previous\ subgroup}}
+\DoxyCodeLine{00477\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_aa9203ba4903591d0fbe3680ff03f40aa}{new\_elements}},}
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keyword}{typename}\ concat<generators\_done,\ type\_list<current\_generator>>\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a5fa10aaef000f60fb08eeec36e97183b}{::type}},}
+\DoxyCodeLine{00479\ \ \ \ \ elements::count,\ \textcolor{comment}{//\ size\ of\ previous\ subgroup}}
+\DoxyCodeLine{00480\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a6ba640074f77cbb30bb5261acececf24}{rep\_pos}},}
+\DoxyCodeLine{00481\ \ \ \ \ \textcolor{keyword}{false}\ \textcolor{comment}{//\ don't\ stop\ (because\ rep\_pos\ >=\ new\_elements::count\ is\ always\ false\ at\ this\ point)}}
+\DoxyCodeLine{00482\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_afe0cbd616ff11cc5d7144454985ac6c3}{\_helper}};}
+\DoxyCodeLine{00483\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a75320f83307a37a34ab998b899c0af2c}{\_helper::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a5fa10aaef000f60fb08eeec36e97183b}{type}};}
+\DoxyCodeLine{00484\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a7dcd08b9ae7b1254005d79af1363b535}{global\_flags}}\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__all__coset__spaces_a0ac8d3c4da71e1675c1cf543214698e3}{\_helper::global\_flags}};}
+\DoxyCodeLine{00485\ \};}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00488\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00489\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00490\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00491\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00492\ \ \ \textcolor{keyword}{typename}\ generators\_done,}
+\DoxyCodeLine{00493\ \ \ \textcolor{keyword}{typename}\ current\_generator}
+\DoxyCodeLine{00494\ >}
+\DoxyCodeLine{00495\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator}{dimino\_add\_generator}}<Multiply,\ Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},\ generators\_done,\ current\_generator,\ \mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>}
+\DoxyCodeLine{00496\ \{}
+\DoxyCodeLine{00497\ \ \ \textcolor{comment}{//\ redundant\ case}}
+\DoxyCodeLine{00498\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_3_01_multiply_00_01_equality1109fbb0e963fbe870ce5c0363b21d03_a297ee7bee83e99dcb6c76c711e190b94}{type}};}
+\DoxyCodeLine{00499\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_3_01_multiply_00_01_equality1109fbb0e963fbe870ce5c0363b21d03_a937db6032c636599ad975a7479fa70e4}{global\_flags}}\ =\ 0;}
+\DoxyCodeLine{00500\ \};}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00514\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00515\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00516\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00517\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00518\ \ \ \textcolor{keyword}{typename}\ generators\_done,}
+\DoxyCodeLine{00519\ \ \ \textcolor{keyword}{typename}\ remaining\_generators,}
+\DoxyCodeLine{00520\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}}
+\DoxyCodeLine{00521\ >}
+\DoxyCodeLine{00522\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators}{dimino\_add\_remaining\_generators}}}
+\DoxyCodeLine{00523\ \{}
+\DoxyCodeLine{00524\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1get}{get<0,\ remaining\_generators>::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_ad8a7372c3d8e3d6b3c4ca1548e7c3468}{first\_generator}};}
+\DoxyCodeLine{00525\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{_json_8c_af38ca32489aef093745b4eb4673c64f3}{skip<1,\ remaining\_generators>::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a04ba8af4f16365890cdc78e64c40c3ea}{next\_generators}};}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ \ \ \textcolor{keyword}{typedef}\ contained\_in\_list\_gf<Equality,\ first\_generator,\ elements>\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_ab87e81a8995394df6d4955b8dc368966}{\_cil}};}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator}{dimino\_add\_generator}}<}
+\DoxyCodeLine{00530\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00531\ \ \ \ \ Equality,}
+\DoxyCodeLine{00532\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00533\ \ \ \ \ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}},}
+\DoxyCodeLine{00534\ \ \ \ \ generators\_done,}
+\DoxyCodeLine{00535\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_ad8a7372c3d8e3d6b3c4ca1548e7c3468}{first\_generator}},}
+\DoxyCodeLine{00536\ \ \ \ \ \_cil::value}
+\DoxyCodeLine{00537\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a3ab71439113d9a0ab307ab15d35889d3}{\_helper}};}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a5fa10aaef000f60fb08eeec36e97183b}{\_helper::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a2750668ee04c44d42663f0f17460c0b0}{new\_elements}};}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators}{dimino\_add\_remaining\_generators}}<}
+\DoxyCodeLine{00542\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00543\ \ \ \ \ Equality,}
+\DoxyCodeLine{00544\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00545\ \ \ \ \ \textcolor{keyword}{typename}\ concat<generators\_done,\ type\_list<first\_generator>>\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a446f68a9af3665750427f885a44e0633}{::type}},}
+\DoxyCodeLine{00546\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a04ba8af4f16365890cdc78e64c40c3ea}{next\_generators}},}
+\DoxyCodeLine{00547\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a2750668ee04c44d42663f0f17460c0b0}{new\_elements}}}
+\DoxyCodeLine{00548\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a766ddb0f497096d6f0a0415aa51ab267}{\_next\_iter}};}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a446f68a9af3665750427f885a44e0633}{\_next\_iter::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a446f68a9af3665750427f885a44e0633}{type}};}
+\DoxyCodeLine{00551\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_aefcd0bed273cc5d7c88ab7eb1774ded8}{global\_flags}}\ =}
+\DoxyCodeLine{00552\ \ \ \ \ \_cil::global\_flags\ |}
+\DoxyCodeLine{00553\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__generator_a7dcd08b9ae7b1254005d79af1363b535}{\_helper::global\_flags}}\ |}
+\DoxyCodeLine{00554\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_aefcd0bed273cc5d7c88ab7eb1774ded8}{\_next\_iter::global\_flags}};}
+\DoxyCodeLine{00555\ \};}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00558\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00559\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00560\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00561\ \ \ \textcolor{keyword}{typename}\ generators\_done,}
+\DoxyCodeLine{00562\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}}
+\DoxyCodeLine{00563\ >}
+\DoxyCodeLine{00564\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators}{dimino\_add\_remaining\_generators}}<Multiply,\ Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ generators\_done,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<>,\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}>}
+\DoxyCodeLine{00565\ \{}
+\DoxyCodeLine{00566\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{test__parallel__do_8cpp_a4b0b744e8191b30e8e4d828e76125ecb}{elements}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_3_01_multiply_00d4c8f7ea21da2ce5b9e3ae885466184b_a297f2c3b36711606eca7e4f03d8eabbf}{type}};}
+\DoxyCodeLine{00567\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_3_01_multiply_00d4c8f7ea21da2ce5b9e3ae885466184b_a607e32bb2d3e4d5b66bb5f136c4dbffa}{global\_flags}}\ =\ 0;}
+\DoxyCodeLine{00568\ \};}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00584\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00585\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00586\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00587\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00588\ \ \ \textcolor{keyword}{typename}\ generators,}
+\DoxyCodeLine{00589\ \ \ \textcolor{keywordtype}{int}\ initial\_global\_flags\ =\ 0}
+\DoxyCodeLine{00590\ >}
+\DoxyCodeLine{00591\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid}{enumerate\_group\_elements\_noid}}}
+\DoxyCodeLine{00592\ \{}
+\DoxyCodeLine{00593\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements}{dimino\_first\_step\_elements<Multiply,\ Equality,\ id,\ generators>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid_a636d9ac7ea87e8a20b0b1b08398e9d26}{first\_step}};}
+\DoxyCodeLine{00594\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a0680cf4fd6fb9846b17aa2eddd775c5c}{first\_step::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid_ae4cf13c8f6fc01f9e4ef3325a7f60435}{first\_step\_elements}};}
+\DoxyCodeLine{00595\ }
+\DoxyCodeLine{00596\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators}{dimino\_add\_remaining\_generators}}<}
+\DoxyCodeLine{00597\ \ \ \ \ Multiply,}
+\DoxyCodeLine{00598\ \ \ \ \ Equality,}
+\DoxyCodeLine{00599\ \ \ \ \ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00600\ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_ac308c5e3fd190ecc41ac6d3d9e55d268}{first\_step::generators\_done}},}
+\DoxyCodeLine{00601\ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_add0c1d545f7aa928965c413e478a920b}{first\_step::next\_generators}},\ \textcolor{comment}{//\ remaining\_generators}}
+\DoxyCodeLine{00602\ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a0680cf4fd6fb9846b17aa2eddd775c5c}{first\_step::type}}\ \textcolor{comment}{//\ first\_step\ elements}}
+\DoxyCodeLine{00603\ \ \ >\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid_a174551f0396f06c2185c642acedb7dfa}{\_helper}};}
+\DoxyCodeLine{00604\ }
+\DoxyCodeLine{00605\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_a446f68a9af3665750427f885a44e0633}{\_helper::type}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid_a81b4f08a5f43fc88459179b9bf587752}{type}};}
+\DoxyCodeLine{00606\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid_a753b9c5cd712a7e7e99ba7deb8a8039f}{global\_flags}}\ =}
+\DoxyCodeLine{00607\ \ \ \ \ initial\_global\_flags\ |}
+\DoxyCodeLine{00608\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__first__step__elements_a80983f85881a15eaa401cedee1436990}{first\_step::global\_flags}}\ |}
+\DoxyCodeLine{00609\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1dimino__add__remaining__generators_aefcd0bed273cc5d7c88ab7eb1774ded8}{\_helper::global\_flags}};}
+\DoxyCodeLine{00610\ \};}
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ \textcolor{comment}{//\ in\ case\ when\ no\ generators\ are\ specified}}
+\DoxyCodeLine{00613\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00614\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00615\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00616\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00617\ \ \ \textcolor{keywordtype}{int}\ initial\_global\_flags}
+\DoxyCodeLine{00618\ >}
+\DoxyCodeLine{00619\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid}{enumerate\_group\_elements\_noid}}<Multiply,\ Equality,\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list}}<>,\ initial\_global\_flags>}
+\DoxyCodeLine{00620\ \{}
+\DoxyCodeLine{00621\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1type__list}{type\_list<id>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid_3_01_multiply_00_0fbeb6252744622d4e917105540d8e4a3_af4227640204d535ba372c9ea98c940e1}{type}};}
+\DoxyCodeLine{00622\ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid_3_01_multiply_00_0fbeb6252744622d4e917105540d8e4a3_a4aab276ad20cfee817ef7b726aa393d9}{global\_flags}}\ =\ initial\_global\_flags;}
+\DoxyCodeLine{00623\ \};}
+\DoxyCodeLine{00624\ }
+\DoxyCodeLine{00642\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{00643\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Multiply,}
+\DoxyCodeLine{00644\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename},\ \textcolor{keyword}{typename}>\ \textcolor{keyword}{class\ }Equality,}
+\DoxyCodeLine{00645\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{cocoa__platform_8h_acf00cd75f37488e1d4ac463303ccfec4}{id}},}
+\DoxyCodeLine{00646\ \ \ \textcolor{keyword}{typename}\ \_generators}
+\DoxyCodeLine{00647\ >}
+\DoxyCodeLine{00648\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements}{enumerate\_group\_elements}}}
+\DoxyCodeLine{00649\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1group__theory_1_1enumerate__group__elements__noid}{enumerate\_group\_elements\_noid}}<}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ Multiply,}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ Equality,}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ id,}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ typename\ strip\_identities<Equality,\ id,\ \_generators>::type,}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ strip\_identities<Equality,\ id,\ \_generators>::global\_flags}
+\DoxyCodeLine{00655\ \ \ \ \ >}
+\DoxyCodeLine{00656\ \{}
+\DoxyCodeLine{00657\ \};}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00659\ \}\ \textcolor{comment}{//\ end\ namespace\ group\_theory}}
+\DoxyCodeLine{00660\ }
+\DoxyCodeLine{00661\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00662\ }
+\DoxyCodeLine{00663\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_CXX11\_TENSORSYMMETRY\_TEMPLATEGROUPTHEORY\_H}}
+\DoxyCodeLine{00666\ }
+\DoxyCodeLine{00667\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00668\ \textcolor{comment}{\ *\ kate:\ space-\/indent\ on;\ indent-\/width\ 2;\ mixedindent\ off;\ indent-\/mode\ cstyle;}}
+\DoxyCodeLine{00669\ \textcolor{comment}{\ */}}
+
+\end{DoxyCode}

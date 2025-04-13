@@ -1,0 +1,67 @@
+\doxysection{Parallel Transforms}
+\hypertarget{_c_u_d_a_s_t_d_transform}{}\label{_c_u_d_a_s_t_d_transform}\index{Parallel Transforms@{Parallel Transforms}}
+Taskflow provides template methods for transforming ranges of items to different outputs.\hypertarget{_c_u_d_a_s_t_d_transform_CUDASTDParallelTransformsIncludeTheHeader}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_c_u_d_a_s_t_d_transform_CUDASTDParallelTransformsIncludeTheHeader}
+You need to include the header file, {\ttfamily taskflow/cuda/algorithm/transform.hpp}, for using the parallel-\/transform algorithm.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{cuda_2algorithm_2transform_8hpp}{taskflow/cuda/algorithm/transform.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_c_u_d_a_s_t_d_transform_CUDASTDTransformARangeOfItems}{}\doxysubsection{\texorpdfstring{Transform a Range of Items}{Transform a Range of Items}}\label{_c_u_d_a_s_t_d_transform_CUDASTDTransformARangeOfItems}
+Parallel-\/transform algorithm applies the given transform function to a range of items and store the result in another range specified by two iterators, {\ttfamily first} and {\ttfamily last}. The task created by \doxylink{namespacetf_a3ed764530620a419e3400e1f9ab6c956}{tf\+::cuda\+\_\+transform(\+P\&\& p, I first, I last, O output, C op)} represents a parallel execution for the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (first\ !=\ last)\ \{}
+\DoxyCodeLine{\ \ *\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}++\ =\ op(*first++);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The following example creates a transform kernel that transforms an input range of {\ttfamily N} items to an output range by multiplying each item by 10.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ output[i]\ =\ input[i]*10}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a3ed764530620a419e3400e1f9ab6c956}{tf::cuda\_transform}}(}
+\DoxyCodeLine{\ \ policy,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}\ +\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ []\ \_\_device\_\_\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}*10;\ \}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ synchronize\ the\ execution}}
+\DoxyCodeLine{policy.synchronize();}
+
+\end{DoxyCode}
+
+
+Each iteration is independent of each other and is assigned one kernel thread to run the callable. The transform algorithm runs {\itshape asynchronously} through the stream specified in the execution policy. You need to synchronize the stream to obtain correct results.\hypertarget{_c_u_d_a_s_t_d_transform_CUDASTDTransformTwoRangesOfItems}{}\doxysubsection{\texorpdfstring{Transform Two Ranges of Items}{Transform Two Ranges of Items}}\label{_c_u_d_a_s_t_d_transform_CUDASTDTransformTwoRangesOfItems}
+You can transform two ranges of items to an output range through a binary operator. The task created by \doxylink{namespacetf_abdcb5b755f7ace2aa452541d5bf93b5f}{tf\+::cuda\+\_\+transform(\+P\&\& p, I1 first1, I1 last1, I2 first2, O output, C op)} represents a parallel execution for the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (first1\ !=\ last1)\ \{}
+\DoxyCodeLine{\ \ *\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}++\ =\ op(*first1++,\ *first2++);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The following example creates a transform kernel that transforms two input ranges of {\ttfamily N} items to an output range by summing each pair of items in the input ranges.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ output[i]\ =\ input1[i]\ +\ inpu2[i]}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a3ed764530620a419e3400e1f9ab6c956}{tf::cuda\_transform}}(policy,}
+\DoxyCodeLine{\ \ input1,\ input1+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ input2,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ []\_\_device\_\_(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}+\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};\ \}}
+\DoxyCodeLine{);\ }
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ synchronize\ the\ execution}}
+\DoxyCodeLine{policy.synchronize();}
+
+\end{DoxyCode}
+ 

@@ -1,0 +1,7 @@
+var struct_eigen_1_1internal_1_1traits_3_01_block_sparse_matrix_3_01___scalar_00_01___block_at_compibd5ca3edcdbc62bf01222bcf3326c5bd =
+[
+    [ "Index", "struct_eigen_1_1internal_1_1traits_3_01_block_sparse_matrix_3_01___scalar_00_01___block_at_compibd5ca3edcdbc62bf01222bcf3326c5bd.html#a9ee631d68b558c162151245afc0ab7bc", null ],
+    [ "Scalar", "struct_eigen_1_1internal_1_1traits_3_01_block_sparse_matrix_3_01___scalar_00_01___block_at_compibd5ca3edcdbc62bf01222bcf3326c5bd.html#a5a7f49b0301275a328580917dd12f1e4", null ],
+    [ "StorageKind", "struct_eigen_1_1internal_1_1traits_3_01_block_sparse_matrix_3_01___scalar_00_01___block_at_compibd5ca3edcdbc62bf01222bcf3326c5bd.html#ace37a5e6eca2b05f410d7349d246e884", null ],
+    [ "XprKind", "struct_eigen_1_1internal_1_1traits_3_01_block_sparse_matrix_3_01___scalar_00_01___block_at_compibd5ca3edcdbc62bf01222bcf3326c5bd.html#a11e3e60bb946bab8d9ede5359faf9562", null ]
+];

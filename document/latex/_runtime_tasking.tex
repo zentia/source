@@ -1,0 +1,124 @@
+\doxysection{Interact with the Runtime}
+\hypertarget{_runtime_tasking}{}\label{_runtime_tasking}\index{Interact with the Runtime@{Interact with the Runtime}}
+Taskflow allows you to interact with the scheduling runtime by taking a {\itshape runtime object} as an argument of a task. This is mostly useful for designing specialized parallel algorithms extended from the existing facility of Taskflow.\hypertarget{_runtime_tasking_CreateARuntimeTask}{}\doxysubsection{\texorpdfstring{Create a Runtime Object}{Create a Runtime Object}}\label{_runtime_tasking_CreateARuntimeTask}
+Taskflow allows a static task and a condition task to take a referenced \doxylink{classtf_1_1_runtime}{tf\+::\+Runtime} object that provides a set of methods to interact with the scheduling runtime. The following example creates a static task that leverages \doxylink{classtf_1_1_runtime}{tf\+::\+Runtime} to explicitly schedule a conditioned task which would never run under the normal scheduling circumstance\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}},\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}},\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}};}
+\DoxyCodeLine{std::tie(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}},\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}},\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}})\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace(}
+\DoxyCodeLine{\ \ []\ ()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \},}
+\DoxyCodeLine{\ \ [\&\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}]\ (\mbox{\hyperlink{classtf_1_1_runtime}{tf::Runtime}}\&\ rt)\ \{\ \ \textcolor{comment}{//\ C\ must\ be\ captured\ by\ reference}}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}B\(\backslash\)n"{}};\ }
+\DoxyCodeLine{\ \ \ \ rt.schedule(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});}
+\DoxyCodeLine{\ \ \},}
+\DoxyCodeLine{\ \ []\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}C\(\backslash\)n"{}};\ \},}
+\DoxyCodeLine{\ \ []\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}D\(\backslash\)n"{}};\ \}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.precede(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}},\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+When the condition task {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} completes and returns {\ttfamily 0}, the scheduler moves on to task {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}. Under the normal circumstance, tasks {\ttfamily C} and {\ttfamily D} will not run because their conditional dependencies never happen. This can be broken by forcefully scheduling {\ttfamily C} or/and {\ttfamily D} via a runtime object of a task that resides in the same graph. Here, task {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} call \doxylink{classtf_1_1_runtime_aa7e72cc0f298475195b252c8f1793343}{tf\+::\+Runtime\+::schedule} to forcefully run task {\ttfamily C} even though the weak dependency between {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} and {\ttfamily C} will never happen based on the graph structure itself. As a result, we will see both {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and {\ttfamily C} in the output\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ \ \ \ \#\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ leverages\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}\ \mbox{\hyperlink{runtime_2spdlog_2include_2spdlog_2fmt_2bundled_2base_8h_a8c5f2060819744fc66f8fbce25a480be}{runtime}}\ \textcolor{keywordtype}{object}\ to\ schedule\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ out\ of\ its\ dependency\ constraint}
+\DoxyCodeLine{\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+You should only schedule an {\itshape active} task from a runtime object. An active task is a task in a running taskflow. The task may or may not be running, and scheduling that task will immediately put it into the task queue of the worker that is running the runtime object.
+\end{DoxyAttention}
+\hypertarget{_runtime_tasking_AcquireTheRunningExecutor}{}\doxysubsection{\texorpdfstring{Acquire the Running Executor}{Acquire the Running Executor}}\label{_runtime_tasking_AcquireTheRunningExecutor}
+You can acquire the reference to the running executor using \doxylink{classtf_1_1_runtime_a4ee48a82df1f9758a999d18e6015cec4}{tf\+::\+Runtime\+::executor()}. The executor associated with a runtime object is the executor that runs the parent task of that runtime object.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&](\mbox{\hyperlink{classtf_1_1_runtime}{tf::Runtime}}\&\ rt)\{}
+\DoxyCodeLine{\ \ assert(\&(rt.\mbox{\hyperlink{classtf_1_1_runtime_a4ee48a82df1f9758a999d18e6015cec4}{executor}}())\ ==\ \&\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}});}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+\hypertarget{_runtime_tasking_RuntimeTaskingRunATaskGraphSynchronously}{}\doxysubsection{\texorpdfstring{Run a Task Graph Synchronously}{Run a Task Graph Synchronously}}\label{_runtime_tasking_RuntimeTaskingRunATaskGraphSynchronously}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} runtime object can spawn and run a task graph synchronously using \doxylink{classtf_1_1_runtime_a1c772e90614302024cfa52fa86d75cac}{tf\+::\+Runtime\+::corun}. This model allows you to leverage dynamic tasking to execute a parallel workload within a runtime object. You can create a task graph yourself and execute it through a runtime object. This organization avoids repetitive creation of a subflow with the same topology, such as running a runtime object repetitively. The following code performs the same execution logic as the above example but using the given task graph to avoid repetitive creations of a subflow\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ custom\ graph}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ graph;}
+\DoxyCodeLine{graph.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}independent\ task\ 1\(\backslash\)n"{}};\ \});}
+\DoxyCodeLine{graph.\mbox{\hyperlink{classtf_1_1_flow_builder_a60d7a666cab71ecfa3010b2efb0d6b57}{emplace}}([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}independent\ task\ 2\(\backslash\)n"{}};\ \});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&](tf::Runtime\&\ rt)\{\ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ this\ worker\ coruns\ the\ graph\ through\ its\ work-\/stealing\ loop}}
+\DoxyCodeLine{\ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_a1c772e90614302024cfa52fa86d75cac}{corun}}(graph);}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a6d0617eebc9421f1ba1f82ce6dd02c00}{run\_n}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}},\ 10000);}
+
+\end{DoxyCode}
+
+
+Although \doxylink{classtf_1_1_runtime_a1c772e90614302024cfa52fa86d75cac}{tf\+::\+Runtime\+::corun} blocks until the operation completes, the caller thread (worker) is not preempted (e.\+g., sleep or holding any lock). Instead, the caller thread joins the work-\/stealing loop of the executor and leaves whenever the spawned task graph completes. This is different from waiting for a submitted taskflow using tf\+::\+Future$<$\+T$>$\+::wait which blocks the caller thread until the submitted taskflow completes. When multiple submitted taskflows are being waited, their executions can potentially lead to deadlock. For example, the code below creates a taskflow of 1000 tasks with each task running a taskflow of 500 tasks in a blocking fashion\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(2);}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{std::array<tf::Taskflow,\ 1000>\ others;}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::atomic<size\_t>\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\{0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}<1000;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}++)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<500;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}].emplace([\&]()\{\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}++;\ \});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}},\ \&tf=others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ blocking\ the\ worker\ can\ introduce\ deadlock\ where}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ all\ workers\ are\ waiting\ for\ their\ taskflows\ to\ finish}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(tf).wait();}
+\DoxyCodeLine{\ \ \});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Using \doxylink{classtf_1_1_runtime_a1c772e90614302024cfa52fa86d75cac}{tf\+::\+Runtime\+::corun} allows each worker to corun these taskflows through its work-\/stealing loop, thus avoiding deadlock problem caused by blocking wait.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(2);}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{std::array<tf::Taskflow,\ 1000>\ others;}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::atomic<size\_t>\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\{0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}<1000;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}++)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<500;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}].emplace([\&]()\{\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}++;\ \});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&tf=others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]](tf::Runtime\&\ rt)\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ the\ caller\ worker\ will\ not\ block\ but\ corun\ these}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ taskflows\ through\ its\ work-\/stealing\ loop}}
+\DoxyCodeLine{\ \ \ \ rt.\mbox{\hyperlink{classtf_1_1_runtime_a1c772e90614302024cfa52fa86d75cac}{corun}}(tf);}
+\DoxyCodeLine{\ \ \});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+\hypertarget{_runtime_tasking_LearnMoreAboutRuntime}{}\doxysubsection{\texorpdfstring{Learn More About Runtime}{Learn More About Runtime}}\label{_runtime_tasking_LearnMoreAboutRuntime}
+Please visit the following pages to learn more about \doxylink{classtf_1_1_runtime}{tf\+::\+Runtime}\+:
+
+
+\begin{DoxyItemize}
+\item \doxysectlink{_async_tasking_LaunchAsynchronousTasksFromARuntime}{Launch Asynchronous Tasks from a Runtime}{1} 
+\end{DoxyItemize}

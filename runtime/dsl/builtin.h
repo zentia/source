@@ -191,7 +191,7 @@ inline void device_assert(Expr<bool> pred, luisa::string_view msg) noexcept {
 inline void set_block_size(uint x, uint y = 1u, uint z = 1u) noexcept {
     detail::validate_block_size(x, y, z);
     detail::FunctionBuilder::current()->set_block_size(
-        uint3{std::max(x, 1u), std::max(y, 1u), std::max(z, 1u)});
+        uint3{(std::max)(x, 1u), (std::max)(y, 1u), (std::max)(z, 1u)});
 }
 
 inline void set_block_size(uint3 size) noexcept {
@@ -609,7 +609,7 @@ struct vectorized_dimension<T> {
 
 template<typename First, typename... Other>
 struct vectorized_dimension<First, Other...> {
-    static constexpr auto value = std::max(
+    static constexpr auto value = (std::max)(
         vector_expr_dimension_v<First>,
         vectorized_dimension<Other...>::value);
 };
@@ -1198,7 +1198,7 @@ template<typename X, typename Y>
 /// Min.
 template<typename X, typename Y>
     requires any_dsl_v<X, Y> && is_vector_expr_same_element_v<X, Y>
-[[nodiscard]] inline auto min(X &&x, Y &&y) noexcept {
+[[nodiscard]] inline auto (min)(X &&x, Y &&y) noexcept {
     return detail::make_vector_call<vector_expr_element_t<X>>(
         CallOp::MIN,
         std::forward<X>(x),
@@ -1208,7 +1208,7 @@ template<typename X, typename Y>
 /// Max.
 template<typename X, typename Y>
     requires any_dsl_v<X, Y> && is_vector_expr_same_element_v<X, Y>
-[[nodiscard]] inline auto max(X &&x, Y &&y) noexcept {
+[[nodiscard]] inline auto (max)(X &&x, Y &&y) noexcept {
     return detail::make_vector_call<vector_expr_element_t<X>>(
         CallOp::MAX,
         std::forward<X>(x),

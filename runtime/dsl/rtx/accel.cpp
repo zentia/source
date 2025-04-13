@@ -1,5 +1,5 @@
-#include <luisa/dsl/stmt.h>
-#include <luisa/dsl/rtx/accel.h>
+#include <runtime/dsl/stmt.h>
+#include <runtime/dsl/rtx/accel.h>
 
 namespace luisa::compute {
 

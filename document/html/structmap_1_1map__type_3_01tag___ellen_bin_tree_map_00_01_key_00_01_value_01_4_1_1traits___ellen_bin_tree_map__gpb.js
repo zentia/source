@@ -1,0 +1,4 @@
+var structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__gpb =
+[
+    [ "update_desc_allocator", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__gpb.html#a5452e8a8ddf49d4d1aec811cafce6b4f", null ]
+];

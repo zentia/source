@@ -1,5 +1,5 @@
-#include <luisa/core/logging.h>
-#include <luisa/dsl/polymorphic.h>
+#include <runtime/core/logging.h>
+#include <runtime/dsl/polymorphic.h>
 
 namespace luisa::compute::detail {
 

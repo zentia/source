@@ -1,0 +1,285 @@
+\chapter{\texorpdfstring{$<$}{<}tt\texorpdfstring{$>$}{>}std\+::variant\texorpdfstring{$<$}{<}/tt\texorpdfstring{$>$}{>}, \texorpdfstring{$<$}{<}tt\texorpdfstring{$>$}{>}rfl\+::Variant\texorpdfstring{$<$}{<}/tt\texorpdfstring{$>$}{>} and \texorpdfstring{$<$}{<}tt\texorpdfstring{$>$}{>}rfl\+::Tagged\+Union\texorpdfstring{$<$}{<}/tt\texorpdfstring{$>$}{>}}
+\hypertarget{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions}{}\label{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions}\index{$<$tt$>$std::variant$<$/tt$>$, $<$tt$>$rfl::Variant$<$/tt$>$ and $<$tt$>$rfl::TaggedUnion$<$/tt$>$@{$<$tt$>$std::variant$<$/tt$>$, $<$tt$>$rfl::Variant$<$/tt$>$ and $<$tt$>$rfl::TaggedUnion$<$/tt$>$}}
+\label{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md705}%
+\Hypertarget{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md705}%
+\hypertarget{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md706}{}\doxysection{\texorpdfstring{{\ttfamily rfl\+::\+Variant} (untagged)}{{\ttfamily rfl\+::\+Variant} (untagged)}}\label{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md706}
+Sometimes you know that the JSON object can be one of several alternatives. For example, you might have several shapes like {\ttfamily Circle}, {\ttfamily Rectangle} or {\ttfamily Square}. For these kind of cases, the C++ standard library contains {\ttfamily std\+::variant} and it is supported by reflect-\/cpp.
+
+However, we recommend you use {\ttfamily \doxylink{classrfl_1_1_variant}{rfl\+::\+Variant}} instead.
+
+{\ttfamily \doxylink{classrfl_1_1_variant}{rfl\+::\+Variant}} behaves just like {\ttfamily std\+::variant}, but it compiles considerably faster, particularly for variants with many alternatives.
+
+You can use the functions {\ttfamily \doxylink{namespacerfl_ac379420409251e5a3c0bea4a701daf0a}{rfl\+::get}}, {\ttfamily \doxylink{namespacerfl_ae888abfe9b03cb12abccf2205daae330}{rfl\+::get\+\_\+if}}, {\ttfamily \doxylink{namespacerfl_a1ed102b316943bd9b92c1aae0a9c2119}{rfl\+::holds\+\_\+alternative}}, {\ttfamily \doxylink{namespacerfl_ab818223fa1c483a720a5004db13c118b}{rfl\+::visit}}, {\ttfamily \doxylink{namespacerfl_a73ec33297a48daba571bebf8307393b2}{rfl\+::variant\+\_\+alternative\+\_\+t}} and {\ttfamily \doxylink{namespacerfl_a86e7b6cea946dc3d8da6f593afde59db}{rfl\+::variant\+\_\+size\+\_\+v}} to access the variant and they work the same way as their equivalents in the standard library.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Circle\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ radius;}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Rectangle\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a31d490b16f4b63c2afa4c7198ef2c31e}{height}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Square\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ =\ \mbox{\hyperlink{classrfl_1_1_variant}{rfl::Variant<Circle,\ Rectangle,\ Square>}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ Rectangle\{.height\ =\ 10,\ .width\ =\ 5\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ r2\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Shapes>}}(json\_string);}
+
+\end{DoxyCode}
+
+
+This code will compile just fine and work as intended. However, there are several problems with this\+:
+
+1) It is in inefficient\+: The parser has to read the fields for all of the different alternatives until it can\textquotesingle{}t find a required field in the JSON object. It will then move on to the next alternative. 2) It leads to confusing error messages\+: If none of the alternatives can be matched, you will get an error message telling you why each of the alternatives couldn\textquotesingle{}t be matched. Such error messages are very long-\/winding and hard to read. 3) It is dangerous. Imagine we had written {\ttfamily \doxylink{classrfl_1_1_variant}{rfl\+::\+Variant}\texorpdfstring{$<$}{<}Circle, Square, Rectangle\texorpdfstring{$>$}{>}} instead of {\ttfamily \doxylink{classrfl_1_1_variant}{rfl\+::\+Variant}\texorpdfstring{$<$}{<}Circle, Rectangle, Square\texorpdfstring{$>$}{>}}. This would mean that {\ttfamily Rectangle} could never be matched, because the fields in {\ttfamily Square} are a subset of {\ttfamily Rectangle}. This leads to very confusing bugs.\hypertarget{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md707}{}\doxysection{\texorpdfstring{Automatic tags}{Automatic tags}}\label{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md707}
+The easiest way to solve this problem is to simply add tags automatically. You can do so by using {\ttfamily \doxylink{structrfl_1_1_add_tags_to_variants}{rfl\+::\+Add\+Tags\+To\+Variants}}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write<rfl::AddTagsToVariants>}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ r2\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Shapes,\ rfl::AddTagsToVariants>}}(json\_string);}
+
+\end{DoxyCode}
+
+
+Please refer to the section on processors in this documentation for more information.\hypertarget{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md708}{}\doxysection{\texorpdfstring{{\ttfamily rfl\+::\+Tagged\+Union} (internally tagged)}{{\ttfamily rfl\+::\+Tagged\+Union} (internally tagged)}}\label{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md708}
+Another way to solve this problem is to add a tag inside the class. That is why we have provided a helper class for these purposes\+: {\ttfamily \doxylink{structrfl_1_1_tagged_union}{rfl\+::\+Tagged\+Union}}.
+
+Tagged\+Unions use the name of the struct as an identifying tag. It will then try to take that field from the JSON object, match it to the correct alternative and then only parse the correct alternative.
+
+We will now rewrite the example from above using {\ttfamily \doxylink{structrfl_1_1_tagged_union}{rfl\+::\+Tagged\+Union}}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Circle\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ radius;}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Rectangle\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a31d490b16f4b63c2afa4c7198ef2c31e}{height}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Square\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Now\ you\ tell\ rfl::TaggedUnion\ that\ you\ want\ it\ to\ write\ the\ name}}
+\DoxyCodeLine{\textcolor{comment}{//\ of\ the\ struct\ into\ an\ extra\ field\ called\ "{}shape"{}.}}
+\DoxyCodeLine{\textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ =\ \mbox{\hyperlink{structrfl_1_1_tagged_union}{rfl::TaggedUnion}}<\textcolor{stringliteral}{"{}shape"{}},\ Circle,\ Square,\ Rectangle>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ Rectangle\{.height\ =\ 10,\ .width\ =\ 5\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ r2\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Shapes>}}(json\_string);}
+
+\end{DoxyCode}
+
+
+The resulting JSON looks like this\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{"{}shape"{}:"{}Rectangle"{},"{}height"{}:10.0,"{}width"{}:5.0\}}
+
+\end{DoxyCode}
+
+
+Because the tag is inside the JSON object, this is called {\itshape internally tagged}. It is the standard in Python\textquotesingle{}s \href{https://docs.pydantic.dev/latest/api/standard_library_types/\#union}{\texttt{ pydantic}}.
+
+It is also possible to set the tag explicitly\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Circle\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}circle"{}},\ \textcolor{stringliteral}{"{}Circle"{}}>;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ radius;}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Rectangle\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}rectangle"{}},\ \textcolor{stringliteral}{"{}Rectangle"{}}>;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a31d490b16f4b63c2afa4c7198ef2c31e}{height}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Square\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}square"{}},\ \textcolor{stringliteral}{"{}Square"{}}>;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ =\ \mbox{\hyperlink{structrfl_1_1_tagged_union}{rfl::TaggedUnion}}<\textcolor{stringliteral}{"{}shape"{}},\ Circle,\ Square,\ Rectangle>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ Rectangle\{.height\ =\ 10,\ .width\ =\ 5\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ r2\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Shapes>}}(json\_string);}
+
+\end{DoxyCode}
+
+
+The JSON generated by {\ttfamily \doxylink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl\+::json\+::write}} looks like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{"{}shape"{}:"{}rectangle"{},"{}height"{}:10.0,"{}width"{}:5.0\}}
+
+\end{DoxyCode}
+
+
+However, {\ttfamily \doxylink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl\+::json\+::read}} would also accept this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{"{}shape"{}:"{}Rectangle"{},"{}height"{}:10.0,"{}width"{}:5.0\}}
+
+\end{DoxyCode}
+
+
+If the behavior of your program depends on the value the user has decided to pass, then you can also set the tag as a field explicitly.
+
+For instance, if it somehow makes a difference whether the JSON contains "{}\+Rectangle"{} or "{}rectangle"{}, you can do the following\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Circle\ \{}
+\DoxyCodeLine{\ \ rfl::Literal<\textcolor{stringliteral}{"{}circle"{}},\ \textcolor{stringliteral}{"{}Circle"{}}>\ shape;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ radius;}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Rectangle\ \{}
+\DoxyCodeLine{\ \ rfl::Literal<\textcolor{stringliteral}{"{}rectangle"{}},\ \textcolor{stringliteral}{"{}Rectangle"{}}>\ shape;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a31d490b16f4b63c2afa4c7198ef2c31e}{height}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Square\ \{}
+\DoxyCodeLine{\ \ rfl::Literal<\textcolor{stringliteral}{"{}square"{}},\ \textcolor{stringliteral}{"{}Square"{}}>\ shape;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ =\ \mbox{\hyperlink{structrfl_1_1_tagged_union}{rfl::TaggedUnion}}<\textcolor{stringliteral}{"{}shape"{}},\ Circle,\ Square,\ Rectangle>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ Rectangle\{}
+\DoxyCodeLine{\ \ .shape\ =\ \mbox{\hyperlink{classrfl_1_1_literal}{rfl::Literal}}<\textcolor{stringliteral}{"{}rectangle"{}},\ \textcolor{stringliteral}{"{}Rectangle"{}}>::make<\textcolor{stringliteral}{"{}Rectangle"{}}>(),}
+\DoxyCodeLine{\ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a31d490b16f4b63c2afa4c7198ef2c31e}{height}}\ =\ 10,}
+\DoxyCodeLine{\ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}\ =\ 5\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ r2\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Shapes>}}(json\_string);}
+
+\end{DoxyCode}
+
+
+Note that in this case the type of the field {\ttfamily shape} MUST be {\ttfamily \doxylink{classrfl_1_1_literal}{rfl\+::\+Literal}}. Also note that this is exactly how tagged unions work in Pydantic. When you use the {\ttfamily \doxylink{structrfl_1_1_no_field_names}{rfl\+::\+No\+Field\+Names}} processor, the tag MUST always be the first entry of the array.\hypertarget{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md709}{}\doxysection{\texorpdfstring{{\ttfamily std\+::variant} or {\ttfamily rfl\+::\+Variant} (externally tagged)}{{\ttfamily std\+::variant} or {\ttfamily rfl\+::\+Variant} (externally tagged)}}\label{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md709}
+Another approach is to add external tags.
+
+You can do that using {\ttfamily \doxylink{structrfl_1_1_field}{rfl\+::\+Field}}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{using\ }TaggedVariant\ =\ \mbox{\hyperlink{classrfl_1_1_variant}{rfl::Variant}}<\mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}option1"{}},\ Type1>,\ \mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}option2"{}},\ Type2>,\ ...>;}
+
+\end{DoxyCode}
+
+
+The parser can now figure this out and will only try to parse the field that was indicated by the field name. Duplicate field names will lead to compile-\/time errors.
+
+We can rewrite the example from above\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Circle,\ Rectangle\ and\ Square\ are\ the\ same\ as\ above.}}
+\DoxyCodeLine{\textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ =\ \mbox{\hyperlink{classrfl_1_1_variant}{rfl::Variant}}<\mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}circle"{}},\ Circle>,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}rectangle"{}},\ Rectangle>,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}square"{}},\ Square>>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespacerfl_afb5f68a22d5b6a42a5b4477c35559ce9}{rfl::make\_field}}<\textcolor{stringliteral}{"{}rectangle"{}}>(Rectangle\{.height\ =\ 10,\ .width\ =\ 5\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ r2\ =\ \mbox{\hyperlink{namespacerfl_1_1json_a905573518eca04a9c269d1bb32de7dd1}{rfl::json::read<Shapes>}}(json\_string);}
+
+\end{DoxyCode}
+
+
+The resulting JSON looks like this\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{"{}rectangle"{}:\{"{}height"{}:10.0,"{}width"{}:5.0\}\}}
+
+\end{DoxyCode}
+
+
+Because the tag is external, this is called {\itshape externally tagged}. It is the standard in Rust\textquotesingle{}s \href{https://serde.rs/enum-representations.html}{\texttt{ serde-\/json}}.\hypertarget{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md710}{}\doxysection{\texorpdfstring{The visitor pattern}{The visitor pattern}}\label{md_external_2reflect-cpp_2docs_2variants__and__tagged__unions_autotoc_md710}
+In C++, the idiomatic way to handle {\ttfamily std\+::variant}, {\ttfamily \doxylink{classrfl_1_1_variant}{rfl\+::\+Variant}} and {\ttfamily \doxylink{structrfl_1_1_tagged_union}{rfl\+::\+Tagged\+Union}} is the \href{https://en.cppreference.com/w/cpp/utility/variant/visit}{\texttt{ visitor pattern}}.
+
+For instance, the externally tagged {\ttfamily \doxylink{classrfl_1_1_variant}{rfl\+::\+Variant}} from the example above could be handled like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ =\ \mbox{\hyperlink{classrfl_1_1_variant}{rfl::Variant}}<\mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}circle"{}},\ Circle>,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}rectangle"{}},\ Rectangle>,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structrfl_1_1_field}{rfl::Field}}<\textcolor{stringliteral}{"{}square"{}},\ Square>>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ my\_shape\ =}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespacerfl_afb5f68a22d5b6a42a5b4477c35559ce9}{rfl::make\_field}}<\textcolor{stringliteral}{"{}rectangle"{}}>(Rectangle\{.height\ =\ 10,\ .width\ =\ 5\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ handle\_shapes\ =\ [](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ field)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{using\ }Name\ =\ \textcolor{keyword}{typename}\ std::decay\_t<\textcolor{keyword}{decltype}(field)>::Name;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<Name,\ \mbox{\hyperlink{classrfl_1_1_literal}{rfl::Literal}}<\textcolor{stringliteral}{"{}circle"{}}>>())\ \{}
+\DoxyCodeLine{\ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{namespaceeastl_af57bce51a6bb1f3a2c790eb60d64d2a3}{is}}\ circle,\ radius:\ <<\ field.value().radius()\ <<\ std::endl;}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<Name,\ \mbox{\hyperlink{classrfl_1_1_literal}{rfl::Literal}}<\textcolor{stringliteral}{"{}rectangle"{}}>>())\ \{}
+\DoxyCodeLine{\ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{namespaceeastl_af57bce51a6bb1f3a2c790eb60d64d2a3}{is}}\ rectangle,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}:\ <<\ field.value().width()\ <<\ \textcolor{stringliteral}{"{},\ height:\ "{}}\ <<\ field.value().height()\ <<\ std::endl;}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<Name,\ \mbox{\hyperlink{classrfl_1_1_literal}{rfl::Literal}}<\textcolor{stringliteral}{"{}square"{}}>>())\ \{}
+\DoxyCodeLine{\ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{namespaceeastl_af57bce51a6bb1f3a2c790eb60d64d2a3}{is}}\ \mbox{\hyperlink{_array_cwise_unary_ops_8h_aa1e484838873e960b8c8ba7e066ba837}{square}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}:\ <<\ field.value().width()\ <<\ std::endl;}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ reflect-\/cpp\ also\ provides\ this\ very\ useful\ helper\ that\ ensures}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ at\ compile-\/time\ that\ you\ didn't\ forget\ anything.}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{namespacerfl_a31e80cea0068eae493065be48bba8d04}{rfl::always\_false\_v<Type>}},\ \textcolor{stringliteral}{"{}Not\ all\ cases\ were\ covered."{}});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{namespacerfl_ab818223fa1c483a720a5004db13c118b}{rfl::visit}}(handle\_shapes,\ my\_shape);\ \textcolor{comment}{//\ OK}}
+\DoxyCodeLine{}
+\DoxyCodeLine{my\_shape.visit(handle\_shapes);\ \textcolor{comment}{//\ also\ OK}}
+
+\end{DoxyCode}
+
+
+You can also apply {\ttfamily \doxylink{namespacerfl_ab818223fa1c483a720a5004db13c118b}{rfl\+::visit}} to {\ttfamily \doxylink{structrfl_1_1_tagged_union}{rfl\+::\+Tagged\+Union}}. The underlying {\ttfamily \doxylink{classrfl_1_1_variant}{rfl\+::\+Variant}} can be retrieved using {\ttfamily .variant()}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ =\ \mbox{\hyperlink{structrfl_1_1_tagged_union}{rfl::TaggedUnion}}<\textcolor{stringliteral}{"{}shape"{}},\ Circle,\ Square,\ Rectangle>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{namespacetest__field__variant_afd8bf28fb645386345e74b945ec0fbf6}{Shapes}}\ my\_shape\ =\ Rectangle\{.height\ =\ 10,\ .width\ =\ 5\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ handle\_shapes\ =\ [](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}})\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{ir__common_8h_a1ac75f8fee198af783521627f1fecfbc}{Type}}\ =\ std::decay\_t<\textcolor{keyword}{decltype}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}})>;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<Type,\ Circle>())\ \{}
+\DoxyCodeLine{\ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{namespaceeastl_af57bce51a6bb1f3a2c790eb60d64d2a3}{is}}\ circle,\ radius:\ <<\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.radius()\ <<\ std::endl;}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<Type,\ Rectangle>())\ \{}
+\DoxyCodeLine{\ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{namespaceeastl_af57bce51a6bb1f3a2c790eb60d64d2a3}{is}}\ rectangle,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}:\ <<\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.width()\ <<\ \textcolor{stringliteral}{"{},\ height:\ "{}}\ <<\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.height()\ <<\ std::endl;}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<Type,\ Square>())\ \{}
+\DoxyCodeLine{\ \ \ \ \ std::cout\ <<\ \mbox{\hyperlink{namespaceeastl_af57bce51a6bb1f3a2c790eb60d64d2a3}{is}}\ \mbox{\hyperlink{_array_cwise_unary_ops_8h_aa1e484838873e960b8c8ba7e066ba837}{square}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}:\ <<\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.width()\ <<\ std::endl;}
+\DoxyCodeLine{\ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static\_assert}(\mbox{\hyperlink{namespacerfl_a31e80cea0068eae493065be48bba8d04}{rfl::always\_false\_v<Type>}},\ \textcolor{stringliteral}{"{}Not\ all\ cases\ were\ covered."{}});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{namespacerfl_ab818223fa1c483a720a5004db13c118b}{rfl::visit}}(handle\_shapes,\ my\_shape);\ \textcolor{comment}{//\ OK}}
+\DoxyCodeLine{}
+\DoxyCodeLine{my\_shape.visit(handle\_shapes);\ \textcolor{comment}{//\ also\ OK}}
+
+\end{DoxyCode}
+ 

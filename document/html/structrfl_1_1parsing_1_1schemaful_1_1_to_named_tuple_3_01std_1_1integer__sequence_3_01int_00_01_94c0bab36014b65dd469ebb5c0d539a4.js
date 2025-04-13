@@ -1,0 +1,4 @@
+var structrfl_1_1parsing_1_1schemaful_1_1_to_named_tuple_3_01std_1_1integer__sequence_3_01int_00_01_94c0bab36014b65dd469ebb5c0d539a4 =
+[
+    [ "Type", "structrfl_1_1parsing_1_1schemaful_1_1_to_named_tuple_3_01std_1_1integer__sequence_3_01int_00_01_94c0bab36014b65dd469ebb5c0d539a4.html#ae3bee7cb216b4f909ce689ddc105619b", null ]
+];

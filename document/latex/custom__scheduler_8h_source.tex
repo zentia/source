@@ -1,0 +1,825 @@
+\doxysection{custom\+\_\+scheduler.\+h}
+\hypertarget{custom__scheduler_8h_source}{}\label{custom__scheduler_8h_source}\index{external/taskflow/3rd-\/party/tbb/src/tbb/custom\_scheduler.h@{external/taskflow/3rd-\/party/tbb/src/tbb/custom\_scheduler.h}}
+\mbox{\hyperlink{custom__scheduler_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ \ Copyright\ (c)\ 2005-\/2020\ Intel\ Corporation}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ \ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ \ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ \ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#ifndef\ \_TBB\_custom\_scheduler\_H}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#define\ \_TBB\_custom\_scheduler\_H}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{scheduler_8h}{scheduler.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{observer__proxy_8h}{observer\_proxy.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{itt__notify_8h}{itt\_notify.h}}"{}}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetbb}{tbb}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetbb_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structtbb_1_1internal_1_1_default_scheduler_traits}{DefaultSchedulerTraits}}\ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structtbb_1_1internal_1_1_default_scheduler_traits_a1bb59c3b985e97bcc2c822e3ca4ac6a2}{itt\_possible}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structtbb_1_1internal_1_1_default_scheduler_traits_a709308e4996d6a3025ec7679e4feab09}{has\_slow\_atomic}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00034\ \};}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structtbb_1_1internal_1_1_intel_scheduler_traits}{IntelSchedulerTraits}}\ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structtbb_1_1internal_1_1_intel_scheduler_traits_ab4bf8a123648698ac58bb407e6c88c3b}{itt\_possible}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#if\ \_\_TBB\_x86\_32||\_\_TBB\_x86\_64}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structtbb_1_1internal_1_1_intel_scheduler_traits_ab9635ca5fb38f8b4d9aade6e78b1cda3}{has\_slow\_atomic}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{structtbb_1_1internal_1_1_intel_scheduler_traits_ab9635ca5fb38f8b4d9aade6e78b1cda3}{has\_slow\_atomic}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_x86\_32||\_\_TBB\_x86\_64\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00043\ \};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ custom\_scheduler}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SchedulerTraits>}
+\DoxyCodeLine{00052\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a92d7730728b3c41c398724de94778e75}{custom\_scheduler}}:\ \textcolor{keyword}{private}\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a838f6ccf79d7ee8a55843de2f8004759}{generic\_scheduler}}\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a92d7730728b3c41c398724de94778e75}{custom\_scheduler<SchedulerTraits>}}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_af22f4470986fa755255d3daf8f96a65b}{scheduler\_type}};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a92d7730728b3c41c398724de94778e75}{custom\_scheduler}}(\ \mbox{\hyperlink{classtbb_1_1internal_1_1market}{market}}\&\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}},\ \textcolor{keywordtype}{bool}\ genuine\ )\ :\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a838f6ccf79d7ee8a55843de2f8004759}{generic\_scheduler}}(\mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}},\ genuine)\ \{\}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a5e2c5878baf724264214e91070844487}{local\_wait\_for\_all}}(\ task\&\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}},\ task*\ child\ )\ \_\_TBB\_override;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_aabe8193f0004a9631d160743c29f277c}{wait\_for\_all}}(\ task\&\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}},\ task*\ child\ )\ \_\_TBB\_override\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a92d7730728b3c41c398724de94778e75}{custom\_scheduler}}*\textcolor{keyword}{>}(\mbox{\hyperlink{classtbb_1_1internal_1_1governor_a3ee947910b77e9ab2f3c02f0d2d63c32}{governor::local\_scheduler}}())-\/>\mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a5e2c5878baf724264214e91070844487}{scheduler\_type::local\_wait\_for\_all}}(\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}},\ child\ );}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_ad4ec695868b3ae27a95f3e393601243a}{tally\_completion\_of\_predecessor}}(\ task\&\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\ task*\&\ bypass\_slot,\ isolation\_tag\ isolation\ )\ )\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ task\_prefix\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.prefix();}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count\ >\ 0,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_ac5a347b47a5603a1f30f6fbf790724b7}{sync\_releasing}},\ \&\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count);}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::has\_slow\_atomic\ \&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count==1\ )}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count=0;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ reference\_count\ old\_ref\_count\ =\ \mbox{\hyperlink{tbb__machine_8h_a58e2509c2723ffe8c2f2a3e73059d65b}{\_\_TBB\_FetchAndDecrementWrelease}}(\&\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count);}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_ref\_count\ ==\ internal::abandon\_flag\ +\ 2)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remove\ the\ abandon\ flag.}}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count\ =\ 1;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ wait\ has\ been\ completed.\ Spawn\ a\ resume\ task.}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tbb::task::resume(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.abandoned\_scheduler);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (old\_ref\_count\ >\ 1)\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ more\ references\ exist}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ '\_\_TBB\_cl\_evict(\&p)'\ degraded\ performance\ of\ parallel\_preorder\ example}}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ordering\ on\ p.ref\_count\ (superfluous\ if\ SchedulerTraits::has\_slow\_atomic)}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gcc__generic_8h_a739e3f9cf251b0c785e86fba7c8f8c7c}{\_\_TBB\_control\_consistency\_helper}}();}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count==0,\ \textcolor{stringliteral}{"{}completion\ of\ task\ caused\ predecessor's\ reference\ count\ to\ underflow"{}});}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \&\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.ref\_count);}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#if\ TBB\_USE\_ASSERT}}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.extra\_state\ \&=\ \mbox{\hyperlink{namespacetbb_1_1internal_a5fb219223e38c8bbcc47d7c943f48e54a2bde1985fd0827baf5dbfa4a9bc33a7f}{\string~es\_ref\_count\_active}};}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ TBB\_USE\_ASSERT\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_ISOLATION}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ isolation\ !=\ no\_isolation\ )\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ parent\ is\ allowed\ not\ to\ have\ isolation\ (even\ if\ a\ child\ has\ isolation)\ because\ it\ has\ never\ spawned.}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.isolation\ ==\ no\_isolation\ ||\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.isolation\ ==\ isolation,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.isolation\ =\ isolation;}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_ISOLATION\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#if\ \_\_TBB\_RECYCLE\_TO\_ENQUEUE}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.state==task::to\_enqueue)\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ related\ to\ \_\_TBB\_TASK\_ARENA\ TODO:\ try\ keep\ priority\ of\ the\ task}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ e.g.\ rework\ task\_prefix\ to\ remember\ priority\ of\ received\ task\ and\ use\ here}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>enqueue\_task(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ 0,\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_aee56a8b51b71d3f96f9c8cacf00fe845}{my\_random}}\ );}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\_\_TBB\_RECYCLE\_TO\_ENQUEUE*/}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ bypass\_slot==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ )}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ bypass\_slot\ =\ \&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}};}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS}}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ internal::is\_critical(\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ )\ )\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ae43166ffd9d7fb624158872394832f17}{local\_spawn}}(\ bypass\_slot,\ bypass\_slot-\/>prefix().next\ );}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ bypass\_slot\ =\ \&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}};}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ae43166ffd9d7fb624158872394832f17}{local\_spawn}}(\ \&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.prefix().next\ );}
+\DoxyCodeLine{00130\ \ \ \ \ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a4ac27cfa293899be6721f939dfdcdf5b}{process\_bypass\_loop}}(\ \mbox{\hyperlink{structtbb_1_1internal_1_1context__guard__helper}{context\_guard\_helper</*report\_tasks=*/SchedulerTraits::itt\_possible>}}\&\ context\_guard,}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(task*\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ isolation\_tag\ isolation)\ );}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a838f6ccf79d7ee8a55843de2f8004759}{generic\_scheduler}}*\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a8b286a7e4beb8de0a14661d0136002fd}{allocate\_scheduler}}(\ \mbox{\hyperlink{classtbb_1_1internal_1_1market}{market}}\&\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}},\ \textcolor{keywordtype}{bool}\ genuine\ )\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ \mbox{\hyperlink{namespacetbb_1_1internal_a395611542e21705f49de2a06e2c88f59}{NFS\_Allocate}}(1,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_af22f4470986fa755255d3daf8f96a65b}{scheduler\_type}}),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ std::memset(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ 0,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_af22f4470986fa755255d3daf8f96a65b}{scheduler\_type}}));}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_af22f4470986fa755255d3daf8f96a65b}{scheduler\_type}}*\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ =\ \textcolor{keyword}{new}(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_af22f4470986fa755255d3daf8f96a65b}{scheduler\_type}}(\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}},\ genuine\ );}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}-\/>assert\_task\_pool\_valid();}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_a7e0f29d1fe322261ee07367d0cdf2563}{ITT\_SYNC\_CREATE}}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ SyncType\_Scheduler,\ SyncObj\_TaskPoolSpinning);}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}};}
+\DoxyCodeLine{00144\ \ \ \ \ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ task*\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a3825613e3650d5a9110b9b9f5ee4a3e9}{receive\_or\_steal\_task}}(\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\ \_\_TBB\_atomic\ reference\_count\&\ completion\_ref\_count,\ isolation\_tag\ isolation\ )\ )\ \_\_TBB\_override;}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \};\ \textcolor{comment}{//\ class\ custom\_scheduler<>}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00153\ \textcolor{comment}{//\ custom\_scheduler\ methods}}
+\DoxyCodeLine{00154\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00155\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SchedulerTraits>}
+\DoxyCodeLine{00156\ task*\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a3825613e3650d5a9110b9b9f5ee4a3e9}{custom\_scheduler<SchedulerTraits>::receive\_or\_steal\_task}}(\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\_\_TBB\_atomic\ reference\_count\&\ completion\_ref\_count,\ isolation\_tag\ isolation)\ )\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ task*\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordtype}{bool}\ outermost\_worker\_level\ =\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_aec76a489fe5368ede0d1658cbb74984b}{worker\_outermost\_level}}();}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{bool}\ outermost\_dispatch\_level\ =\ outermost\_worker\_level\ ||\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a744eb36f568cf2c726a0920494e5579d}{master\_outermost\_level}}();}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordtype}{bool}\ can\_steal\_here\ =\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a1c00f465a90ee09a240d1f81de5f635b}{can\_steal}}();}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordtype}{bool}\ outermost\_current\_worker\_level\ =\ outermost\_worker\_level;}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00163\ \ \ \ \ outermost\_current\_worker\_level\ \&=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.genuine;}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00165\ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.set\_is\_idle(\ \textcolor{keyword}{true}\ );}
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\#if\ \_\_TBB\_HOARD\_NONLOCAL\_TASKS}}
+\DoxyCodeLine{00167\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!my\_nonlocal\_free\_list,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00168\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ outermost\_dispatch\_level\ )\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ intptr\_t\ skipped\_priority\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_skipped\_fifo\_priority\ )\ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ thread\ can\ dequeue\ FIFO\ tasks,\ and\ some\ priority\ levels\ of}}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIFO\ tasks\ have\ been\ bypassed\ (to\ prevent\ deadlock\ caused\ by}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ dynamic\ priority\ changes\ in\ nested\ task\ group\ hierarchy).}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_skipped\_fifo\_priority.compare\_and\_swap(0,\ skipped\_priority)\ ==\ skipped\_priority}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ skipped\_priority\ >\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_top\_priority\ )}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ac652e4a610353888a31352e678955e1b}{my\_market}}-\/>update\_arena\_priority(\ *\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}},\ skipped\_priority\ );}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ !\_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ TODO:\ Try\ to\ find\ a\ place\ to\ reset\ my\_limit\ (under\ market's\ lock)}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{comment}{//\ The\ number\ of\ slots\ potentially\ used\ in\ the\ arena.\ Updated\ once\ in\ a\ while,\ as\ my\_limit\ changes\ rarely.}}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_limit-\/1;}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordtype}{int}\ yield\_count\ =\ 0;}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ The\ state\ "{}failure\_count==-\/1"{}\ is\ used\ only\ when\ itt\_possible\ is\ true,}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{comment}{//\ and\ denotes\ that\ a\ sync\_prepare\ has\ not\ yet\ been\ issued.}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ failure\_count\ =\ -\/\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(SchedulerTraits::itt\_possible);;\ ++failure\_count)\ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_limit\ >\ 0,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a35aa72cfdda3b500e908925a3d6da747}{my\_arena\_index}}\ <=\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ completion\_ref\_count\ ==\ 1\ )\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )\ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ failure\_count!=-\/1\ )\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_prepare,\ \&completion\_ref\_count);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Notify\ Intel(R)\ Thread\ Profiler\ that\ thread\ has\ stopped\ spinning.}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \&completion\_ref\_count);}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ worker\ thread\ in\ its\ outermost\ dispatch\ loop\ (i.e.\ its\ execution\ stack\ is\ empty)\ should}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ exit\ it\ either\ when\ there\ is\ no\ more\ work\ in\ the\ current\ arena,\ or\ when\ revoked\ by\ the\ market.}}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !outermost\_worker\_level,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gcc__generic_8h_a739e3f9cf251b0c785e86fba7c8f8c7c}{\_\_TBB\_control\_consistency\_helper}}();\ \textcolor{comment}{//\ on\ ref\_count}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ exit\ stealing\ loop\ and\ return;}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ the\ resource\ manager\ requires\ our\ arena\ to\ relinquish\ some\ threads}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ outermost\_current\_worker\_level\ )\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_num\_workers\_allotted\ <\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>num\_workers\_active()\ )\ )\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ SchedulerTraits::itt\_possible\ \&\&\ failure\_count\ !=\ -\/1\ )}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_a209ab745dc4b55d55acb64a82cb8c9b6}{sync\_cancel}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ *\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ )\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Original\ scheduler\ was\ requested,\ return\ from\ stealing\ loop\ and\ recall.}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.is\_idle\_state(\textcolor{keyword}{true})\ )}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.set\_is\_idle(\textcolor{keyword}{false});}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00223\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ \mbox{\hyperlink{sugar_8h_ae4f82344f573c70aa1066a2394bba345}{int}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_top\_priority);}
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{/*\ !\_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ 0;}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ there\ are\ tasks\ mailed\ to\ this\ thread\ via\ task-\/to-\/thread\ affinity\ mechanism.}}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a3a635bad42d492013d4a06d1af0c452b}{my\_affinity\_id}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ \&\&\ !\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.empty()\ )\ \{}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a5657ac6c517d9bbf59a424ef330640bb}{get\_mailbox\_task}}(\ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(\ isolation\ )\ );}
+\DoxyCodeLine{00233\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_ISOLATION}}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ There\ is\ a\ race\ with\ a\ thread\ adding\ a\ new\ task\ (possibly\ with\ suitable\ isolation)}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ our\ mailbox,\ so\ the\ below\ conditions\ might\ result\ in\ a\ false\ positive.}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Then\ set\_is\_idle(false)\ allows\ that\ task\ to\ be\ stolen;\ it's\ OK.}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ isolation\ !=\ no\_isolation\ \&\&\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ \&\&\ !\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.empty()}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.is\_idle\_state(\ \textcolor{keyword}{true}\ )\ )\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ proxy\ tasks\ in\ our\ mailbox\ but\ the\ isolation\ blocks\ their\ execution.}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ So\ publish\ the\ proxy\ tasks\ in\ mailbox\ to\ be\ available\ for\ stealing\ from\ owner's\ task\ pool.}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.set\_is\_idle(\ \textcolor{keyword}{false}\ );}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_ISOLATION\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ )\ \{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ ++my\_counters.mails\_received\ );}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ there\ are\ tasks\ in\ starvation-\/resistant\ stream.}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Only\ allowed\ at\ the\ outermost\ dispatch\ level\ without\ isolation.}}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(isolation\ ==\ no\_isolation\ \&\&)\ outermost\_dispatch\_level\ \&\&}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_task\_stream.empty(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \&\&\ (}
+\DoxyCodeLine{00252\ \#\textcolor{keywordflow}{if}\ \mbox{\hyperlink{tbb__config_8h_a5c53ade08fbe91cfc93bd8a13ff30672}{\_\_TBB\_PREVIEW\_CRITICAL\_TASKS}}\ \&\&\ \_\_TBB\_CPF\_BUILD}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_task\_stream.pop(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \mbox{\hyperlink{structtbb_1_1internal_1_1subsequent__lane__selector}{subsequent\_lane\_selector}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>hint\_for\_pop)\ )}
+\DoxyCodeLine{00254\ \#\textcolor{keywordflow}{else}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_task\_stream.pop(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>hint\_for\_pop\ )}
+\DoxyCodeLine{00256\ \#endif}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )\ )\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \&\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_task\_stream);}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ just\ proceed\ with\ the\ obtained\ task}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ any\ earlier\ offloaded\ non-\/top\ priority\ tasks\ become\ returned\ to\ the\ top\ level}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ my\_offloaded\_tasks\ \&\&\ (\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ reload\_tasks(\ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(\ isolation\ )\ ))\ )\ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a868812dd8d875a225a6f589fdbaafe54}{is\_proxy}}(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}),\ \textcolor{stringliteral}{"{}The\ proxy\ task\ cannot\ be\ offloaded"{}}\ );}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ just\ proceed\ with\ the\ obtained\ task}}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ can\_steal\_here\ \&\&\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ \&\&\ (\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_abb8f3f3967170ca9398e55b90220c3cb}{steal\_task}}(\ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(isolation)\ ))\ )\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ just\ proceed\ with\ the\ obtained\ task}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ (\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ get\_critical\_task(\ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(isolation)\ ))\ )\ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ internal::is\_critical(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}),\ \textcolor{stringliteral}{"{}Received\ task\ must\ be\ critical\ one"{}}\ );}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \&\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_critical\_task\_stream);}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ just\ proceed\ with\ the\ obtained\ task}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ fail;}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ A\ task\ was\ successfully\ obtained\ somewhere}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00282\ \textcolor{preprocessor}{\#if\ \_\_TBB\_ARENA\_OBSERVER}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_observers.notify\_entry\_observers(\ my\_last\_local\_observer,\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a24ecab941cdf8ff762126f1c65e5274a}{is\_worker}}()\ );}
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00285\ \textcolor{preprocessor}{\#if\ \_\_TBB\_SCHEDULER\_OBSERVER}}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ the\_global\_observer\_list.notify\_entry\_observers(\ my\_last\_global\_observer,\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a24ecab941cdf8ff762126f1c65e5274a}{is\_worker}}()\ );}
+\DoxyCodeLine{00287\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_SCHEDULER\_OBSERVER\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ SchedulerTraits::itt\_possible\ \&\&\ failure\_count\ !=\ -\/1\ )\ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ -\/\ might\ be\ victim,\ or\ might\ be\ selected\ from\ a\ mailbox}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Notify\ Intel(R)\ Thread\ Profiler\ that\ thread\ has\ stopped\ spinning.}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ exit\ stealing\ loop\ and\ return}}
+\DoxyCodeLine{00294\ fail:}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ ++my\_counters.steals\_failed\ );}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ \&\&\ failure\_count==-\/1\ )\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ first\ attempt\ to\ steal\ work\ failed,\ so\ notify\ Intel(R)\ Thread\ Profiler\ that}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ thread\ has\ started\ spinning.\ \ Ideally,\ we\ would\ do\ this\ notification}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ *before*\ the\ first\ failed\ attempt\ to\ steal,\ but\ at\ that\ point\ we\ do\ not}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ know\ that\ the\ steal\ will\ fail.}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_prepare,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ failure\_count\ =\ 0;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Pause,\ even\ if\ we\ are\ going\ to\ yield,\ because\ the\ yield\ might\ return\ immediately.}}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a0c5ac9e978873b08137acc8b6d584567}{prolonged\_pause}}();}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ failure\_threshold\ =\ 2*\mbox{\hyperlink{sugar_8h_ae4f82344f573c70aa1066a2394bba345}{int}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}+1);}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ failure\_count>=failure\_threshold\ )\ \{}
+\DoxyCodeLine{00308\ \textcolor{preprocessor}{\#if\ \_\_TBB\_YIELD2P}}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ failure\_count\ =\ 0;}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ failure\_count\ =\ failure\_threshold;}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ibm__aix51_8h_a2b17e6e4504bddf60a920f609fc46ea6}{\_\_TBB\_Yield}}();}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ if\ there\ are\ tasks\ abandoned\ by\ other\ workers}}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_orphaned\_tasks\ )\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Epoch\ must\ be\ advanced\ before\ seizing\ the\ list\ pointer}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_abandonment\_epoch;}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ task*\ orphans\ =\ (task*)\_\_TBB\_FetchAndStoreW(\ \&\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_orphaned\_tasks,\ 0\ );}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ orphans\ )\ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ task**\ link\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ local\ counter\ out\ of\ the\ way\ (we've\ just\ brought\ in\ external\ tasks)}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_local\_reload\_epoch-\/-\/;}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ reload\_tasks(\ orphans,\ link,\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\ effective\_reference\_priority(),\ isolation\ )\ );}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ orphans\ )\ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *link\ =\ my\_offloaded\_tasks;}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !my\_offloaded\_tasks\ )}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_offloaded\_task\_list\_tail\_link\ =\ link;}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_offloaded\_tasks\ =\ orphans;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !my\_offloaded\_tasks\ ==\ !my\_offloaded\_task\_list\_tail\_link,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ )\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_a209ab745dc4b55d55acb64a82cb8c9b6}{sync\_cancel}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a868812dd8d875a225a6f589fdbaafe54}{is\_proxy}}(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}),\ \textcolor{stringliteral}{"{}The\ proxy\ task\ cannot\ be\ offloaded"{}}\ );}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ exit\ stealing\ loop\ and\ return}}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\#if\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ threshold\ value\ tuned\ separately\ for\ macOS\ due\ to\ high\ cost\ of\ sched\_yield\ there}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ yield\_threshold\ =\ 10;}
+\DoxyCodeLine{00344\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ yield\_threshold\ =\ 100;}
+\DoxyCodeLine{00346\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ yield\_count++\ >=\ yield\_threshold\ )\ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ When\ a\ worker\ thread\ has\ nothing\ to\ do,\ return\ it\ to\ RML.}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ For\ purposes\ of\ affinity\ support,\ the\ thread\ is\ considered\ idle\ while\ in\ RML.}}
+\DoxyCodeLine{00350\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ outermost\_current\_worker\_level\ ||\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_top\_priority\ >\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_bottom\_priority\ )\ \{}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>is\_out\_of\_work()\ \&\&\ outermost\_current\_worker\_level\ )\ \{}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{/*\ !\_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ outermost\_current\_worker\_level\ \&\&\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>is\_out\_of\_work()\ )\ \{}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ !\_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_a209ab745dc4b55d55acb64a82cb8c9b6}{sync\_cancel}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00360\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ my\_offloaded\_tasks\ )\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Safeguard\ against\ any\ sloppiness\ in\ managing\ reload\ epoch}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ counter\ (e.g.\ on\ the\ hot\ path\ because\ of\ performance\ reasons).}}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_local\_reload\_epoch-\/-\/;}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Break\ the\ deadlock\ caused\ by\ a\ higher\ priority\ dispatch\ loop}}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ stealing\ and\ offloading\ a\ lower\ priority\ task.\ Priority\ check}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ at\ the\ stealing\ moment\ cannot\ completely\ preclude\ such\ cases}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ because\ priorities\ can\ changes\ dynamically.}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !outermost\_worker\_level\ \&\&\ *my\_ref\_top\_priority\ >\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_top\_priority\ )\ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ ++my\_counters.prio\_ref\_fixups\ );}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_ref\_top\_priority\ =\ \&\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_top\_priority;}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ it's\ expected\ that\ only\ outermost\ workers\ can\ use\ global\ reload\ epoch}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(my\_ref\_reload\_epoch\ ==\ \&\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_reload\_epoch,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00377\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ arena\ snapshot\ branch}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ several\ attempts\ did\ not\ find\ work,\ re-\/read\ the\ arena\ limit.}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_limit-\/1;}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ yielding\ branch}}
+\DoxyCodeLine{00382\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ nonlocal\ task\ retrieval\ loop}}
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.is\_idle\_state(\ \textcolor{keyword}{true}\ )\ )}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.set\_is\_idle(\ \textcolor{keyword}{false}\ );}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}};}
+\DoxyCodeLine{00386\ \}}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SchedulerTraits>}
+\DoxyCodeLine{00389\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a4ac27cfa293899be6721f939dfdcdf5b}{custom\_scheduler<SchedulerTraits>::process\_bypass\_loop}}(}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1context__guard__helper}{context\_guard\_helper</*report\_tasks=*/SchedulerTraits::itt\_possible>}}\&\ context\_guard,}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(task*\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ isolation\_tag\ isolation)\ )}
+\DoxyCodeLine{00392\ \{}
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keywordflow}{while}\ (\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ )\ \{}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.is\_idle\_state(\textcolor{keyword}{false}),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a868812dd8d875a225a6f589fdbaafe54}{is\_proxy}}(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}),\textcolor{stringliteral}{"{}unexpected\ proxy"{}});}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().owner,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00397\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_ISOLATION}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a643ae54febb34aa0f2543aa5385a606f}{\_\_TBB\_ASSERT\_EX}}(\ isolation\ ==\ no\_isolation\ ||\ isolation\ ==\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().isolation,}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}A\ task\ from\ another\ isolated\ region\ is\ going\ to\ be\ executed"{}}\ );}
+\DoxyCodeLine{00400\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_ISOLATION\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a35e1c039fac0fa1b7d8b4f491d557a86}{assert\_task\_valid}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00402\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_GROUP\_CONTEXT\ \&\&\ TBB\_USE\_ASSERT}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ assert\_context\_valid(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().context);}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().context-\/>my\_cancellation\_requested\ )}
+\DoxyCodeLine{00405\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ make\ the\ assert\ stronger\ by\ prohibiting\ allocated\ state.}}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ 1L<<\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>state()\ \&\ (1L<<task::allocated|1L<<task::ready|1L<<task::reexecute),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00409\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS}}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ check\ performance\ and\ optimize\ if\ needed\ for\ added\ conditions\ on\ the}}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ hot-\/path.}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !internal::is\_critical(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})\ \&\&\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>is\_enqueued\_task()\ )\ \{}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ task*\ critical\_task\ =\ get\_critical\_task(\ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(isolation)\ )\ )\ \{}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ internal::is\_critical(*critical\_task),}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Received\ task\ must\ be\ critical\ one"{}}\ );}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \&\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_critical\_task\_stream);}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().state\ =\ task::allocated;}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}};\ \textcolor{comment}{//\ required\ during\ spawn\ to\ propagate\ isolation}}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ae43166ffd9d7fb624158872394832f17}{local\_spawn}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().next);}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ critical\_task;}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00422\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00423\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ intptr\_t\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ priority(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ !=\ *my\_ref\_top\_priority}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>is\_enqueued\_task()\ )\ \{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ assert\_priority\_valid(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ !=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_top\_priority\ )\ \{}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ac652e4a610353888a31352e678955e1b}{my\_market}}-\/>update\_arena\_priority(\ *\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}},\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ <\ effective\_reference\_priority()\ )\ \{}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !my\_offloaded\_tasks\ )\ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_offloaded\_task\_list\_tail\_link\ =\ \&\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().next\_offloaded;}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Erase\ possible\ reference\ to\ the\ owner\ scheduler}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (next\_offloaded\ is\ a\ union\ member)}}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *my\_offloaded\_task\_list\_tail\_link\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ offload\_task(\ *\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a1f221aa79878e3962ea2b3eaa7429fe1}{is\_task\_pool\_published}}()\ )\ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ winnow\_task\_pool(\ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(\ isolation\ )\ );}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ )}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Mark\ arena\ as\ full\ to\ unlock\ arena\ priority\ level\ adjustment}}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ by\ arena::is\_out\_of\_work(),\ and\ ensure\ worker's\ presence.}}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>advertise\_new\_work<\mbox{\hyperlink{classtbb_1_1internal_1_1arena_a2380e7751924d1199ffab7b2ee29ddeeac92fe41bfa3a02ea67d83232c9f88b90}{arena::wakeup}}>();}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{/*\ exit\ bypass\ loop\ */}}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00452\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00453\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS}}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ if\ is\ not\ critical}}
+\DoxyCodeLine{00456\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ task*\ t\_next\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}};}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().owner\ =\ \textcolor{keyword}{this};}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().state\ =\ task::executing;}
+\DoxyCodeLine{00461\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_GROUP\_CONTEXT}}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ context\_guard.\mbox{\hyperlink{structtbb_1_1internal_1_1context__guard__helper_a350702cb725a4ecf04b30f9ab396e6b3}{set\_ctx}}(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().context\ );}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().context-\/>my\_cancellation\_requested\ )}
+\DoxyCodeLine{00464\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ ++my\_counters.tasks\_executed\ );}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ my\_counters.avg\_arena\_concurrency\ +=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>num\_workers\_active()\ );}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ my\_counters.avg\_assigned\_workers\ +=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_num\_workers\_allotted\ );}
+\DoxyCodeLine{00469\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ my\_counters.avg\_arena\_prio\ +=\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ my\_counters.avg\_market\_prio\ +=\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ac652e4a610353888a31352e678955e1b}{my\_market}}-\/>my\_global\_top\_priority\ );}
+\DoxyCodeLine{00472\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_a935256976656668744a60ab1f3916e2d}{ITT\_STACK}}(SchedulerTraits::itt\_possible,\ callee\_enter,\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().context-\/>itt\_caller);}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ t\_next\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>execute();}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_a935256976656668744a60ab1f3916e2d}{ITT\_STACK}}(SchedulerTraits::itt\_possible,\ callee\_leave,\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().context-\/>itt\_caller);}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (t\_next)\ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a35e1c039fac0fa1b7d8b4f491d557a86}{assert\_task\_valid}}(t\_next);}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ t\_next-\/>state()==task::allocated,}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}if\ task::execute()\ returns\ task,\ it\ must\ be\ marked\ as\ allocated"{}}\ );}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a7a454ca6d8bb2b9fccde7e52a0c31856}{reset\_extra\_state}}(t\_next);}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(\ t\_next-\/>prefix().isolation\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().isolation\ );}
+\DoxyCodeLine{00482\ \textcolor{preprocessor}{\#if\ TBB\_USE\_ASSERT}}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a3e3837fb3ca7bbf4cf4752c58cbed886}{affinity\_id}}\ next\_affinity=t\_next-\/>prefix().affinity;}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (next\_affinity\ !=\ 0\ \&\&\ next\_affinity\ !=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a3a635bad42d492013d4a06d1af0c452b}{my\_affinity\_id}})}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ ++my\_counters.affinity\_ignored\ );}
+\DoxyCodeLine{00486\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ if\ there\ is\ bypassed\ task}}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>state()\ )\ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ task::executing:\ \{}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ task*\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>parent();}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}==\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().ref\_count==0,\ \textcolor{stringliteral}{"{}Task\ still\ has\ children\ after\ it\ has\ been\ executed"{}}\ );}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>\string~task();}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ )}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_ad4ec695868b3ae27a95f3e393601243a}{tally\_completion\_of\_predecessor}}(\ *\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\ t\_next,\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().isolation\ )\ );}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a12dd37171af77214add72a973e6b71ba}{free\_task<no\_hint>}}(\ *\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ );}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ poison\_pointer(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ );}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ task::recycle:\ \textcolor{comment}{//\ set\ by\ recycle\_as\_safe\_continuation()}}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().state\ =\ task::allocated;}
+\DoxyCodeLine{00506\ \textcolor{preprocessor}{\#if\ \_\_TBB\_RECYCLE\_TO\_ENQUEUE}}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_TBB\_fallthrough;}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ task::to\_enqueue:\ \textcolor{comment}{//\ set\ by\ recycle\_to\_enqueue()}}
+\DoxyCodeLine{00509\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ t\_next\ !=\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \textcolor{stringliteral}{"{}a\ task\ returned\ from\ method\ execute()\ can\ not\ be\ recycled\ in\ another\ way"{}}\ );}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a7a454ca6d8bb2b9fccde7e52a0c31856}{reset\_extra\_state}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ safe\ continuation,\ need\ atomically\ decrement\ ref\_count;}}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_ad4ec695868b3ae27a95f3e393601243a}{tally\_completion\_of\_predecessor}}(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\ t\_next,\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().isolation\ )\ );}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ task::reexecute:\ \textcolor{comment}{//\ set\ by\ recycle\_to\_reexecute()}}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ t\_next,\ \textcolor{stringliteral}{"{}reexecution\ requires\ that\ method\ execute()\ return\ another\ task"{}}\ );}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ t\_next\ !=\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \textcolor{stringliteral}{"{}a\ task\ returned\ from\ method\ execute()\ can\ not\ be\ recycled\ in\ another\ way"{}}\ );}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().state\ =\ task::allocated;}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a7a454ca6d8bb2b9fccde7e52a0c31856}{reset\_extra\_state}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ae43166ffd9d7fb624158872394832f17}{local\_spawn}}(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().next\ );}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ task::allocated:}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a7a454ca6d8bb2b9fccde7e52a0c31856}{reset\_extra\_state}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00528\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ task::to\_resume:}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ ==\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().ref\_count\ ==\ 0,\ \textcolor{stringliteral}{"{}Task\ still\ has\ children\ after\ it\ has\ been\ executed"{}});}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>\string~task();}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a12dd37171af77214add72a973e6b71ba}{free\_task<no\_hint>}}(*\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.genuine\ \&\&\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.outermost,}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Only\ a\ coroutine\ on\ outermost\ level\ can\ be\ left."{}});}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Leave\ the\ outermost\ coroutine}}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00538\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00539\ \textcolor{preprocessor}{\#if\ TBB\_USE\_ASSERT}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ task::ready:}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}task\ is\ in\ READY\ state\ upon\ return\ from\ method\ execute()"{}}\ );}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00543\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}illegal\ state"{}}\ );}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__statistics_8h_a08f1e46bb511c63da3ce07aa9c897bc4}{GATHER\_STATISTIC}}(\ t\_next\ ?\ ++my\_counters.spawns\_bypassed\ :\ 0\ );}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ t\_next;}
+\DoxyCodeLine{00550\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ scheduler\ bypass\ loop}}
+\DoxyCodeLine{00551\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00552\ \}}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \textcolor{comment}{//\ TODO:\ Rename\ args\ 'parent'\ into\ 'controlling\_task'\ and\ 'child'\ into\ 't'\ or\ consider\ introducing}}
+\DoxyCodeLine{00555\ \textcolor{comment}{//\ a\ wait\ object\ (a\ la\ task\_handle)\ to\ replace\ the\ 'parent'\ logic.}}
+\DoxyCodeLine{00556\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SchedulerTraits>}
+\DoxyCodeLine{00557\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a5e2c5878baf724264214e91070844487}{custom\_scheduler<SchedulerTraits>::local\_wait\_for\_all}}(\ task\&\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}},\ task*\ child\ )\ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{classtbb_1_1internal_1_1governor_a14d4453f34a770b1c983c2ed38570e31}{governor::is\_set}}(\textcolor{keyword}{this}),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00559\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.ref\_count()\ >=\ (child\ \&\&\ child-\/>parent()\ ==\ \&\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}\ ?\ 2\ :\ 1),\ \textcolor{stringliteral}{"{}ref\_count\ is\ too\ small"{}}\ );}
+\DoxyCodeLine{00560\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00561\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_GROUP\_CONTEXT}}
+\DoxyCodeLine{00562\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().context,\ \textcolor{stringliteral}{"{}parent\ task\ does\ not\ have\ context"{}}\ );}
+\DoxyCodeLine{00563\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_GROUP\_CONTEXT\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00564\ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{comment}{//\ Using\ parent's\ refcount\ in\ sync\_prepare\ (in\ the\ stealing\ loop\ below)\ is}}
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{comment}{//\ a\ workaround\ for\ TP.\ We\ need\ to\ name\ it\ here\ to\ display\ correctly\ in\ Ampl.}}
+\DoxyCodeLine{00567\ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_a7e0f29d1fe322261ee07367d0cdf2563}{ITT\_SYNC\_CREATE}}(\&\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().ref\_count,\ SyncType\_Scheduler,\ SyncObj\_TaskStealingLoop);}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ \ \ \ \ \textcolor{comment}{//\ TODO:\ consider\ extending\ the\ "{}context"{}\ guard\ to\ a\ "{}dispatch\ loop"{}\ guard\ to\ additionally}}
+\DoxyCodeLine{00571\ \ \ \ \ \textcolor{comment}{//\ guard\ old\_innermost\_running\_task\ and\ old\_properties\ states.}}
+\DoxyCodeLine{00572\ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1context__guard__helper}{context\_guard\_helper}}<\textcolor{comment}{/*report\_tasks=*/}SchedulerTraits::itt\_possible>\ context\_guard;}
+\DoxyCodeLine{00573\ \ \ \ \ task*\ old\_innermost\_running\_task\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}};}
+\DoxyCodeLine{00574\ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__properties}{scheduler\_properties}}\ old\_properties\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}};}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \ \ \ \ task*\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ child;}
+\DoxyCodeLine{00577\ \ \ \ \ \textcolor{keywordtype}{bool}\ cleanup\ =\ !\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a24ecab941cdf8ff762126f1c65e5274a}{is\_worker}}()\ \&\&\ \&\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}==\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_abc495d5b077a2ef1b05e15e820555d90}{my\_dummy\_task}};}
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{comment}{//\ Remove\ outermost\ property\ to\ indicate\ nested\ level.}}
+\DoxyCodeLine{00579\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.outermost\ ||\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}!=\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_abc495d5b077a2ef1b05e15e820555d90}{my\_dummy\_task}},\ \textcolor{stringliteral}{"{}The\ outermost\ property\ should\ be\ set\ out\ of\ a\ dispatch\ loop"{}});}
+\DoxyCodeLine{00580\ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.outermost\ \&=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}==\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_abc495d5b077a2ef1b05e15e820555d90}{my\_dummy\_task}};}
+\DoxyCodeLine{00581\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_CRITICAL\_TASKS}}
+\DoxyCodeLine{00582\ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.has\_taken\_critical\_task\ |=\ is\_critical(*\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}});}
+\DoxyCodeLine{00583\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00584\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00585\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ (uintptr\_t)*my\_ref\_top\_priority\ <\ (uintptr\_t)\mbox{\hyperlink{namespacetbb_1_1internal_ae1dadab9152ec72bebfb2827c03846e6}{num\_priority\_levels}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00586\ \ \ \ \ \textcolor{keyword}{volatile}\ intptr\_t\ *old\_ref\_top\_priority\ =\ my\_ref\_top\_priority;}
+\DoxyCodeLine{00587\ \ \ \ \ \textcolor{comment}{//\ When\ entering\ nested\ parallelism\ level\ market\ level\ counter}}
+\DoxyCodeLine{00588\ \ \ \ \ \textcolor{comment}{//\ must\ be\ replaced\ with\ the\ one\ local\ to\ this\ arena.}}
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{keyword}{volatile}\ uintptr\_t\ *old\_ref\_reload\_epoch\ =\ my\_ref\_reload\_epoch;}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ab09f5bf82f328f50d815d38f8d553f5f}{outermost\_level}}()\ )\ \{}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ are\ in\ a\ nested\ dispatch\ loop.}}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Market\ or\ arena\ priority\ must\ not\ prevent\ child\ tasks\ from\ being}}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ executed\ so\ that\ dynamic\ priority\ changes\ did\ not\ cause\ deadlock.}}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ my\_ref\_top\_priority\ =\ \&\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().context-\/>my\_priority;}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ my\_ref\_reload\_epoch\ =\ \&\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6b830853cb0386a2b8744d4c7dff3a80}{my\_arena}}-\/>my\_reload\_epoch;}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (my\_ref\_reload\_epoch\ !=\ old\_ref\_reload\_epoch)}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ my\_local\_reload\_epoch\ =\ *my\_ref\_reload\_epoch\ -\/\ 1;}
+\DoxyCodeLine{00598\ \ \ \ \ \}}
+\DoxyCodeLine{00599\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00600\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_ISOLATION}}
+\DoxyCodeLine{00601\ \ \ \ \ isolation\_tag\ isolation\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}-\/>prefix().isolation;}
+\DoxyCodeLine{00602\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ \&\&\ isolation\ !=\ no\_isolation)\ \{}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().isolation\ ==\ no\_isolation,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Propagate\ the\ isolation\ to\ the\ task\ executed\ without\ spawn.}}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().isolation\ =\ isolation;}
+\DoxyCodeLine{00606\ \ \ \ \ \}}
+\DoxyCodeLine{00607\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_ISOLATION\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00608\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00609\ \ \ \ \ \textcolor{comment}{//\ The\ recall\ flag\ for\ the\ original\ owner\ of\ this\ scheduler.}}
+\DoxyCodeLine{00610\ \ \ \ \ \textcolor{comment}{//\ It\ is\ used\ only\ on\ outermost\ level\ of\ currently\ attached\ arena\ slot.}}
+\DoxyCodeLine{00611\ \ \ \ \ tbb::atomic<bool>\ recall\_flag;}
+\DoxyCodeLine{00612\ \ \ \ \ recall\_flag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00613\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ab09f5bf82f328f50d815d38f8d553f5f}{outermost\_level}}()\ \&\&\ my\_wait\_task\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ \&\&\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.genuine)\ \{}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\ ==\ \textcolor{keyword}{this},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ =\ \&recall\_flag;}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ my\_current\_is\_recalled\ =\ \&recall\_flag;}
+\DoxyCodeLine{00618\ \ \ \ \ \}}
+\DoxyCodeLine{00619\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00620\ \ \ \ \ task*\ old\_wait\_task\ =\ my\_wait\_task;}
+\DoxyCodeLine{00621\ \ \ \ \ my\_wait\_task\ =\ \&\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}};}
+\DoxyCodeLine{00622\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00623\ \textcolor{preprocessor}{\#if\ TBB\_USE\_EXCEPTIONS}}
+\DoxyCodeLine{00624\ \ \ \ \ \textcolor{comment}{//\ Infinite\ safeguard\ EH\ loop}}
+\DoxyCodeLine{00625\ \ \ \ \ \textcolor{keywordflow}{for}\ (;;)\ \{}
+\DoxyCodeLine{00626\ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00627\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ TBB\_USE\_EXCEPTIONS\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{comment}{//\ Outer\ loop\ receives\ tasks\ from\ global\ environment\ (via\ mailbox,\ FIFO\ queue(s),}}
+\DoxyCodeLine{00629\ \ \ \ \ \textcolor{comment}{//\ and\ by\ \ stealing\ from\ other\ threads'\ task\ pools).}}
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{comment}{//\ All\ exit\ points\ from\ the\ dispatch\ loop\ are\ located\ in\ its\ immediate\ scope.}}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keywordflow}{for}(;;)\ \{}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Middle\ loop\ retrieves\ tasks\ from\ the\ local\ task\ pool.}}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;;)\ \{}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Inner\ loop\ evaluates\ tasks\ coming\ from\ nesting\ loops\ and\ those\ returned}}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ by\ just\ executed\ tasks\ (bypassing\ spawn\ or\ enqueue\ calls).}}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a4ac27cfa293899be6721f939dfdcdf5b}{process\_bypass\_loop}}(\ context\_guard,\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ isolation)\ )\ )\ \{}
+\DoxyCodeLine{00637\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Restore\ the\ old\ properties\ for\ the\ coroutine\ reusage\ (leave\ in\ a\ valid\ state)}}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ =\ old\_innermost\_running\_task;}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}\ =\ old\_properties;}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_wait\_task\ =\ old\_wait\_task;}
+\DoxyCodeLine{00642\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00645\ }
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Check\ "{}normal"{}\ exit\ condition\ when\ parent's\ work\ is\ done.}}
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().ref\_count\ ==\ 1\ )\ \{}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !cleanup,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gcc__generic_8h_a739e3f9cf251b0c785e86fba7c8f8c7c}{\_\_TBB\_control\_consistency\_helper}}();\ \textcolor{comment}{//\ on\ ref\_count}}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\ sync\_acquired,\ \&\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().ref\_count\ );}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ \mbox{\hyperlink{cpq__pdes_8cpp_a1d39aac66e12dae50a24cd7a9100ef33}{done}};}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00653\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ thread\ may\ be\ otside\ of\ its\ original\ scheduler.\ Check\ the\ recall\ request.}}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \&recall\_flag\ !=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ )\ \{}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \textcolor{stringliteral}{"{}A\ broken\ recall\ flag"{}}\ );}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ *\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ )\ \{}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !resume\_original\_scheduler()\ )\ \{}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ are\ requested\ to\ finish\ the\ current\ coroutine\ before\ the\ resume.}}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.genuine\ \&\&\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.outermost,}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Only\ a\ coroutine\ on\ outermost\ level\ can\ be\ left."{}}\ );}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Restore\ the\ old\ properties\ for\ the\ coroutine\ reusage\ (leave\ in\ a\ valid\ state)}}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ =\ old\_innermost\_running\_task;}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}\ =\ old\_properties;}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_wait\_task\ =\ old\_wait\_task;}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Retrieve\ the\ task\ from\ local\ task\ pool.}}
+\DoxyCodeLine{00672\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a1f221aa79878e3962ea2b3eaa7429fe1}{is\_task\_pool\_published}}()\ ||\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a089d1ca7efe019834cc06e82b4f3d883}{is\_quiescent\_local\_task\_pool\_reset}}(),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00673\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a1f221aa79878e3962ea2b3eaa7429fe1}{is\_task\_pool\_published}}()\ ?\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a10c72a4aad7308d944cef26502ece55e}{get\_task}}(\ \mbox{\hyperlink{scheduler__common_8h_a63e9a35b6d2bfbfb21b3199dc03acc6d}{\_\_TBB\_ISOLATION\_EXPR}}(\ isolation\ )\ )\ :\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ )\ \textcolor{comment}{//\ No\ tasks\ in\ the\ local\ task\ pool.\ Go\ to\ stealing\ loop.}}
+\DoxyCodeLine{00677\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \};\ \textcolor{comment}{//\ end\ of\ local\ task\ pool\ retrieval\ loop}}
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ \textcolor{preprocessor}{\#if\ \_\_TBB\_HOARD\_NONLOCAL\_TASKS}}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ before\ stealing,\ previously\ stolen\ task\ objects\ are\ returned}}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ my\_nonlocal\_free\_list;\ my\_nonlocal\_free\_list\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ )\ \{}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ my\_nonlocal\_free\_list-\/>prefix().next;}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a720c816c0253fe199e4583cd24090e9b}{free\_nonlocal\_small\_task}}(\ *my\_nonlocal\_free\_list\ );}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00686\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ cleanup\ )\ \{}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a1f221aa79878e3962ea2b3eaa7429fe1}{is\_task\_pool\_published}}()\ \&\&\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a089d1ca7efe019834cc06e82b4f3d883}{is\_quiescent\_local\_task\_pool\_reset}}(),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_aec76a489fe5368ede0d1658cbb74984b}{worker\_outermost\_level}}(),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00690\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ =\ old\_innermost\_running\_task;}
+\DoxyCodeLine{00691\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}\ =\ old\_properties;}
+\DoxyCodeLine{00692\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ \ \ \ \ my\_ref\_top\_priority\ =\ old\_ref\_top\_priority;}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(my\_ref\_reload\_epoch\ !=\ old\_ref\_reload\_epoch)}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ my\_local\_reload\_epoch\ =\ *old\_ref\_reload\_epoch-\/1;}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ \ \ \ \ my\_ref\_reload\_epoch\ =\ old\_ref\_reload\_epoch;}
+\DoxyCodeLine{00697\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00698\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\&recall\_flag\ !=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled)\ \{}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ recall\ point}}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!recall\_flag,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tbb::task::suspend(recall\_functor(\&recall\_flag));}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.is\_idle\_state(\textcolor{keyword}{true}))}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.set\_is\_idle(\textcolor{keyword}{false});}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\&recall\_flag\ ==\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!(my\_wait\_task-\/>prefix().ref\_count\ \&\ internal::abandon\_flag),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ \ \ \ \ my\_wait\_task\ =\ old\_wait\_task;}
+\DoxyCodeLine{00710\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{classtbb_1_1internal_1_1custom__scheduler_a3825613e3650d5a9110b9b9f5ee4a3e9}{receive\_or\_steal\_task}}(\ \mbox{\hyperlink{scheduler__common_8h_ae8bf2edd69c1485ce30d4e88cc7e27d2}{\_\_TBB\_ISOLATION\_ARG}}(\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().ref\_count,\ isolation\ )\ );}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ )\ \{}
+\DoxyCodeLine{00715\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ *\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ )}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Done\ if\ either\ original\ thread\ enters\ or\ we\ are\ on\ the\ nested\ level\ or\ attached\ the\ same\ arena}}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \&recall\_flag\ ==\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ ||\ old\_wait\_task\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ )}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ \mbox{\hyperlink{cpq__pdes_8cpp_a1d39aac66e12dae50a24cd7a9100ef33}{done}};}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ recall\ point.\ Continue\ dispatch\ loop\ because\ recalled\ thread\ may\ have\ tasks\ in\ it's\ task\ pool.}}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!recall\_flag,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \ \ \ \ tbb::task::suspend(\ recall\_functor(\&recall\_flag)\ );}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.is\_idle\_state(\textcolor{keyword}{true})\ )}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.set\_is\_idle(\textcolor{keyword}{false});}
+\DoxyCodeLine{00726\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Just\ exit\ dispatch\ loop}}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ \mbox{\hyperlink{cpq__pdes_8cpp_a1d39aac66e12dae50a24cd7a9100ef33}{done}};}
+\DoxyCodeLine{00729\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00731\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ infinite\ stealing\ loop}}
+\DoxyCodeLine{00732\ \textcolor{preprocessor}{\#if\ TBB\_USE\_EXCEPTIONS}}
+\DoxyCodeLine{00733\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Must\ never\ get\ here"{}}\ );}
+\DoxyCodeLine{00734\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ try-\/block}}
+\DoxyCodeLine{00735\ \ \ \ \ TbbCatchAll(\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}-\/>prefix().context\ );}
+\DoxyCodeLine{00736\ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}};}
+\DoxyCodeLine{00737\ \ \ \ \ \textcolor{comment}{//\ Complete\ post-\/processing\ ...}}
+\DoxyCodeLine{00738\ \ \ \ \ \textcolor{keywordflow}{if}(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>state()\ ==\ task::recycle}
+\DoxyCodeLine{00739\ \#\textcolor{keywordflow}{if}\ \mbox{\hyperlink{flow__graph_8h_ae1e892e1dba2e1b3f94afe55f97cb561}{\_\_TBB\_RECYCLE\_TO\_ENQUEUE}}}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ the\ enqueue\ semantics\ gets\ lost\ below,\ consider\ reimplementing}}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ ||\ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>state()\ ==\ task::to\_enqueue}
+\DoxyCodeLine{00742\ \#endif}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ )\ \{}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ...\ for\ recycled\ tasks\ to\ atomically\ decrement\ ref\_count}}
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().state\ =\ task::allocated;}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_ac5a347b47a5603a1f30f6fbf790724b7}{sync\_releasing}},\ \&\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().ref\_count);}
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ \mbox{\hyperlink{tbb__machine_8h_a58e2509c2723ffe8c2f2a3e73059d65b}{\_\_TBB\_FetchAndDecrementWrelease}}(\&\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().ref\_count)==1\ )\ \{}
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ SchedulerTraits::itt\_possible\ )}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \&\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}-\/>prefix().ref\_count);}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \}\textcolor{keywordflow}{else}\{}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00754\ \ \ \ \ \}}
+\DoxyCodeLine{00755\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ of\ infinite\ EH\ loop}}
+\DoxyCodeLine{00756\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \textcolor{keyword}{false},\ \textcolor{stringliteral}{"{}Must\ never\ get\ here\ too"{}}\ );}
+\DoxyCodeLine{00757\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ TBB\_USE\_EXCEPTIONS\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00758\ \mbox{\hyperlink{cpq__pdes_8cpp_a1d39aac66e12dae50a24cd7a9100ef33}{done}}:}
+\DoxyCodeLine{00759\ \textcolor{preprocessor}{\#if\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS}}
+\DoxyCodeLine{00760\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!(\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().ref\_count\ \&\ internal::abandon\_flag),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00761\ \ \ \ \ my\_wait\_task\ =\ old\_wait\_task;}
+\DoxyCodeLine{00762\ \ \ \ \ \textcolor{keywordflow}{if}\ (my\_wait\_task\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_ab09f5bf82f328f50d815d38f8d553f5f}{outermost\_level}}(),\ \textcolor{stringliteral}{"{}my\_wait\_task\ could\ be\ NULL\ only\ on\ outermost\ level"{}});}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\&recall\_flag\ !=\ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled)\ \{}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ recall\ point.}}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}.genuine,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!recall\_flag,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \ \ \ \ \ \ tbb::task::suspend(recall\_functor(\&recall\_flag));}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.is\_idle\_state(\textcolor{keyword}{true}))}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a5b120ea3121cd82f578eef2c1319f9fe}{my\_inbox}}.set\_is\_idle(\textcolor{keyword}{false});}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\ ==\ \textcolor{keyword}{this},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_a6f2fdcecd347bf767e89fda580545c1a}{my\_arena\_slot}}-\/>my\_scheduler\_is\_recalled\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00774\ \ \ \ \ \ \ \ \ my\_current\_is\_recalled\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00775\ \ \ \ \ \}}
+\DoxyCodeLine{00776\ }
+\DoxyCodeLine{00777\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_PREVIEW\_RESUMABLE\_TASKS\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00778\ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aac9af4d8baddbbc2af433e11297be8a5}{my\_innermost\_running\_task}}\ =\ old\_innermost\_running\_task;}
+\DoxyCodeLine{00779\ \ \ \ \ \mbox{\hyperlink{structtbb_1_1internal_1_1scheduler__state_aed181c52b8462c43272d45e625cd31fa}{my\_properties}}\ =\ old\_properties;}
+\DoxyCodeLine{00780\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_PRIORITY}}
+\DoxyCodeLine{00781\ \ \ \ \ my\_ref\_top\_priority\ =\ old\_ref\_top\_priority;}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{keywordflow}{if}(my\_ref\_reload\_epoch\ !=\ old\_ref\_reload\_epoch)}
+\DoxyCodeLine{00783\ \ \ \ \ \ \ \ \ my\_local\_reload\_epoch\ =\ *old\_ref\_reload\_epoch-\/1;}
+\DoxyCodeLine{00784\ \ \ \ \ my\_ref\_reload\_epoch\ =\ old\_ref\_reload\_epoch;}
+\DoxyCodeLine{00785\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_PRIORITY\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00786\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ !\mbox{\hyperlink{namespacetbb_1_1internal_a87ff64e432be3c5ddee9ddca98f7d0d5}{ConcurrentWaitsEnabled}}(\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}})\ )\ \{}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().ref\_count\ !=\ 1)\ \{}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ a\ worker\ that\ was\ revoked\ by\ the\ market.}}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_aec76a489fe5368ede0d1658cbb74984b}{worker\_outermost\_level}}(),}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Worker\ thread\ exits\ nested\ dispatch\ loop\ prematurely"{}}\ );}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().ref\_count\ =\ 0;}
+\DoxyCodeLine{00794\ \ \ \ \ \}}
+\DoxyCodeLine{00795\ \textcolor{preprocessor}{\#if\ TBB\_USE\_ASSERT}}
+\DoxyCodeLine{00796\ \ \ \ \ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().extra\_state\ \&=\ \mbox{\hyperlink{namespacetbb_1_1internal_a5fb219223e38c8bbcc47d7c943f48e54a2bde1985fd0827baf5dbfa4a9bc33a7f}{\string~es\_ref\_count\_active}};}
+\DoxyCodeLine{00797\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ TBB\_USE\_ASSERT\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00798\ \textcolor{preprocessor}{\#if\ \_\_TBB\_TASK\_GROUP\_CONTEXT}}
+\DoxyCodeLine{00799\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().context\ \&\&\ default\_context(),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00800\ \ \ \ \ task\_group\_context*\ parent\_ctx\ =\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}.prefix().context;}
+\DoxyCodeLine{00801\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ parent\_ctx-\/>my\_cancellation\_requested\ )\ \{}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ task\_group\_context::exception\_container\_type\ *pe\ =\ parent\_ctx-\/>my\_exception;}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a744eb36f568cf2c726a0920494e5579d}{master\_outermost\_level}}()\ \&\&\ parent\_ctx\ ==\ default\_context()\ )\ \{}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ are\ in\ the\ outermost\ task\ dispatch\ loop\ of\ a\ master\ thread,\ and}}
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ whole\ task\ tree\ has\ been\ collapsed.\ So\ we\ may\ clear\ cancellation\ data.}}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \ \ \ \ parent\_ctx-\/>my\_cancellation\_requested\ =\ 0;}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ Add\ assertion\ that\ master's\ dummy\ task\ context\ does\ not\ have\ children}}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \ \ \ \ parent\_ctx-\/>my\_state\ \&=\ \string~(uintptr\_t)task\_group\_context::may\_have\_children;}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ pe\ )\ \{}
+\DoxyCodeLine{00811\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ On\ Windows,\ FPU\ control\ settings\ changed\ in\ the\ helper\ destructor\ are\ not\ visible}}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ outside\ a\ catch\ block.\ So\ restore\ the\ default\ settings\ manually\ before\ rethrowing}}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ exception.}}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \ \ \ \ context\_guard.restore\_default();}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \ \ \ \ TbbRethrowException(\ pe\ );}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00817\ \ \ \ \ \}}
+\DoxyCodeLine{00818\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a24ecab941cdf8ff762126f1c65e5274a}{is\_worker}}()\ ||\ !CancellationInfoPresent(*\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_abc495d5b077a2ef1b05e15e820555d90}{my\_dummy\_task}}),}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Worker's\ dummy\ task\ context\ modified"{}});}
+\DoxyCodeLine{00820\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(!\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_a744eb36f568cf2c726a0920494e5579d}{master\_outermost\_level}}()\ ||\ !CancellationInfoPresent(*\mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_abc495d5b077a2ef1b05e15e820555d90}{my\_dummy\_task}}),}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Unexpected\ exception\ or\ cancellation\ data\ in\ the\ master's\ dummy\ task"{}});}
+\DoxyCodeLine{00822\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_TASK\_GROUP\_CONTEXT\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00823\ \ \ \ \ \mbox{\hyperlink{classtbb_1_1internal_1_1generic__scheduler_adc904ecbeb053f061c66edd8e85ac704}{assert\_task\_pool\_valid}}();}
+\DoxyCodeLine{00824\ \}}
+\DoxyCodeLine{00825\ }
+\DoxyCodeLine{00826\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00827\ \}\ \textcolor{comment}{//\ namespace\ tbb}}
+\DoxyCodeLine{00828\ }
+\DoxyCodeLine{00829\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_TBB\_custom\_scheduler\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

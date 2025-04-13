@@ -1,0 +1,242 @@
+\doxysection{cache\+\_\+aligned\+\_\+allocator.\+cpp}
+\hypertarget{cache__aligned__allocator_8cpp_source}{}\label{cache__aligned__allocator_8cpp_source}\index{external/taskflow/3rd-\/party/tbb/src/tbb/cache\_aligned\_allocator.cpp@{external/taskflow/3rd-\/party/tbb/src/tbb/cache\_aligned\_allocator.cpp}}
+\mbox{\hyperlink{cache__aligned__allocator_8cpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ \ Copyright\ (c)\ 2005-\/2020\ Intel\ Corporation}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ \ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ \ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ \ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tbb__config_8h}{tbb/tbb\_config.h}}"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{cache__aligned__allocator_8h}{tbb/cache\_aligned\_allocator.h}}"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tbb__allocator_8h}{tbb/tbb\_allocator.h}}"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tbb__exception_8h}{tbb/tbb\_exception.h}}"{}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tbb__misc_8h}{tbb\_misc.h}}"{}}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{dynamic__link_8h}{dynamic\_link.h}}"{}}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#if\ \_WIN32||\_WIN64}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{windows__api_8h}{tbb/machine/windows\_api.h}}"{}}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <dlfcn.h>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_WIN32||\_WIN64\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#if\ \_\_TBB\_WEAK\_SYMBOLS\_PRESENT}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#pragma\ weak\ scalable\_malloc}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#pragma\ weak\ scalable\_free}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#pragma\ weak\ scalable\_aligned\_malloc}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#pragma\ weak\ scalable\_aligned\_free}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{group__memory__allocation_ga2fcb23ca500304f69173dd13ad7e1389}{scalable\_malloc}}(\ \textcolor{keywordtype}{size\_t}\ );}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{group__memory__allocation_ga2ad3952b8c4dd7d293e02ae18fc37b84}{scalable\_free}}(\ \textcolor{keywordtype}{void}*\ );}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{group__memory__allocation_gaabbb96e401f5505e6c1a4a5f40f8ef13}{scalable\_aligned\_malloc}}(\ \textcolor{keywordtype}{size\_t},\ \textcolor{keywordtype}{size\_t}\ );}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{group__memory__allocation_gad9aa7595581a7bc5be193d7e034c8f61}{scalable\_aligned\_free}}(\ \textcolor{keywordtype}{void}*\ );}
+\DoxyCodeLine{00043\ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ \_\_TBB\_WEAK\_SYMBOLS\_PRESENT\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetbb}{tbb}}\ \{}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetbb_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespacetbb_1_1internal_a017b2dc8729e0abacdcb39735b376b5e}{DummyMalloc}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ );}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_ac1ac27823b99b8514409264eebc62a30}{DummyFree}}(\ \textcolor{keywordtype}{void}\ *\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ );}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00058\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ (*MallocHandler)(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ )\ =\ \&\mbox{\hyperlink{namespacetbb_1_1internal_a017b2dc8729e0abacdcb39735b376b5e}{DummyMalloc}};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{static}\ \mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}}\ (*\mbox{\hyperlink{namespacetbb_1_1internal_ac1be49e884d193d480c5837b324fc96d}{FreeHandler}})(\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a114e561b64eeccad5bc17f0f799e1e08}{pointer}}\ )\ =\ \&\mbox{\hyperlink{namespacetbb_1_1internal_ac1ac27823b99b8514409264eebc62a30}{DummyFree}};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespacetbb_1_1internal_a89d502cbc759014cb6465447e4558110}{dummy\_padded\_allocate}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structbytes}{bytes}},\ \textcolor{keywordtype}{size\_t}\ alignment\ );}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_a2a42b7bb1a4a2823b93d6591f7cc12cf}{dummy\_padded\_free}}(\ \textcolor{keywordtype}{void}\ *\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ );}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ !\ Allocates\ memory\ using\ standard\ malloc.\ It\ is\ used\ when\ scalable\_allocator\ is\ not\ available}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespacetbb_1_1internal_a53b20002ba2abdc3326f3741a8608f22}{padded\_allocate}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structbytes}{bytes}},\ \textcolor{keywordtype}{size\_t}\ alignment\ );}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ !\ Allocates\ memory\ using\ standard\ free.\ It\ is\ used\ when\ scalable\_allocator\ is\ not\ available}}
+\DoxyCodeLine{00073\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_ad794dd567905ec5005396fec4e96cf6a}{padded\_free}}(\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ (*padded\_allocate\_handler)(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structbytes}{bytes}},\ \textcolor{keywordtype}{size\_t}\ alignment\ )\ =\ \&\mbox{\hyperlink{namespacetbb_1_1internal_a89d502cbc759014cb6465447e4558110}{dummy\_padded\_allocate}};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{static}\ \mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}}\ (*\mbox{\hyperlink{namespacetbb_1_1internal_ac2ea8dc1cc2e8dbcede7ac1d14d64e38}{padded\_free\_handler}})(\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ =\ \&\mbox{\hyperlink{namespacetbb_1_1internal_a2a42b7bb1a4a2823b93d6591f7cc12cf}{dummy\_padded\_free}};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structdynamic__link__descriptor}{dynamic\_link\_descriptor}}\ \mbox{\hyperlink{namespacetbb_1_1internal_a45f3d94cc398dff010b24fbd3c97d5d5}{MallocLinkTable}}[]\ =\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{dynamic__link_8h_a936c2724b498e02f80811f92ee06255a}{DLD}}(\mbox{\hyperlink{group__memory__allocation_ga2fcb23ca500304f69173dd13ad7e1389}{scalable\_malloc}},\ \mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}),}
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{dynamic__link_8h_a936c2724b498e02f80811f92ee06255a}{DLD}}(\mbox{\hyperlink{group__memory__allocation_ga2ad3952b8c4dd7d293e02ae18fc37b84}{scalable\_free}},\ \mbox{\hyperlink{namespacetbb_1_1internal_ac1be49e884d193d480c5837b324fc96d}{FreeHandler}}),}
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{dynamic__link_8h_a936c2724b498e02f80811f92ee06255a}{DLD}}(\mbox{\hyperlink{group__memory__allocation_gaabbb96e401f5505e6c1a4a5f40f8ef13}{scalable\_aligned\_malloc}},\ \mbox{\hyperlink{namespacetbb_1_1internal_a1c0ac87f6b518b657df7ccd32f7fb68e}{padded\_allocate\_handler}}),}
+\DoxyCodeLine{00086\ \ \ \ \ \mbox{\hyperlink{dynamic__link_8h_a936c2724b498e02f80811f92ee06255a}{DLD}}(\mbox{\hyperlink{group__memory__allocation_gad9aa7595581a7bc5be193d7e034c8f61}{scalable\_aligned\_free}},\ \mbox{\hyperlink{namespacetbb_1_1internal_ac2ea8dc1cc2e8dbcede7ac1d14d64e38}{padded\_free\_handler}}),}
+\DoxyCodeLine{00087\ \};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#if\ TBB\_USE\_DEBUG}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#define\ DEBUG\_SUFFIX\ "{}\_debug"{}}}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#define\ DEBUG\_SUFFIX}}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ TBB\_USE\_DEBUG\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ MALLOCLIB\_NAME\ is\ the\ name\ of\ the\ TBB\ memory\ allocator\ library.}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#if\ \_WIN32||\_WIN64}}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#define\ MALLOCLIB\_NAME\ "{}tbbmalloc"{}\ DEBUG\_SUFFIX\ "{}.dll"{}}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#elif\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#define\ MALLOCLIB\_NAME\ "{}libtbbmalloc"{}\ DEBUG\_SUFFIX\ "{}.dylib"{}}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#elif\ \_\_FreeBSD\_\_\ ||\ \_\_NetBSD\_\_\ ||\ \_\_OpenBSD\_\_\ ||\ \_\_sun\ ||\ \_AIX\ ||\ \_\_ANDROID\_\_}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#define\ MALLOCLIB\_NAME\ "{}libtbbmalloc"{}\ DEBUG\_SUFFIX\ "{}.so"{}}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#elif\ \_\_linux\_\_\ \ }\textcolor{comment}{//\ Note\ that\ order\ of\ these\ \#elif's\ is\ important!}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#define\ MALLOCLIB\_NAME\ "{}libtbbmalloc"{}\ DEBUG\_SUFFIX\ \ \_\_TBB\_STRING(.so.TBB\_COMPATIBLE\_INTERFACE\_VERSION)}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#error\ Unknown\ OS}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00113\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_ad81b5f8ef24a819263e662348983fb5d}{initialize\_handler\_pointers}}()\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}==\&\mbox{\hyperlink{namespacetbb_1_1internal_a017b2dc8729e0abacdcb39735b376b5e}{DummyMalloc}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{bool}\ success\ =\ \mbox{\hyperlink{dynamic__link_8cpp_aca8bbbbc28690d986ae2636bae2754f7}{dynamic\_link}}(\ MALLOCLIB\_NAME,\ \mbox{\hyperlink{namespacetbb_1_1internal_a45f3d94cc398dff010b24fbd3c97d5d5}{MallocLinkTable}},\ 4\ );}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{if}(\ !success\ )\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ unsuccessful,\ set\ the\ handlers\ to\ the\ default\ routines.}}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ This\ must\ be\ done\ now,\ and\ not\ before\ FillDynamicLinks\ runs,\ because\ if\ other}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ threads\ call\ the\ handlers,\ we\ want\ them\ to\ go\ through\ the\ DoOneTimeInitializations\ logic,}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ which\ forces\ them\ to\ wait.}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_ac1be49e884d193d480c5837b324fc96d}{FreeHandler}}\ =\ \&std::free;}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}\ =\ \&std::malloc;}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a1c0ac87f6b518b657df7ccd32f7fb68e}{padded\_allocate\_handler}}\ =\ \&\mbox{\hyperlink{namespacetbb_1_1internal_a53b20002ba2abdc3326f3741a8608f22}{padded\_allocate}};}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_ac2ea8dc1cc2e8dbcede7ac1d14d64e38}{padded\_free\_handler}}\ =\ \&\mbox{\hyperlink{namespacetbb_1_1internal_ad794dd567905ec5005396fec4e96cf6a}{padded\_free}};}
+\DoxyCodeLine{00125\ \ \ \ \ \}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#if\ !\_\_TBB\_RML\_STATIC}}
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a89891ef24359a1304be463a41071684c}{PrintExtraVersionInfo}}(\ \textcolor{stringliteral}{"{}ALLOCATOR"{}},\ success?\textcolor{stringliteral}{"{}scalable\_malloc"{}}:\textcolor{stringliteral}{"{}malloc"{}}\ );}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00129\ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \textcolor{keyword}{static}\ tbb::atomic<do\_once\_state>\ \mbox{\hyperlink{namespacetbb_1_1internal_a8f522a675e285e4ffbd8e9dc21c4f621}{initialization\_state}};}
+\DoxyCodeLine{00132\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_a408cda99f26f50b451ac562e96a4d760}{initialize\_cache\_aligned\_allocator}}()\ \{}
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a1082394ca8392ef2aa6795b57a756fa5}{atomic\_do\_once}}(\ \&\mbox{\hyperlink{namespacetbb_1_1internal_ad81b5f8ef24a819263e662348983fb5d}{initialize\_handler\_pointers}},\ \mbox{\hyperlink{namespacetbb_1_1internal_a8f522a675e285e4ffbd8e9dc21c4f621}{initialization\_state}}\ );}
+\DoxyCodeLine{00134\ \}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00137\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespacetbb_1_1internal_a017b2dc8729e0abacdcb39735b376b5e}{DummyMalloc}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ )\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a408cda99f26f50b451ac562e96a4d760}{initialize\_cache\_aligned\_allocator}}();}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}!=\&\mbox{\hyperlink{namespacetbb_1_1internal_a017b2dc8729e0abacdcb39735b376b5e}{DummyMalloc}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{return}\ (*\mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}})(\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ac42c05b5701aef6bab82675cf3b55fee}{size}}\ );}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00144\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_ac1ac27823b99b8514409264eebc62a30}{DummyFree}}(\ \textcolor{keywordtype}{void}\ *\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ )\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a408cda99f26f50b451ac562e96a4d760}{initialize\_cache\_aligned\_allocator}}();}
+\DoxyCodeLine{00146\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{namespacetbb_1_1internal_ac1be49e884d193d480c5837b324fc96d}{FreeHandler}}!=\&\mbox{\hyperlink{namespacetbb_1_1internal_ac1ac27823b99b8514409264eebc62a30}{DummyFree}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00147\ \ \ \ \ (*FreeHandler)(\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ );}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00151\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespacetbb_1_1internal_a89d502cbc759014cb6465447e4558110}{dummy\_padded\_allocate}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structbytes}{bytes}},\ \textcolor{keywordtype}{size\_t}\ alignment\ )\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a408cda99f26f50b451ac562e96a4d760}{initialize\_cache\_aligned\_allocator}}();}
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{namespacetbb_1_1internal_a1c0ac87f6b518b657df7ccd32f7fb68e}{padded\_allocate\_handler}}!=\&\mbox{\hyperlink{namespacetbb_1_1internal_a89d502cbc759014cb6465447e4558110}{dummy\_padded\_allocate}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keywordflow}{return}\ (*\mbox{\hyperlink{namespacetbb_1_1internal_a1c0ac87f6b518b657df7ccd32f7fb68e}{padded\_allocate\_handler}})(\mbox{\hyperlink{structbytes}{bytes}},\ alignment);}
+\DoxyCodeLine{00155\ \}}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00158\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_a2a42b7bb1a4a2823b93d6591f7cc12cf}{dummy\_padded\_free}}(\ \textcolor{keywordtype}{void}\ *\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ )\ \{}
+\DoxyCodeLine{00159\ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a408cda99f26f50b451ac562e96a4d760}{initialize\_cache\_aligned\_allocator}}();}
+\DoxyCodeLine{00160\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{namespacetbb_1_1internal_ac2ea8dc1cc2e8dbcede7ac1d14d64e38}{padded\_free\_handler}}!=\&\mbox{\hyperlink{namespacetbb_1_1internal_a2a42b7bb1a4a2823b93d6591f7cc12cf}{dummy\_padded\_free}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00161\ \ \ \ \ (*padded\_free\_handler)(\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ );}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ TODO:\ use\ CPUID\ to\ find\ actual\ line\ size,\ though\ consider\ backward\ compatibility}}
+\DoxyCodeLine{00165\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacetbb_1_1internal_a82c444105b03846fa7053a32df285603}{NFS\_LineSize}}\ =\ 128;}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespacetbb_1_1internal_a9694b519576433b7ce9af226bfc7c422}{NFS\_GetLineSize}}()\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacetbb_1_1internal_a82c444105b03846fa7053a32df285603}{NFS\_LineSize}};}
+\DoxyCodeLine{00169\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#if\ \_MSC\_VER\ \&\&\ !defined(\_\_INTEL\_COMPILER)}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ unary\ minus\ operator\ applied\ to\ unsigned\ type,\ result\ still\ unsigned}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ warning(\ disable:\ 4146\ 4706\ )}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespacetbb_1_1internal_a395611542e21705f49de2a06e2c88f59}{NFS\_Allocate}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\ \textcolor{keywordtype}{size\_t}\ element\_size,\ \textcolor{keywordtype}{void}*\ \textcolor{comment}{/*hint*/}\ )\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//TODO:\ make\ this\ functionality\ \ available\ via\ an\ adaptor\ over\ generic\ STL\ like\ allocator}}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ nfs\_cache\_line\_size\ =\ \mbox{\hyperlink{namespacetbb_1_1internal_a82c444105b03846fa7053a32df285603}{NFS\_LineSize}};}
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ nfs\_cache\_line\_size\ <=\ NFS\_MaxLineSize,\ \textcolor{stringliteral}{"{}illegal\ value\ for\ NFS\_LineSize"{}}\ );}
+\DoxyCodeLine{00180\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ is\_power\_of\_two(nfs\_cache\_line\_size),\ \textcolor{stringliteral}{"{}must\ be\ power\ of\ two"{}}\ );}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structbytes}{bytes}}\ =\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}*element\_size;}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structbytes}{bytes}}<\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ ||\ \mbox{\hyperlink{structbytes}{bytes}}+nfs\_cache\_line\_size<\mbox{\hyperlink{structbytes}{bytes}})\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Overflow}}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a61a681f9fd15fdb055f7725d6416ddf4}{throw\_exception}}(\mbox{\hyperlink{namespacetbb_1_1internal_ace88c7330e7f616616785ffb001e04f9a83455347fab4a99a0ba3860af1f91b25}{eid\_bad\_alloc}});}
+\DoxyCodeLine{00186\ \ \ \ \ \}}
+\DoxyCodeLine{00187\ \ \ \ \ \textcolor{comment}{//\ scalable\_aligned\_malloc\ considers\ zero\ size\ request\ an\ error,\ and\ returns\ NULL}}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{structbytes}{bytes}}==0)\ \mbox{\hyperlink{structbytes}{bytes}}\ =\ 1;}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ (*padded\_allocate\_handler)(\ \mbox{\hyperlink{structbytes}{bytes}},\ nfs\_cache\_line\_size\ );}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}})}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a61a681f9fd15fdb055f7725d6416ddf4}{throw\_exception}}(\mbox{\hyperlink{namespacetbb_1_1internal_ace88c7330e7f616616785ffb001e04f9a83455347fab4a99a0ba3860af1f91b25}{eid\_bad\_alloc}});}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{harness_8h_a2cd6d606b7a354545b2cdecca67efa44}{is\_aligned}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}},\ nfs\_cache\_line\_size),\ \textcolor{stringliteral}{"{}The\ address\ returned\ isn't\ aligned\ to\ cache\ line\ size"{}}\ );}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00196\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_abd3fdd42ea716867fc95116354481b4e}{NFS\_Free}}(\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \{}
+\DoxyCodeLine{00199\ \ \ \ \ (*padded\_free\_handler)(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{namespacetbb_1_1internal_a53b20002ba2abdc3326f3741a8608f22}{padded\_allocate}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{structbytes}{bytes}},\ \textcolor{keywordtype}{size\_t}\ alignment\ )\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ base\ =\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)std::malloc(alignment+\mbox{\hyperlink{structbytes}{bytes}});}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{keywordflow}{if}(\ base\ )\ \{}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Round\ up\ to\ the\ next\ line}}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ (\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*)((uintptr\_t)(base+alignment)\&-\/alignment);}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Record\ where\ block\ actually\ starts.}}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ ((uintptr\_t*)\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}})[-\/1]\ =\ uintptr\_t(base);}
+\DoxyCodeLine{00210\ \ \ \ \ \}}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00212\ \}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetbb_1_1internal_ad794dd567905ec5005396fec4e96cf6a}{padded\_free}}(\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \{}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keywordflow}{if}(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ (uintptr\_t)\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}>=0x4096,\ \textcolor{stringliteral}{"{}attempt\ to\ free\ block\ not\ obtained\ from\ cache\_aligned\_allocator"{}}\ );}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Recover\ where\ block\ actually\ starts}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ base\ =\ ((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}**)\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})[-\/1];}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ (\textcolor{keywordtype}{void}*)((uintptr\_t)(base+\mbox{\hyperlink{namespacetbb_1_1internal_a82c444105b03846fa7053a32df285603}{NFS\_LineSize}})\&-\/\mbox{\hyperlink{namespacetbb_1_1internal_a82c444105b03846fa7053a32df285603}{NFS\_LineSize}})==\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{stringliteral}{"{}not\ allocated\ by\ NFS\_Allocate?"{}}\ );}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ std::free(base);}
+\DoxyCodeLine{00221\ \ \ \ \ \}}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{scalable__allocator_8h_ab6dd3eee12dcbf8bc4c41513c4c4c9fb}{\_\_TBB\_EXPORTED\_FUNC}}\ \mbox{\hyperlink{namespacetbb_1_1internal_a9f226bc3212761202602d0198c587b12}{allocate\_via\_handler\_v3}}(\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ )\ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ (*MallocHandler)\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}});}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}})\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacetbb_1_1internal_a61a681f9fd15fdb055f7725d6416ddf4}{throw\_exception}}(\mbox{\hyperlink{namespacetbb_1_1internal_ace88c7330e7f616616785ffb001e04f9a83455347fab4a99a0ba3860af1f91b25}{eid\_bad\_alloc}});}
+\DoxyCodeLine{00228\ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00230\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{scalable__allocator_8h_ab6dd3eee12dcbf8bc4c41513c4c4c9fb}{\_\_TBB\_EXPORTED\_FUNC}}\ \mbox{\hyperlink{namespacetbb_1_1internal_a09c594367453cbf1ac040fc9ff8396da}{deallocate\_via\_handler\_v3}}(\ \textcolor{keywordtype}{void}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{if}(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ (*FreeHandler)(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );}
+\DoxyCodeLine{00235\ \ \ \ \ \}}
+\DoxyCodeLine{00236\ \}}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{scalable__allocator_8h_ab6dd3eee12dcbf8bc4c41513c4c4c9fb}{\_\_TBB\_EXPORTED\_FUNC}}\ \mbox{\hyperlink{namespacetbb_1_1internal_ac6c57720b7096491ee91d3c2fe1c4240}{is\_malloc\_used\_v3}}()\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}\ ==\ \&\mbox{\hyperlink{namespacetbb_1_1internal_a017b2dc8729e0abacdcb39735b376b5e}{DummyMalloc}})\ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}*\ void\_ptr\ =\ (*MallocHandler)(1);}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ (*FreeHandler)(void\_ptr);}
+\DoxyCodeLine{00242\ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}!=\&\mbox{\hyperlink{namespacetbb_1_1internal_a017b2dc8729e0abacdcb39735b376b5e}{DummyMalloc}}\ \&\&\ \mbox{\hyperlink{namespacetbb_1_1internal_ac1be49e884d193d480c5837b324fc96d}{FreeHandler}}!=\&\mbox{\hyperlink{namespacetbb_1_1internal_ac1ac27823b99b8514409264eebc62a30}{DummyFree}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{comment}{//\ Cast\ to\ void\ avoids\ type\ mismatch\ errors\ on\ some\ compilers\ (e.g.\ \_\_IBMCPP\_\_)}}
+\DoxyCodeLine{00245\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ !(((\textcolor{keywordtype}{void}*)\mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}==(\textcolor{keywordtype}{void}*)\&std::malloc)\ \string^\ ((\textcolor{keywordtype}{void}*)\mbox{\hyperlink{namespacetbb_1_1internal_ac1be49e884d193d480c5837b324fc96d}{FreeHandler}}==(\textcolor{keywordtype}{void}*)\&std::free)),}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Both\ shim\ pointers\ must\ refer\ to\ routines\ from\ the\ same\ package\ (either\ TBB\ or\ CRT)"{}}\ );}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{void}*)\mbox{\hyperlink{namespacetbb_1_1internal_a94d768ba0464db687f650b5f94bcd158}{MallocHandler}}\ ==\ (\textcolor{keywordtype}{void}*)\&std::malloc;}
+\DoxyCodeLine{00248\ \}}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \}\ \textcolor{comment}{//\ namespace\ tbb}}
+
+\end{DoxyCode}

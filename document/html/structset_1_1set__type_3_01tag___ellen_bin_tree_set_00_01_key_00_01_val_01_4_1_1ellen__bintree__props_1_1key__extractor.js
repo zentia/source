@@ -1,0 +1,4 @@
+var structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1ellen__bintree__props_1_1key__extractor =
+[
+    [ "operator()", "structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1ellen__bintree__props_1_1key__extractor.html#a6468569b7a7a272bb524b9b71ec4d7be", null ]
+];

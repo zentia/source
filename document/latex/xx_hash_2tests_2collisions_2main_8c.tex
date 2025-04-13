@@ -1,0 +1,560 @@
+\doxysection{runtime/xx\+Hash/tests/collisions/main.c 文件参考}
+\hypertarget{xx_hash_2tests_2collisions_2main_8c}{}\label{xx_hash_2tests_2collisions_2main_8c}\index{runtime/xxHash/tests/collisions/main.c@{runtime/xxHash/tests/collisions/main.c}}
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$assert.\+h$>$}\newline
+{\ttfamily \#include "{}hashes.\+h"{}}\newline
+{\ttfamily \#include "{}sort.\+hh"{}}\newline
+{\ttfamily \#include $<$time.\+h$>$}\newline
+{\ttfamily \#include "{}pool.\+h"{}}\newline
+main.\+c 的引用(Include)关系图\+:
+% FIG 0
+\doxysubsubsection*{类}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structsample_factory}{sample\+Factory}}
+\item 
+struct \mbox{\hyperlink{structsearch_collisions__results}{search\+Collisions\+\_\+results}}
+\item 
+struct \mbox{\hyperlink{structsearch_collisions__parameters}{search\+Collisions\+\_\+parameters}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{宏定义}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a06195e3f47d21ad861bd2dd075827bd2}{EXIT}}(...)
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a0d321faac987b129d64e3abd82630b71}{SPARSE\+\_\+\+LEVEL\+\_\+\+MAX}}~15
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a3acffbd305ee72dcd4593c0d8af64a4f}{MIN}}(a,  \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_afa99ec4acc4ecb2dc3c2d05da15d0e3f}{MAX}}(a,  \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_aec2bebaf5f9a433b4cfa9e8b3cad8c48}{NB\+\_\+\+BITS\+\_\+\+MAX}}~64   /\texorpdfstring{$\ast$}{*} can\textquotesingle{}\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}} store nor analyze hash wider than 64-\/bits \mbox{\hyperlink{sugar_8h_a750e3136a03cedcdb7f5f2de4b988f5b}{for}} the time being \texorpdfstring{$\ast$}{*}/
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a5a5fbd7a78051c2134b21324e5c74bdc}{DISPLAY}}(...)
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a234381503c491c9348450ca1c8ab76dd}{SAMPLE\+\_\+\+SIZE\+\_\+\+DEFAULT}}~256
+\item 
+\#define \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a8b74ea113bc84495db638581c2a9271f}{HASHFN\+\_\+\+ID\+\_\+\+DEFAULT}}~0
+\end{DoxyCompactItemize}
+\doxysubsubsection*{类型定义}
+\begin{DoxyCompactItemize}
+\item 
+typedef unsigned char \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{枚举}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} \{ \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a140331d0edbea0fda553cf1099dffd08}{ht32}}
+, \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a7c6f3d33f5eee927bd577f07835cecc3}{ht64}}
+, \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a174833878a9f6a75a411ea040649ea76}{ht128}}
+ \}
+\item 
+enum \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664c}{sf\+\_\+gen\+Mode}} \{ \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664ca6272eb58c034769a60f6229d68169fe8}{sf\+\_\+slab5}}
+, \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664ca5ac8d00fe046e5005a1eea1fc52e6de5}{sf\+\_\+sparse}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{函数}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ada54715805e684e2b918600e1defbba5}{hex\+Raw}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}})
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_acd453fb0b0fb21cd58357764b90a252b}{print\+Hash}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}table, size\+\_\+t n, \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} htype)
+\item 
+static \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab628323ee13682d8e666ac0fd924a935}{avalanche64}} (\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} h64)
+\item 
+static unsigned char \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a2a77931f4cc60d4fc67eea0d353e9dba}{random\+Byte}} (\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} n)
+\item 
+static double \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ad828d8ae7b64dc128e0d4d8cfb0dca43}{Cnm}} (\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} n, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} m)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_af8efd0bd35701ed8eabed71e64fd8a7d}{enough\+Combos}} (size\+\_\+t \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} htotal)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a9ef3cf0cc9ae2f3be48c99ad81364b91}{init\+\_\+sample\+Factory}} (\mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*}sf, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} htotal)
+\item 
+static \mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_aa7b6214b034f81a652934896b71cdde0}{create\+\_\+sample\+Factory}} (size\+\_\+t \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} htotal, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} seed)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a00c9f0ad081cb63f4116513c4c57ccf7}{free\+\_\+sample\+Factory}} (\mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*}sf)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a772c9667fb0c61511695fb98de42aa05}{flipbit}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} bit\+ID)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a6404c199633ab0f943819c94f42c39d9}{update\+Bit}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t \texorpdfstring{$\ast$}{*}bit\+Idx, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a2b536fca24f51d6a849aed325793e661}{level}}, size\+\_\+t max)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae8a09f35098f1960bd1d9ad357113476}{update\+\_\+sample\+Factory}} (\mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*}sf)
+\item 
+\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a5f42c1ef7007fd03101a5c47ad763199}{create\+\_\+\+Filter}} (\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} bflog)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a2cb445ce42ab49c001117a1ff1fdb442}{free\+\_\+\+Filter}} (\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}bf)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a68e4db40507504c4e11e6e189fc96ec3}{Filter\+\_\+insert}} (\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}bf, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} bflog, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} hash)
+\item 
+static \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_aac0c8f9ee4a5163c8535ab1fea026af5}{Filter\+\_\+reduce}} (\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}bf, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} bflog)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_aaeff9ee8a4e7d4d769a9faf5ebe7b0c0}{Filter\+\_\+check}} (const \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}bf, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} bflog, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} hash)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a899758a3f0c50be6e1fdfffc5ad47e0f}{update\+\_\+indicator}} (\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} v, \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} total)
+\item 
+const char \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a8c2c8a013268b707a842caf85a57d735}{display\+Delay}} (double delay\+\_\+s)
+\item 
+static double \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a8c8fc0b853403926062eb6acd951139e}{power}} (\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} base, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})
+\item 
+static double \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_aa9648d16b2cb48c465ca13ca82af3bb7}{estimate\+Nb\+Collisions}} (\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} nbH, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} nb\+Bits)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a66d0e681abd034156ac4e4cf570f5b4c}{highest\+Bit\+Set}} (\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} v)
+\item 
+\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a2237d3b7caaf82f67790dffcc6e312ae}{select\+\_\+nbh}} (\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} nb\+Bits)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab9deb4a18b913cc017e25ed502d65f35}{is\+Equal}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}h\+Table\+Ptr, size\+\_\+t index1, size\+\_\+t index2, \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} htype)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_aa2c99a2f2018f2986984b0c90676599e}{is\+High\+Equal}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}h\+Table\+Ptr, size\+\_\+t index1, size\+\_\+t index2, \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} htype, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} r\+Shift)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a9869202a00afb72bf649760ae54ed269}{add\+Hash\+Candidate}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}h\+Table\+Ptr, \mbox{\hyperlink{union_uni_hash}{Uni\+Hash}} h, \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} htype, size\+\_\+t \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}})
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_afbd6639c985824526618983c16d9f4bd}{get\+Nb\+Bits\+\_\+from\+Htype}} (\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} htype)
+\item 
+static \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a3a9bb7ff4f5060697744ca25ac5faa3d}{get\+Htype\+\_\+from\+Hbits}} (\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} nb\+Bits)
+\item 
+static size\+\_\+t \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a5eaa188ad9b37ee63bb7254e4c67dd57}{search\+\_\+collisions}} (\mbox{\hyperlink{structsearch_collisions__parameters}{search\+Collisions\+\_\+parameters}} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa18f5f638c58bcb864e367eacbb3380d}{param}})
+\item 
+static size\+\_\+t \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a36756af58b018165d27d8256e67086fe}{get\+Process\+Mem\+Usage}} (\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} ignore)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a1175a91864a86f438cc993bc57c9473d}{time\+\_\+collisions}} (\mbox{\hyperlink{structsearch_collisions__parameters}{search\+Collisions\+\_\+parameters}} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa18f5f638c58bcb864e367eacbb3380d}{param}})
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab89c02c9d7984faf70b2723c1e32fcd3}{MT\+\_\+search\+Collisions}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}payload)
+\item 
+static \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a44e9a21e7cb9da4ed43363b9ae082496}{read\+U64\+From\+Char}} (const char \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}string\+Ptr)
+\item 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a4332ba2202f59d1610317d7e90df84e8}{long\+Command\+WArg}} (const char \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}string\+Ptr, const char \texorpdfstring{$\ast$}{*}long\+Command)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_af67ac2097958c102c7bd0e8598173dd8}{help}} (const char \texorpdfstring{$\ast$}{*}exe\+Name)
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a783d046cd3e10685a8c09d7f749009d3}{bad\+\_\+argument}} (const char \texorpdfstring{$\ast$}{*}exe\+Name)
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a217dbf8b442f20279ea00b898af96f52}{main}} (\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} argc, const char \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}argv)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{变量}
+\begin{DoxyCompactItemize}
+\item 
+static const \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a88e40072c60f476816d9b761938d5f43}{prime64\+\_\+1}} = 11400714785074694791ULL
+\item 
+static const \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_afe60a663ce6919521acc6e26fb5a02ce}{prime64\+\_\+2}} = 14029467366897019727ULL
+\item 
+static const \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab3a8ff71da4fb0f682112115eae17b30}{prime64\+\_\+3}} = 1609587929392839161ULL
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{宏定义说明}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a5a5fbd7a78051c2134b21324e5c74bdc}\index{main.c@{main.c}!DISPLAY@{DISPLAY}}
+\index{DISPLAY@{DISPLAY}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{DISPLAY}{DISPLAY}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a5a5fbd7a78051c2134b21324e5c74bdc} 
+\#define DISPLAY(\begin{DoxyParamCaption}\item[{}]{}...{}\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{\ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{boing_8c_a4ea013001a5fb47853d0fab8f8de35cd}{display}})\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\_\_VA\_ARGS\_\_);\ \}}
+
+\end{DoxyCode}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a06195e3f47d21ad861bd2dd075827bd2}\index{main.c@{main.c}!EXIT@{EXIT}}
+\index{EXIT@{EXIT}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{EXIT}{EXIT}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a06195e3f47d21ad861bd2dd075827bd2} 
+\#define EXIT(\begin{DoxyParamCaption}\item[{}]{}...{}\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{\ \mbox{\hyperlink{printf_8h_a9f315126362cae9675de1642105e631e}{fprintf}}(stderr,\ \_\_VA\_ARGS\_\_);\ \mbox{\hyperlink{printf_8h_a9f315126362cae9675de1642105e631e}{fprintf}}(stderr,\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}});\ fflush(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});\ exit(1);\ \}}
+
+\end{DoxyCode}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a8b74ea113bc84495db638581c2a9271f}\index{main.c@{main.c}!HASHFN\_ID\_DEFAULT@{HASHFN\_ID\_DEFAULT}}
+\index{HASHFN\_ID\_DEFAULT@{HASHFN\_ID\_DEFAULT}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{HASHFN\_ID\_DEFAULT}{HASHFN\_ID\_DEFAULT}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a8b74ea113bc84495db638581c2a9271f} 
+\#define HASHFN\+\_\+\+ID\+\_\+\+DEFAULT~0}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_afa99ec4acc4ecb2dc3c2d05da15d0e3f}\index{main.c@{main.c}!MAX@{MAX}}
+\index{MAX@{MAX}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{MAX}{MAX}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_afa99ec4acc4ecb2dc3c2d05da15d0e3f} 
+\#define MAX(\begin{DoxyParamCaption}\item[{}]{a}{, }\item[{}]{\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}}{}\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{((a)\ >\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ ?\ (a)\ :\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}))}
+
+\end{DoxyCode}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a3acffbd305ee72dcd4593c0d8af64a4f}\index{main.c@{main.c}!MIN@{MIN}}
+\index{MIN@{MIN}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{MIN}{MIN}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a3acffbd305ee72dcd4593c0d8af64a4f} 
+\#define MIN(\begin{DoxyParamCaption}\item[{}]{a}{, }\item[{}]{\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}}{}\end{DoxyParamCaption})}
+
+{\bfseries 值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{((a)\ <\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ ?\ (a)\ :\ (\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}))}
+
+\end{DoxyCode}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_aec2bebaf5f9a433b4cfa9e8b3cad8c48}\index{main.c@{main.c}!NB\_BITS\_MAX@{NB\_BITS\_MAX}}
+\index{NB\_BITS\_MAX@{NB\_BITS\_MAX}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{NB\_BITS\_MAX}{NB\_BITS\_MAX}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_aec2bebaf5f9a433b4cfa9e8b3cad8c48} 
+\#define NB\+\_\+\+BITS\+\_\+\+MAX~64   /\texorpdfstring{$\ast$}{*} can\textquotesingle{}\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}} store nor analyze hash wider than 64-\/bits \mbox{\hyperlink{sugar_8h_a750e3136a03cedcdb7f5f2de4b988f5b}{for}} the time being \texorpdfstring{$\ast$}{*}/}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a234381503c491c9348450ca1c8ab76dd}\index{main.c@{main.c}!SAMPLE\_SIZE\_DEFAULT@{SAMPLE\_SIZE\_DEFAULT}}
+\index{SAMPLE\_SIZE\_DEFAULT@{SAMPLE\_SIZE\_DEFAULT}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{SAMPLE\_SIZE\_DEFAULT}{SAMPLE\_SIZE\_DEFAULT}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a234381503c491c9348450ca1c8ab76dd} 
+\#define SAMPLE\+\_\+\+SIZE\+\_\+\+DEFAULT~256}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a0d321faac987b129d64e3abd82630b71}\index{main.c@{main.c}!SPARSE\_LEVEL\_MAX@{SPARSE\_LEVEL\_MAX}}
+\index{SPARSE\_LEVEL\_MAX@{SPARSE\_LEVEL\_MAX}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{SPARSE\_LEVEL\_MAX}{SPARSE\_LEVEL\_MAX}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a0d321faac987b129d64e3abd82630b71} 
+\#define SPARSE\+\_\+\+LEVEL\+\_\+\+MAX~15}
+
+
+
+\doxysubsection{类型定义说明}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}\index{main.c@{main.c}!Filter@{Filter}}
+\index{Filter@{Filter}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{Filter}{Filter}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f} 
+typedef unsigned char \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}}}
+
+
+
+\doxysubsection{枚举类型说明}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}\index{main.c@{main.c}!Htype\_e@{Htype\_e}}
+\index{Htype\_e@{Htype\_e}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{Htype\_e}{Htype\_e}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6} 
+enum \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}}}
+
+\begin{DoxyEnumFields}[2]{枚举值}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{ht32@{ht32}!main.c@{main.c}}\index{main.c@{main.c}!ht32@{ht32}}}\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a140331d0edbea0fda553cf1099dffd08}\label{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a140331d0edbea0fda553cf1099dffd08} 
+ht32&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{ht64@{ht64}!main.c@{main.c}}\index{main.c@{main.c}!ht64@{ht64}}}\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a7c6f3d33f5eee927bd577f07835cecc3}\label{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a7c6f3d33f5eee927bd577f07835cecc3} 
+ht64&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{ht128@{ht128}!main.c@{main.c}}\index{main.c@{main.c}!ht128@{ht128}}}\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a174833878a9f6a75a411ea040649ea76}\label{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6a174833878a9f6a75a411ea040649ea76} 
+ht128&\\
+\hline
+
+\end{DoxyEnumFields}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664c}\index{main.c@{main.c}!sf\_genMode@{sf\_genMode}}
+\index{sf\_genMode@{sf\_genMode}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{sf\_genMode}{sf\_genMode}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664c} 
+enum \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664c}{sf\+\_\+gen\+Mode}}}
+
+\begin{DoxyEnumFields}[2]{枚举值}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{sf\_slab5@{sf\_slab5}!main.c@{main.c}}\index{main.c@{main.c}!sf\_slab5@{sf\_slab5}}}\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664ca6272eb58c034769a60f6229d68169fe8}\label{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664ca6272eb58c034769a60f6229d68169fe8} 
+sf\+\_\+slab5&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{sf\_sparse@{sf\_sparse}!main.c@{main.c}}\index{main.c@{main.c}!sf\_sparse@{sf\_sparse}}}\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664ca5ac8d00fe046e5005a1eea1fc52e6de5}\label{xx_hash_2tests_2collisions_2main_8c_ab8c555b25617af242f15e651fcea664ca5ac8d00fe046e5005a1eea1fc52e6de5} 
+sf\+\_\+sparse&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsection{函数说明}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a9869202a00afb72bf649760ae54ed269}\index{main.c@{main.c}!addHashCandidate@{addHashCandidate}}
+\index{addHashCandidate@{addHashCandidate}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{addHashCandidate()}{addHashCandidate()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a9869202a00afb72bf649760ae54ed269} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} add\+Hash\+Candidate (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{h\+Table\+Ptr}{, }\item[{\mbox{\hyperlink{union_uni_hash}{Uni\+Hash}}}]{h}{, }\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}}}]{htype}{, }\item[{size\+\_\+t}]{index}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ab628323ee13682d8e666ac0fd924a935}\index{main.c@{main.c}!avalanche64@{avalanche64}}
+\index{avalanche64@{avalanche64}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{avalanche64()}{avalanche64()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ab628323ee13682d8e666ac0fd924a935} 
+static \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} avalanche64 (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{h64}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a783d046cd3e10685a8c09d7f749009d3}\index{main.c@{main.c}!bad\_argument@{bad\_argument}}
+\index{bad\_argument@{bad\_argument}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{bad\_argument()}{bad\_argument()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a783d046cd3e10685a8c09d7f749009d3} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} bad\+\_\+argument (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{exe\+Name}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 1
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ad828d8ae7b64dc128e0d4d8cfb0dca43}\index{main.c@{main.c}!Cnm@{Cnm}}
+\index{Cnm@{Cnm}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{Cnm()}{Cnm()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ad828d8ae7b64dc128e0d4d8cfb0dca43} 
+static double Cnm (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{n}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{m}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a5f42c1ef7007fd03101a5c47ad763199}\index{main.c@{main.c}!create\_Filter@{create\_Filter}}
+\index{create\_Filter@{create\_Filter}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{create\_Filter()}{create\_Filter()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a5f42c1ef7007fd03101a5c47ad763199} 
+\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*} create\+\_\+\+Filter (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{bflog}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 2
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_aa7b6214b034f81a652934896b71cdde0}\index{main.c@{main.c}!create\_sampleFactory@{create\_sampleFactory}}
+\index{create\_sampleFactory@{create\_sampleFactory}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{create\_sampleFactory()}{create\_sampleFactory()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_aa7b6214b034f81a652934896b71cdde0} 
+static \mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*} create\+\_\+sample\+Factory (\begin{DoxyParamCaption}\item[{size\+\_\+t}]{size}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{htotal}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 3
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a8c2c8a013268b707a842caf85a57d735}\index{main.c@{main.c}!displayDelay@{displayDelay}}
+\index{displayDelay@{displayDelay}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{displayDelay()}{displayDelay()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a8c2c8a013268b707a842caf85a57d735} 
+const char \texorpdfstring{$\ast$}{*} display\+Delay (\begin{DoxyParamCaption}\item[{double}]{delay\+\_\+s}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 4
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_af8efd0bd35701ed8eabed71e64fd8a7d}\index{main.c@{main.c}!enoughCombos@{enoughCombos}}
+\index{enoughCombos@{enoughCombos}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{enoughCombos()}{enoughCombos()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_af8efd0bd35701ed8eabed71e64fd8a7d} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} enough\+Combos (\begin{DoxyParamCaption}\item[{size\+\_\+t}]{size}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{htotal}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 5
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_aa9648d16b2cb48c465ca13ca82af3bb7}\index{main.c@{main.c}!estimateNbCollisions@{estimateNbCollisions}}
+\index{estimateNbCollisions@{estimateNbCollisions}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{estimateNbCollisions()}{estimateNbCollisions()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_aa9648d16b2cb48c465ca13ca82af3bb7} 
+static double estimate\+Nb\+Collisions (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{nbH}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{nb\+Bits}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 6
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_aaeff9ee8a4e7d4d769a9faf5ebe7b0c0}\index{main.c@{main.c}!Filter\_check@{Filter\_check}}
+\index{Filter\_check@{Filter\_check}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{Filter\_check()}{Filter\_check()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_aaeff9ee8a4e7d4d769a9faf5ebe7b0c0} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} Filter\+\_\+check (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}}]{bf}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{bflog}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{hash}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 7
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a68e4db40507504c4e11e6e189fc96ec3}\index{main.c@{main.c}!Filter\_insert@{Filter\_insert}}
+\index{Filter\_insert@{Filter\_insert}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{Filter\_insert()}{Filter\_insert()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a68e4db40507504c4e11e6e189fc96ec3} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} Filter\+\_\+insert (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}}]{bf}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{bflog}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{hash}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 8
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_aac0c8f9ee4a5163c8535ab1fea026af5}\index{main.c@{main.c}!Filter\_reduce@{Filter\_reduce}}
+\index{Filter\_reduce@{Filter\_reduce}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{Filter\_reduce()}{Filter\_reduce()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_aac0c8f9ee4a5163c8535ab1fea026af5} 
+static \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*} Filter\+\_\+reduce (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}}]{bf}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{bflog}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a772c9667fb0c61511695fb98de42aa05}\index{main.c@{main.c}!flipbit@{flipbit}}
+\index{flipbit@{flipbit}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{flipbit()}{flipbit()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a772c9667fb0c61511695fb98de42aa05} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} flipbit (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{bit\+ID}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a2cb445ce42ab49c001117a1ff1fdb442}\index{main.c@{main.c}!free\_Filter@{free\_Filter}}
+\index{free\_Filter@{free\_Filter}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{free\_Filter()}{free\_Filter()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a2cb445ce42ab49c001117a1ff1fdb442} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} free\+\_\+\+Filter (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_ae5a63d2aeb5bb487f6473be91e13d14f}{Filter}} \texorpdfstring{$\ast$}{*}}]{bf}{}\end{DoxyParamCaption})}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a00c9f0ad081cb63f4116513c4c57ccf7}\index{main.c@{main.c}!free\_sampleFactory@{free\_sampleFactory}}
+\index{free\_sampleFactory@{free\_sampleFactory}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{free\_sampleFactory()}{free\_sampleFactory()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a00c9f0ad081cb63f4116513c4c57ccf7} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} free\+\_\+sample\+Factory (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*}}]{sf}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a3a9bb7ff4f5060697744ca25ac5faa3d}\index{main.c@{main.c}!getHtype\_fromHbits@{getHtype\_fromHbits}}
+\index{getHtype\_fromHbits@{getHtype\_fromHbits}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{getHtype\_fromHbits()}{getHtype\_fromHbits()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a3a9bb7ff4f5060697744ca25ac5faa3d} 
+static \mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}} get\+Htype\+\_\+from\+Hbits (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{nb\+Bits}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_afbd6639c985824526618983c16d9f4bd}\index{main.c@{main.c}!getNbBits\_fromHtype@{getNbBits\_fromHtype}}
+\index{getNbBits\_fromHtype@{getNbBits\_fromHtype}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{getNbBits\_fromHtype()}{getNbBits\_fromHtype()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_afbd6639c985824526618983c16d9f4bd} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} get\+Nb\+Bits\+\_\+from\+Htype (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}}}]{htype}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a36756af58b018165d27d8256e67086fe}\index{main.c@{main.c}!getProcessMemUsage@{getProcessMemUsage}}
+\index{getProcessMemUsage@{getProcessMemUsage}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{getProcessMemUsage()}{getProcessMemUsage()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a36756af58b018165d27d8256e67086fe} 
+static size\+\_\+t get\+Process\+Mem\+Usage (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{ignore}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 9
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_af67ac2097958c102c7bd0e8598173dd8}\index{main.c@{main.c}!help@{help}}
+\index{help@{help}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{help()}{help()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_af67ac2097958c102c7bd0e8598173dd8} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} help (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{exe\+Name}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 10
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ada54715805e684e2b918600e1defbba5}\index{main.c@{main.c}!hexRaw@{hexRaw}}
+\index{hexRaw@{hexRaw}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{hexRaw()}{hexRaw()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ada54715805e684e2b918600e1defbba5} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} hex\+Raw (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{size}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 11
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a66d0e681abd034156ac4e4cf570f5b4c}\index{main.c@{main.c}!highestBitSet@{highestBitSet}}
+\index{highestBitSet@{highestBitSet}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{highestBitSet()}{highestBitSet()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a66d0e681abd034156ac4e4cf570f5b4c} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} highest\+Bit\+Set (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{v}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a9ef3cf0cc9ae2f3be48c99ad81364b91}\index{main.c@{main.c}!init\_sampleFactory@{init\_sampleFactory}}
+\index{init\_sampleFactory@{init\_sampleFactory}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{init\_sampleFactory()}{init\_sampleFactory()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a9ef3cf0cc9ae2f3be48c99ad81364b91} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} init\+\_\+sample\+Factory (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*}}]{sf}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{htotal}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 12
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ab9deb4a18b913cc017e25ed502d65f35}\index{main.c@{main.c}!isEqual@{isEqual}}
+\index{isEqual@{isEqual}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{isEqual()}{isEqual()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ab9deb4a18b913cc017e25ed502d65f35} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} is\+Equal (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{h\+Table\+Ptr}{, }\item[{size\+\_\+t}]{index1}{, }\item[{size\+\_\+t}]{index2}{, }\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}}}]{htype}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 13
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_aa2c99a2f2018f2986984b0c90676599e}\index{main.c@{main.c}!isHighEqual@{isHighEqual}}
+\index{isHighEqual@{isHighEqual}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{isHighEqual()}{isHighEqual()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_aa2c99a2f2018f2986984b0c90676599e} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} is\+High\+Equal (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{h\+Table\+Ptr}{, }\item[{size\+\_\+t}]{index1}{, }\item[{size\+\_\+t}]{index2}{, }\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}}}]{htype}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{r\+Shift}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a4332ba2202f59d1610317d7e90df84e8}\index{main.c@{main.c}!longCommandWArg@{longCommandWArg}}
+\index{longCommandWArg@{longCommandWArg}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{longCommandWArg()}{longCommandWArg()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a4332ba2202f59d1610317d7e90df84e8} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} long\+Command\+WArg (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{string\+Ptr}{, }\item[{const char \texorpdfstring{$\ast$}{*}}]{long\+Command}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\doxylink{xx_hash_2tests_2collisions_2main_8c_a4332ba2202f59d1610317d7e90df84e8}{long\+Command\+WArg()}\+: Checks if \texorpdfstring{$\ast$}{*}string\+Ptr is the same as long\+Command. If yes, \begin{DoxyReturn}{返回}
+1 and advances \texorpdfstring{$\ast$}{*}string\+Ptr to the position which immediately follows long\+Command. 
+
+0 and doesn\textquotesingle{}t modify \texorpdfstring{$\ast$}{*}string\+Ptr otherwise. 
+\end{DoxyReturn}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a217dbf8b442f20279ea00b898af96f52}\index{main.c@{main.c}!main@{main}}
+\index{main@{main}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a217dbf8b442f20279ea00b898af96f52} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} main (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{argc}{, }\item[{const char \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{argv}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 14
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ab89c02c9d7984faf70b2723c1e32fcd3}\index{main.c@{main.c}!MT\_searchCollisions@{MT\_searchCollisions}}
+\index{MT\_searchCollisions@{MT\_searchCollisions}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{MT\_searchCollisions()}{MT\_searchCollisions()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ab89c02c9d7984faf70b2723c1e32fcd3} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} MT\+\_\+search\+Collisions (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{payload}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 15
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a8c8fc0b853403926062eb6acd951139e}\index{main.c@{main.c}!power@{power}}
+\index{power@{power}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{power()}{power()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a8c8fc0b853403926062eb6acd951139e} 
+static double power (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{base}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{p}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_acd453fb0b0fb21cd58357764b90a252b}\index{main.c@{main.c}!printHash@{printHash}}
+\index{printHash@{printHash}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{printHash()}{printHash()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_acd453fb0b0fb21cd58357764b90a252b} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} print\+Hash (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{table}{, }\item[{size\+\_\+t}]{n}{, }\item[{\mbox{\hyperlink{xx_hash_2tests_2collisions_2main_8c_a26525535b268090f0a1fbea0570beed6}{Htype\+\_\+e}}}]{htype}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 16
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a2a77931f4cc60d4fc67eea0d353e9dba}\index{main.c@{main.c}!randomByte@{randomByte}}
+\index{randomByte@{randomByte}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{randomByte()}{randomByte()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a2a77931f4cc60d4fc67eea0d353e9dba} 
+static unsigned char random\+Byte (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{n}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 17
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a44e9a21e7cb9da4ed43363b9ae082496}\index{main.c@{main.c}!readU64FromChar@{readU64FromChar}}
+\index{readU64FromChar@{readU64FromChar}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{readU64FromChar()}{readU64FromChar()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a44e9a21e7cb9da4ed43363b9ae082496} 
+static \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} read\+U64\+From\+Char (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{string\+Ptr}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\doxylink{xx_hash_2tests_2collisions_2main_8c_a44e9a21e7cb9da4ed43363b9ae082496}{read\+U64\+From\+Char()}\+: Allows and interprets K, KB, KiB, M, MB and MiB suffix. Will also modify {\ttfamily \texorpdfstring{$\ast$}{*}string\+Ptr}, advancing it to the position where it stopped reading. \Hypertarget{xx_hash_2tests_2collisions_2main_8c_a5eaa188ad9b37ee63bb7254e4c67dd57}\index{main.c@{main.c}!search\_collisions@{search\_collisions}}
+\index{search\_collisions@{search\_collisions}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{search\_collisions()}{search\_collisions()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a5eaa188ad9b37ee63bb7254e4c67dd57} 
+static size\+\_\+t search\+\_\+collisions (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structsearch_collisions__parameters}{search\+Collisions\+\_\+parameters}}}]{param}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 18
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a2237d3b7caaf82f67790dffcc6e312ae}\index{main.c@{main.c}!select\_nbh@{select\_nbh}}
+\index{select\_nbh@{select\_nbh}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{select\_nbh()}{select\_nbh()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a2237d3b7caaf82f67790dffcc6e312ae} 
+\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} select\+\_\+nbh (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{nb\+Bits}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 19
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a1175a91864a86f438cc993bc57c9473d}\index{main.c@{main.c}!time\_collisions@{time\_collisions}}
+\index{time\_collisions@{time\_collisions}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{time\_collisions()}{time\_collisions()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a1175a91864a86f438cc993bc57c9473d} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} time\+\_\+collisions (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structsearch_collisions__parameters}{search\+Collisions\+\_\+parameters}}}]{param}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 20
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a899758a3f0c50be6e1fdfffc5ad47e0f}\index{main.c@{main.c}!update\_indicator@{update\_indicator}}
+\index{update\_indicator@{update\_indicator}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{update\_indicator()}{update\_indicator()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a899758a3f0c50be6e1fdfffc5ad47e0f} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} update\+\_\+indicator (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{v}{, }\item[{\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}}}]{total}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 21
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ae8a09f35098f1960bd1d9ad357113476}\index{main.c@{main.c}!update\_sampleFactory@{update\_sampleFactory}}
+\index{update\_sampleFactory@{update\_sampleFactory}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{update\_sampleFactory()}{update\_sampleFactory()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ae8a09f35098f1960bd1d9ad357113476} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} update\+\_\+sample\+Factory (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structsample_factory}{sample\+Factory}} \texorpdfstring{$\ast$}{*}}]{sf}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 22
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a6404c199633ab0f943819c94f42c39d9}\index{main.c@{main.c}!updateBit@{updateBit}}
+\index{updateBit@{updateBit}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{updateBit()}{updateBit()}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a6404c199633ab0f943819c94f42c39d9} 
+static \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} update\+Bit (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t \texorpdfstring{$\ast$}{*}}]{bit\+Idx}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{level}{, }\item[{size\+\_\+t}]{max}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 23
+
+
+\doxysubsection{变量说明}
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_a88e40072c60f476816d9b761938d5f43}\index{main.c@{main.c}!prime64\_1@{prime64\_1}}
+\index{prime64\_1@{prime64\_1}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{prime64\_1}{prime64\_1}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_a88e40072c60f476816d9b761938d5f43} 
+const \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} prime64\+\_\+1 = 11400714785074694791ULL\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_afe60a663ce6919521acc6e26fb5a02ce}\index{main.c@{main.c}!prime64\_2@{prime64\_2}}
+\index{prime64\_2@{prime64\_2}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{prime64\_2}{prime64\_2}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_afe60a663ce6919521acc6e26fb5a02ce} 
+const \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} prime64\+\_\+2 = 14029467366897019727ULL\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xx_hash_2tests_2collisions_2main_8c_ab3a8ff71da4fb0f682112115eae17b30}\index{main.c@{main.c}!prime64\_3@{prime64\_3}}
+\index{prime64\_3@{prime64\_3}!main.c@{main.c}}
+\doxysubsubsection{\texorpdfstring{prime64\_3}{prime64\_3}}
+{\footnotesize\ttfamily \label{xx_hash_2tests_2collisions_2main_8c_ab3a8ff71da4fb0f682112115eae17b30} 
+const \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\+\_\+t}} prime64\+\_\+3 = 1609587929392839161ULL\hspace{0.3cm}{\ttfamily [static]}}
+

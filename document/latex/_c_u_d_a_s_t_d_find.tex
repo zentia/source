@@ -1,0 +1,184 @@
+\doxysection{Parallel Find}
+\hypertarget{_c_u_d_a_s_t_d_find}{}\label{_c_u_d_a_s_t_d_find}\index{Parallel Find@{Parallel Find}}
+Taskflow provides standalone template methods for finding elements in the given ranges using GPU.\hypertarget{_c_u_d_a_s_t_d_find_CUDASTDFindIncludeTheHeader}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_c_u_d_a_s_t_d_find_CUDASTDFindIncludeTheHeader}
+You need to include the header file, {\ttfamily taskflow/cuda/algorithm/find.hpp}, for using the parallel-\/find algorithm.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{cuda_2algorithm_2find_8hpp}{taskflow/cuda/algorithm/find.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_c_u_d_a_s_t_d_find_CUDASTDFindItems}{}\doxysubsection{\texorpdfstring{Find an Element in a Range}{Find an Element in a Range}}\label{_c_u_d_a_s_t_d_find_CUDASTDFindItems}
+\doxylink{namespacetf_a5f9dabd7c5d0fa5166cf76d9fa5a038e}{tf\+::cuda\+\_\+find\+\_\+if} finds the index of the first element in the range {\ttfamily \mbox{[}first, last)} that satisfies the given criteria. This is equivalent to the parallel execution of the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{unsigned}\ idx\ =\ 0;}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(;\ first\ !=\ last;\ ++first,\ ++idx)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}(*first))\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ idx;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\textcolor{keywordflow}{return}\ idx;}
+
+\end{DoxyCode}
+
+
+If no such an element is found, the size of the range is returned. The following code finds the index of the first element that is dividable by {\ttfamily 17} over a range of one million elements.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 1000000;}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \ \ \ \ \ \textcolor{comment}{//\ vector}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ idx\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<unsigned>}}(1);\ \ \textcolor{comment}{//\ index}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ initializes\ the\ data}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++]\ =\ rand());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ an\ execution\ policy}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ finds\ the\ index\ of\ the\ first\ element\ that\ is\ a\ multiple\ of\ 17}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a5f9dabd7c5d0fa5166cf76d9fa5a038e}{tf::cuda\_find\_if}}(}
+\DoxyCodeLine{\ \ policy,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ idx,\ []\ \_\_device\_\_\ (\textcolor{keyword}{auto}\ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}\%17\ ==\ 0;\ \}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ wait\ for\ the\ find\ operation\ to\ complete}}
+\DoxyCodeLine{stream.synchronize();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ verifies\ the\ result}}
+\DoxyCodeLine{\textcolor{keywordflow}{if}(*idx\ !=\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \{}
+\DoxyCodeLine{\ \ assert(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[*idx]\ \%17\ ==\ 0);}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ deletes\ the\ memory}}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}});}
+\DoxyCodeLine{cudaFree(idx);}
+
+\end{DoxyCode}
+
+
+The find-\/if algorithm runs {\itshape asynchronously} through the stream specified in the execution policy. You need to synchronize the stream to obtain the correct result.\hypertarget{_c_u_d_a_s_t_d_find_CUDASTDFindMinItems}{}\doxysubsection{\texorpdfstring{Find the Minimum Element in a Range}{Find the Minimum Element in a Range}}\label{_c_u_d_a_s_t_d_find_CUDASTDFindMinItems}
+\doxylink{namespacetf_a572c13198191c46765264f8afabe2e9f}{tf\+::cuda\+\_\+min\+\_\+element} finds the index of the minimum element in the given range {\ttfamily \mbox{[}first, last)} using the given comparison function object. This is equivalent to a parallel execution of the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{if}(first\ ==\ last)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ smallest\ =\ first;}
+\DoxyCodeLine{\textcolor{keywordflow}{for}\ (++first;\ first\ !=\ last;\ ++first)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (op(*first,\ *smallest))\ \{}
+\DoxyCodeLine{\ \ \ \ smallest\ =\ first;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\textcolor{keywordflow}{return}\ std::distance(first,\ smallest);}
+
+\end{DoxyCode}
+
+
+The following code finds the index of the minimum element in a range of one millions elements using GPU computing\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 1000000;}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \ \ \ \ \ \textcolor{comment}{//\ vector}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ idx\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<unsigned>}}(1);\ \ \textcolor{comment}{//\ index}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ initializes\ the\ data}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++]\ =\ rand());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ an\ execution\ policy}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy(stream);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ queries\ the\ required\ buffer\ size\ to\ find\ the\ minimum\ element\ over\ N\ element}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{structbytes}{bytes}}\ \ =\ policy.\mbox{\hyperlink{classtf_1_1cuda_execution_policy_abcafb001cd68c1135392f4bcda5a2a05}{min\_element\_bufsz}}<\textcolor{keywordtype}{int}>(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<std::byte>}}(\mbox{\hyperlink{structbytes}{bytes}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ finds\ the\ minimum\ element\ using\ the\ less\ comparator}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a572c13198191c46765264f8afabe2e9f}{tf::cuda\_min\_element}}(}
+\DoxyCodeLine{\ \ policy,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ idx,\ []\ \_\_device\_\_\ (\textcolor{keyword}{auto}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}<\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};\ \},\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ wait\ for\ the\ min-\/element\ operation\ completes}}
+\DoxyCodeLine{stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ verifies\ the\ result}}
+\DoxyCodeLine{assert(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[*idx]\ ==\ *std::min\_element(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ std::less<int>\{\}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ deletes\ the\ memory}}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}});}
+\DoxyCodeLine{cudaFree(idx);}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}});}
+
+\end{DoxyCode}
+
+
+Since the GPU min-\/element algorithm may require extra buffer to store the temporary results, you need to provide a buffer of size at least larger or equal to the value returned from {\ttfamily \doxylink{classtf_1_1cuda_execution_policy_abcafb001cd68c1135392f4bcda5a2a05}{tf\+::cuda\+Default\+Execution\+Policy\+::min\+\_\+element\+\_\+bufsz}}.
+
+\begin{DoxyAttention}{注意}
+You must keep the buffer alive before the \doxylink{namespacetf_a572c13198191c46765264f8afabe2e9f}{tf\+::cuda\+\_\+min\+\_\+element} completes.
+\end{DoxyAttention}
+\hypertarget{_c_u_d_a_s_t_d_find_CUDASTDFindMaxItems}{}\doxysubsection{\texorpdfstring{Find the Maximum Element in a Range}{Find the Maximum Element in a Range}}\label{_c_u_d_a_s_t_d_find_CUDASTDFindMaxItems}
+Similar to \doxylink{namespacetf_a572c13198191c46765264f8afabe2e9f}{tf\+::cuda\+\_\+min\+\_\+element}, \doxylink{namespacetf_a3fc577fd0a8f127770bcf68bc56c073e}{tf\+::cuda\+\_\+max\+\_\+element} finds the index of the maximum element in the given range {\ttfamily \mbox{[}first, last)} using the given comparison function object. This is equivalent to a parallel execution of the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{if}(first\ ==\ last)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ largest\ =\ first;}
+\DoxyCodeLine{\textcolor{keywordflow}{for}\ (++first;\ first\ !=\ last;\ ++first)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (op(*largest,\ *first))\ \{}
+\DoxyCodeLine{\ \ \ \ largest\ =\ first;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\textcolor{keywordflow}{return}\ std::distance(first,\ largest);}
+
+\end{DoxyCode}
+
+
+The following code finds the index of the maximum element in a range of one millions elements using GPU computing\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 1000000;}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \ \ \ \ \ \textcolor{comment}{//\ vector}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ idx\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<unsigned>}}(1);\ \ \textcolor{comment}{//\ index}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ initializes\ the\ data}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++]\ =\ rand());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ an\ execution\ policy}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy(stream);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ queries\ the\ required\ buffer\ size\ to\ find\ the\ maximum\ element\ over\ N\ element}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{structbytes}{bytes}}\ \ =\ policy.\mbox{\hyperlink{classtf_1_1cuda_execution_policy_a31fe75c4b0765df3035e12be49af88aa}{max\_element\_bufsz}}<\textcolor{keywordtype}{int}>(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<std::byte>}}(\mbox{\hyperlink{structbytes}{bytes}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ finds\ the\ maximum\ element\ using\ the\ less\ comparator}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a3fc577fd0a8f127770bcf68bc56c073e}{tf::cuda\_max\_element}}(}
+\DoxyCodeLine{\ \ policy,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ idx,\ []\ \_\_device\_\_\ (\textcolor{keyword}{auto}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}<\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};\ \},\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ wait\ for\ the\ max-\/element\ operation\ to\ complete}}
+\DoxyCodeLine{stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ verifies\ the\ result}}
+\DoxyCodeLine{assert(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[*idx]\ ==\ *std::max\_element(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ std::less<int>\{\}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ deletes\ the\ memory}}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}});}
+\DoxyCodeLine{cudaFree(idx);}
+\DoxyCodeLine{cudaFree(\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}});}
+
+\end{DoxyCode}
+
+
+Since the GPU max-\/element algorithm may require extra buffer to store the temporary results, you need to provide a buffer of size at least larger or equal to the value returned from {\ttfamily \doxylink{classtf_1_1cuda_execution_policy_a31fe75c4b0765df3035e12be49af88aa}{tf\+::cuda\+Default\+Execution\+Policy\+::max\+\_\+element\+\_\+bufsz}}.
+
+\begin{DoxyAttention}{注意}
+You must keep the buffer alive before \doxylink{namespacetf_a3fc577fd0a8f127770bcf68bc56c073e}{tf\+::cuda\+\_\+max\+\_\+element} completes. 
+\end{DoxyAttention}

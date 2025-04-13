@@ -1,0 +1,119 @@
+\chapter{Overriding Malloc}
+\hypertarget{overrides}{}\label{overrides}\index{Overriding Malloc@{Overriding Malloc}}
+Overriding the standard {\ttfamily malloc} (and {\ttfamily new}) can be done either {\itshape dynamically} or {\itshape statically}.\hypertarget{overrides_autotoc_md24}{}\doxysubsection{\texorpdfstring{Dynamic override}{Dynamic override}}\label{overrides_autotoc_md24}
+This is the recommended way to override the standard malloc interface.\hypertarget{overrides_autotoc_md25}{}\doxysubsubsection{\texorpdfstring{Dynamic Override on Linux, BSD}{Dynamic Override on Linux, BSD}}\label{overrides_autotoc_md25}
+On these ELF-\/based systems we preload the mimalloc shared library so all calls to the standard {\ttfamily malloc} interface are resolved to the {\itshape mimalloc} library. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>\ env\ LD\_PRELOAD=/usr/lib/libmimalloc.so\ myprogram}
+
+\end{DoxyCode}
+
+
+You can set extra environment variables to check that mimalloc is running, like\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>\ env\ MIMALLOC\_VERBOSE=1\ LD\_PRELOAD=/usr/lib/libmimalloc.so\ myprogram}
+
+\end{DoxyCode}
+ or run with the debug version to get detailed statistics\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>\ env\ MIMALLOC\_SHOW\_STATS=1\ LD\_PRELOAD=/usr/lib/libmimalloc-\/\mbox{\hyperlink{base_8h_adfa139c9a1902753b3696794759b2c48aad42f6697b035b7580e4fef93be20b4d}{debug}}.so\ myprogram}
+
+\end{DoxyCode}
+\hypertarget{overrides_autotoc_md26}{}\doxysubsubsection{\texorpdfstring{Dynamic Override on Mac\+OS}{Dynamic Override on Mac\+OS}}\label{overrides_autotoc_md26}
+On mac\+OS we can also preload the mimalloc shared library so all calls to the standard {\ttfamily malloc} interface are resolved to the {\itshape mimalloc} library. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>\ env\ DYLD\_INSERT\_LIBRARIES=/usr/lib/libmimalloc.dylib\ myprogram}
+
+\end{DoxyCode}
+
+
+Note that certain security restrictions may apply when doing this from the \href{https://stackoverflow.com/questions/43941322/dyld-insert-libraries-ignored-when-calling-application-through-bash}{\texttt{ shell}}.\hypertarget{overrides_autotoc_md27}{}\doxysubsubsection{\texorpdfstring{Dynamic Override on Windows}{Dynamic Override on Windows}}\label{overrides_autotoc_md27}
+Dynamically overriding on mimalloc on Windows is robust and has the particular advantage to be able to redirect all malloc/free calls that go through the (dynamic) C runtime allocator, including those from other DLL\textquotesingle{}s or libraries. As it intercepts all allocation calls on a low level, it can be used reliably on large programs that include other 3rd party components. There are four requirements to make the overriding work well\+:
+
+
+\begin{DoxyEnumerate}
+\item Use the C-\/runtime library as a DLL (using the {\ttfamily /\+MD} or {\ttfamily /\+MDd} switch).
+\item Link your program explicitly with the {\ttfamily mimalloc.\+lib} export library for the {\ttfamily mimalloc.\+dll}. (which must be compiled with {\ttfamily -\/DMI\+\_\+\+OVERRIDE=ON}, which is the default though). To ensure the {\ttfamily mimalloc.\+dll} is actually loaded at run-\/time it is easiest to insert some call to the mimalloc API in the {\ttfamily main} function, like {\ttfamily \doxylink{mimalloc_8h_a906d3e6d7f3e9cf284134c7d23d965e7}{mi\+\_\+version()}} (or use the {\ttfamily /include\+:mi\+\_\+version} switch on the linker command, or similarly, {\ttfamily \#pragma comment(linker, "{}/include\+:mi\+\_\+version"{})} in some source file). See the {\ttfamily mimalloc-\/test-\/override} project for an example on how to use this.
+\item The {\ttfamily mimalloc-\/redirect.\+dll} must be put in the same directory as the main {\ttfamily mimalloc.\+dll} at runtime (as it is a dependency of that DLL). The redirection DLL ensures that all calls to the C runtime malloc API get redirected to mimalloc functions (which reside in {\ttfamily mimalloc.\+dll}).
+\item Ensure the {\ttfamily mimalloc.\+dll} comes as early as possible in the import list of the final executable (so it can intercept all potential allocations). You can use {\ttfamily minject -\/l \texorpdfstring{$<$}{<}exe\texorpdfstring{$>$}{>}} to check this if needed.
+\end{DoxyEnumerate}
+
+For best performance on Windows with C++, it is also recommended to also override the {\ttfamily new}/{\ttfamily delete} operations (by including \href{include/mimalloc-new-delete.h}{\texttt{ {\ttfamily mimalloc-\/new-\/delete.\+h}}} a single(!) source file in your project).
+
+The environment variable {\ttfamily MIMALLOC\+\_\+\+DISABLE\+\_\+\+REDIRECT=1} can be used to disable dynamic overriding at run-\/time. Use {\ttfamily MIMALLOC\+\_\+\+VERBOSE=1} to check if mimalloc was successfully redirected.
+
+For different platforms than x64, you may need a specific \mbox{[}redirection dll\mbox{]}(bin). Furthermore, we cannot always re-\/link an executable or ensure {\ttfamily mimalloc.\+dll} comes first in the import table. In such cases the \mbox{[}{\ttfamily minject}\mbox{]}(bin) tool can be used to patch the executable\textquotesingle{}s import tables.\hypertarget{overrides_autotoc_md28}{}\doxysubsection{\texorpdfstring{Static override}{Static override}}\label{overrides_autotoc_md28}
+On Unix-\/like systems, you can also statically link with {\itshape mimalloc} to override the standard malloc interface. The recommended way is to link the final program with the {\itshape mimalloc} single object file ({\ttfamily mimalloc.\+o}). We use an object file instead of a library file as linkers give preference to that over archives to resolve symbols. To ensure that the standard malloc interface resolves to the {\itshape mimalloc} library, link it as the first object file. For example\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{>\ gcc\ -\/o\ myprogram\ mimalloc.o\ \ myfile1.c\ ...}
+
+\end{DoxyCode}
+
+
+Another way to override statically that works on all platforms, is to link statically to mimalloc (as shown in the introduction) and include a header file in each source file that re-\/defines {\ttfamily malloc} etc. to {\ttfamily mi\+\_\+malloc}. This is provided by \href{https://github.com/microsoft/mimalloc/blob/master/include/mimalloc-override.h}{\texttt{ {\ttfamily mimalloc-\/override.\+h}}}. This only works reliably though if all sources are under your control or otherwise mixing of pointers from different heaps may occur!\hypertarget{overrides_autotoc_md29}{}\doxysubsection{\texorpdfstring{List of Overrides\+:}{List of Overrides\+:}}\label{overrides_autotoc_md29}
+The specific functions that get redirected to the {\itshape mimalloc} library are\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ C}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a99aa8fd9f4831e1b0fa9e1cdcde3e249}{malloc}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a84e191d73dd91ea0a5bd2ec14d7adfaf}{calloc}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{size\_t}\ n);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_adbbb9b1695e5714db8873077d44ade2f}{realloc}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ newsize);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \ \ \mbox{\hyperlink{mimalloc-override_8h_a9d4b5df3530d1bc733070a4669ba6ebc}{free}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a812ba79d010b681820059b1af8e92d69}{aligned\_alloc}}(\textcolor{keywordtype}{size\_t}\ alignment,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{\textcolor{keywordtype}{char}*\ \ \mbox{\hyperlink{mimalloc-override_8h_ad832104a69551cf1e4e347fffa9dc77c}{strdup}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}});}
+\DoxyCodeLine{\textcolor{keywordtype}{char}*\ \ \mbox{\hyperlink{mimalloc-override_8h_acad0dc642ef992709367197c99973229}{strndup}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \textcolor{keywordtype}{size\_t}\ n);}
+\DoxyCodeLine{\textcolor{keywordtype}{char}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a9d5265d9e1400945faacb846b1c93e10}{realpath}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fname,\ \textcolor{keywordtype}{char}*\ resolved\_name);}
+\DoxyCodeLine{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ C++}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{delete}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{delete}[](\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}(std::size\_t\ n)\ \textcolor{keyword}{noexcept}(\textcolor{keyword}{false});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}[](std::size\_t\ n)\ \textcolor{keyword}{noexcept}(\textcolor{keyword}{false});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}(\ std::size\_t\ n,\ std::align\_val\_t\ \mbox{\hyperlink{base_8h_a6c52c4bac77f6744fdc338766e9e8a6f}{align}})\ \textcolor{keyword}{noexcept}(\textcolor{keyword}{false});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}[](\ std::size\_t\ n,\ std::align\_val\_t\ \mbox{\hyperlink{base_8h_a6c52c4bac77f6744fdc338766e9e8a6f}{align}})\ \textcolor{keyword}{noexcept}(\textcolor{keyword}{false});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}\ \ (\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ \textcolor{keyword}{const}\ std::nothrow\_t\&\ tag);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}[](\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ \textcolor{keyword}{const}\ std::nothrow\_t\&\ tag);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}\ \ (\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ std::align\_val\_t\ al,\ \textcolor{keyword}{const}\ std::nothrow\_t\&);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{new}[](\ std::size\_t\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ std::align\_val\_t\ al,\ \textcolor{keyword}{const}\ std::nothrow\_t\&);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Posix}}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \ \ \ \mbox{\hyperlink{mimalloc-override_8h_a6f0607529685a15c0a189aafc7d4a496}{posix\_memalign}}(\textcolor{keywordtype}{void}**\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ alignment,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Linux}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a7807c4983b459d524a01d6ea678a3477}{memalign}}(\textcolor{keywordtype}{size\_t}\ alignment,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_ae68fe3924fef11422792c40bdc1ee7ec}{valloc}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a185110d5fa9c13f7409287a20357adc8}{pvalloc}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{mimalloc-override_8h_abfe63bd2844f39f16092f92278a0cfbc}{malloc\_usable\_size}}(\textcolor{keywordtype}{void}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_ae2766877d731d2f811516c55c26ad715}{reallocf}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ newsize);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ macOS}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \ \ vfree(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{mimalloc-override_8h_a26689d722b1366dc1f992958d6ab4fc4}{malloc\_size}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{mimalloc-override_8h_a8ce8fa5a8fe6b9ece30691e8ad662007}{malloc\_good\_size}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ BSD}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a2fa99489705291c707b69b55f38c6f53}{reallocarray}}(\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ );}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_ae2766877d731d2f811516c55c26ad715}{reallocf}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ newsize);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \ \ \mbox{\hyperlink{mimalloc-override_8h_a1a62d679929fee90b44d70a7868feee4}{cfree}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ NetBSD}}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \ \ \ \mbox{\hyperlink{mimalloc-override_8h_a91a1f6a78dbc909a3bad9fe1f37797f8}{reallocarr}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Windows}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \mbox{\hyperlink{mimalloc-override_8h_a0011f845b35a4f673869beef6fe8f8e9}{\_expand}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ newsize);}
+\DoxyCodeLine{\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{mimalloc-override_8h_a0b7c1255a775e4d2a4185556a6d5fe02}{\_msize}}(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \_malloc\_dbg(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{int}\ block\_type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fname,\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \_realloc\_dbg(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ newsize,\ \textcolor{keywordtype}{int}\ block\_type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fname,\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \_calloc\_dbg(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{int}\ block\_type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fname,\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}*\ \ \_expand\_dbg(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{int}\ block\_type,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fname,\ \textcolor{keywordtype}{int}\ line);}
+\DoxyCodeLine{\textcolor{keywordtype}{size\_t}\ \_msize\_dbg(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{int}\ block\_type);}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \ \ \_free\_dbg(\textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{int}\ block\_type);}
+
+\end{DoxyCode}
+ 

@@ -1,0 +1,5 @@
+var structmap_1_1map__type_3_01tag___feldman_hash_map_00_01_key_00_01_value_01_4_1_1traits___feldman_hash_map__fixed =
+[
+    [ "compare", "structmap_1_1map__type_3_01tag___feldman_hash_map_00_01_key_00_01_value_01_4_1_1traits___feldman_hash_map__fixed.html#aa7b73f951a1c103bd4fc0d08385ed91b", null ],
+    [ "item_counter", "structmap_1_1map__type_3_01tag___feldman_hash_map_00_01_key_00_01_value_01_4_1_1traits___feldman_hash_map__fixed.html#a1868943888328e2a7e2ca7ca44fc015d", null ]
+];

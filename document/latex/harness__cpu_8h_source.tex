@@ -1,0 +1,121 @@
+\doxysection{harness\+\_\+cpu.\+h}
+\hypertarget{harness__cpu_8h_source}{}\label{harness__cpu_8h_source}\index{external/taskflow/3rd-\/party/tbb/src/test/harness\_cpu.h@{external/taskflow/3rd-\/party/tbb/src/test/harness\_cpu.h}}
+\mbox{\hyperlink{harness__cpu_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ \ Copyright\ (c)\ 2005-\/2020\ Intel\ Corporation}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ \ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ \ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ \ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ Declarations\ for\ simple\ estimate\ of\ CPU\ time\ being\ used\ by\ a\ program.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ This\ header\ is\ an\ optional\ part\ of\ the\ test\ harness.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ It\ assumes\ that\ "{}harness\_assert.h"{}\ has\ already\ been\ included.}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#if\ \_WIN32}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \ \ \#include\ <windows.h>}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\ \ \ \ \#include\ <sys/time.h>}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\ \ \ \ \#include\ <sys/resource.h>}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{/*\ \ Returns\ 0\ if\ not\ implemented\ on\ platform.\ */}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{harness__cpu_8h_aede41842b0757f853270009f4c4e3bea}{GetCPUUserTime}}()\ \{}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#if\ \_\_TBB\_WIN8UI\_SUPPORT}}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#elif\ \_WIN32}}
+\DoxyCodeLine{00034\ \ \ \ \ FILETIME\ my\_times[4];}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{bool}\ status\ =\ GetProcessTimes(GetCurrentProcess(),\ my\_times,\ my\_times+1,\ my\_times+2,\ my\_times+3)!=0;}
+\DoxyCodeLine{00036\ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}(\ status,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00037\ \ \ \ \ LARGE\_INTEGER\ usrtime;}
+\DoxyCodeLine{00038\ \ \ \ \ usrtime.LowPart\ =\ my\_times[3].dwLowDateTime;}
+\DoxyCodeLine{00039\ \ \ \ \ usrtime.HighPart\ =\ my\_times[3].dwHighDateTime;}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordflow}{return}\ double(usrtime.QuadPart)*1\mbox{\hyperlink{sandbox_2strassen_2omp_8cpp_a4bfa035cad7c3258704669810cd5de5d}{E}}-\/7;}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{comment}{//\ Generic\ UNIX,\ including\ \_\_APPLE\_\_}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{comment}{//\ On\ Linux,\ there\ is\ no\ good\ way\ to\ get\ CPU\ usage\ info\ for\ the\ current\ process:}}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//\ \ \ getrusage(RUSAGE\_SELF,\ ...)\ that\ is\ used\ now\ only\ returns\ info\ for\ the\ calling\ thread;}}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ \ \ getrusage(RUSAGE\_CHILDREN,\ ...)\ only\ counts\ for\ finished\ children\ threads;}}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{comment}{//\ \ \ tms\_utime\ and\ tms\_cutime\ got\ with\ times(struct\ tms*)\ are\ equivalent\ to\ the\ above\ items;}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ \ \ finally,\ /proc/self/task/<task\_id>/stat\ doesn't\ exist\ on\ older\ kernels}}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ and\ it\ isn't\ quite\ convenient\ to\ read\ it\ for\ every\ task\_id.}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{struct\ }rusage\ resources;}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{bool}\ status\ =\ getrusage(RUSAGE\_SELF,\ \&resources)==0;}
+\DoxyCodeLine{00053\ \ \ \ \ \mbox{\hyperlink{_mini_cpp_unit_8hxx_a092bd7bb2cb7fd9f483b6995cee61bc0}{ASSERT}}(\ status,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ );}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{double}(resources.ru\_utime.tv\_sec)*1E6\ +\ \textcolor{keywordtype}{double}(resources.ru\_utime.tv\_usec))*1\mbox{\hyperlink{sandbox_2strassen_2omp_8cpp_a4bfa035cad7c3258704669810cd5de5d}{E}}-\/6;}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tick__count_8h}{tbb/tick\_count.h}}"{}}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ The\ resolution\ of\ GetCPUUserTime\ is\ 10-\/15\ ms\ or\ so;\ waittime\ should\ be\ a\ few\ times\ bigger.}}
+\DoxyCodeLine{00062\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{harness__cpu_8h_ade70ba744c406d827c4bec211a72c3e9}{WAITTIME}}\ =\ 0.1;\ \textcolor{comment}{//\ in\ seconds,\ i.e.\ 100\ ms}}
+\DoxyCodeLine{00063\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{harness__cpu_8h_a3b99de87c4e7ec4d5739a02455c88281}{THRESHOLD}}\ =\ \mbox{\hyperlink{harness__cpu_8h_ade70ba744c406d827c4bec211a72c3e9}{WAITTIME}}/100;}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{harness__cpu_8h_ae82322301117f8cceac03b6e5c3c24d5}{TestCPUUserTime}}(\ \textcolor{keywordtype}{int}\ nthreads,\ \textcolor{keywordtype}{int}\ nactive\ =\ 1\ )\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ The\ test\ will\ always\ pass\ on\ Linux;\ read\ the\ comments\ in\ GetCPUUserTime\ for\ details}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ Also\ it\ will\ not\ detect\ spinning\ issues\ on\ systems\ with\ only\ one\ processing\ core.}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{int}\ nworkers\ =\ nthreads-\/nactive;}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{if}(\ !nworkers\ )\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{double}\ lastusrtime\ =\ \mbox{\hyperlink{harness__cpu_8h_aede41842b0757f853270009f4c4e3bea}{GetCPUUserTime}}();}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordflow}{if}(\ !lastusrtime\ )\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{double}\ minimal\_waittime\ =\ \mbox{\hyperlink{harness__cpu_8h_ade70ba744c406d827c4bec211a72c3e9}{WAITTIME}},}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maximal\_waittime\ =\ \mbox{\hyperlink{harness__cpu_8h_ade70ba744c406d827c4bec211a72c3e9}{WAITTIME}}\ *\ 10;}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordtype}{double}\ usrtime\_delta;}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keywordtype}{double}\ waittime\_delta;}
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{classtbb_1_1tick__count}{tbb::tick\_count}}\ stamp\ =\ \mbox{\hyperlink{classtbb_1_1tick__count_a74dcecde7431ff4591d7c46fc1d50d7e}{tbb::tick\_count::now}}();}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{keyword}{volatile}\ intptr\_t\ k\ =\ (intptr\_t)\&usrtime\_delta;}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{comment}{//\ wait\ for\ GetCPUUserTime\ update}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{while}(\ (usrtime\_delta=\mbox{\hyperlink{harness__cpu_8h_aede41842b0757f853270009f4c4e3bea}{GetCPUUserTime}}()-\/lastusrtime)\ <\ \mbox{\hyperlink{harness__cpu_8h_a3b99de87c4e7ec4d5739a02455c88281}{THRESHOLD}}\ )\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ 1000;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ )\ ++k;\ \textcolor{comment}{//\ do\ fake\ work\ without\ which\ user\ time\ can\ stall}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (waittime\_delta\ =\ (\mbox{\hyperlink{classtbb_1_1tick__count_a74dcecde7431ff4591d7c46fc1d50d7e}{tbb::tick\_count::now}}()-\/stamp).seconds())\ >\ maximal\_waittime\ )\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{harness__report_8h_a787099914a94ed31fa544b985b55752f}{REPORT}}(\ \textcolor{stringliteral}{"{}Warning:\ \%.2f\ sec\ elapsed\ but\ user\ mode\ time\ is\ still\ below\ its\ threshold\ (\%g\ <\ \%g)\(\backslash\)n"{}},}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ waittime\_delta,\ usrtime\_delta,\ \mbox{\hyperlink{harness__cpu_8h_a3b99de87c4e7ec4d5739a02455c88281}{THRESHOLD}}\ );}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ lastusrtime\ +=\ usrtime\_delta;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ workers\ to\ go\ sleep}}
+\DoxyCodeLine{00092\ \ \ \ \ stamp\ =\ \mbox{\hyperlink{classtbb_1_1tick__count_a74dcecde7431ff4591d7c46fc1d50d7e}{tbb::tick\_count::now}}();}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{while}(\ ((waittime\_delta=(\mbox{\hyperlink{classtbb_1_1tick__count_a74dcecde7431ff4591d7c46fc1d50d7e}{tbb::tick\_count::now}}()-\/stamp).seconds())\ <\ minimal\_waittime)}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ ||\ ((usrtime\_delta=\mbox{\hyperlink{harness__cpu_8h_aede41842b0757f853270009f4c4e3bea}{GetCPUUserTime}}()-\/lastusrtime)\ <\ \mbox{\hyperlink{harness__cpu_8h_a3b99de87c4e7ec4d5739a02455c88281}{THRESHOLD}})\ )}
+\DoxyCodeLine{00095\ \ \ \ \ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ 1000;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ )\ ++k;\ \textcolor{comment}{//\ do\ fake\ work\ without\ which\ user\ time\ can\ stall}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ waittime\_delta\ >\ maximal\_waittime\ )\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{harness__report_8h_a787099914a94ed31fa544b985b55752f}{REPORT}}(\ \textcolor{stringliteral}{"{}Warning:\ \%.2f\ sec\ elapsed\ but\ GetCPUUserTime\ reported\ only\ \%g\ sec\(\backslash\)n"{}},\ waittime\_delta,\ usrtime\_delta\ );}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ Test\ that\ all\ workers\ sleep\ when\ no\ work.}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{while}(\ nactive>1\ \&\&\ usrtime\_delta-\/nactive*waittime\_delta<0\ )\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ probably\ the\ number\ of\ active\ threads\ was\ mispredicted}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ -\/-\/nactive;\ ++nworkers;}
+\DoxyCodeLine{00107\ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{double}\ avg\_worker\_usrtime\ =\ (usrtime\_delta-\/nactive*waittime\_delta)/nworkers;}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordflow}{if}(\ avg\_worker\_usrtime\ >\ waittime\_delta/2\ )}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{harness__report_8h_a787099914a94ed31fa544b985b55752f}{REPORT}}(\ \textcolor{stringliteral}{"{}ERROR:\ \%d\ worker\ threads\ are\ spinning;\ waittime:\ \%g;\ usrtime:\ \%g;\ avg\ worker\ usrtime:\ \%g\(\backslash\)n"{}},}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nworkers,\ waittime\_delta,\ usrtime\_delta,\ avg\_worker\_usrtime);}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{harness__report_8h_ace9fba7267bf6a9a92654ce7f25c5516}{REMARK}}(\textcolor{stringliteral}{"{}\%d\ worker\ threads;\ waittime:\ \%g;\ usrtime:\ \%g;\ avg\ worker\ usrtime:\ \%g\(\backslash\)n"{}},}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nworkers,\ waittime\_delta,\ usrtime\_delta,\ avg\_worker\_usrtime);}
+\DoxyCodeLine{00116\ \}}
+
+\end{DoxyCode}

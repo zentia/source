@@ -1,0 +1,225 @@
+\doxysection{GPU Tasking (cuda\+Flow)}
+\hypertarget{_g_p_u_taskingcuda_flow}{}\label{_g_p_u_taskingcuda_flow}\index{GPU Tasking (\%cudaFlow)@{GPU Tasking (\%cudaFlow)}}
+Modern scientific computing typically leverages GPU-\/powered parallel processing cores to speed up large-\/scale applications. This chapter discusses how to implement CPU-\/\+GPU heterogeneous tasking algorithms with @\+Nvidia\+CUDA.\hypertarget{_g_p_u_taskingcuda_flow_GPUTaskingcudaFlowIncludeTheHeader}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_g_p_u_taskingcuda_flow_GPUTaskingcudaFlowIncludeTheHeader}
+You need to include the header file, {\ttfamily taskflow/cuda/cudaflow.hpp}, for creating a GPU task graph using \doxylink{classtf_1_1cuda_flow}{tf\+::cuda\+Flow}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{cudaflow_8hpp}{taskflow/cuda/cudaflow.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_g_p_u_taskingcuda_flow_WhatIsACudaGraph}{}\doxysubsection{\texorpdfstring{What is a CUDA Graph?}{What is a CUDA Graph?}}\label{_g_p_u_taskingcuda_flow_WhatIsACudaGraph}
+CUDA Graph is a new execution model that enables a series of CUDA kernels to be defined and encapsulated as a single unit, i.\+e., a task graph of operations, rather than a sequence of individually-\/launched operations. This organization allows launching multiple GPU operations through a single CPU operation and hence reduces the launching overheads, especially for kernels of short running time. The benefit of CUDA Graph can be demonstrated in the figure below\+:
+
+
+
+In this example, a sequence of short kernels is launched one-\/by-\/one by the CPU. The CPU launching overhead creates a significant gap in between the kernels. If we replace this sequence of kernels with a CUDA graph, initially we will need to spend a little extra time on building the graph and launching the whole graph in one go on the first occasion, but subsequent executions will be very fast, as there will be very little gap between the kernels. The difference is more pronounced when the same sequence of operations is repeated many times, for example, many training epochs in machine learning workloads. In that case, the initial costs of building and launching the graph will be amortized over the entire training iterations.
+
+\begin{DoxyAttention}{注意}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} comprehensive introduction about CUDA Graph can be referred to the \href{https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html\#cuda-graphs}{\texttt{ CUDA Graph Programming Guide}}.
+\end{DoxyAttention}
+\hypertarget{_g_p_u_taskingcuda_flow_Create_a_cudaFlow}{}\doxysubsection{\texorpdfstring{Create a cuda\+Flow}{Create a cuda\+Flow}}\label{_g_p_u_taskingcuda_flow_Create_a_cudaFlow}
+Taskflow leverages @cuda\+Graph to enable concurrent CPU-\/\+GPU tasking using a task graph model called \doxylink{classtf_1_1cuda_flow}{tf\+::cuda\+Flow}. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} cuda\+Flow manages a CUDA graph explicitly to execute dependent GPU operations in a single CPU call. The following example implements a cuda\+Flow that performs an saxpy (A·X Plus Y) workload\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{cudaflow_8hpp}{taskflow/cuda/cudaflow.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ saxpy\ (single-\/precision\ A·X\ Plus\ Y)\ kernel}}
+\DoxyCodeLine{\_\_global\_\_\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{bench_2btl_2libs_2_b_l_a_s_2blas_8h_ad53e5aed16187a6bb50b8aa5f24cca8b}{saxpy}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keywordtype}{float}\ *\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \textcolor{keywordtype}{float}\ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}})\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x*\mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}})\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}*\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ +\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ main\ function\ begins}}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 1<<20;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ vector}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ std::vector<float>\ hx(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ 1.0f);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ x\ vector\ at\ host}}
+\DoxyCodeLine{\ \ std::vector<float>\ hy(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ 2.0f);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ y\ vector\ at\ host}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ *dx\{\textcolor{keyword}{nullptr}\};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ x\ vector\ at\ device}}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ *dy\{\textcolor{keyword}{nullptr}\};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ y\ vector\ at\ device}}
+\DoxyCodeLine{\ }
+\DoxyCodeLine{\ \ cudaMalloc(\&dx,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}));}
+\DoxyCodeLine{\ \ cudaMalloc(\&dy,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::cudaFlow\ cudaflow;}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ data\ transfer\ tasks}}
+\DoxyCodeLine{\ \ tf::cudaTask\ h2d\_x\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(dx,\ hx.data(),\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}).name(\textcolor{stringliteral}{"{}h2d\_x"{}});\ }
+\DoxyCodeLine{\ \ tf::cudaTask\ h2d\_y\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(dy,\ hy.data(),\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}).name(\textcolor{stringliteral}{"{}h2d\_y"{}});}
+\DoxyCodeLine{\ \ tf::cudaTask\ d2h\_x\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(hx.data(),\ dx,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}).name(\textcolor{stringliteral}{"{}d2h\_x"{}});}
+\DoxyCodeLine{\ \ tf::cudaTask\ d2h\_y\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(hy.data(),\ dy,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}).name(\textcolor{stringliteral}{"{}d2h\_y"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ launch\ saxpy<<<(N+255)/256,\ 256,\ 0>>>(N,\ 2.0f,\ dx,\ dy)}}
+\DoxyCodeLine{\ \ tf::cudaTask\ kernel\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a1473a15a6023fbc25e1f029f2ff84aec}{kernel}}(}
+\DoxyCodeLine{\ \ \ \ (\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}+255)/256,\ 256,\ 0,\ \mbox{\hyperlink{bench_2btl_2libs_2_b_l_a_s_2blas_8h_ad53e5aed16187a6bb50b8aa5f24cca8b}{saxpy}},\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ 2.0f,\ dx,\ dy}
+\DoxyCodeLine{\ \ ).name(\textcolor{stringliteral}{"{}saxpy"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ kernel.\mbox{\hyperlink{classtf_1_1cuda_task_a4a9ca1a34bac47e4c9b04eb4fb2f7775}{succeed}}(h2d\_x,\ h2d\_y)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1cuda_task_abdd68287ec4dff4216af34d1db44d1b4}{precede}}(d2h\_x,\ d2h\_y);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ run\ the\ cudaflow\ through\ a\ stream}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\ \ cudaflow.run(stream)}
+\DoxyCodeLine{\ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ dump\ the\ cudaflow}}
+\DoxyCodeLine{\ \ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_abd73a9268b80e74803f241ee10a842b6}{dump}}(std::cout);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The cuda\+Flow graph consists of two CPU-\/to-\/\+GPU data copies ({\ttfamily h2d\+\_\+x} and {\ttfamily h2d\+\_\+y}), one kernel ({\ttfamily saxpy}), and two GPU-\/to-\/\+CPU data copies ({\ttfamily d2h\+\_\+x} and {\ttfamily d2h\+\_\+y}), in this order of their task dependencies.
+
+We do not expend yet another effort on simplifying kernel programming but focus on tasking CUDA operations and their dependencies. In other words, \doxylink{classtf_1_1cuda_flow}{tf\+::cuda\+Flow} is a lightweight C++ abstraction over CUDA Graph. This organization lets users fully take advantage of CUDA features that are commensurate with their domain knowledge, while leaving difficult task parallelism details to Taskflow.\hypertarget{_g_p_u_taskingcuda_flow_Compile_a_cudaFlow_program}{}\doxysubsection{\texorpdfstring{Compile a cuda\+Flow Program}{Compile a cuda\+Flow Program}}\label{_g_p_u_taskingcuda_flow_Compile_a_cudaFlow_program}
+Use @nvcc to compile a cuda\+Flow program\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ nvcc\ -\/\mbox{\hyperlink{namespacestd}{std}}=\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}++17\ my\_cudaflow.cu\ -\/I\ \mbox{\hyperlink{ittnotify__static_8h_a7016119bc831a22d1a351d56128518ed}{path}}/to/include/\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}\ -\/O2\ -\/o\ my\_cudaflow}
+\DoxyCodeLine{\string~\$\ ./my\_cudaflow}
+
+\end{DoxyCode}
+
+
+Please visit the page \doxylink{CompileTaskflowWithCUDA}{Compile Taskflow with CUDA} for more details.\hypertarget{_g_p_u_taskingcuda_flow_run_a_cudaflow_on_a_specific_gpu}{}\doxysubsection{\texorpdfstring{Run a cuda\+Flow on Specific GPU}{Run a cuda\+Flow on Specific GPU}}\label{_g_p_u_taskingcuda_flow_run_a_cudaflow_on_a_specific_gpu}
+By default, a cuda\+Flow runs on the current GPU context associated with the caller, which is typically GPU {\ttfamily 0}. Each CUDA GPU has an integer identifier in the range of {\ttfamily \mbox{[}0, N)} to represent the context of that GPU, where {\ttfamily N} is the number of GPUs in the system. You can run a cuda\+Flow on a specific GPU by switching the context to a different GPU using \doxylink{classtf_1_1cuda_scoped_device}{tf\+::cuda\+Scoped\+Device}. The code below creates a cuda\+Flow and runs it on GPU {\ttfamily 2}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ an\ RAII-\/styled\ switcher\ to\ the\ context\ of\ GPU\ 2}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1cuda_scoped_device}{tf::cudaScopedDevice}}\ \mbox{\hyperlink{classcontext}{context}}(2);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ a\ cudaFlow\ capturer\ under\ GPU\ 2}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1cuda_flow_capturer}{tf::cudaFlowCapturer}}\ capturer;}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ a\ stream\ under\ GPU\ 2\ and\ offload\ the\ capturer\ to\ that\ GPU}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\ \ capturer.\mbox{\hyperlink{classtf_1_1cuda_flow_capturer_a952596fd7c46acee4c2459d8fe39da28}{run}}(stream);}
+\DoxyCodeLine{\ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+\doxylink{classtf_1_1cuda_scoped_device}{tf\+::cuda\+Scoped\+Device} is an RAII-\/styled wrapper to perform {\itshape scoped} switch to the given GPU context. When the scope is destroyed, it switches back to the original context.
+
+\begin{DoxyAttention}{注意}
+\doxylink{classtf_1_1cuda_scoped_device}{tf\+::cuda\+Scoped\+Device} allows you to place a cuda\+Flow on a particular GPU device, but it is your responsibility to ensure correct memory access. For example, you may not allocate a memory block on GPU {\ttfamily 2} while accessing it from a kernel on GPU {\ttfamily 0}. An easy practice for multi-\/\+GPU programming is to allocate {\itshape unified shared memory} using {\ttfamily cuda\+Malloc\+Managed} and let the CUDA runtime perform automatic memory migration between GPUs.
+\end{DoxyAttention}
+\hypertarget{_g_p_u_taskingcuda_flow_GPUMemoryOperations}{}\doxysubsection{\texorpdfstring{Create Memory Operation Tasks}{Create Memory Operation Tasks}}\label{_g_p_u_taskingcuda_flow_GPUMemoryOperations}
+cuda\+Flow provides a set of methods for users to manipulate device memory. There are two categories, {\itshape raw} data and {\itshape typed} data. Raw data operations are methods with prefix {\ttfamily mem}, such as {\ttfamily memcpy} and {\ttfamily memset}, that operate in {\itshape bytes}. Typed data operations such as {\ttfamily copy}, {\ttfamily fill}, and {\ttfamily zero}, take {\itshape logical count} of elements. For instance, the following three methods have the same result of zeroing {\ttfamily sizeof(int)\texorpdfstring{$\ast$}{*}count} bytes of the device memory area pointed to by {\ttfamily target}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ target;}
+\DoxyCodeLine{cudaMalloc(\&target,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1cuda_flow}{tf::cudaFlow}}\ cudaflow;}
+\DoxyCodeLine{memset\_target\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a10196f49de261a4042de328aab2452c8}{memset}}(target,\ 0,\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int})\ *\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+\DoxyCodeLine{same\_as\_above\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a32634c5645c14b99ceeaafe77ea5ea62}{fill}}(target,\ 0,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+\DoxyCodeLine{same\_as\_above\_again\ =\ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_ab45bc592a33380adf74d6f1e7690bd4c}{zero}}(target,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+
+\end{DoxyCode}
+
+
+The method \doxylink{classtf_1_1cuda_graph_base_a32634c5645c14b99ceeaafe77ea5ea62}{tf\+::cuda\+Flow\+::fill} is a more powerful variant of \doxylink{classtf_1_1cuda_graph_base_a10196f49de261a4042de328aab2452c8}{tf\+::cuda\+Flow\+::memset}. It can fill a memory area with any value of type {\ttfamily T}, given that {\ttfamily sizeof(\+T)} is 1, 2, or 4 bytes. The following example creates a GPU task to fill {\ttfamily count} elements in the array {\ttfamily target} with value {\ttfamily 1234}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{cf.fill(target,\ 1234,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+
+\end{DoxyCode}
+
+
+Similar concept applies to \doxylink{classtf_1_1cuda_graph_base_a5e704c7bb669a82f4fe140ecb4576eb0}{tf\+::cuda\+Flow\+::memcpy} and \doxylink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{tf\+::cuda\+Flow\+::copy} as well. The following two methods are equivalent to each other.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a5e704c7bb669a82f4fe140ecb4576eb0}{memcpy}}(target,\ source,\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int})\ *\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+\DoxyCodeLine{cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(target,\ source,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+
+\end{DoxyCode}
+\hypertarget{_g_p_u_taskingcuda_flow_OffloadAcudaFlow}{}\doxysubsection{\texorpdfstring{Offload a cuda\+Flow}{Offload a cuda\+Flow}}\label{_g_p_u_taskingcuda_flow_OffloadAcudaFlow}
+To offload a cuda\+Flow to a GPU, you need to use tf\+::cuda\+Flow\+::run and pass a \doxylink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf\+::cuda\+Stream} created on that GPU. The run method is asynchronous and can be explicitly synchronized through the given stream.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\textcolor{comment}{//\ launch\ a\ cudaflow\ asynchronously\ through\ a\ stream}}
+\DoxyCodeLine{cudaflow.run(stream);}
+\DoxyCodeLine{\textcolor{comment}{//\ wait\ for\ the\ cudaflow\ to\ finish}}
+\DoxyCodeLine{stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+
+\end{DoxyCode}
+
+
+When you offload a cuda\+Flow using tf\+::cuda\+Flow\+::run, the runtime transforms that cuda\+Flow (i.\+e., application GPU task graph) into a native executable instance and submit it to the CUDA runtime for execution. There is always an one-\/to-\/one mapping between cuda\+Flow and its native CUDA graph representation (except those constructed by using \doxylink{classtf_1_1cuda_flow_capturer}{tf\+::cuda\+Flow\+Capturer}).\hypertarget{_g_p_u_taskingcuda_flow_UpdateAcudaFlow}{}\doxysubsection{\texorpdfstring{Update a cuda\+Flow}{Update a cuda\+Flow}}\label{_g_p_u_taskingcuda_flow_UpdateAcudaFlow}
+Many GPU applications require you to launch a cuda\+Flow multiple times and update node parameters (e.\+g., kernel parameters and memory addresses) between iterations. cuda\+Flow allows you to update the parameters of created tasks and run the updated cuda\+Flow with new parameters. Every task-\/creation method in \doxylink{classtf_1_1cuda_flow}{tf\+::cuda\+Flow} has an overload to update the parameters of a created task by that method.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1cuda_flow}{tf::cudaFlow}}\ cf;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ kernel\ task}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1cuda_task}{tf::cudaTask}}\ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a1473a15a6023fbc25e1f029f2ff84aec}{kernel}}(grid1,\ block1,\ shm1,\ kernel,\ kernel\_args\_1);}
+\DoxyCodeLine{cf.run(stream);}
+\DoxyCodeLine{stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ update\ the\ created\ kernel\ task\ with\ different\ parameters}}
+\DoxyCodeLine{cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a1473a15a6023fbc25e1f029f2ff84aec}{kernel}}(\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}},\ grid2,\ block2,\ shm2,\ kernel,\ kernel\_args\_2);}
+\DoxyCodeLine{cf.run(stream);}
+\DoxyCodeLine{stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+
+\end{DoxyCode}
+
+
+Between successive offloads (i.\+e., iterative executions of a cuda\+Flow), you can {\itshape ONLY} update task parameters, such as changing the kernel execution parameters and memory operation parameters. However, you must {\itshape NOT} change the topology of the cuda\+Flow, such as adding a new task or adding a new dependency. This is the limitation of CUDA Graph.
+
+\begin{DoxyAttention}{注意}
+There are a few restrictions on updating task parameters in a cuda\+Flow. Notably, you must {\itshape NOT} change the topology of an offloaded graph. In addition, update methods have the following limitations\+:
+\begin{DoxyItemize}
+\item kernel task
+\begin{DoxyItemize}
+\item The kernel function is not allowed to change. This restriction applies to all algorithm tasks that are created using lambda.
+\end{DoxyItemize}
+\item memset and memcpy tasks\+:
+\begin{DoxyItemize}
+\item The CUDA device(s) to which the operand(s) was allocated/mapped cannot change
+\item The source/destination memory must be allocated from the same contexts as the original source/destination memory.
+\end{DoxyItemize}
+\end{DoxyItemize}
+\end{DoxyAttention}
+\hypertarget{_g_p_u_taskingcuda_flow_IntegrateCudaFlowIntoTaskflow}{}\doxysubsection{\texorpdfstring{Integrate a cuda\+Flow into Taskflow}{Integrate a cuda\+Flow into Taskflow}}\label{_g_p_u_taskingcuda_flow_IntegrateCudaFlowIntoTaskflow}
+You can create a task to enclose a cuda\+Flow and run it from a worker thread. The usage of the cuda\+Flow remains the same except that the cuda\+Flow is run by a worker thread from a taskflow task. The following example runs a cuda\+Flow from a static task\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ a\ cudaFlow\ inside\ a\ static\ task}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1cuda_flow}{tf::cudaFlow}}\ cudaflow;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ ...\ create\ a\ kernel\ task}}
+\DoxyCodeLine{\ \ cudaflow.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a1473a15a6023fbc25e1f029f2ff84aec}{kernel}}(...);}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ run\ the\ capturer\ through\ a\ stream}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\ \ capturer.\mbox{\hyperlink{classtf_1_1cuda_flow_capturer_a952596fd7c46acee4c2459d8fe39da28}{run}}(stream);}
+\DoxyCodeLine{\ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+ 

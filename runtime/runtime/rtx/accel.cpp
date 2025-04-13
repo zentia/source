@@ -1,12 +1,12 @@
-#include <luisa/core/stl/algorithm.h>
-#include <luisa/ast/function_builder.h>
-#include <luisa/runtime/shader.h>
-#include <luisa/core/logging.h>
-#include <luisa/runtime/rtx/mesh.h>
-#include <luisa/runtime/rtx/curve.h>
-#include <luisa/runtime/rtx/procedural_primitive.h>
-#include <luisa/runtime/rtx/motion_instance.h>
-#include <luisa/runtime/rtx/accel.h>
+#include <runtime/core/stl/algorithm.h>
+#include <runtime/ast/function_builder.h>
+#include <runtime/runtime/shader.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/rtx/mesh.h>
+#include <runtime/runtime/rtx/curve.h>
+#include <runtime/runtime/rtx/procedural_primitive.h>
+#include <runtime/runtime/rtx/motion_instance.h>
+#include <runtime/runtime/rtx/accel.h>
 
 namespace luisa::compute {
 

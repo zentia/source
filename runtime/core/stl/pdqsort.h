@@ -313,7 +313,7 @@ inline std::pair<Iter, bool> partition_right_branchless(Iter begin, Iter end, Co
             }
 
             // Swap elements and update block sizes and first/last boundaries.
-            size_t num = std::min(num_l, num_r);
+            size_t num = (std::min)(num_l, num_r);
             swap_offsets(offsets_l_base, offsets_r_base,
                          offsets_l + start_l, offsets_r + start_r,
                          num, num_l == num_r);

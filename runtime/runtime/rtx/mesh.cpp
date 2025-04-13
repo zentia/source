@@ -1,6 +1,6 @@
-#include <luisa/core/logging.h>
-#include <luisa/runtime/rtx/mesh.h>
-#include <luisa/runtime/rtx/accel.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/rtx/mesh.h>
+#include <runtime/runtime/rtx/accel.h>
 
 namespace luisa::compute {
 

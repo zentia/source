@@ -1,0 +1,4 @@
+var structrfl_1_1internal_1_1define__named__tuple_3_01_named_tuple_3_01_tup_content_8_8_8_01_4_00_01_head_00_01_tail_8_8_8_01_4 =
+[
+    [ "type", "structrfl_1_1internal_1_1define__named__tuple_3_01_named_tuple_3_01_tup_content_8_8_8_01_4_00_01_head_00_01_tail_8_8_8_01_4.html#a7349e699c54c2cd397c0c49baae361ba", null ]
+];

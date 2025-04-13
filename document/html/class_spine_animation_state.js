@@ -1,0 +1,25 @@
+var class_spine_animation_state =
+[
+    [ "SpineAnimationState", "class_spine_animation_state.html#a8453419a8c4968faeefc3afc5814edcb", null ],
+    [ "~SpineAnimationState", "class_spine_animation_state.html#aa9c7e0353717f867784e064816ea101c", null ],
+    [ "_bind_methods", "class_spine_animation_state.html#ae79c9ba9f2f3b9d718d534bebd4b529f", null ],
+    [ "add_animation", "class_spine_animation_state.html#a2f8bd68d57be14834c758ec2027bc2d0", null ],
+    [ "add_empty_animation", "class_spine_animation_state.html#a62be24b83200686fb58223d8a39de273", null ],
+    [ "apply", "class_spine_animation_state.html#ad1147e52f89ae08fcb6afde3f7fac524", null ],
+    [ "clear_track", "class_spine_animation_state.html#a0e048a0801fb544c2fe143d1bbf1df5e", null ],
+    [ "clear_tracks", "class_spine_animation_state.html#aa06dfec1d64e959b69b329f1c34b486c", null ],
+    [ "disable_queue", "class_spine_animation_state.html#a3f4ab1643f3e87bebb388065abbbacfe", null ],
+    [ "enable_queue", "class_spine_animation_state.html#ac44dae114782cd195f994a952e04014b", null ],
+    [ "get_current", "class_spine_animation_state.html#a964c2367b7179c5a89676e71a06b1baf", null ],
+    [ "get_num_tracks", "class_spine_animation_state.html#a89634be3c3e0fa7b72a90ee9a6b9c63d", null ],
+    [ "get_spine_object", "class_spine_animation_state.html#a98fd0ef8237567ef2fcc7b58fb8c920f", null ],
+    [ "get_time_scale", "class_spine_animation_state.html#ad7483d40390d641afe25d8cbb255e0f0", null ],
+    [ "set_animation", "class_spine_animation_state.html#a60c01538820d5ec461d46667abe58afc", null ],
+    [ "set_empty_animation", "class_spine_animation_state.html#afac0f32395c9effc9ed3233b49cf2851", null ],
+    [ "set_empty_animations", "class_spine_animation_state.html#a9eb707affde1672550cde4f6a78a85b0", null ],
+    [ "set_spine_sprite", "class_spine_animation_state.html#ab6e83ee07f3f49c88a01a2392c13fe9b", null ],
+    [ "set_time_scale", "class_spine_animation_state.html#a74472c461b9dc1aa453fc3d2dad68974", null ],
+    [ "update", "class_spine_animation_state.html#a6e934c9ff9b739241aa53e0c82799dba", null ],
+    [ "animation_state", "class_spine_animation_state.html#aa10ae6d4f86c0fddaf7dcf4f8b23befe", null ],
+    [ "sprite", "class_spine_animation_state.html#a0bc2acb0b043eeee4e67ca0b13f561c7", null ]
+];

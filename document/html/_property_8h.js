@@ -1,0 +1,35 @@
+var _property_8h =
+[
+    [ "spine::PropertyId", "namespacespine.html#a6442a03e3c686c87ea76901c05e4ac45", null ],
+    [ "spine::Property", "namespacespine.html#a70d921dc10a9500cdd79c831e615152e", [
+      [ "spine::Property_Rotate", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea52d83ed812e964a2b3f38ea70a6bf7b4", null ],
+      [ "spine::Property_X", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea295bfdb6af2ac0c277957802f2dddf18", null ],
+      [ "spine::Property_Y", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eaca00e5f7a9cfad7738adfc2e7750acbd", null ],
+      [ "spine::Property_ScaleX", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea283991f78f13ff7a83d1a65c6f145b67", null ],
+      [ "spine::Property_ScaleY", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea77966a8580a38e992e4cd90a3fe0be07", null ],
+      [ "spine::Property_ShearX", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea437f950e23326cf6fe88ecee99ad6a75", null ],
+      [ "spine::Property_ShearY", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eaffd3f0dcf66dad8eded1696b9746edd8", null ],
+      [ "spine::Property_Inherit", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea49d446383e0534fd5e2088668b119b78", null ],
+      [ "spine::Property_Rgb", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea95a426522105a96cf94c3ca48495b6d0", null ],
+      [ "spine::Property_Alpha", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea57b2246b8e2a2b4eee865675c6e40824", null ],
+      [ "spine::Property_Rgb2", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eab1a6bf1fd22c363383bb344a0e032850", null ],
+      [ "spine::Property_Attachment", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eaab9cd3da8188361220fa4bc487de652d", null ],
+      [ "spine::Property_Deform", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea9849719f289da89d425b642da0ffb54e", null ],
+      [ "spine::Property_Event", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea075a6286c5a92b11a35f9426c9a1b554", null ],
+      [ "spine::Property_DrawOrder", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea7a4b8fdfdb0c904d8f5ccfe1173b5931", null ],
+      [ "spine::Property_IkConstraint", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea0b95bb16d489da17908af4a4136bea22", null ],
+      [ "spine::Property_TransformConstraint", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea82f549fe06aa9e4331161d1f52b711d2", null ],
+      [ "spine::Property_PathConstraintPosition", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eadca2d6fb07fb466a2a5e9439fc2faa41", null ],
+      [ "spine::Property_PathConstraintSpacing", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eae6f83adca777bfff3471253b30842a18", null ],
+      [ "spine::Property_PathConstraintMix", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea4a3e42333b29de76c322ce139f75d106", null ],
+      [ "spine::Property_PhysicsConstraintInertia", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea08c361db9448b3603cbddbaa691635fc", null ],
+      [ "spine::Property_PhysicsConstraintStrength", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eaea57c6d9754f0c621b54d42148ce0d69", null ],
+      [ "spine::Property_PhysicsConstraintDamping", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ead81d4fcdb7d6ae0926bbf5f9b955c9e0", null ],
+      [ "spine::Property_PhysicsConstraintMass", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eaa6436eacb8f0cef3ac6cd213a54e92dd", null ],
+      [ "spine::Property_PhysicsConstraintWind", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea2734e71cd2ce9d058ee3f4b12098ff91", null ],
+      [ "spine::Property_PhysicsConstraintGravity", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eac66d4148b22547be338425721556ba3e", null ],
+      [ "spine::Property_PhysicsConstraintMix", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eae67dd5632b2b2012c5080c85f440e0c1", null ],
+      [ "spine::Property_PhysicsConstraintReset", "namespacespine.html#a70d921dc10a9500cdd79c831e615152ea18e46e0ca6efab56ef309fd9112721f3", null ],
+      [ "spine::Property_Sequence", "namespacespine.html#a70d921dc10a9500cdd79c831e615152eabc8ff5f9e89cacd03ff3ecb3dca190ab", null ]
+    ] ]
+];

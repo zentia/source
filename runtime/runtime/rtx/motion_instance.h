@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <luisa/runtime/device.h>
+#include <runtime/runtime/device.h>
 
 namespace luisa::compute {
 

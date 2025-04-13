@@ -1,0 +1,62 @@
+\chapter{Synchronization monitor}
+\hypertarget{cds_sync_monitor}{}\label{cds_sync_monitor}\index{Synchronization monitor@{Synchronization monitor}}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} \href{http://en.wikipedia.org/wiki/Monitor_\%28synchronization\%29}{\texttt{ monitor}} is synchronization construction that allows threads to have both mutual exclusion and the ability to wait (block) for a certain condition to become true. Some blocking data structure algoritms like the trees require per-\/node locking. For huge trees containing millions of nodes it can be very inefficient to inject the lock object into each node. Moreover, some operating systems may not support the millions of system objects like mutexes per user process. The monitor strategy is intended to solve that problem. When the node should be locked, the monitor is called to allocate appropriate lock object for the node if needed, and to lock the node. The monitor strategy can significantly reduce the number of system objects required for data structure.
+
+{\bfseries{Implemetations}}
+
+{\ttfamily libcds} contains several monitor implementations\+:
+\begin{DoxyItemize}
+\item {\ttfamily \doxylink{classcds_1_1sync_1_1injecting__monitor}{sync\+::injecting\+\_\+monitor}} injects the lock object into each node. That mock monitor is designed for user-\/space locking primitive like \doxylink{classcds_1_1sync_1_1spin__lock}{spin-\/lock}.
+\item {\ttfamily \doxylink{classcds_1_1sync_1_1pool__monitor}{sync\+::pool\+\_\+monitor}} is the monitor that allocates a lock object for a node from the pool when needed. When the node is unlocked the lock assigned to it is given back to the pool if no thread references to that node.
+\end{DoxyItemize}
+
+{\bfseries{How to use}}
+
+If you use a container from {\ttfamily libcds} that requires a monitor, you should just specify required monitor type in container\textquotesingle{}s traits. Usually, the monitor is specified by {\ttfamily traits\+::sync\+\_\+monitor} typedef, or by {\ttfamily \doxylink{structcds_1_1opt_1_1sync__monitor}{cds\+::opt\+::sync\+\_\+monitor}} option for container\textquotesingle{}s {\ttfamily make\+\_\+traits} metafunction.
+
+If you\textquotesingle{}re developing a new container algorithm, you should know internal monitor interface\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{class\ }Monitor\ \{}
+\DoxyCodeLine{\textcolor{keyword}{public}:}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Monitor's\ injection\ into\ the\ Node\ class}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Node>}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }node\_injection:\ \textcolor{keyword}{public}\ \mbox{\hyperlink{class_node}{Node}}}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{comment}{//\ Monitor\ data\ injecting\ into\ container's\ node}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Locks\ the\ node}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Node>}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}(\ \mbox{\hyperlink{class_node}{Node}}\&\ node\ );}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Unlocks\ the\ node}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Node>}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{void}\ unlock(\ \mbox{\hyperlink{class_node}{Node}}\&\ node\ );}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Scoped\ lock\ applyes\ RAII\ to\ Monitor}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Node>}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }scoped\_lock\ =\ monitor\_scoped\_lock<\ pool\_monitor,\ Node\ >;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+ Monitor\textquotesingle{}s data must be injected into container\textquotesingle{}s node as {\ttfamily m\+\_\+\+Sync\+Monitor\+Injection} data member\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SyncMonitor>}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }my\_node}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{typename}\ SyncMonitor::node\_injection\ m\_SyncMonitorInjection;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+ The monitor must be a member of your container\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ GC,\ \textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Traits>}
+\DoxyCodeLine{\textcolor{keyword}{class\ }my\_container\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Traits::sync\_monitor\ \ \ sync\_monitor;}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{typedef}\ my\_node<sync\_monitor>\ node\_type;}
+\DoxyCodeLine{\ \ \ \ sync\_monitor\ m\_Monitor;}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//...}}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+ 

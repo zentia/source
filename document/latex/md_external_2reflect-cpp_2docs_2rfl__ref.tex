@@ -1,0 +1,260 @@
+\chapter{\texorpdfstring{$<$}{<}tt\texorpdfstring{$>$}{>}rfl\+::Box\texorpdfstring{$<$}{<}/tt\texorpdfstring{$>$}{>} and \texorpdfstring{$<$}{<}tt\texorpdfstring{$>$}{>}rfl\+::Ref\texorpdfstring{$<$}{<}/tt\texorpdfstring{$>$}{>}}
+\hypertarget{md_external_2reflect-cpp_2docs_2rfl__ref}{}\label{md_external_2reflect-cpp_2docs_2rfl__ref}\index{$<$tt$>$rfl::Box$<$/tt$>$ and $<$tt$>$rfl::Ref$<$/tt$>$@{$<$tt$>$rfl::Box$<$/tt$>$ and $<$tt$>$rfl::Ref$<$/tt$>$}}
+\label{md_external_2reflect-cpp_2docs_2rfl__ref_autotoc_md626}%
+\Hypertarget{md_external_2reflect-cpp_2docs_2rfl__ref_autotoc_md626}%
+
+
+In previous sections, we have defined the {\ttfamily Person} class recursively\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Person\ \{}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}firstName"{}},\ std::string>\ first\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}lastName"{}},\ std::string>\ last\_name;}
+\DoxyCodeLine{\ \ \ \ std::vector<Person>\ children;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+This works, because {\ttfamily std\+::vector} contains a pointer under-\/the-\/hood. But what wouldn\textquotesingle{}t work is something like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ WILL\ NOT\ COMPILE}}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Person\ \{}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}firstName"{}},\ std::string>\ first\_name;}
+\DoxyCodeLine{\ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}lastName"{}},\ std::string>\ last\_name;}
+\DoxyCodeLine{\ \ \ \ Person\ child;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+This is because the compiler cannot figure out the intended size of the struct. But recursively defined structures are important. For instance, if you deal with machine learning, you might be familiar with a decision tree.
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} decision tree consists of a {\ttfamily Leaf} containing the prediction and a {\ttfamily \doxylink{class_node}{Node}} which splits the decision tree into two subtrees.
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} naive implementation might look like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ WILL\ NOT\ COMPILE}}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }DecisionTree\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Leaf\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Leaf"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ prediction;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Node\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Node"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}criticalValue"{}},\ \textcolor{keywordtype}{double}>\ critical\_value;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ DecisionTree\ lesser;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ DecisionTree\ greater;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }LeafOrNode\ =\ rfl::TaggedUnion<\textcolor{stringliteral}{"{}type"{}},\ Leaf,\ Node>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}leafOrNode"{}},\ LeafOrNode>\ leaf\_or\_node;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+Again, this will not compile, because the compiler cannot figure out the intended size of the struct.
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} possible solution might be to use {\ttfamily std\+::unique\+\_\+ptr}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ Will\ compile,\ but\ not\ an\ ideal\ design.}}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }DecisionTree\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Leaf\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Leaf"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ prediction;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Node\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Node"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}criticalValue"{}},\ \textcolor{keywordtype}{double}>\ critical\_value;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ std::unique\_ptr<DecisionTree>\ lesser;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ std::unique\_ptr<DecisionTree>\ greater;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }LeafOrNode\ =\ rfl::TaggedUnion<\textcolor{stringliteral}{"{}type"{}},\ Leaf,\ Node>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}leafOrNode"{}},\ LeafOrNode>\ leaf\_or\_node;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+This will compile, but the design is less than ideal. We know for a fact that a {\ttfamily \doxylink{class_node}{Node}} must have exactly two subtrees. But this is not reflected in the type system. In this encoding, the fields "{}lesser"{} and "{}greater"{} are marked optional and you will have to check at runtime that they are indeed set.
+
+But this violates the principles of reflection. Reflection is all about validating as much of our assumptions upfront as we possibly can. For a great theoretical discussion of this topic, check out \href{https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/}{\texttt{ Parse, don\textquotesingle{}t validate}} by Alexis King.
+
+So how would we encode our assumptions that the fields "{}lesser"{} and "{}greater"{} must exist in the type system and still have code that compiles? By using {\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}} instead of {\ttfamily std\+::unique\+\_\+ptr}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }DecisionTree\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Leaf\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Leaf"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ prediction;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Node\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Node"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}criticalValue"{}},\ \textcolor{keywordtype}{double}>\ critical\_value;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Box<DecisionTree>\ lesser;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Box<DecisionTree>\ greater;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }LeafOrNode\ =\ rfl::TaggedUnion<\textcolor{stringliteral}{"{}type"{}},\ Leaf,\ Node>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}leafOrNode"{}},\ LeafOrNode>\ leaf\_or\_node;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+{\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}} is a thin wrapper around {\ttfamily std\+::unique\+\_\+ptr}, but it is guaranteed to {\bfseries{never be null}} (unless you do something egregious such as trying to access it after calling {\ttfamily std\+::move}). It is a {\ttfamily std\+::unique\+\_\+ptr} without the {\ttfamily nullptr}.
+
+If you want to learn more about the evils of null references, check out the \href{https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/}{\texttt{ Null References\+: The Billion Dollar Mistake}} by Tony Hoare, who invented the concept in the first place.
+
+You {\bfseries{must}} initialize {\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}} the moment you create it and it cannot be dereferenced until it is destroyed.
+
+{\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}} can be initialized using {\ttfamily \doxylink{namespacerfl_abe491c0b107ed7c5e2c8baaf1a116b01}{rfl\+::make\+\_\+box}\texorpdfstring{$<$}{<}...\texorpdfstring{$>$}{>}(...)}, just like {\ttfamily std\+::make\+\_\+unique\texorpdfstring{$<$}{<}...\texorpdfstring{$>$}{>}(...)}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ leaf1\ =\ DecisionTree::Leaf\{.value\ =\ 3.0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ leaf2\ =\ DecisionTree::Leaf\{.value\ =\ 5.0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ node\ =}
+\DoxyCodeLine{\ \ \ \ DecisionTree::Node\{.critical\_value\ =\ 10.0,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .lesser\ =\ \mbox{\hyperlink{namespacerfl_abe491c0b107ed7c5e2c8baaf1a116b01}{rfl::make\_box<DecisionTree>}}(leaf1),}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .greater\ =\ \mbox{\hyperlink{namespacerfl_abe491c0b107ed7c5e2c8baaf1a116b01}{rfl::make\_box<DecisionTree>}}(leaf2)\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ DecisionTree\ tree\{.leaf\_or\_node\ =\ std::move(node)\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write}}(tree);}
+
+\end{DoxyCode}
+
+
+This will result in the following JSON string\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{"{}leafOrNode"{}:\{"{}type"{}:"{}Node"{},"{}criticalValue"{}:10.0,"{}lesser"{}:\{"{}leafOrNode"{}:\{"{}type"{}:"{}Leaf"{},"{}value"{}:3.0\}\},"{}greater"{}:\{"{}leafOrNode"{}:\{"{}type"{}:"{}Leaf"{},"{}value"{}:5.0\}\}\}\}}
+
+\end{DoxyCode}
+
+
+You can also initialize {\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}} from a {\ttfamily std\+::unique\+\_\+ptr\texorpdfstring{$<$}{<}T\texorpdfstring{$>$}{>}}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}\ =\ std::make\_unique<std::string>(\textcolor{stringliteral}{"{}Hello\ World!"{}});}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \mbox{\hyperlink{classrfl_1_1_result}{rfl::Result<rfl::Box<std::string>}}>\ \mbox{\hyperlink{structbox}{box}}\ =\ \mbox{\hyperlink{namespacerfl_abe491c0b107ed7c5e2c8baaf1a116b01}{rfl::make\_box<std::string>}}(std::move(\mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}));}
+
+\end{DoxyCode}
+
+
+Note that {\ttfamily box} is wrapped in a {\ttfamily Result}. That is, because we cannot guarantee at compile time that {\ttfamily ptr} is not {\ttfamily nullptr}, therefore we need to account for that.
+
+If you want to use reference-\/counted pointers, instead of unique pointers, you can use {\ttfamily \doxylink{classrfl_1_1_ref}{rfl\+::\+Ref}}. {\ttfamily \doxylink{classrfl_1_1_ref}{rfl\+::\+Ref}} is the same concept as {\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}}, but using {\ttfamily std\+::shared\+\_\+ptr} under-\/the-\/hood.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }DecisionTree\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Leaf\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Leaf"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_abe8e049f756b5ba547bda825af81b645}{value}};}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Node\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Node"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}criticalValue"{}},\ \textcolor{keywordtype}{double}>\ critical\_value;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Ref<DecisionTree>\ lesser;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Ref<DecisionTree>\ greater;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }LeafOrNode\ =\ rfl::TaggedUnion<\textcolor{stringliteral}{"{}type"{}},\ Leaf,\ Node>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}leafOrNode"{}},\ LeafOrNode>\ leaf\_or\_node;}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ leaf1\ =\ DecisionTree::Leaf\{.value\ =\ 3.0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ leaf2\ =\ DecisionTree::Leaf\{.value\ =\ 5.0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ node\ =}
+\DoxyCodeLine{\ \ \ \ DecisionTree::Node\{.critical\_value\ =\ 10.0,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .lesser\ =\ \mbox{\hyperlink{namespacerfl_aed181c75f7cf189893248a95bb2d588e}{rfl::make\_ref<DecisionTree>}}(leaf1),}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .greater\ =\ \mbox{\hyperlink{namespacerfl_aed181c75f7cf189893248a95bb2d588e}{rfl::make\_ref<DecisionTree>}}(leaf2)\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ DecisionTree\ tree\{.leaf\_or\_node\ =\ std::move(node)\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ json\_string\ =\ \mbox{\hyperlink{namespacerfl_1_1json_af39a23539424555b8c970d12a58e547f}{rfl::json::write}}(tree);}
+
+\end{DoxyCode}
+
+
+The resulting JSON string is identical\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{"{}leafOrNode"{}:\{"{}type"{}:"{}Node"{},"{}criticalValue"{}:10.0,"{}lesser"{}:\{"{}leafOrNode"{}:\{"{}type"{}:"{}Leaf"{},"{}value"{}:3.0\}\},"{}greater"{}:\{"{}leafOrNode"{}:\{"{}type"{}:"{}Leaf"{},"{}value"{}:5.0\}\}\}\}}
+
+\end{DoxyCode}
+\hypertarget{md_external_2reflect-cpp_2docs_2rfl__ref_autotoc_md627}{}\doxysection{\texorpdfstring{Deep Copying}{Deep Copying}}\label{md_external_2reflect-cpp_2docs_2rfl__ref_autotoc_md627}
+The default {\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}} implementation behaves the same as {\ttfamily std\+::unique\+\_\+ptr} in relation to copying, disabling the copy assignment operator and the copy constructor.
+
+An opt-\/in box implementation, {\ttfamily \doxylink{namespacerfl_ab1ef9e7a3fb11bf9f09eecd8a49addf4}{rfl\+::\+Copyable\+Box}}, bypasses the {\ttfamily std\+::unique\+\_\+ptr} operators and allows copying by calling the contained type\textquotesingle{}s copy constructor and copy assignment operator directly, but otherwise behaves the same as {\ttfamily \doxylink{classrfl_1_1_box}{rfl\+::\+Box}}.
+
+When using {\ttfamily \doxylink{namespacerfl_ab1ef9e7a3fb11bf9f09eecd8a49addf4}{rfl\+::\+Copyable\+Box}}, {\ttfamily \doxylink{namespacerfl_abe491c0b107ed7c5e2c8baaf1a116b01}{rfl\+::make\+\_\+box}\texorpdfstring{$<$}{<}...\texorpdfstring{$>$}{>}(...)} must be replaced with {\ttfamily \doxylink{namespacerfl_ac3716bee653bc1e6b885441a28382830}{rfl\+::make\+\_\+copyable\+\_\+box}\texorpdfstring{$<$}{<}...\texorpdfstring{$>$}{>}(...)}.
+
+This allows for deep-\/copying of arbitrary-\/complexity types that contain nested recursive elements\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }DecisionTree\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Leaf\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Leaf"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ prediction;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{struct\ }Node\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Tag\ =\ rfl::Literal<\textcolor{stringliteral}{"{}Node"{}}>;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ rfl::Rename<\textcolor{stringliteral}{"{}criticalValue"{}},\ \textcolor{keywordtype}{double}>\ critical\_value;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacerfl_ab1ef9e7a3fb11bf9f09eecd8a49addf4}{rfl::CopyableBox<DecisionTree>}}\ lesser;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacerfl_ab1ef9e7a3fb11bf9f09eecd8a49addf4}{rfl::CopyableBox<DecisionTree>}}\ greater;}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{using\ }LeafOrNode\ =\ rfl::TaggedUnion<\textcolor{stringliteral}{"{}type"{}},\ Leaf,\ Node>;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ rfl::Field<\textcolor{stringliteral}{"{}leafOrNode"{}},\ LeafOrNode>\ leaf\_or\_node;}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ leaf1\ =\ DecisionTree::Leaf\{.value\ =\ 3.0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ leaf2\ =\ DecisionTree::Leaf\{.value\ =\ 5.0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ node\ =}
+\DoxyCodeLine{\ \ \ \ DecisionTree::Node\{.critical\_value\ =\ 10.0,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .lesser\ =\ \mbox{\hyperlink{namespacerfl_ac3716bee653bc1e6b885441a28382830}{rfl::make\_copyable\_box<DecisionTree>}}(leaf1),}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .greater\ =\ \mbox{\hyperlink{namespacerfl_ac3716bee653bc1e6b885441a28382830}{rfl::make\_copyable\_box<DecisionTree>}}(leaf2)\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{const}\ DecisionTree\ tree\{.leaf\_or\_node\ =\ std::move(node)\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ different\_leaf\ =\ DecisionTree::Leaf\{.value\ =\ 1.0\};}
+\DoxyCodeLine{DecisionTree\ \mbox{\hyperlink{level1__impl_8h_a7ffc26122ca6f9bec01f9bc5e64f3006}{copy}}\ =\ tree;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{namespacerfl_ac379420409251e5a3c0bea4a701daf0a}{rfl::get<DecisionTree::Node>}}(\mbox{\hyperlink{level1__impl_8h_a7ffc26122ca6f9bec01f9bc5e64f3006}{copy}}.leaf\_or\_node.get().variant()).lesser\ =\ \mbox{\hyperlink{namespacerfl_ac3716bee653bc1e6b885441a28382830}{rfl::make\_copyable\_box<DecisionTree>}}(different\_leaf);}
+
+\end{DoxyCode}
+ 

@@ -1,0 +1,7 @@
+var struct_eigen_1_1internal_1_1traits_3_01_band_matrix_3_01___scalar_00_01___rows_00_01___cols_00_03762db5085b3b9896d5a124beda4837b =
+[
+    [ "CoefficientsType", "struct_eigen_1_1internal_1_1traits_3_01_band_matrix_3_01___scalar_00_01___rows_00_01___cols_00_03762db5085b3b9896d5a124beda4837b.html#aafd270c1440909d8c2c7901e57e73f9e", null ],
+    [ "Scalar", "struct_eigen_1_1internal_1_1traits_3_01_band_matrix_3_01___scalar_00_01___rows_00_01___cols_00_03762db5085b3b9896d5a124beda4837b.html#a7491ccd4fec074ebedf02909f324b36a", null ],
+    [ "StorageIndex", "struct_eigen_1_1internal_1_1traits_3_01_band_matrix_3_01___scalar_00_01___rows_00_01___cols_00_03762db5085b3b9896d5a124beda4837b.html#a7cde578b2a145709789123f8922b66fa", null ],
+    [ "StorageKind", "struct_eigen_1_1internal_1_1traits_3_01_band_matrix_3_01___scalar_00_01___rows_00_01___cols_00_03762db5085b3b9896d5a124beda4837b.html#add341ed484b43c00348eeab9dc99d0d8", null ]
+];

@@ -1,0 +1,5 @@
+var struct_eigen_1_1internal_1_1evaluator__traits_3_01_sparse_self_adjoint_view_3_01_matrix_type_00_01_mode_01_4_01_4 =
+[
+    [ "Kind", "struct_eigen_1_1internal_1_1evaluator__traits_3_01_sparse_self_adjoint_view_3_01_matrix_type_00_01_mode_01_4_01_4.html#aee002adde92e3c9937cc1dae0dbe445c", null ],
+    [ "Shape", "struct_eigen_1_1internal_1_1evaluator__traits_3_01_sparse_self_adjoint_view_3_01_matrix_type_00_01_mode_01_4_01_4.html#a86d787406dd4237d16ffb6d88397cde7", null ]
+];

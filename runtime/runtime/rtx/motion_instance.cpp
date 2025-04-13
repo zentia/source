@@ -2,11 +2,11 @@
 // Created by Mike on 2024/9/21.
 //
 
-#include <luisa/core/logging.h>
-#include <luisa/runtime/rtx/mesh.h>
-#include <luisa/runtime/rtx/curve.h>
-#include <luisa/runtime/rtx/procedural_primitive.h>
-#include <luisa/runtime/rtx/motion_instance.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/rtx/mesh.h>
+#include <runtime/runtime/rtx/curve.h>
+#include <runtime/runtime/rtx/procedural_primitive.h>
+#include <runtime/runtime/rtx/motion_instance.h>
 
 namespace luisa::compute {
 

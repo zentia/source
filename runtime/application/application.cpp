@@ -1,6 +1,6 @@
 #include "application.h"
 
-#include "core_globals.h"
+#include "runtime/core/core_globals.h"
 #include "editor/ui/editor_ui.h"
 #include "module/render/render_module.h"
 #include "module/rhi/d3d12/d3d12_rhi.h"

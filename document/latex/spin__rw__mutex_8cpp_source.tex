@@ -1,0 +1,153 @@
+\doxysection{spin\+\_\+rw\+\_\+mutex.\+cpp}
+\hypertarget{spin__rw__mutex_8cpp_source}{}\label{spin__rw__mutex_8cpp_source}\index{external/taskflow/3rd-\/party/tbb/src/tbb/spin\_rw\_mutex.cpp@{external/taskflow/3rd-\/party/tbb/src/tbb/spin\_rw\_mutex.cpp}}
+\mbox{\hyperlink{spin__rw__mutex_8cpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ \ \ \ Copyright\ (c)\ 2005-\/2020\ Intel\ Corporation}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ \ \ \ Licensed\ under\ the\ Apache\ License,\ Version\ 2.0\ (the\ "{}License"{});}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ \ \ \ you\ may\ not\ use\ this\ file\ except\ in\ compliance\ with\ the\ License.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ \ \ \ You\ may\ obtain\ a\ copy\ of\ the\ License\ at}}
+\DoxyCodeLine{00007\ \textcolor{comment}{}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ \ \ \ \ \ http://www.apache.org/licenses/LICENSE-\/2.0}}
+\DoxyCodeLine{00009\ \textcolor{comment}{}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ \ Unless\ required\ by\ applicable\ law\ or\ agreed\ to\ in\ writing,\ software}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ \ distributed\ under\ the\ License\ is\ distributed\ on\ an\ "{}AS\ IS"{}\ BASIS,}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ \ \ \ WITHOUT\ WARRANTIES\ OR\ CONDITIONS\ OF\ ANY\ KIND,\ either\ express\ or\ implied.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ \ See\ the\ License\ for\ the\ specific\ language\ governing\ permissions\ and}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ \ limitations\ under\ the\ License.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{spin__rw__mutex_8h}{tbb/spin\_rw\_mutex.h}}"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tbb__machine_8h}{tbb/tbb\_machine.h}}"{}}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2include_2tbb_2atomic_8h}{tbb/atomic.h}}"{}}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{itt__notify_8h}{itt\_notify.h}}"{}}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)\ \&\&\ defined(\_Wp64)}}
+\DoxyCodeLine{00023\ \ \ \ \ \textcolor{comment}{//\ Workaround\ for\ overzealous\ compiler\ warnings\ in\ /Wp64\ mode}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ warning\ (disable:\ 4244)}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetbb}{tbb}}\ \{}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{comment}{//\ a\ template\ can\ work\ with\ private\ spin\_rw\_mutex::state\_t}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{_m_p_m_cqueues_8hpp_ade570fdc92454d2e464c7ea8f085e0a4}{CAS}}(\textcolor{keyword}{volatile}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \&\mbox{\hyperlink{ittnotify__static_8h_a5a45e81e22c3c12a69b24c775466de97}{addr}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ newv,\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ oldv)\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{comment}{//\ ICC\ (9.1\ and\ 10.1\ tried)\ unable\ to\ do\ implicit\ conversion}}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{comment}{//\ from\ "{}volatile\ T*"{}\ to\ "{}volatile\ void*"{},\ so\ explicit\ cast\ added.}}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespacetbb_1_1internal_a958f482f9d5f3476ca70610af5336040}{tbb::internal::as\_atomic}}(\mbox{\hyperlink{ittnotify__static_8h_a5a45e81e22c3c12a69b24c775466de97}{addr}}).compare\_and\_swap(\ newv,\ oldv\ );}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00037\ \textcolor{keywordtype}{bool}\ spin\_rw\_mutex\_v3::internal\_acquire\_writer()}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_prepare,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordflow}{for}(\ internal::atomic\_backoff\ backoff;;backoff.pause()\ )\{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{test__concurrent__queue__v2_8cpp_aa0aafed44fec19806d8f9ad834be1248}{state\_t}}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ =\ \textcolor{keyword}{const\_cast<}\textcolor{keyword}{volatile\ }\mbox{\hyperlink{test__concurrent__queue__v2_8cpp_aa0aafed44fec19806d8f9ad834be1248}{state\_t}}\&\textcolor{keyword}{>}(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}});\ \textcolor{comment}{//\ ensure\ reloading}}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6a811c72bd7e5ad6a3a9161ee05e298c}{BUSY}})\ )\ \{\ \textcolor{comment}{//\ no\ readers,\ no\ writers}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ \mbox{\hyperlink{_m_p_m_cqueues_8hpp_ade570fdc92454d2e464c7ea8f085e0a4}{CAS}}(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}},\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}})==\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ )}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ successfully\ stored\ writer\ flag}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ backoff.reset();\ \textcolor{comment}{//\ we\ could\ be\ very\ close\ to\ complete\ op.}}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ !(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}})\ )\ \{\ \textcolor{comment}{//\ no\ pending\ writers}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{gcc__generic_8h_a60613096eb983aaa583bd4e32904b05d}{\_\_TBB\_AtomicOR}}(\&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}});}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00049\ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00052\ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00055\ \textcolor{keywordtype}{void}\ spin\_rw\_mutex\_v3::internal\_release\_writer()}
+\DoxyCodeLine{00056\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_ac5a347b47a5603a1f30f6fbf790724b7}{sync\_releasing}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{gcc__generic_8h_a2a508e5fe7b52677b138166bf8f0c56a}{\_\_TBB\_AtomicAND}}(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6cc93cdcf4ad43f6bf8b0f76cde66f9e}{READERS}}\ );}
+\DoxyCodeLine{00059\ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00062\ \textcolor{keywordtype}{void}\ spin\_rw\_mutex\_v3::internal\_acquire\_reader()}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_prepare,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{for}(\ internal::atomic\_backoff\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};;\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}.pause()\ )\{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ =\ \textcolor{keyword}{const\_cast<}\textcolor{keyword}{volatile\ }\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\&\textcolor{keyword}{>}(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}});\ \textcolor{comment}{//\ ensure\ reloading}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ (\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}|\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}}))\ )\ \{\ \textcolor{comment}{//\ no\ writer\ or\ write\ requests}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ (\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}})\_\_TBB\_FetchAndAddW(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ (intptr\_t)\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}\ );}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}\ ))}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ successfully\ stored\ increased\ number\ of\ readers}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ writer\ got\ there\ first,\ undo\ the\ increment}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \_\_TBB\_FetchAndAddW(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ -\/(intptr\_t)\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}\ );}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \ \ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6cc93cdcf4ad43f6bf8b0f76cde66f9e}{READERS}},\ \textcolor{stringliteral}{"{}invalid\ state\ of\ a\ read\ lock:\ no\ readers"{}}\ );}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keywordtype}{bool}\ spin\_rw\_mutex\_v3::internal\_upgrade()}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ =\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}};}
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6cc93cdcf4ad43f6bf8b0f76cde66f9e}{READERS}},\ \textcolor{stringliteral}{"{}invalid\ state\ before\ upgrade:\ no\ readers\ "{}}\ );}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{//\ check\ and\ set\ writer-\/pending\ flag}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{comment}{//\ required\ conditions:\ either\ no\ pending\ writers,\ or\ we\ are\ the\ only\ reader}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ (with\ multiple\ readers\ and\ pending\ writer,\ another\ upgrade\ could\ have\ been\ requested)}}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{while}(\ (\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6cc93cdcf4ad43f6bf8b0f76cde66f9e}{READERS}})==\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}\ ||\ !(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}})\ )\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\ old\_s\ =\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}=\mbox{\hyperlink{_m_p_m_cqueues_8hpp_ade570fdc92454d2e464c7ea8f085e0a4}{CAS}}(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ |\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}\ |\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}},\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}))==old\_s\ )\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_prepare,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ internal::atomic\_backoff\ backoff;}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\ (\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6cc93cdcf4ad43f6bf8b0f76cde66f9e}{READERS}})\ !=\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}\ )\ backoff.pause();}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}((\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}}\&(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}}|\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}))==(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}}|\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}),\textcolor{stringliteral}{"{}invalid\ state\ when\ upgrading\ to\ writer"{}});}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ both\ new\ readers\ and\ writers\ are\ blocked\ at\ this\ time}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \_\_TBB\_FetchAndAddW(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ \ -\/\ (intptr\_t)(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}+\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}}));}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \textcolor{comment}{//\ successfully\ upgraded}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \ \}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ slow\ reacquire}}
+\DoxyCodeLine{00103\ \ \ \ \ internal\_release\_reader();}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{return}\ internal\_acquire\_writer();\ \textcolor{comment}{//\ always\ returns\ false}}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00108\ \textcolor{keywordtype}{void}\ spin\_rw\_mutex\_v3::internal\_downgrade()\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_ac5a347b47a5603a1f30f6fbf790724b7}{sync\_releasing}},\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00110\ \ \ \ \ \_\_TBB\_FetchAndAddW(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ (intptr\_t)(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}-\/\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}));}
+\DoxyCodeLine{00111\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6cc93cdcf4ad43f6bf8b0f76cde66f9e}{READERS}},\ \textcolor{stringliteral}{"{}invalid\ state\ after\ downgrade:\ no\ readers"{}}\ );}
+\DoxyCodeLine{00112\ \}}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00115\ \textcolor{keywordtype}{void}\ spin\_rw\_mutex\_v3::internal\_release\_reader()}
+\DoxyCodeLine{00116\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{tbb__stddef_8h_a7b58d28a34a1717e2ddb591f00658b10}{\_\_TBB\_ASSERT}}(\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6cc93cdcf4ad43f6bf8b0f76cde66f9e}{READERS}},\ \textcolor{stringliteral}{"{}invalid\ state\ of\ a\ read\ lock:\ no\ readers"{}}\ );}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(\mbox{\hyperlink{ittnotify__static_8h_ac5a347b47a5603a1f30f6fbf790724b7}{sync\_releasing}},\ \textcolor{keyword}{this});\ \textcolor{comment}{//\ release\ reader}}
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{tbb__machine_8h_aa689caf9c3864c691eacec00808ea3a8}{\_\_TBB\_FetchAndAddWrelease}}(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},-\/(intptr\_t)\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}});}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00123\ \textcolor{keywordtype}{bool}\ spin\_rw\_mutex\_v3::internal\_try\_acquire\_writer()}
+\DoxyCodeLine{00124\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ for\ a\ writer:\ only\ possible\ to\ acquire\ if\ no\ active\ readers\ or\ writers}}
+\DoxyCodeLine{00126\ \ \ \ \ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ =\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}};}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordflow}{if}(\ !(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a6a811c72bd7e5ad6a3a9161ee05e298c}{BUSY}})\ )\ \textcolor{comment}{//\ no\ readers,\ no\ writers;\ mask\ is\ 1..1101}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ \mbox{\hyperlink{_m_p_m_cqueues_8hpp_ade570fdc92454d2e464c7ea8f085e0a4}{CAS}}(\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}},\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}})==\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ )\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \textcolor{comment}{//\ successfully\ stored\ writer\ flag}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00136\ \textcolor{keywordtype}{bool}\ spin\_rw\_mutex\_v3::internal\_try\_acquire\_reader()}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ for\ a\ reader:\ acquire\ if\ no\ active\ or\ waiting\ writers}}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ =\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}};}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{if}(\ !(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}\ \&\ (\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}|\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a5b321914828e5e21baf24d58f32c66d5}{WRITER\_PENDING}}))\ )\ \{\ \textcolor{comment}{//\ no\ writers}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ (\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a27adc7d791dfaa4a60638313b9d1c1f4}{state\_t}})\_\_TBB\_FetchAndAddW(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ (intptr\_t)\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}\ );}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ !(\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aaeec59dde09fe92be196ecddb480777b}{WRITER}}\ ))\ \{\ \ \textcolor{comment}{//\ got\ the\ lock}}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_adf75d9635323cc786c012fe69ceef418}{ITT\_NOTIFY}}(sync\_acquired,\ \textcolor{keyword}{this});}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \textcolor{comment}{//\ successfully\ stored\ increased\ number\ of\ readers}}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ writer\ got\ there\ first,\ undo\ the\ increment}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \_\_TBB\_FetchAndAddW(\ \&\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_aa28625051072472ccd8a2b19405d6fb3}{state}},\ -\/(intptr\_t)\mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_af1386a2fa5979432e4a58b94e68db23f}{ONE\_READER}}\ );}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00150\ \}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtbb_1_1spin__rw__mutex__v3_a891c161e88a6af22d3911a25adedae7f}{spin\_rw\_mutex\_v3::internal\_construct}}()\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{itt__notify_8h_a7e0f29d1fe322261ee07367d0cdf2563}{ITT\_SYNC\_CREATE}}(\textcolor{keyword}{this},\ \mbox{\hyperlink{itt__notify_8h_a12fc55887756a149e9d8bf158f9c72f2}{\_T}}(\textcolor{stringliteral}{"{}tbb::spin\_rw\_mutex"{}}),\ \mbox{\hyperlink{itt__notify_8h_a12fc55887756a149e9d8bf158f9c72f2}{\_T}}(\textcolor{stringliteral}{"{}"{}}));}
+\DoxyCodeLine{00154\ \}}
+\DoxyCodeLine{00155\ \}\ \textcolor{comment}{//\ namespace\ tbb}}
+
+\end{DoxyCode}

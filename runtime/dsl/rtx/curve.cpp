@@ -1,7 +1,7 @@
-#include <luisa/core/logging.h>
-#include <luisa/dsl/syntax.h>
-#include <luisa/dsl/sugar.h>
-#include <luisa/dsl/rtx/curve.h>
+#include <runtime/core/logging.h>
+#include <runtime/dsl/syntax.h>
+#include <runtime/dsl/sugar.h>
+#include <runtime/dsl/rtx/curve.h>
 
 namespace luisa::compute {
 

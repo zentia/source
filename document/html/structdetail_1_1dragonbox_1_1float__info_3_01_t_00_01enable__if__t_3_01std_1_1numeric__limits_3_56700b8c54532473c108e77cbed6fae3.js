@@ -1,0 +1,5 @@
+var structdetail_1_1dragonbox_1_1float__info_3_01_t_00_01enable__if__t_3_01std_1_1numeric__limits_3_56700b8c54532473c108e77cbed6fae3 =
+[
+    [ "carrier_uint", "structdetail_1_1dragonbox_1_1float__info_3_01_t_00_01enable__if__t_3_01std_1_1numeric__limits_3_56700b8c54532473c108e77cbed6fae3.html#a14601b7464563aa2d5d6eb1ddfb05e99", null ],
+    [ "exponent_bits", "structdetail_1_1dragonbox_1_1float__info_3_01_t_00_01enable__if__t_3_01std_1_1numeric__limits_3_56700b8c54532473c108e77cbed6fae3.html#a39a70c96415f08490c1dd0142532abce", null ]
+];

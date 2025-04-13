@@ -1,0 +1,105 @@
+\chapter{C Arrays and inheritance}
+\hypertarget{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance}{}\label{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance}\index{C Arrays and inheritance@{C Arrays and inheritance}}
+\label{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance_autotoc_md528}%
+\Hypertarget{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance_autotoc_md528}%
+
+
+reflect-\/cpp supports fixed-\/size C arrays and some forms of inheritance, but only as an opt-\/in.
+
+We have made this design decision, because checking for C arrays and inheritance requires a disproportionate amount of compile time and we believe it is more important to reduce compile time than to support things out-\/of-\/the-\/box that most people won\textquotesingle{}t need anyway. Since there are good alternatives for both of these problems, it is recommended to avoid using C arrays or inheritance altogether.
+
+Note that C arrays are not the same thing as {\ttfamily std\+::array}. {\ttfamily std\+::array} is always supported and is the recommended alternative.
+
+If you want support for these, you will have to pass the flag {\ttfamily -\/D REFLECT\+\_\+\+CPP\+\_\+\+C\+\_\+\+ARRAYS\+\_\+\+OR\+\_\+\+INHERITANCE} during compilation.\hypertarget{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance_autotoc_md529}{}\doxysection{\texorpdfstring{C arrays}{C arrays}}\label{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance_autotoc_md529}
+Suppose you have a struct like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Person\{}
+\DoxyCodeLine{\ \ \ \ std::string\ first\_name;\ \ }
+\DoxyCodeLine{\ \ \ \ std::string\ last\_name;\ }
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{int}[5]\ post\_code;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+In this example, {\ttfamily post\+\_\+code} is a C array. The best way to handle this is to simply replace the C array with {\ttfamily std\+::array}, like this\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Person\{}
+\DoxyCodeLine{\ \ \ \ std::string\ first\_name;\ \ }
+\DoxyCodeLine{\ \ \ \ std::string\ last\_name;\ }
+\DoxyCodeLine{\ \ \ \ std::array<int,\ 5>\ post\_code;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+However, in some cases, using C arrays is unavoidable. For instance {\ttfamily bson\+\_\+oid\+\_\+t} contains a C array under-\/the-\/hood, so if you want to parse a {\ttfamily bson\+\_\+oid\+\_\+t} you will have no choice but to pass the flag mentioned above.\hypertarget{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance_autotoc_md530}{}\doxysection{\texorpdfstring{Inheritance}{Inheritance}}\label{md_external_2reflect-cpp_2docs_2c__arrays__and__inheritance_autotoc_md530}
+reflect-\/cpp supports some form of inheritance. Because we use structured bindings to retrieve the fields of a struct, there are limitations on what we can do when it comes to inheritance\+:
+
+{\itshape Every non-\/static data member of E must be a direct member of E or the same base class of E.} (\href{https://en.cppreference.com/w/cpp/language/structured_binding}{\texttt{ https\+://en.\+cppreference.\+com/w/cpp/language/structured\+\_\+binding}})
+
+In other words, all of the fields must be inside the same struct.
+
+So, this is fine\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }\mbox{\hyperlink{class_base}{Base}}\ \{}
+\DoxyCodeLine{\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Derived\ :\ \mbox{\hyperlink{class_base}{Base}}\ \{\};}
+
+\end{DoxyCode}
+
+
+This is fine as well\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }\mbox{\hyperlink{class_base}{Base}}\ \{\};}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Derived\ :\ \mbox{\hyperlink{class_base}{Base}}\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+But this is not fine, because the fields are spread out over more than one struct\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }\mbox{\hyperlink{class_base}{Base}}\ \{}
+\DoxyCodeLine{\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Derived\ :\ \mbox{\hyperlink{class_base}{Base}}\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}};}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+The recommended alternative is to simply use {\ttfamily \doxylink{structrfl_1_1_flatten}{rfl\+::\+Flatten}}, which has no such limitation\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }\mbox{\hyperlink{class_base}{Base}}\ \{}
+\DoxyCodeLine{\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }Derived\ \{}
+\DoxyCodeLine{\ \ rfl::Flatten<Base>\ \mbox{\hyperlink{namespacegenerate__swizzles_a33071bf5d2c3f89ecf3c8ffc45fbac64}{base}};\ }
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}};}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+Please refer to the section on {\ttfamily \doxylink{structrfl_1_1_flatten}{rfl\+::\+Flatten}} in this documentation for more information.
+
+If for any reason you want to use inheritance patterns like the ones described above, you will make have to make sure that all of the fields are inside the same struct and also you will also have to pass the compile time flag mentioned above. 

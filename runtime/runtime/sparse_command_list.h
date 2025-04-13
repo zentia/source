@@ -1,7 +1,7 @@
 #pragma once
-#include <luisa/core/concepts.h>
-#include <luisa/runtime/rhi/tile_modification.h>
-#include <luisa/runtime/stream_event.h>
+#include <runtime/core/concepts.h>
+#include <runtime/runtime/rhi/tile_modification.h>
+#include <runtime/runtime/stream_event.h>
 
 namespace luisa::compute {
 struct SparseCommandListCommit;

@@ -1,0 +1,25 @@
+var structrfl_1_1avro_1_1_reader =
+[
+    [ "AVROInputArray", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_array.html", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_array" ],
+    [ "AVROInputMap", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_map.html", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_map" ],
+    [ "AVROInputObject", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_object.html", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_object" ],
+    [ "AVROInputUnion", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_union.html", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_union" ],
+    [ "AVROInputVar", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_var.html", "structrfl_1_1avro_1_1_reader_1_1_a_v_r_o_input_var" ],
+    [ "InputArrayType", "structrfl_1_1avro_1_1_reader.html#ae978cce1f78351dc014d3bca88ef919f", null ],
+    [ "InputMapType", "structrfl_1_1avro_1_1_reader.html#a2213e40a4a37f081067b05fa27fe5bbc", null ],
+    [ "InputObjectType", "structrfl_1_1avro_1_1_reader.html#a60f5f4396d85ab6f5116aab80e55e24a", null ],
+    [ "InputUnionType", "structrfl_1_1avro_1_1_reader.html#ab46b2c5fbf93834ae4cffeb3c732dedd", null ],
+    [ "InputVarType", "structrfl_1_1avro_1_1_reader.html#ae67566ca289350e6b97ae98e6f4240a0", null ],
+    [ "is_empty", "structrfl_1_1avro_1_1_reader.html#aa16471b0002b88c4a9fd3a1c7c73fcc1", null ],
+    [ "read_array", "structrfl_1_1avro_1_1_reader.html#a048defb7c68de251923597dc8f551429", null ],
+    [ "read_map", "structrfl_1_1avro_1_1_reader.html#a234efad95f34441e3d924102c3112474", null ],
+    [ "read_object", "structrfl_1_1avro_1_1_reader.html#a169bbdf2b4b6e26a84354b144fa47b1a", null ],
+    [ "read_union", "structrfl_1_1avro_1_1_reader.html#a4514e83e09dc8b72b3125d7f449dc735", null ],
+    [ "to_array", "structrfl_1_1avro_1_1_reader.html#aba4a0d68e83c67913ec575854b5e789f", null ],
+    [ "to_basic_type", "structrfl_1_1avro_1_1_reader.html#abbfc76a4c5a9a7209b38de0dd9f6a8cb", null ],
+    [ "to_map", "structrfl_1_1avro_1_1_reader.html#a0e30e276e18a6063d036caf3b35acad8", null ],
+    [ "to_object", "structrfl_1_1avro_1_1_reader.html#a57df56674ee050762b1e7d8ea7e90d52", null ],
+    [ "to_union", "structrfl_1_1avro_1_1_reader.html#aa8aae15f0dfde5af2b64e9a3d7ec10e5", null ],
+    [ "use_custom_constructor", "structrfl_1_1avro_1_1_reader.html#a2d8449c1d5ce8596515ed30f42d7c436", null ],
+    [ "has_custom_constructor", "structrfl_1_1avro_1_1_reader.html#addf499dc7863c9646e43b38dc6f0b3da", null ]
+];

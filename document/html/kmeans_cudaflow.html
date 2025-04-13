@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.13.2"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>source: k-means Clustering (cudaFlow)</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="clipboard.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+  $(function() { init_search(); });
+/* @license-end */
+</script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">source
+   </div>
+  </td>
+    <td>        <div id="MSearchBox" class="MSearchBoxInactive">
+        <span class="left">
+          <span id="MSearchSelect"                onmouseover="return searchBox.OnSearchSelectShow()"                onmouseout="return searchBox.OnSearchSelectHide()">&#160;</span>
+          <input type="text" id="MSearchField" value="" placeholder="搜索" accesskey="S"
+               onfocus="searchBox.OnSearchFieldFocus(true)" 
+               onblur="searchBox.OnSearchFieldFocus(false)" 
+               onkeyup="searchBox.OnSearchFieldChange(event)"/>
+          </span><span class="right">
+            <a id="MSearchClose" href="javascript:searchBox.CloseResultsWindow()"><img id="MSearchCloseImg" border="0" src="search/close.svg" alt=""/></a>
+          </span>
+        </div>
+</td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.13.2 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() { codefold.init(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function(){initNavTree('kmeans_cudaflow.html',''); initResizable(true); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">载入中...</div>
+<div class="SRStatus" id="Searching">搜索中...</div>
+<div class="SRStatus" id="NoMatches">未找到</div>
+</div>
+</div>
+</div>
+</div>
+
+<div><div class="header">
+  <div class="headertitle"><div class="title">k-means Clustering (cudaFlow)</div></div>
+</div><!--header-->
+<div class="contents">
+<div class="toc"><h3>目录</h3>
+<ul>
+  <li class="level1">
+    <a href="#DefineTheKMeansKernels">Define the k-means Kernels</a>
+  </li>
+  <li class="level1">
+    <a href="#DefineTheKMeanscudaFlow">Define the k-means cudaFlow</a>
+  </li>
+  <li class="level1">
+    <a href="#KMeanscudaFlowBenchmarking">Benchmarking</a>
+  </li>
+</ul>
+</div>
+<div class="textblock"><p>Following up on <a class="el" href="kmeans.html">k-means Clustering</a>, this page studies how to accelerate a k-means workload on a GPU using <a class="el" href="classtf_1_1cuda_flow.html" title="class to create a cudaFlow task dependency graph">tf::cudaFlow</a>.</p>
+<h1><a class="anchor" id="DefineTheKMeansKernels"></a>
+Define the k-means Kernels</h1>
+<p>Recall that the k-means algorithm has the following steps:</p>
+<ul>
+<li>
+Step 1: initialize k random centroids </li>
+<li>
+Step 2: for every data point, find the nearest centroid (L2 distance or other measurements) and assign the point to it </li>
+<li>
+Step 3: for every centroid, move the centroid to the average of the points assigned to that centroid </li>
+<li>
+Step 4: go to Step 2 until converged (no more changes in the last few iterations) or maximum iterations reached </li>
+</ul>
+<p>We observe Step 2 and Step 3 of the algorithm are parallelizable across individual points for use to harness the power of GPU:</p>
+<ol>
+<li>
+for every data point, find the nearest centroid (L2 distance or other measurements) and assign the point to it </li>
+<li>
+for every centroid, move the centroid to the average of the points assigned to that centroid. </li>
+</ol>
+<p>At a fine-grained level, we request one GPU thread to work on one point for Step 2 and one GPU thread to work on one centroid for Step 3.</p>
+<div class="fragment"><div class="line"><span class="comment">// px/py: 2D points</span></div>
+<div class="line"><span class="comment">// N: number of points</span></div>
+<div class="line"><span class="comment">// mx/my: centroids</span></div>
+<div class="line"><span class="comment">// K: number of clusters</span></div>
+<div class="line"><span class="comment">// sx/sy/c: storage to compute the average</span></div>
+<div class="line">__global__ <span class="keywordtype">void</span> assign_clusters(</div>
+<div class="line">  <span class="keywordtype">float</span>* <a class="code hl_variable" href="level1__cplx__impl_8h.html#aa422b67a42f6a655b79abc04b8c0ad49">px</a>, <span class="keywordtype">float</span>* <a class="code hl_variable" href="level1__cplx__impl_8h.html#abecb3a9c27c34b3023649d5e329c235b">py</a>, <span class="keywordtype">int</span> <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>, </div>
+<div class="line">  <span class="keywordtype">float</span>* mx, <span class="keywordtype">float</span>* my, <span class="keywordtype">float</span>* sx, <span class="keywordtype">float</span>* sy, <span class="keywordtype">int</span> K, <span class="keywordtype">int</span>* <a class="code hl_variable" href="bench_vec_add_8cpp.html#a41689956983587b085f9da3e48f31d99">c</a></div>
+<div class="line">) {</div>
+<div class="line">  <span class="keyword">const</span> <span class="keywordtype">int</span> <a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#ab47dd9958bcadea08866b42bf358e95e">index</a> = <a class="code hl_variable" href="cuda__common_8h.html#ab30e5f6958c9264d3c5235d463eb2b57">blockIdx</a>.x * <a class="code hl_variable" href="cuda__common_8h.html#a1a2cdcc50d7e1505a058c5832ebe5702">blockDim</a>.x + <a class="code hl_variable" href="cuda__common_8h.html#a0a680a9519f7aaccce02a4bb4c0a0b52">threadIdx</a>.x;</div>
+<div class="line"> </div>
+<div class="line">  <span class="keywordflow">if</span> (<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#ab47dd9958bcadea08866b42bf358e95e">index</a> &gt;= <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>) {</div>
+<div class="line">    <span class="keywordflow">return</span>;</div>
+<div class="line">  }</div>
+<div class="line"> </div>
+<div class="line">  <span class="comment">// Make global loads once.</span></div>
+<div class="line">  <span class="keywordtype">float</span> <a class="code hl_variable" href="offscreen_8c.html#a5fd331c99e778f04762be6d8173eb4d2">x</a> = <a class="code hl_variable" href="level1__cplx__impl_8h.html#aa422b67a42f6a655b79abc04b8c0ad49">px</a>[<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#ab47dd9958bcadea08866b42bf358e95e">index</a>];</div>
+<div class="line">  <span class="keywordtype">float</span> <a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#a5e247fc24ceb70d83f6ad59149b8910a">y</a> = <a class="code hl_variable" href="level1__cplx__impl_8h.html#abecb3a9c27c34b3023649d5e329c235b">py</a>[<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#ab47dd9958bcadea08866b42bf358e95e">index</a>];</div>
+<div class="line"> </div>
+<div class="line">  <span class="keywordtype">float</span> best_dance = FLT_MAX;</div>
+<div class="line">  <span class="keywordtype">int</span> best_k = 0;</div>
+<div class="line">  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> k = 0; k &lt; K; ++k) {</div>
+<div class="line">    <span class="keywordtype">float</span> <a class="code hl_variable" href="ittnotify__static_8h.html#a5f135fd1e66a03efd5275434478e0d97">d</a> = L2(<a class="code hl_variable" href="offscreen_8c.html#a5fd331c99e778f04762be6d8173eb4d2">x</a>, <a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#a5e247fc24ceb70d83f6ad59149b8910a">y</a>, mx[k], my[k]);</div>
+<div class="line">    <span class="keywordflow">if</span> (<a class="code hl_variable" href="ittnotify__static_8h.html#a5f135fd1e66a03efd5275434478e0d97">d</a> &lt; best_d) {</div>
+<div class="line">      best_d = <a class="code hl_variable" href="ittnotify__static_8h.html#a5f135fd1e66a03efd5275434478e0d97">d</a>;</div>
+<div class="line">      best_k = k;</div>
+<div class="line">    }   </div>
+<div class="line">  }</div>
+<div class="line"> </div>
+<div class="line">  atomicAdd(&amp;sx[best_k], <a class="code hl_variable" href="offscreen_8c.html#a5fd331c99e778f04762be6d8173eb4d2">x</a>); </div>
+<div class="line">  atomicAdd(&amp;sy[best_k], <a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#a5e247fc24ceb70d83f6ad59149b8910a">y</a>); </div>
+<div class="line">  atomicAdd(&amp;<a class="code hl_variable" href="bench_vec_add_8cpp.html#a41689956983587b085f9da3e48f31d99">c</a> [best_k], 1); </div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// mx/my: centroids, sx/sy/c: storage to compute the average</span></div>
+<div class="line">__global__ <span class="keywordtype">void</span> compute_new_means(</div>
+<div class="line">  <span class="keywordtype">float</span>* mx, <span class="keywordtype">float</span>* my, <span class="keywordtype">float</span>* sx, <span class="keywordtype">float</span>* sy, <span class="keywordtype">int</span>* <a class="code hl_variable" href="bench_vec_add_8cpp.html#a41689956983587b085f9da3e48f31d99">c</a></div>
+<div class="line">) {</div>
+<div class="line">  <span class="keywordtype">int</span> k = <a class="code hl_variable" href="cuda__common_8h.html#a0a680a9519f7aaccce02a4bb4c0a0b52">threadIdx</a>.x;</div>
+<div class="line">  <span class="keywordtype">int</span> <a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#a78e23769680a273f948d4bd3e946fcae">count</a> = <a class="code hl_define" href="datatypes_8h.html#affe776513b24d84b39af8ab0930fef7f">max</a>(1, <a class="code hl_variable" href="bench_vec_add_8cpp.html#a41689956983587b085f9da3e48f31d99">c</a>[k]);  <span class="comment">// turn 0/0 to 0/1</span></div>
+<div class="line">  mx[k] = sx[k] / <a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#a78e23769680a273f948d4bd3e946fcae">count</a>;</div>
+<div class="line">  my[k] = sy[k] / <a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#a78e23769680a273f948d4bd3e946fcae">count</a>;</div>
+<div class="line">}</div>
+<div class="ttc" id="abench_vec_add_8cpp_html_a41689956983587b085f9da3e48f31d99"><div class="ttname"><a href="bench_vec_add_8cpp.html#a41689956983587b085f9da3e48f31d99">c</a></div><div class="ttdeci">Scalar Scalar * c</div><div class="ttdef"><b>定义</b> benchVecAdd.cpp:17</div></div>
+<div class="ttc" id="acuda__common_8h_html_a0a680a9519f7aaccce02a4bb4c0a0b52"><div class="ttname"><a href="cuda__common_8h.html#a0a680a9519f7aaccce02a4bb4c0a0b52">threadIdx</a></div><div class="ttdeci">dim3 threadIdx</div><div class="ttdef"><b>定义</b> cuda_common.h:11</div></div>
+<div class="ttc" id="acuda__common_8h_html_a1a2cdcc50d7e1505a058c5832ebe5702"><div class="ttname"><a href="cuda__common_8h.html#a1a2cdcc50d7e1505a058c5832ebe5702">blockDim</a></div><div class="ttdeci">dim3 blockDim</div><div class="ttdef"><b>定义</b> cuda_common.h:11</div></div>
+<div class="ttc" id="acuda__common_8h_html_ab30e5f6958c9264d3c5235d463eb2b57"><div class="ttname"><a href="cuda__common_8h.html#ab30e5f6958c9264d3c5235d463eb2b57">blockIdx</a></div><div class="ttdeci">dim3 blockIdx</div><div class="ttdef"><b>定义</b> cuda_common.h:11</div></div>
+<div class="ttc" id="adatatypes_8h_html_affe776513b24d84b39af8ab0930fef7f"><div class="ttname"><a href="datatypes_8h.html#affe776513b24d84b39af8ab0930fef7f">max</a></div><div class="ttdeci">#define max(a, b)</div><div class="ttdef"><b>定义</b> datatypes.h:20</div></div>
+<div class="ttc" id="aimgui__impl__opengl3__loader_8h_html_a5e247fc24ceb70d83f6ad59149b8910a"><div class="ttname"><a href="imgui__impl__opengl3__loader_8h.html#a5e247fc24ceb70d83f6ad59149b8910a">y</a></div><div class="ttdeci">GLint y</div><div class="ttdef"><b>定义</b> imgui_impl_opengl3_loader.h:188</div></div>
+<div class="ttc" id="aimgui__impl__opengl3__loader_8h_html_a78e23769680a273f948d4bd3e946fcae"><div class="ttname"><a href="imgui__impl__opengl3__loader_8h.html#a78e23769680a273f948d4bd3e946fcae">count</a></div><div class="ttdeci">GLsizei count</div><div class="ttdef"><b>定义</b> imgui_impl_opengl3_loader.h:226</div></div>
+<div class="ttc" id="aimgui__impl__opengl3__loader_8h_html_ab47dd9958bcadea08866b42bf358e95e"><div class="ttname"><a href="imgui__impl__opengl3__loader_8h.html#ab47dd9958bcadea08866b42bf358e95e">index</a></div><div class="ttdeci">GLuint index</div><div class="ttdef"><b>定义</b> imgui_impl_opengl3_loader.h:366</div></div>
+<div class="ttc" id="aittnotify__static_8h_html_a5f135fd1e66a03efd5275434478e0d97"><div class="ttname"><a href="ittnotify__static_8h.html#a5f135fd1e66a03efd5275434478e0d97">d</a></div><div class="ttdeci">void const char const char int ITT_FORMAT __itt_group_sync x void const char ITT_FORMAT __itt_group_sync s void ITT_FORMAT __itt_group_sync p void ITT_FORMAT p void ITT_FORMAT p no args __itt_suppress_mode_t unsigned int void size_t ITT_FORMAT d</div><div class="ttdef"><b>定义</b> ittnotify_static.h:109</div></div>
+<div class="ttc" id="alevel1__cplx__impl_8h_html_aa422b67a42f6a655b79abc04b8c0ad49"><div class="ttname"><a href="level1__cplx__impl_8h.html#aa422b67a42f6a655b79abc04b8c0ad49">px</a></div><div class="ttdeci">RealScalar RealScalar * px</div><div class="ttdef"><b>定义</b> level1_cplx_impl.h:28</div></div>
+<div class="ttc" id="alevel1__cplx__impl_8h_html_abecb3a9c27c34b3023649d5e329c235b"><div class="ttname"><a href="level1__cplx__impl_8h.html#abecb3a9c27c34b3023649d5e329c235b">py</a></div><div class="ttdeci">int RealScalar int RealScalar * py</div><div class="ttdef"><b>定义</b> level1_cplx_impl.h:97</div></div>
+<div class="ttc" id="amain-override-static_8c_html_a0240ac851181b84ac374872dc5434ee4"><div class="ttname"><a href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a></div><div class="ttdeci">#define N</div><div class="ttdef"><b>定义</b> main-override-static.c:141</div></div>
+<div class="ttc" id="aoffscreen_8c_html_a5fd331c99e778f04762be6d8173eb4d2"><div class="ttname"><a href="offscreen_8c.html#a5fd331c99e778f04762be6d8173eb4d2">x</a></div><div class="ttdeci">float x</div><div class="ttdef"><b>定义</b> offscreen.c:41</div></div>
+</div><!-- fragment --><p>When we recompute the cluster centroids to be the mean of all points assigned to a particular centroid, multiple GPU threads may access the sum arrays, <code>sx</code> and <code>sy</code>, and the count array, <code>c</code>. To avoid data race, we use a simple <code>atomicAdd</code> method.</p>
+<h1><a class="anchor" id="DefineTheKMeanscudaFlow"></a>
+Define the k-means cudaFlow</h1>
+<p>Based on the two kernels, we can define the cudaFlow for the k-means workload below:</p>
+<div class="fragment"><div class="line"><span class="comment">// N: number of points</span></div>
+<div class="line"><span class="comment">// K: number of clusters</span></div>
+<div class="line"><span class="comment">// M: number of iterations</span></div>
+<div class="line"><span class="comment">// px/py: 2D point vector </span></div>
+<div class="line"><span class="keywordtype">void</span> kmeans_gpu(</div>
+<div class="line">  <span class="keywordtype">int</span> <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>, <span class="keywordtype">int</span> K, <span class="keywordtype">int</span> <a class="code hl_define" href="test__overwrite__node_8cpp.html#a52037c938e3c1b126c6277da5ca689d0">M</a>, cconst std::vector&lt;float&gt;&amp; <a class="code hl_variable" href="level1__cplx__impl_8h.html#aa422b67a42f6a655b79abc04b8c0ad49">px</a>, <span class="keyword">const</span> std::vector&lt;float&gt;&amp; <a class="code hl_variable" href="level1__cplx__impl_8h.html#abecb3a9c27c34b3023649d5e329c235b">py</a></div>
+<div class="line">) {</div>
+<div class="line">  std::vector&lt;float&gt; h_mx, h_my;</div>
+<div class="line">  <span class="keywordtype">float</span> *d_px, *d_py, *d_mx, *d_my, *d_sx, *d_sy, *d_c;</div>
+<div class="line"> </div>
+<div class="line">  <span class="keywordflow">for</span>(<span class="keywordtype">int</span> <a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>=0; <a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>&lt;K; ++<a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>) {</div>
+<div class="line">    h_mx.push_back(h_px[<a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>]);</div>
+<div class="line">    h_my.push_back(h_py[<a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>]);</div>
+<div class="line">  }</div>
+<div class="line"> </div>
+<div class="line">  <span class="comment">// create a taskflow graph</span></div>
+<div class="line">  <a class="code hl_class" href="classtf_1_1_executor.html">tf::Executor</a> <a class="code hl_variable" href="thread__pool_8cpp.html#a543e564a8407bbeac15cb2d929fec755">executor</a>;</div>
+<div class="line">  <a class="code hl_class" href="classtf_1_1_taskflow.html">tf::Taskflow</a> <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>(<span class="stringliteral">&quot;K-Means&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> allocate_px = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    <a class="code hl_define" href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a>(cudaMalloc(&amp;d_px, <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>)), <span class="stringliteral">&quot;failed to allocate d_px&quot;</span>);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;allocate_px&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> allocate_py = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    <a class="code hl_define" href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a>(cudaMalloc(&amp;d_py, <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>)), <span class="stringliteral">&quot;failed to allocate d_py&quot;</span>);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;allocate_py&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> allocate_mx = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    <a class="code hl_define" href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a>(cudaMalloc(&amp;d_mx, K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>)), <span class="stringliteral">&quot;failed to allocate d_mx&quot;</span>);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;allocate_mx&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> allocate_my = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    <a class="code hl_define" href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a>(cudaMalloc(&amp;d_my, K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>)), <span class="stringliteral">&quot;failed to allocate d_my&quot;</span>);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;allocate_my&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> allocate_sx = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    <a class="code hl_define" href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a>(cudaMalloc(&amp;d_sx, K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>)), <span class="stringliteral">&quot;failed to allocate d_sx&quot;</span>);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;allocate_sx&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> allocate_sy = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    <a class="code hl_define" href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a>(cudaMalloc(&amp;d_sy, K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>)), <span class="stringliteral">&quot;failed to allocate d_sy&quot;</span>);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;allocate_sy&quot;</span>);</div>
+<div class="line">  <span class="keyword">auto</span> allocate_c = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    <a class="code hl_define" href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a>(cudaMalloc(&amp;d_c, K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>)), <span class="stringliteral">&quot;failed to allocate dc&quot;</span>);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;allocate_c&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> h2d = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    cudaMemcpy(d_px, h_px.data(), <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>), cudaMemcpyDefault);</div>
+<div class="line">    cudaMemcpy(d_py, h_py.data(), <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>), cudaMemcpyDefault);</div>
+<div class="line">    cudaMemcpy(d_mx, h_mx.data(), K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>), cudaMemcpyDefault);</div>
+<div class="line">    cudaMemcpy(d_my, h_my.data(), K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>), cudaMemcpyDefault);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;h2d&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> kmeans = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line"> </div>
+<div class="line">    tf::cudaFlow cf;</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">auto</span> zero_c = cf.<a class="code hl_function" href="classtf_1_1cuda_graph_base.html#ab45bc592a33380adf74d6f1e7690bd4c">zero</a>(d_c, K).name(<span class="stringliteral">&quot;zero_c&quot;</span>);</div>
+<div class="line">    <span class="keyword">auto</span> zero_sx = cf.<a class="code hl_function" href="classtf_1_1cuda_graph_base.html#ab45bc592a33380adf74d6f1e7690bd4c">zero</a>(d_sx, K).name(<span class="stringliteral">&quot;zero_sx&quot;</span>);</div>
+<div class="line">    <span class="keyword">auto</span> zero_sy = cf.<a class="code hl_function" href="classtf_1_1cuda_graph_base.html#ab45bc592a33380adf74d6f1e7690bd4c">zero</a>(d_sy, K).name(<span class="stringliteral">&quot;zero_sy&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">auto</span> cluster = cf.<a class="code hl_function" href="classtf_1_1cuda_graph_base.html#a1473a15a6023fbc25e1f029f2ff84aec">kernel</a>(</div>
+<div class="line">      (<a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>+512-1) / 512, 512, 0,</div>
+<div class="line">      assign_clusters, d_px, d_py, <a class="code hl_define" href="main-override-static_8c.html#a0240ac851181b84ac374872dc5434ee4">N</a>, d_mx, d_my, d_sx, d_sy, K, d_c</div>
+<div class="line">    ).name(<span class="stringliteral">&quot;cluster&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">auto</span> new_centroid = cf.<a class="code hl_function" href="classtf_1_1cuda_graph_base.html#a1473a15a6023fbc25e1f029f2ff84aec">kernel</a>(</div>
+<div class="line">      1, K, 0,</div>
+<div class="line">      compute_new_means, d_mx, d_my, d_sx, d_sy, d_c</div>
+<div class="line">    ).name(<span class="stringliteral">&quot;new_centroid&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">    cluster.<a class="code hl_function" href="classtf_1_1cuda_task.html#abdd68287ec4dff4216af34d1db44d1b4">precede</a>(new_centroid)</div>
+<div class="line">           .<a class="code hl_function" href="classtf_1_1cuda_task.html#a4a9ca1a34bac47e4c9b04eb4fb2f7775">succeed</a>(zero_c, zero_sx, zero_sy);</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Repeat the execution for M times</span></div>
+<div class="line">    <a class="code hl_typedef" href="namespacetf.html#af19c9b301dc0b0fe2a51a960fa427e83">tf::cudaStream</a> stream;</div>
+<div class="line">    <span class="keywordflow">for</span>(<span class="keywordtype">int</span> <a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>=0; <a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>&lt;<a class="code hl_define" href="test__overwrite__node_8cpp.html#a52037c938e3c1b126c6277da5ca689d0">M</a>; <a class="code hl_variable" href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a>++) {</div>
+<div class="line">      cf.run(stream);</div>
+<div class="line">    }</div>
+<div class="line">    stream.<a class="code hl_function" href="classtf_1_1cuda_stream_base.html#a08857ff2874cd5378e578822e2e96dd0">synchronize</a>();</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;update_means&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> stop = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    cudaMemcpy(h_mx.data(), d_mx, K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>), cudaMemcpyDefault);</div>
+<div class="line">    cudaMemcpy(h_my.data(), d_my, K*<span class="keyword">sizeof</span>(<span class="keywordtype">float</span>), cudaMemcpyDefault);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;d2h&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="keyword">auto</span> <a class="code hl_define" href="mimalloc-override_8h.html#a9d4b5df3530d1bc733070a4669ba6ebc">free</a> = <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.emplace([&amp;](){</div>
+<div class="line">    cudaFree(d_px);</div>
+<div class="line">    cudaFree(d_py);</div>
+<div class="line">    cudaFree(d_mx);</div>
+<div class="line">    cudaFree(d_my);</div>
+<div class="line">    cudaFree(d_sx);</div>
+<div class="line">    cudaFree(d_sy);</div>
+<div class="line">    cudaFree(d_c);</div>
+<div class="line">  }).<a class="code hl_typedef" href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a>(<span class="stringliteral">&quot;free&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="comment">// build up the dependency</span></div>
+<div class="line">  h2d.succeed(allocate_px, allocate_py, allocate_mx, allocate_my);</div>
+<div class="line"> </div>
+<div class="line">  kmeans.succeed(allocate_sx, allocate_sy, allocate_c, h2d)</div>
+<div class="line">        .precede(stop);</div>
+<div class="line"> </div>
+<div class="line">  stop.precede(<a class="code hl_define" href="mimalloc-override_8h.html#a9d4b5df3530d1bc733070a4669ba6ebc">free</a>);</div>
+<div class="line"> </div>
+<div class="line">  <span class="comment">// run the taskflow</span></div>
+<div class="line">  <a class="code hl_variable" href="thread__pool_8cpp.html#a543e564a8407bbeac15cb2d929fec755">executor</a>.<a class="code hl_function" href="classtf_1_1_executor.html#a519777f5783981d534e9e53b99712069">run</a>(<a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>).wait();</div>
+<div class="line"> </div>
+<div class="line">  <span class="comment">//std::cout &lt;&lt; &quot;dumping kmeans graph ...\n&quot;;</span></div>
+<div class="line">  <a class="code hl_function" href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a>.dump(std::cout);</div>
+<div class="line">  <span class="keywordflow">return</span> {h_mx, h_my};</div>
+<div class="line">}</div>
+<div class="ttc" id="a_bi_c_g_s_t_a_b__step__by__step_8cpp_html_acb559820d9ca11295b4500f179ef6392"><div class="ttname"><a href="_bi_c_g_s_t_a_b__step__by__step_8cpp.html#acb559820d9ca11295b4500f179ef6392">i</a></div><div class="ttdeci">int i</div><div class="ttdef"><b>定义</b> BiCGSTAB_step_by_step.cpp:9</div></div>
+<div class="ttc" id="aclasstf_1_1_executor_html"><div class="ttname"><a href="classtf_1_1_executor.html">tf::Executor</a></div><div class="ttdoc">class to create an executor for running a taskflow graph</div><div class="ttdef"><b>定义</b> executor-dl.hpp:51</div></div>
+<div class="ttc" id="aclasstf_1_1_executor_html_a519777f5783981d534e9e53b99712069"><div class="ttname"><a href="classtf_1_1_executor.html#a519777f5783981d534e9e53b99712069">tf::Executor::run</a></div><div class="ttdeci">tf::Future&lt; void &gt; run(Taskflow &amp;taskflow)</div><div class="ttdoc">runs a taskflow once</div><div class="ttdef"><b>定义</b> executor-dl.hpp:2067</div></div>
+<div class="ttc" id="aclasstf_1_1_taskflow_html"><div class="ttname"><a href="classtf_1_1_taskflow.html">tf::Taskflow</a></div><div class="ttdoc">class to create a taskflow object</div><div class="ttdef"><b>定义</b> taskflow.hpp:67</div></div>
+<div class="ttc" id="aclasstf_1_1cuda_graph_base_html_a1473a15a6023fbc25e1f029f2ff84aec"><div class="ttname"><a href="classtf_1_1cuda_graph_base.html#a1473a15a6023fbc25e1f029f2ff84aec">tf::cudaGraphBase::kernel</a></div><div class="ttdeci">cudaTask kernel(dim3 g, dim3 b, size_t s, F f, ArgsT... args)</div><div class="ttdoc">creates a kernel task</div><div class="ttdef"><b>定义</b> cuda_graph.hpp:831</div></div>
+<div class="ttc" id="aclasstf_1_1cuda_graph_base_html_ab45bc592a33380adf74d6f1e7690bd4c"><div class="ttname"><a href="classtf_1_1cuda_graph_base.html#ab45bc592a33380adf74d6f1e7690bd4c">tf::cudaGraphBase::zero</a></div><div class="ttdeci">cudaTask zero(T *dst, size_t count)</div><div class="ttdoc">creates a memset task that sets a typed memory block to zero</div><div class="ttdef"><b>定义</b> cuda_graph.hpp:860</div></div>
+<div class="ttc" id="aclasstf_1_1cuda_stream_base_html_a08857ff2874cd5378e578822e2e96dd0"><div class="ttname"><a href="classtf_1_1cuda_stream_base.html#a08857ff2874cd5378e578822e2e96dd0">tf::cudaStreamBase::synchronize</a></div><div class="ttdeci">void synchronize() const</div><div class="ttdoc">synchronizes the associated stream</div><div class="ttdef"><b>定义</b> cuda_stream.hpp:212</div></div>
+<div class="ttc" id="aclasstf_1_1cuda_task_html_a4a9ca1a34bac47e4c9b04eb4fb2f7775"><div class="ttname"><a href="classtf_1_1cuda_task.html#a4a9ca1a34bac47e4c9b04eb4fb2f7775">tf::cudaTask::succeed</a></div><div class="ttdeci">cudaTask &amp; succeed(Ts &amp;&amp;... tasks)</div><div class="ttdoc">adds precedence links from other tasks to this</div><div class="ttdef"><b>定义</b> cuda_graph.hpp:368</div></div>
+<div class="ttc" id="aclasstf_1_1cuda_task_html_abdd68287ec4dff4216af34d1db44d1b4"><div class="ttname"><a href="classtf_1_1cuda_task.html#abdd68287ec4dff4216af34d1db44d1b4">tf::cudaTask::precede</a></div><div class="ttdeci">cudaTask &amp; precede(Ts &amp;&amp;... tasks)</div><div class="ttdoc">adds precedence links from this to other tasks</div><div class="ttdef"><b>定义</b> cuda_graph.hpp:357</div></div>
+<div class="ttc" id="acuda__error_8hpp_html_a75e23f7c3ff7a29d92f78b7b6ac0eafc"><div class="ttname"><a href="cuda__error_8hpp.html#a75e23f7c3ff7a29d92f78b7b6ac0eafc">TF_CHECK_CUDA</a></div><div class="ttdeci">#define TF_CHECK_CUDA(...)</div><div class="ttdef"><b>定义</b> cuda_error.hpp:16</div></div>
+<div class="ttc" id="aimgui__impl__opengl3__loader_8h_html_aab18cfce5ee7c6881ae04f18be70d94a"><div class="ttname"><a href="imgui__impl__opengl3__loader_8h.html#aab18cfce5ee7c6881ae04f18be70d94a">name</a></div><div class="ttdeci">const GLchar * name</div><div class="ttdef"><b>定义</b> imgui_impl_opengl3_loader.h:312</div></div>
+<div class="ttc" id="amimalloc-override_8h_html_a9d4b5df3530d1bc733070a4669ba6ebc"><div class="ttname"><a href="mimalloc-override_8h.html#a9d4b5df3530d1bc733070a4669ba6ebc">free</a></div><div class="ttdeci">#define free(p)</div><div class="ttdef"><b>定义</b> mimalloc-override.h:24</div></div>
+<div class="ttc" id="anamespacetf_html_af19c9b301dc0b0fe2a51a960fa427e83"><div class="ttname"><a href="namespacetf.html#af19c9b301dc0b0fe2a51a960fa427e83">tf::cudaStream</a></div><div class="ttdeci">cudaStreamBase&lt; cudaStreamCreator, cudaStreamDeleter &gt; cudaStream</div><div class="ttdoc">default smart pointer type to manage a cudaStream_t object with unique ownership</div><div class="ttdef"><b>定义</b> cuda_stream.hpp:299</div></div>
+<div class="ttc" id="apoisson_8hpp_html_aa56fe360bb0ae38e0082f49e394ff825"><div class="ttname"><a href="poisson_8hpp.html#aa56fe360bb0ae38e0082f49e394ff825">taskflow</a></div><div class="ttdeci">void taskflow(int nx, int ny, double dx, double dy, double *f, int itold, int itnew, double *u, double *unew, int block_size, unsigned num_threads)</div><div class="ttdef"><b>定义</b> taskflow.cpp:6</div></div>
+<div class="ttc" id="atest__overwrite__node_8cpp_html_a52037c938e3c1b126c6277da5ca689d0"><div class="ttname"><a href="test__overwrite__node_8cpp.html#a52037c938e3c1b126c6277da5ca689d0">M</a></div><div class="ttdeci">#define M</div><div class="ttdef"><b>定义</b> test_overwrite_node.cpp:30</div></div>
+<div class="ttc" id="athread__pool_8cpp_html_a543e564a8407bbeac15cb2d929fec755"><div class="ttname"><a href="thread__pool_8cpp.html#a543e564a8407bbeac15cb2d929fec755">executor</a></div><div class="ttdeci">tf::Executor executor</div><div class="ttdef"><b>定义</b> thread_pool.cpp:6</div></div>
+</div><!-- fragment --><p>The first dump before executing the taskflow produces the following diagram. The condition tasks introduces a cycle between itself and <code>update_means</code>. Each time it goes back to <code>update_means</code>, the cudaFlow is reconstructed with captured parameters in the closure and offloaded to the GPU.</p>
+<p>The main cudaFlow task, <code>update_means</code>, must not run before all required data has settled down. It precedes a condition task that circles back to itself until we reach <code>M</code> iterations. When iteration completes, the condition task directs the execution path to the cudaFlow, <code>h2d</code>, to copy the results of clusters to <code>h_mx</code> and <code>h_my</code> and then deallocate all GPU memory.</p>
+<h1><a class="anchor" id="KMeanscudaFlowBenchmarking"></a>
+Benchmarking</h1>
+<p>We run three versions of k-means, sequential CPU, parallel CPUs, and one GPU, on a machine of 12 Intel i7-8700 CPUs at 3.20 GHz and a Nvidia RTX 2080 GPU using various numbers of 2D point counts and iterations.</p>
+<div align="center"> <table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadCenter">N   </th><th class="markdownTableHeadCenter">K   </th><th class="markdownTableHeadCenter">M   </th><th class="markdownTableHeadCenter">CPU Sequential   </th><th class="markdownTableHeadCenter">CPU Parallel   </th><th class="markdownTableHeadCenter">GPU    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyCenter">10   </td><td class="markdownTableBodyCenter">5   </td><td class="markdownTableBodyCenter">10   </td><td class="markdownTableBodyCenter">0.14 ms   </td><td class="markdownTableBodyCenter">77 ms   </td><td class="markdownTableBodyCenter">1 ms    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyCenter">100   </td><td class="markdownTableBodyCenter">10   </td><td class="markdownTableBodyCenter">100   </td><td class="markdownTableBodyCenter">0.56 ms   </td><td class="markdownTableBodyCenter">86 ms   </td><td class="markdownTableBodyCenter">7 ms    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyCenter">1000   </td><td class="markdownTableBodyCenter">10   </td><td class="markdownTableBodyCenter">1000   </td><td class="markdownTableBodyCenter">10 ms   </td><td class="markdownTableBodyCenter">98 ms   </td><td class="markdownTableBodyCenter">55 ms    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyCenter">10000   </td><td class="markdownTableBodyCenter">10   </td><td class="markdownTableBodyCenter">10000   </td><td class="markdownTableBodyCenter">1006 ms   </td><td class="markdownTableBodyCenter">713 ms   </td><td class="markdownTableBodyCenter">458 ms    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyCenter">100000   </td><td class="markdownTableBodyCenter">10   </td><td class="markdownTableBodyCenter">100000   </td><td class="markdownTableBodyCenter">102483 ms   </td><td class="markdownTableBodyCenter">49966 ms   </td><td class="markdownTableBodyCenter">7952 ms   </td></tr>
+</table>
+</div><p>When the number of points is larger than 10K, both parallel CPU and GPU implementations start to pick up the speed over than the sequential version. We can see that using the built-in predicate, tf::cudaFlow::offload_n, can avoid repetitively creating the graph over and over, resulting in two times faster than conditional tasking. </p>
+</div></div><!-- contents -->
+</div><!-- PageDoc -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="footer">制作者 <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.13.2 </li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+var structvectorization__logic__half =
+[
+    [ "PacketTraits", "structvectorization__logic__half.html#abe70d70b8b8c02da43cf8fd212a3fb82", null ],
+    [ "PacketType", "structvectorization__logic__half.html#a9c9e99172d2e3c20ed4e94c33f9aadde", null ],
+    [ "run", "structvectorization__logic__half.html#a27a0f75f85861aae7be5ec4a792c2380", null ]
+];

@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1traits_3_01_jacobi_s_v_d_3_01___matrix_type_00_01_q_r_preconditioner_01_4_01_4 =
+[
+    [ "MatrixType", "struct_eigen_1_1internal_1_1traits_3_01_jacobi_s_v_d_3_01___matrix_type_00_01_q_r_preconditioner_01_4_01_4.html#a0c5efadd389b46f324bdee9e47f7c273", null ]
+];

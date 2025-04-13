@@ -1,0 +1,125 @@
+\doxysection{kafka\+\_\+sink.\+h}
+\hypertarget{kafka__sink_8h_source}{}\label{kafka__sink_8h_source}\index{runtime/spdlog/include/spdlog/sinks/kafka\_sink.h@{runtime/spdlog/include/spdlog/sinks/kafka\_sink.h}}
+\mbox{\hyperlink{kafka__sink_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ Copyright(c)\ 2015-\/present,\ Gabi\ Melman\ \&\ spdlog\ contributors.}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Distributed\ under\ the\ MIT\ License\ (http://opensource.org/licenses/MIT)}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Custom\ sink\ for\ kafka}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Building\ and\ using\ requires\ librdkafka\ library.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ For\ building\ librdkafka\ library\ check\ the\ url\ below}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ https://github.com/confluentinc/librdkafka}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{async_8h}{spdlog/async.h}}"{}}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{log__msg_8h}{spdlog/details/log\_msg.h}}"{}}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{null__mutex_8h}{spdlog/details/null\_mutex.h}}"{}}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{synchronous__factory_8h}{spdlog/details/synchronous\_factory.h}}"{}}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{base__sink_8h}{spdlog/sinks/base\_sink.h}}"{}}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{common_8h}{spdlog/common.h}}>}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ kafka\ header}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#include\ <librdkafka/rdkafkacpp.h>}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog}{spdlog}}\ \{}
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacespdlog_1_1sinks}{sinks}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a2f9778ec0f89da8ea556f3f553d82b9a}{kafka\_sink\_config}}\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ std::string\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a0e077f188f98682e8da032e4bb16fc85}{server\_addr}};}
+\DoxyCodeLine{00029\ \ \ \ \ std::string\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a29b72502f06a462df78346a4913dfb74}{produce\_topic}};}
+\DoxyCodeLine{00030\ \ \ \ \ \mbox{\hyperlink{eabase_8h_ab1967d8591af1a4e48c37fd2b0f184d0}{int32\_t}}\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a542785bbd17d423f27e855d2eab8f9ab}{flush\_timeout\_ms}}\ =\ 1000;}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a2f9778ec0f89da8ea556f3f553d82b9a}{kafka\_sink\_config}}(std::string\ addr,\ std::string\ topic,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a542785bbd17d423f27e855d2eab8f9ab}{flush\_timeout\_ms}}\ =\ 1000)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a0e077f188f98682e8da032e4bb16fc85}{server\_addr}}\{\mbox{\hyperlink{namespacestd}{std}}::move(addr)\},}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a29b72502f06a462df78346a4913dfb74}{produce\_topic}}\{\mbox{\hyperlink{namespacestd}{std}}::move(topic)\},}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a542785bbd17d423f27e855d2eab8f9ab}{flush\_timeout\_ms}}(\mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config_a542785bbd17d423f27e855d2eab8f9ab}{flush\_timeout\_ms}})\ \{\}}
+\DoxyCodeLine{00036\ \};}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Mutex>}
+\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a80a2ab94df37d12307cc952c4c479f13}{kafka\_sink}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1base__sink_a0a4c703dc54edfbd0d3817770e36f3f7}{base\_sink}}<Mutex>\ \{}
+\DoxyCodeLine{00040\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00041\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a80a2ab94df37d12307cc952c4c479f13}{kafka\_sink}}(\mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config}{kafka\_sink\_config}}\ config)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_af721577d1c811ba3945abfa4fdc98fd5}{config\_}}\{\mbox{\hyperlink{namespacestd}{std}}::move(config)\}\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ errstr;}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ad8967ecc4c3a950e29d23277e5b21c49}{conf\_}}.reset(RdKafka::Conf::create(RdKafka::Conf::CONF\_GLOBAL));}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \ \ RdKafka::Conf::ConfResult\ confRes\ =}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ad8967ecc4c3a950e29d23277e5b21c49}{conf\_}}-\/>set(\textcolor{stringliteral}{"{}bootstrap.servers"{}},\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_af721577d1c811ba3945abfa4fdc98fd5}{config\_}}.server\_addr,\ errstr);}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (confRes\ !=\ RdKafka::Conf::CONF\_OK)\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt\_lib::format(\textcolor{stringliteral}{"{}conf\ set\ bootstrap.servers\ failed\ err:\{\}"{}},\ errstr));}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ab3163ccfee5185ce79f183d0bdb1414f}{tconf\_}}.reset(RdKafka::Conf::create(RdKafka::Conf::CONF\_TOPIC));}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ab3163ccfee5185ce79f183d0bdb1414f}{tconf\_}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(fmt\_lib::format(\textcolor{stringliteral}{"{}create\ topic\ config\ failed"{}}));}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a63c640320edd45bb74df28476c84fee0}{producer\_}}.reset(RdKafka::Producer::create(\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ad8967ecc4c3a950e29d23277e5b21c49}{conf\_}}.get(),\ errstr));}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a63c640320edd45bb74df28476c84fee0}{producer\_}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(fmt\_lib::format(\textcolor{stringliteral}{"{}create\ producer\ failed\ err:\{\}"{}},\ errstr));}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a0fceb760e4ea72eddbc1e5b323aff7cb}{topic\_}}.reset(RdKafka::Topic::create(\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a63c640320edd45bb74df28476c84fee0}{producer\_}}.get(),\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_af721577d1c811ba3945abfa4fdc98fd5}{config\_}}.produce\_topic,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ab3163ccfee5185ce79f183d0bdb1414f}{tconf\_}}.get(),\ errstr));}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a0fceb760e4ea72eddbc1e5b323aff7cb}{topic\_}}\ ==\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(fmt\_lib::format(\textcolor{stringliteral}{"{}create\ topic\ failed\ err:\{\}"{}},\ errstr));}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ std::exception\ \&e)\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespacespdlog_ac3d8b7e83aad48720518fbac80836c3c}{throw\_spdlog\_ex}}(fmt\_lib::format(\textcolor{stringliteral}{"{}error\ create\ kafka\ instance:\ \{\}"{}},\ e.what()));}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a3f438cd46c0d6f2b44da17c042a74e70}{\string~kafka\_sink}}()\ \{\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a63c640320edd45bb74df28476c84fee0}{producer\_}}-\/>flush(\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_af721577d1c811ba3945abfa4fdc98fd5}{config\_}}.flush\_timeout\_ms);\ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_af19ff9d654fb00779cd697efc71ea7df}{sink\_it\_}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structspdlog_1_1details_1_1log__msg}{details::log\_msg}}\ \&msg)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a63c640320edd45bb74df28476c84fee0}{producer\_}}-\/>produce(\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a0fceb760e4ea72eddbc1e5b323aff7cb}{topic\_}}.get(),\ 0,\ RdKafka::Producer::RK\_MSG\_COPY,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{void}\ *)msg.\mbox{\hyperlink{structspdlog_1_1details_1_1log__msg_a3f3bc29f5bf45e8a3dc976d544b8faed}{payload}}.data(),\ msg.\mbox{\hyperlink{structspdlog_1_1details_1_1log__msg_a3f3bc29f5bf45e8a3dc976d544b8faed}{payload}}.size(),\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00078\ \ \ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a8030aae0a527bc914e0cdbd75bf2e2f4}{flush\_}}()\textcolor{keyword}{\ override\ }\{\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a63c640320edd45bb74df28476c84fee0}{producer\_}}-\/>flush(\mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_af721577d1c811ba3945abfa4fdc98fd5}{config\_}}.flush\_timeout\_ms);\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config}{kafka\_sink\_config}}\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_af721577d1c811ba3945abfa4fdc98fd5}{config\_}};}
+\DoxyCodeLine{00084\ \ \ \ \ std::unique\_ptr<RdKafka::Producer>\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a63c640320edd45bb74df28476c84fee0}{producer\_}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00085\ \ \ \ \ std::unique\_ptr<RdKafka::Conf>\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ad8967ecc4c3a950e29d23277e5b21c49}{conf\_}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00086\ \ \ \ \ std::unique\_ptr<RdKafka::Conf>\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_ab3163ccfee5185ce79f183d0bdb1414f}{tconf\_}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00087\ \ \ \ \ std::unique\_ptr<RdKafka::Topic>\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink_a0fceb760e4ea72eddbc1e5b323aff7cb}{topic\_}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00088\ \};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_1_1sinks_a7c007b29364c2dcb4250da9e0a019859}{kafka\_sink\_mt}}\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink}{kafka\_sink<std::mutex>}};}
+\DoxyCodeLine{00091\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacespdlog_1_1sinks_aa1c1cfbe8333dc0eb0976588d4e5d800}{kafka\_sink\_st}}\ =\ \mbox{\hyperlink{classspdlog_1_1sinks_1_1kafka__sink}{kafka\_sink<spdlog::details::null\_mutex>}};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \}\ \ \textcolor{comment}{//\ namespace\ sinks}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Factory\ =\ spdlog::synchronous\_factory>}
+\DoxyCodeLine{00096\ \textcolor{keyword}{inline}\ std::shared\_ptr<logger>\ \mbox{\hyperlink{namespacespdlog_a9fc5b0947b3108fd064e83ed85409b64}{kafka\_logger\_mt}}(\textcolor{keyword}{const}\ std::string\ \&logger\_name,}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config}{spdlog::sinks::kafka\_sink\_config}}\ config)\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{return}\ Factory::template\ \mbox{\hyperlink{namespacespdlog_a564c2ba1d44b490a1b77f69f3c94d2e5}{create<sinks::kafka\_sink\_mt>}}(logger\_name,\ config);}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Factory\ =\ spdlog::synchronous\_factory>}
+\DoxyCodeLine{00102\ \textcolor{keyword}{inline}\ std::shared\_ptr<logger>\ \mbox{\hyperlink{namespacespdlog_af58d88cc4e968cd97f9a76bf7cd4ba2a}{kafka\_logger\_st}}(\textcolor{keyword}{const}\ std::string\ \&logger\_name,}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config}{spdlog::sinks::kafka\_sink\_config}}\ config)\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{return}\ Factory::template\ \mbox{\hyperlink{namespacespdlog_a564c2ba1d44b490a1b77f69f3c94d2e5}{create<sinks::kafka\_sink\_st>}}(logger\_name,\ config);}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Factory\ =\ spdlog::async\_factory>}
+\DoxyCodeLine{00108\ \textcolor{keyword}{inline}\ std::shared\_ptr<spdlog::logger>\ \mbox{\hyperlink{namespacespdlog_ad22ce892ff09f2d8b4475f61b502b02c}{kafka\_logger\_async\_mt}}(}
+\DoxyCodeLine{00109\ \ \ \ \ std::string\ logger\_name,\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config}{spdlog::sinks::kafka\_sink\_config}}\ config)\ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keywordflow}{return}\ Factory::template\ \mbox{\hyperlink{namespacespdlog_a564c2ba1d44b490a1b77f69f3c94d2e5}{create<sinks::kafka\_sink\_mt>}}(logger\_name,\ config);}
+\DoxyCodeLine{00111\ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Factory\ =\ spdlog::async\_factory>}
+\DoxyCodeLine{00114\ \textcolor{keyword}{inline}\ std::shared\_ptr<spdlog::logger>\ \mbox{\hyperlink{namespacespdlog_a91768e5b04631154ad1bc25ecb9f841e}{kafka\_logger\_async\_st}}(}
+\DoxyCodeLine{00115\ \ \ \ \ std::string\ logger\_name,\ \mbox{\hyperlink{structspdlog_1_1sinks_1_1kafka__sink__config}{spdlog::sinks::kafka\_sink\_config}}\ config)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{return}\ Factory::template\ \mbox{\hyperlink{namespacespdlog_a564c2ba1d44b490a1b77f69f3c94d2e5}{create<sinks::kafka\_sink\_st>}}(logger\_name,\ config);}
+\DoxyCodeLine{00117\ \}}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \}\ \ \textcolor{comment}{//\ namespace\ spdlog}}
+
+\end{DoxyCode}

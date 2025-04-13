@@ -1,0 +1,196 @@
+\doxysection{find.\+hpp}
+\hypertarget{cuda_2algorithm_2find_8hpp_source}{}\label{cuda_2algorithm_2find_8hpp_source}\index{external/taskflow/taskflow/cuda/algorithm/find.hpp@{external/taskflow/taskflow/cuda/algorithm/find.hpp}}
+\mbox{\hyperlink{cuda_2algorithm_2find_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{taskflow_2cuda_2algorithm_2for__each_8hpp}{for\_each.hpp}}"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{taskflow_2cuda_2algorithm_2reduce_8hpp}{reduce.hpp}}"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetf_1_1detail}{tf::detail}}\ \{}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00015\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structtf_1_1detail_1_1cuda_find_pair}{cudaFindPair}}\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{structtf_1_1detail_1_1cuda_find_pair_a45f07c94fc363d0d14bd827e33868c77}{key}};}
+\DoxyCodeLine{00018\ \ \ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{structtf_1_1detail_1_1cuda_find_pair_a0cdb518ce84ef59432fe1b1995597bf1}{index}};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \_\_device\_\_\ \textcolor{keyword}{operator}\ unsigned\ ()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structtf_1_1detail_1_1cuda_find_pair_a0cdb518ce84ef59432fe1b1995597bf1}{index}};\ \}}
+\DoxyCodeLine{00021\ \};}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}\ I,\ \textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00025\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetf_1_1detail_a3941b09790867beb42f502c08e08b908}{cuda\_find\_if\_loop}}(\mbox{\hyperlink{namespace_p}{P}}\&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ I\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}},\ \textcolor{keywordtype}{unsigned}*\ idx,\ U\ pred)\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \mbox{\hyperlink{namespacetf_a2ff1cf81426c856fc6db1f6ead47878f}{cuda\_single\_task}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ [=]\ \_\_device\_\_\ ()\ \{\ *idx\ =\ 0;\ \});}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00030\ \ \ \}}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{sandbox_2strassen_2omp_8cpp_a4bfa035cad7c3258704669810cd5de5d}{E}}\ =\ std::decay\_t<P>;}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ +\ E::nv\ -\/\ 1)\ /\ E::nv;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \textcolor{comment}{//\ set\ the\ index\ to\ the\ maximum}}
+\DoxyCodeLine{00037\ \ \ \mbox{\hyperlink{namespacetf_a2ff1cf81426c856fc6db1f6ead47878f}{cuda\_single\_task}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ [=]\ \_\_device\_\_\ ()\ \{\ *idx\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};\ \});}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \textcolor{comment}{//\ launch\ the\ kernel\ to\ atomic-\/find\ the\ minimum}}
+\DoxyCodeLine{00040\ \ \ \mbox{\hyperlink{namespacetf_a2fa23f4109147679d05a25ee952c4baf}{cuda\_kernel}}<<<\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ E::nt,\ 0,\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.stream()>>>([=]\ \_\_device\_\_\ (\textcolor{keyword}{auto}\ tid,\ \textcolor{keyword}{auto}\ bid)\ \{}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \_\_shared\_\_\ \textcolor{keywordtype}{unsigned}\ shm\_id;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordflow}{if}(!tid)\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ shm\_id\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{00046\ \ \ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{auto}\ tile\ =\ \mbox{\hyperlink{namespacetf_a5a41760b383016bd1cebadcfd7f05476}{cuda\_get\_tile}}(bid,\ E::nv,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{namespacetf_a3efaad7a8e442f8cf312c296325b0e07}{cuda\_mem\_to\_reg\_strided<E::nt,\ E::vt>}}(}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}\ +\ tile.begin,\ tid,\ tile.count()}
+\DoxyCodeLine{00054\ \ \ \ \ );}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keywordtype}{id}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<E::vt;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ E::nt*\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +\ tid;}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ tile.count()\ \&\&\ pred(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]))\ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{id}\ =\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ +\ tile.begin;}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00064\ \ \ \ \ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{//\ Note:\ the\ reduce\ version\ is\ not\ faster\ though}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ reduce\ to\ a\ scalar\ per\ block.}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{//\_\_shared\_\_\ typename\ cudaBlockReduce<E::nt,\ unsigned>::Storage\ shm;}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//id\ =\ cudaBlockReduce<E::nt,\ unsigned>()(}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ \ tid,}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ \ id,}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ \ shm,}}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{comment}{//\ \ (tile.count()\ <\ E::nt\ ?\ tile.count()\ :\ E::nt),}}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ \ cuda\_minimum<unsigned>\{\},}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{comment}{//\ \ false}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{comment}{//);}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//\ only\ need\ the\ minimum\ id}}
+\DoxyCodeLine{00080\ \ \ \ \ atomicMin(\&shm\_id,\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00081\ \ \ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{comment}{//\ reduce\ all\ to\ the\ global\ memory}}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{if}(!tid)\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ atomicMin(idx,\ shm\_id);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{comment}{//atomicMin(idx,\ id);}}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \});}
+\DoxyCodeLine{00089\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00092\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}\ I,\ \textcolor{keyword}{typename}\ O>}
+\DoxyCodeLine{00093\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetf_1_1detail_a72820903215a409e1e3d47a073579918}{cuda\_min\_element\_loop}}(}
+\DoxyCodeLine{00094\ \ \ \mbox{\hyperlink{namespace_p}{P}}\&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ I\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}},\ \textcolor{keywordtype}{unsigned}*\ idx,\ O\ op,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}}
+\DoxyCodeLine{00095\ )\ \{}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{namespacetf_a2ff1cf81426c856fc6db1f6ead47878f}{cuda\_single\_task}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ [=]\ \_\_device\_\_\ ()\ \{\ *idx\ =\ 0;\ \});}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00100\ \ \ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ =\ cudaFindPair<typename\ std::iterator\_traits<I>::value\_type>;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \mbox{\hyperlink{namespacetf_1_1detail_a6694b88dc343d87df2104809002583cc}{cuda\_uninitialized\_reduce\_loop}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},}
+\DoxyCodeLine{00105\ \ \ \ \ \mbox{\hyperlink{namespacetf_a8419f2a62fa1e991230fc3ca93c08c3b}{cuda\_make\_load\_iterator<T>}}([=]\_\_device\_\_(\textcolor{keyword}{auto}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\{*(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}+\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}),\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\};}
+\DoxyCodeLine{00107\ \ \ \ \ \}),}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}},}
+\DoxyCodeLine{00109\ \ \ \ \ idx,}
+\DoxyCodeLine{00110\ \ \ \ \ [=]\ \_\_device\_\_\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ op(\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}.key,\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}.key)\ ?\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}\ :\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};}
+\DoxyCodeLine{00112\ \ \ \ \ \},}
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}}
+\DoxyCodeLine{00114\ \ \ );}
+\DoxyCodeLine{00115\ \}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}\ I,\ \textcolor{keyword}{typename}\ O>}
+\DoxyCodeLine{00119\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetf_1_1detail_a442fbc4beb897580a46164147d7db2c9}{cuda\_max\_element\_loop}}(}
+\DoxyCodeLine{00120\ \ \ \mbox{\hyperlink{namespace_p}{P}}\&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ I\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}},\ \textcolor{keywordtype}{unsigned}*\ idx,\ O\ op,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}}
+\DoxyCodeLine{00121\ )\ \{}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \mbox{\hyperlink{namespacetf_a2ff1cf81426c856fc6db1f6ead47878f}{cuda\_single\_task}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ [=]\ \_\_device\_\_\ ()\ \{\ *idx\ =\ 0;\ \});}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00126\ \ \ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ =\ \mbox{\hyperlink{structtf_1_1detail_1_1cuda_find_pair}{cudaFindPair<typename\ std::iterator\_traits<I>::value\_type}}>;}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \mbox{\hyperlink{namespacetf_1_1detail_a6694b88dc343d87df2104809002583cc}{cuda\_uninitialized\_reduce\_loop}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},}
+\DoxyCodeLine{00131\ \ \ \ \ \mbox{\hyperlink{namespacetf_a8419f2a62fa1e991230fc3ca93c08c3b}{cuda\_make\_load\_iterator<T>}}([=]\_\_device\_\_(\textcolor{keyword}{auto}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\{*(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}+\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}),\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\};}
+\DoxyCodeLine{00133\ \ \ \ \ \}),}
+\DoxyCodeLine{00134\ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}},}
+\DoxyCodeLine{00135\ \ \ \ \ idx,}
+\DoxyCodeLine{00136\ \ \ \ \ [=]\ \_\_device\_\_\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ op(\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}.key,\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}.key)\ ?\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}\ :\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}};}
+\DoxyCodeLine{00138\ \ \ \ \ \},}
+\DoxyCodeLine{00139\ \ \ \ \ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}}}
+\DoxyCodeLine{00140\ \ \ );}
+\DoxyCodeLine{00141\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \}\ \ \textcolor{comment}{//\ end\ of\ namespace\ tf::detail\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetf}{tf}}\ \{}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00149\ \textcolor{comment}{//\ cuda\_find\_if}}
+\DoxyCodeLine{00150\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00180\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}\ I,\ \textcolor{keyword}{typename}\ U>}
+\DoxyCodeLine{00181\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetf_a5f9dabd7c5d0fa5166cf76d9fa5a038e}{cuda\_find\_if}}(}
+\DoxyCodeLine{00182\ \ \ \mbox{\hyperlink{namespace_p}{P}}\&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ I\ first,\ I\ last,\ \textcolor{keywordtype}{unsigned}*\ idx,\ U\ op}
+\DoxyCodeLine{00183\ )\ \{}
+\DoxyCodeLine{00184\ \ \ \mbox{\hyperlink{namespacetf_1_1detail_a3941b09790867beb42f502c08e08b908}{detail::cuda\_find\_if\_loop}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ first,\ std::distance(first,\ last),\ idx,\ op);}
+\DoxyCodeLine{00185\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00188\ \textcolor{comment}{//\ cuda\_min\_element}}
+\DoxyCodeLine{00189\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{comment}{//\ Function:\ min-\/element\_bufsz}}
+\DoxyCodeLine{00192\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{unsigned}\ NT,\ \textcolor{keywordtype}{unsigned}\ VT>\ \ }
+\DoxyCodeLine{00193\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00194\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classtf_1_1cuda_execution_policy_abcafb001cd68c1135392f4bcda5a2a05}{cudaExecutionPolicy<NT,\ VT>::min\_element\_bufsz}}(\textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}})\ \{}
+\DoxyCodeLine{00195\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1cuda_execution_policy_a446cee95bb839ee180052059e2ad7fd6}{reduce\_bufsz<detail::cudaFindPair<T>}}>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+\DoxyCodeLine{00196\ \}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00232\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}\ I,\ \textcolor{keyword}{typename}\ O>}
+\DoxyCodeLine{00233\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetf_a572c13198191c46765264f8afabe2e9f}{cuda\_min\_element}}(\mbox{\hyperlink{namespace_p}{P}}\&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ I\ first,\ I\ last,\ \textcolor{keywordtype}{unsigned}*\ idx,\ O\ op,\ \textcolor{keywordtype}{void}*\ buf)\ \{}
+\DoxyCodeLine{00234\ \ \ \mbox{\hyperlink{namespacetf_1_1detail_a72820903215a409e1e3d47a073579918}{detail::cuda\_min\_element\_loop}}(}
+\DoxyCodeLine{00235\ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ first,\ std::distance(first,\ last),\ idx,\ op,\ buf}
+\DoxyCodeLine{00236\ \ \ );}
+\DoxyCodeLine{00237\ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00240\ \textcolor{comment}{//\ cuda\_max\_element}}
+\DoxyCodeLine{00241\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \textcolor{comment}{//\ Function:\ max\_element\_bufsz}}
+\DoxyCodeLine{00244\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{unsigned}\ NT,\ \textcolor{keywordtype}{unsigned}\ VT>\ \ }
+\DoxyCodeLine{00245\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00246\ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{classtf_1_1cuda_execution_policy_a31fe75c4b0765df3035e12be49af88aa}{cudaExecutionPolicy<NT,\ VT>::max\_element\_bufsz}}(\textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}})\ \{}
+\DoxyCodeLine{00247\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1cuda_execution_policy_a446cee95bb839ee180052059e2ad7fd6}{reduce\_bufsz<detail::cudaFindPair<T>}}>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}});}
+\DoxyCodeLine{00248\ \}}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00284\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ P,\ \textcolor{keyword}{typename}\ I,\ \textcolor{keyword}{typename}\ O>}
+\DoxyCodeLine{00285\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespacetf_a3fc577fd0a8f127770bcf68bc56c073e}{cuda\_max\_element}}(\mbox{\hyperlink{namespace_p}{P}}\&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ I\ first,\ I\ last,\ \textcolor{keywordtype}{unsigned}*\ idx,\ O\ op,\ \textcolor{keywordtype}{void}*\ buf)\ \{}
+\DoxyCodeLine{00286\ \ \ \mbox{\hyperlink{namespacetf_1_1detail_a442fbc4beb897580a46164147d7db2c9}{detail::cuda\_max\_element\_loop}}(}
+\DoxyCodeLine{00287\ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ first,\ std::distance(first,\ last),\ idx,\ op,\ buf}
+\DoxyCodeLine{00288\ \ \ );}
+\DoxyCodeLine{00289\ \}}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \}\ \ \textcolor{comment}{//\ end\ of\ namespace\ tf\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ }
+
+\end{DoxyCode}

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <luisa/core/stl/vector.h>
-#include <luisa/core/stl/memory.h>
-#include <luisa/core/spin_mutex.h>
-#include <luisa/core/thread_safety.h>
+#include <runtime/core/stl/vector.h>
+#include <runtime/core/stl/memory.h>
+#include <runtime/core/spin_mutex.h>
+#include <runtime/core/thread_safety.h>
 
 namespace luisa {
 

@@ -1,0 +1,657 @@
+\doxysection{ff\+\_\+dgroups.\+hpp}
+\hypertarget{ff__dgroups_8hpp_source}{}\label{ff__dgroups_8hpp_source}\index{external/taskflow/3rd-\/party/ff/distributed/ff\_dgroups.hpp@{external/taskflow/3rd-\/party/ff/distributed/ff\_dgroups.hpp}}
+\mbox{\hyperlink{ff__dgroups_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ ***************************************************************************}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ \ FastFlow\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ \ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License\ version\ 3\ as}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ \ published\ by\ the\ Free\ Software\ Foundation.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *\ \ Starting\ from\ version\ 3.0.1\ FastFlow\ is\ dual\ licensed\ under\ the\ GNU\ LGPLv3}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ \ or\ MIT\ License\ (https://github.com/ParaGroup/WindFlow/blob/vers3.x/LICENSE.MIT)}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ \ This\ program\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but\ WITHOUT}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ \ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of\ MERCHANTABILITY\ or}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ \ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ License\ for\ more\ details.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ along\ with\ this\ program;\ if\ not,\ write\ to\ the\ Free\ Software\ Foundation,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ Inc.,\ 59\ Temple\ Place\ -\/\ Suite\ 330,\ Boston,\ MA\ 02111-\/1307,\ USA.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ ****************************************************************************}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00020\ \textcolor{comment}{/*\ Authors:\ }}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ \ \ Nicolo'\ Tonci}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ \ \ Massimo\ Torquati}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#ifndef\ FF\_DGROUPS\_H}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#define\ FF\_DGROUPS\_H}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#include\ <signal.h>}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <getopt.h>}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff_8hpp}{ff/ff.hpp}}>}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff__dprinter_8hpp}{ff/distributed/ff\_dprinter.hpp}}>}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff__dutils_8hpp}{ff/distributed/ff\_dutils.hpp}}>}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff__dintermediate_8hpp}{ff/distributed/ff\_dintermediate.hpp}}>}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{ff__dgroup_8hpp}{ff/distributed/ff\_dgroup.hpp}}>}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#include\ <cereal/cereal.hpp>}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#include\ <cereal/archives/json.hpp>}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <cereal/types/string.hpp>}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <cereal/types/vector.hpp>}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#ifdef\ DFF\_MPI}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#include\ <mpi.h>}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceff}{ff}}\ \{}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classff_1_1d_groups_a3d39f2d6f5c4f47f0957670d8dd34b05}{dGroups}}\ \{}
+\DoxyCodeLine{00057\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{classff_1_1d_groups_a2c3783f8c3e87133276db2650ffb8997}{GroupInterface}};}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classff_1_1d_groups_a3d39f2d6f5c4f47f0957670d8dd34b05}{dGroups}}*\ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{Instance}}()\{}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classff_1_1d_groups_a3d39f2d6f5c4f47f0957670d8dd34b05}{dGroups}}\ dg;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \&dg;}
+\DoxyCodeLine{00062\ \ \ \ \ \}}
+\DoxyCodeLine{00063\ \ \ \ \ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{comment}{/*\string~dGroups()\ \{}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ \ \ \ \ \ \ \ for\ (auto\ g\ :\ this-\/>groups)}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ if\ (g.second)}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ delete\ g.second;}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ \ \ \ \ \ groups.clear();}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ \ \ \ \}*/}}
+\DoxyCodeLine{00070\ \ \ \ \ }
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1e}{Proto}}\ \mbox{\hyperlink{classff_1_1d_groups_a0f9c724bde964c962cc19e4da7efa8cc}{usedProtocol}};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff_1_1d_groups_a20c1bd59176c09b9d60673f476648841}{parseConfig}}(std::string\ \mbox{\hyperlink{dff__run_8cpp_a38ae412dc79c65b339fe314c3aaf4544}{configFile}})\{}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ std::ifstream\ is(\mbox{\hyperlink{dff__run_8cpp_a38ae412dc79c65b339fe314c3aaf4544}{configFile}});}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!is)\ \textcolor{keywordflow}{throw}\ \mbox{\hyperlink{struct_f_f___exception}{FF\_Exception}}(\textcolor{stringliteral}{"{}Unable\ to\ open\ configuration\ file\ for\ the\ program!"{}});}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ cereal::JSONInputArchive\ ari(is);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ ari(cereal::make\_nvp(\textcolor{stringliteral}{"{}groups"{}},\ this-\/>\mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}}));}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ get\ the\ protocol\ to\ be\ used\ from\ the\ configuration\ file}}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ tmpProtocol;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ari(cereal::make\_nvp(\textcolor{stringliteral}{"{}protocol"{}},\ tmpProtocol));}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tmpProtocol\ ==\ \textcolor{stringliteral}{"{}MPI"{}})\{}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#ifdef\ DFF\_MPI}}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>usedProtocol\ =\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaece8c4cb0f2685308261ef5409676a18}{Proto::MPI}};}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}NO\ MPI\ support!\ Falling\ back\ to\ TCP\(\backslash\)n"{}};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>usedProtocol\ =\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaa040cd7feeb588104634cdadf35abf1c}{Proto::TCP}};}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#endif\ }}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ this-\/>usedProtocol\ =\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaa040cd7feeb588104634cdadf35abf1c}{Proto::TCP}};}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (cereal::Exception\&)\ \{}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ari.setNextName(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>usedProtocol\ =\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaa040cd7feeb588104634cdadf35abf1c}{Proto::TCP}};}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ cereal::Exception\&\ \mbox{\hyperlink{_cwise__array__power__array_8cpp_a9cb86ff854760bf91a154f2724a9101d}{e}})\{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}Error\ parsing\ the\ JSON\ config\ file.\ Check\ syntax\ and\ structure\ of\ the\ file\ and\ retry!"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ exit(EXIT\_FAILURE);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \ \ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff_1_1d_groups_a29306514c134ef295adc58d052d4c37a}{annotateGroup}}(std::string\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}},\ \mbox{\hyperlink{classff_1_1ff__node}{ff\_node}}*\ parentBB)\{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}.contains(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}))\{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}Group\ "{}}\ <<\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}\ <<\ \textcolor{stringliteral}{"{}\ created\ twice.\ Error!\(\backslash\)n"{}};\ abort();}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}].parentBB\ =\ parentBB;}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff_1_1d_groups_abfa32302fee5698b5df8897c54ea619c}{size}}()\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}.size();\}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff_1_1d_groups_abab0934ddcd9ce74d3c16533f743fc9a}{setRunningGroup}}(std::string\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}})\{this-\/>\mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}}\ =\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}};\}}
+\DoxyCodeLine{00116\ \ \ \ \ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff_1_1d_groups_ad80b7f9c00c1621a4657980636996e52}{setRunningGroupByRank}}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{ittnotify__static_8h_a4d59258314b5b7d431d257e3a5a98b57}{rank}})\{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}}\ =\ \mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}}[\mbox{\hyperlink{ittnotify__static_8h_a4d59258314b5b7d431d257e3a5a98b57}{rank}}].name;}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ \ \ *\ Set\ the\ thread\ mapping\ if\ specified\ in\ the\ configuration\ file.\ Otherwise\ use\ the\ default\ mapping\ specified\ in\ the\ legacy\ FastFlow\ config.hpp\ file.}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ \ *\ In\ config\ file\ the\ mapping\ can\ be\ specified\ for\ each\ group\ through\ the\ key\ "{}threadMapping"{}}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff_1_1d_groups_a2ce0bbe9949e68743506d14c283683da}{setThreadMapping}}()\{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}\ =\ std::find\_if(\mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}}.begin(),\ \mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}}.end(),\ [\textcolor{keyword}{this}](\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}})\{return\ g.name\ ==\ this-\/>runningGroup;\});}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}\ !=\ \mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}}.end()\ \&\&\ !\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}-\/>threadMapping.empty())}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1thread_mapper_ae889e3e371cc7bb4e0fc067f74f097c1}{threadMapper::instance}}()-\/>\mbox{\hyperlink{classff_1_1thread_mapper_a26c07e9815c8da6bf496fccff29bf0c8}{setMappingList}}(\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}-\/>threadMapping.c\_str());}
+\DoxyCodeLine{00129\ \ \ \ \ \}}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{classff_1_1d_groups_a5e1240a7d9f19c470d0b9698eefd6958}{getRunningGroup}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}};\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff_1_1d_groups_a1a9a5860791645ee41fa60229f2ce6d6}{forceProtocol}}(\mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1e}{Proto}}\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\{this-\/>usedProtocol\ =\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}};\}}
+\DoxyCodeLine{00134\ \ \ \ \ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff_1_1d_groups_a77bdfae3f0329f0b903abfc89dba9c17}{run\_and\_wait\_end}}(\mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}*\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}})\{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}.find(\mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}})\ ==\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}.end())\{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{ff::error}}(\textcolor{stringliteral}{"{}The\ group\ \%s\ is\ not\ found\ nor\ implemented!\(\backslash\)n"{}},\ \mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}}.c\_str());}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ allDeriveFromParent\ =\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ [\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}},\ ir]:\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}})\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ir.parentBB\ !=\ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}})\ \{\ allDeriveFromParent\ =\ \textcolor{keyword}{false};\ \textcolor{keywordflow}{break};\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (allDeriveFromParent)\ \{}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}\ *mypipe\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}};}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ mypipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_ab58d4873ed5492773a5dc0b013eaebc5}{add\_stage}}(\mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}});}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{ittnotify__static_8h_ab242ec323769be8fbbf53617a69d14ff}{parent}}\ =\ mypipe;}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{comment}{//\ qui\ dovrei\ creare\ la\ rappresentazione\ intermedia\ di\ tutti}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classff_1_1d_groups_abea091126db400780b99da540751af5c}{prepareIR}}(parent);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#ifdef\ PRINT\_IR}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ this-\/>annotatedGroups[this-\/>\mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}}].print();}
+\DoxyCodeLine{00156\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{comment}{//\ buildare\ il\ farm\ dalla\ rappresentazione\ intermedia\ del\ gruppo\ che\ devo\ rannare}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_group}{dGroup}}\ \_grp(this-\/>annotatedGroups[this-\/>\mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}}]);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{comment}{//\ rannere\ il\ farm\ come\ sotto!}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{if}\ (\_grp.\mbox{\hyperlink{classff_1_1ff__farm_a89ce87c93462adc209a3af4e3f2c5c23}{run}}()\ <\ 0)\{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}Error\ running\ the\ group!"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00164\ \ \ \ \ \}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\_grp.\mbox{\hyperlink{classff_1_1ff__farm_aecfdf624552b6d156de35fb5db36604c}{wait}}()\ <\ 0)\{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}Error\ waiting\ the\ group!"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ DFF\_MPI}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff_1_1d_groups_a0f9c724bde964c962cc19e4da7efa8cc}{usedProtocol}}\ ==\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaece8c4cb0f2685308261ef5409676a18}{Proto::MPI}})}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (MPI\_Finalize()\ !=\ MPI\_SUCCESS)\ abort();}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif\ }}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00177\ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a3d39f2d6f5c4f47f0957670d8dd34b05}{dGroups}}()\ :\ \mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}}()\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ costruttore}}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ std::map<ff\_node*,\ std::string>\ \mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}};}
+\DoxyCodeLine{00183\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{static}\ \mbox{\hyperlink{classff_1_1d_groups_a3d39f2d6f5c4f47f0957670d8dd34b05}{dGroups}}*\ \mbox{\hyperlink{classff_1_1d_groups_af286a6db78fdf327cb8361a6b51bd38d}{i}}\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00185\ \ \ \ \ std::map<std::string,\ ff\_IR>\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}};}
+\DoxyCodeLine{00186\ \ \ \ \ }
+\DoxyCodeLine{00187\ \ \ \ \ std::string\ \mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}};}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{comment}{//\ helper\ class\ to\ parse\ config\ file\ Json}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structff_1_1d_groups_1_1_g}{G}}\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a46a9bc62fd9920d980d80fec4916d4eb}{name}};}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_af73ca73f94a2b07b57dc1acb40a0297c}{address}};}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ std::string\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_aacdcf66336f19e5a9bec773286dc2be3}{threadMapping}};}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a89243e94a667e9f60252d49186e53e02}{port}};}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a7d474b88fcce4e90919dacf0aa855eb3}{batchSize}}\ \ \ \ \ \ \ \ \ \ =\ \mbox{\hyperlink{dff_8hpp_a123fa013ecd2c91686ad58c0b8d985b3}{DEFAULT\_BATCH\_SIZE}};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_ac74df6b3e9ab24618fc0c059d9029882}{internalMessageOTF}}\ =\ \mbox{\hyperlink{dff_8hpp_a087a86968d7c77fbd2ec5d81cacac019}{DEFAULT\_INTERNALMSG\_OTF}};}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a5cddeb4872948abf390d307aebcbc48e}{messageOTF}}\ \ \ \ \ \ \ \ \ =\ \mbox{\hyperlink{dff_8hpp_a98084099edfbe21df8ff5a1f89c26700}{DEFAULT\_MESSAGE\_OTF}};}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ Archive>}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_abf68113d56eb15ca872d8b5086d5c272}{load}}(\ Archive\ \&\ ar\ )\{}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ ar(cereal::make\_nvp(\textcolor{stringliteral}{"{}name"{}},\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a46a9bc62fd9920d980d80fec4916d4eb}{name}}));}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ endpoint;}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ar(cereal::make\_nvp(\textcolor{stringliteral}{"{}endpoint"{}},\ endpoint));\ std::vector\ endp(\mbox{\hyperlink{classff_1_1d_groups_a43edefde542b6a3da77ac311982f5420}{split}}(endpoint,\ \textcolor{charliteral}{':'}));}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_af73ca73f94a2b07b57dc1acb40a0297c}{address}}\ =\ endp[0];\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a89243e94a667e9f60252d49186e53e02}{port}}\ =\ std::stoi(endp[1]);}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (cereal::Exception\&)\ \{ar.setNextName(\textcolor{keyword}{nullptr});\}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ar(cereal::make\_nvp(\textcolor{stringliteral}{"{}batchSize"{}},\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a7d474b88fcce4e90919dacf0aa855eb3}{batchSize}}));}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (cereal::Exception\&)\ \{ar.setNextName(\textcolor{keyword}{nullptr});\}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ar(cereal::make\_nvp(\textcolor{stringliteral}{"{}internalMessageOTF"{}},\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_ac74df6b3e9ab24618fc0c059d9029882}{internalMessageOTF}}));}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (cereal::Exception\&)\ \{ar.setNextName(\textcolor{keyword}{nullptr});\}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ar(cereal::make\_nvp(\textcolor{stringliteral}{"{}messageOTF"{}},\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_a5cddeb4872948abf390d307aebcbc48e}{messageOTF}}));}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (cereal::Exception\&)\ \{ar.setNextName(\textcolor{keyword}{nullptr});\}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ar(cereal::make\_nvp(\textcolor{stringliteral}{"{}threadMapping"{}},\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g_aacdcf66336f19e5a9bec773286dc2be3}{threadMapping}}));}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (cereal::Exception\&)\ \{ar.setNextName(\textcolor{keyword}{nullptr});\}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \};}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ std::vector<G>\ \mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}};}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ std::vector<std::string>\ \mbox{\hyperlink{classff_1_1d_groups_a43edefde542b6a3da77ac311982f5420}{split}}\ (\textcolor{keyword}{const}\ std::string\ \&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\ \textcolor{keywordtype}{char}\ delim)\ \{}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ std::vector<std::string>\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ std::stringstream\ ss\ (\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}});}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ std::string\ item;}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (getline\ (ss,\ item,\ delim))}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}.push\_back\ (item);}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00239\ \ \ \ \ \}}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classff_1_1d_groups_abea091126db400780b99da540751af5c}{prepareIR}}(\mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}*\ parentPipe)\{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff___i_r}{ff::ff\_IR}}\&\ runningGroup\_IR\ =\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[this-\/>runningGroup];}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_af04eaeacd886499f319000f82296be8a}{protocol}}\ =\ this-\/>usedProtocol;\ \textcolor{comment}{//\ set\ the\ protocol}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__node}{ff\_node}}*\ previousStage\ =\ \mbox{\hyperlink{namespaceff_ae3498d3d29550a469d6ff773fcbd57e2}{getPreviousStage}}(parentPipe,\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}});}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__node}{ff\_node}}*\ nextStage\ =\ \mbox{\hyperlink{namespaceff_a2586793c51da311cfad4289359a7683f}{getNextStage}}(parentPipe,\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}});}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO:\ check\ coverage\ all\ 1st\ level}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classff_1_1d_groups_af286a6db78fdf327cb8361a6b51bd38d}{i}}\ =\ 0;\ \mbox{\hyperlink{classff_1_1d_groups_af286a6db78fdf327cb8361a6b51bd38d}{i}}\ <\ \mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}}.size();\ \mbox{\hyperlink{classff_1_1d_groups_af286a6db78fdf327cb8361a6b51bd38d}{i}}++)\{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structff_1_1d_groups_1_1_g}{G}}\ \&\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}\ =\ \mbox{\hyperlink{classff_1_1d_groups_a75a9e368717f57e697169d1889f59e65}{parsedGroups}}[\mbox{\hyperlink{classff_1_1d_groups_af286a6db78fdf327cb8361a6b51bd38d}{i}}];}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ throw\ an\ error\ if\ a\ group\ in\ the\ configuration\ has\ not\ been\ annotated\ in\ the\ current\ program}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}.contains(\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.name))\ \textcolor{keywordflow}{throw}\ \mbox{\hyperlink{struct_f_f___exception}{FF\_Exception}}(\textcolor{stringliteral}{"{}present\ in\ the\ configuration\ file\ has\ not\ been\ implemented!\ :("{}});}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ endpoint\ =\ this-\/>usedProtocol\ ==\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaa040cd7feeb588104634cdadf35abf1c}{Proto::TCP}}\ ?\ \mbox{\hyperlink{structff__endpoint}{ff\_endpoint}}(\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.address,\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.port)\ :\ \mbox{\hyperlink{structff__endpoint}{ff\_endpoint}}(\mbox{\hyperlink{classff_1_1d_groups_af286a6db78fdf327cb8361a6b51bd38d}{i}});}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ endpoint.groupName\ =\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.name;}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ annotate\ the\ listen\ endpoint\ for\ the\ specified\ group}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.name].listenEndpoint\ =\ endpoint;}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set\ the\ batch\ size\ for\ each\ group}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.batchSize\ >\ 1)\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.name].outBatchSize\ =\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.batchSize;}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.messageOTF)\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.name].messageOTF\ =\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.messageOTF;}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.internalMessageOTF)\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.name].internalMessageOTF\ =\ \mbox{\hyperlink{offscreen_8c_a8cf17d727651616de6f2b79ef32170cd}{g}}.internalMessageOTF;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ check\ first\ level\ pipeline\ before\ strting\ building\ the\ groups.}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{comment}{//\ build\ the\ map\ parentBB\ -\/>\ <groups\ names>}}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ std::map<ff\_node*,\ std::set<std::string>>\ parentBB2GroupsName;}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}:\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}})\ parentBB2GroupsName[\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.second.parentBB].insert(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first);}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \textcolor{comment}{//\ iterate\ over\ the\ 1st\ level\ building\ blocks\ and\ the\ list\ of\ create\ groups\ }}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ pair\ :\ parentBB2GroupsName)\{}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{comment}{//just\ build\ the\ current\ previous\ the\ current\ and\ the\ next\ stage\ of\ the\ parentbuilding\ block\ i'm\ going\ to\ exeecute\ \ ////\ TODO:\ reprhase\ this\ comment!}}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \textcolor{comment}{//if\ (!(pair.first\ ==\ previousStage\ ||\ pair.first\ ==\ runningGroup\_IR.parentBB\ ||\ pair.first\ ==\ nextStage))}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ continue;}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isSrc\ =\ \mbox{\hyperlink{namespaceff_afb200e23382ab850a5add3c7390df6f4}{isSource}}(pair.first,\ parentPipe);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isSnk\ =\ \mbox{\hyperlink{namespaceff_ac3656f7bdea07338ee8dd6be66817db0}{isSink}}(pair.first,\ parentPipe);}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ from\ the\ under\ analysis\ 1st\ level\ building\ block\ it\ has\ been\ created\ just\ one\ group}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pair.second.size()\ ==\ 1)\{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ unique\ group\ is\ not\ the\ one\ i'm\ going\ to\ run\ just\ skip\ this\ 1st\ level\ building\ block}}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((isSrc\ ||\ pair.first-\/>isDeserializable())\ \&\&\ (isSnk\ ||\ pair.first-\/>isSerializable()))\{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ ir\_\ =\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[*pair.second.begin()];}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ ir\_.insertInList(std::make\_pair(pair.first,\ \mbox{\hyperlink{namespaceff_ae2980b109d0a7591e4678014fbb40552a61cab97ce913925da9db1434b20124d3}{SetEnum::L}}),\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ ir\_.isSink\ =\ isSnk;\ ir\_.isSource\ =\ isSrc;}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};\ \textcolor{comment}{//\ skip\ anyway}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ i'm\ here\ it\ means\ that\ from\ this\ 1st\ level\ building\ block,\ multiple\ groups\ have\ been\ created!\ (An\ Error\ or\ an\ A2A\ or\ a\ Pipe\ BB)}}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ multiple\ groups\ created\ from\ a\ pipeline!}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pair.first-\/>isPipe())\{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isMainPipe\ =\ pair.first\ ==\ parentPipe;}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}*\ originalPipe\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}*\textcolor{keyword}{>}(pair.first);}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ pipe\ coincide\ with\ the\ main\ Pipe,\ just\ ignore\ the\ fact\ that\ is\ wrapped\ around,\ since\ it\ will\ be\ handled\ later\ on!}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ iswrappedAround\ =\ isMainPipe\ ?\ \mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}\ :\ originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a5ba27b6a4a49b946466ecbd3f562728a}{isset\_wraparound}}();}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ that\ all\ stages\ were\ annotated}}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classff_1_1ff__node}{ff\_node}}*\ child\ :\ originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a98c5c28af305a11748597e34e65f150e}{getStages}}())}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}.contains(child))\{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}When\ create\ a\ group\ from\ a\ pipeline,\ all\ the\ stages\ must\ be\ annotated\ on\ a\ group!"{}});}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ abort();}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ gName:\ pair.second)\{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}*\ mypipe\ =\ \textcolor{keyword}{new}\ \mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}};}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classff_1_1ff__node}{ff\_node}}*\ child\ :\ originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a98c5c28af305a11748597e34e65f150e}{getStages}}())\{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}[child]\ ==\ gName)\{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ current\ builiding\ pipe\ has\ a\ stages,\ and\ the\ last\ one\ is\ not\ the\ previous\ i'm\ currently\ including\ there\ is\ a\ problem!}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (mypipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a98c5c28af305a11748597e34e65f150e}{getStages}}().size()\ !=\ 0\ \&\&\ originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a1161273061cb3d12ed9fe00b47a68aac}{get\_stageindex}}(mypipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a2646d913cfe74b24a981862e48316c99}{get\_laststage}}())+1\ !=\ originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a1161273061cb3d12ed9fe00b47a68aac}{get\_stageindex}}(child))\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}There\ are\ some\ stages\ missing\ in\ the\ annottation!\(\backslash\)n"{}});}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ abort();}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ mypipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_ab58d4873ed5492773a5dc0b013eaebc5}{add\_stage}}(child);}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ =\ mypipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a7cc0d9d21a4d9f1f3c3b8ba1c09d57ea}{get\_firststage}}()\ ==\ originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a7cc0d9d21a4d9f1f3c3b8ba1c09d57ea}{get\_firststage}}();}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{ittnotify__static_8h_ae6f0aed6c2af4489760c7c13c49ae904}{tail}}\ =\ mypipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a2646d913cfe74b24a981862e48316c99}{get\_laststage}}()\ ==\ originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a2646d913cfe74b24a981862e48316c99}{get\_laststage}}();}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (((\mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ \&\&\ isSrc\ \&\&\ !iswrappedAround)\ ||\ mypipe-\/>isDeserializable())\ \&\&\ ((\mbox{\hyperlink{ittnotify__static_8h_ae6f0aed6c2af4489760c7c13c49ae904}{tail}}\ \&\&\ isSnk\ \&\&\ !iswrappedAround)\ ||\ mypipe-\/>isSerializable()))\ \ }
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].insertInList(std::make\_pair(mypipe,\ \mbox{\hyperlink{namespaceff_ae2980b109d0a7591e4678014fbb40552a61cab97ce913925da9db1434b20124d3}{SetEnum::L}}));}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}The\ group\ cannot\ serialize\ something!\(\backslash\)n"{}});}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ abort();}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ \&\&\ isSrc)\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].isSource\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ittnotify__static_8h_ae6f0aed6c2af4489760c7c13c49ae904}{tail}}\ \&\&\ isSnk)\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].isSink\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{ittnotify__static_8h_ae6f0aed6c2af4489760c7c13c49ae904}{tail}})}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].destinationEndpoints.push\_back(\{\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8a7e34b7ae523ac22114cdb965ee8db601}{ChannelType::FWD}},\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}[originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_ac36117f6f593036b04aa0cc0738ff589}{get\_nextstage}}(mypipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a2646d913cfe74b24a981862e48316c99}{get\_laststage}}())]].listenEndpoint\});}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (iswrappedAround)}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ this\ is\ the\ last\ stage\ \&\ the\ pipe\ is\ wrapper\ around\ i\ connect\ tot\ he\ "{}head"{}\ groups\ of\ this\ pipeline}}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].destinationEndpoints.push\_back(\{\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8ac53d16911739e991ff812058af14979c}{ChannelType::FBK}},\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}[originalPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a7cc0d9d21a4d9f1f3c3b8ba1c09d57ea}{get\_firststage}}()]].listenEndpoint\});}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ a\ new\ expected\ connection\ if\ i'm\ not\ the\ head\ or\ i'm\ the\ head\ and\ the\ pipeline\ is\ wrapped\ around}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{ittnotify__static_8h_ad492e8facf9b4113e52f1918fceb8804}{head}}\ ||\ iswrappedAround)}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].expectedEOS\ =\ 1;}
+\DoxyCodeLine{00346\ \ \ \ \ }
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{\ \textcolor{comment}{//\ multiple\ groups\ created\ from\ an\ all2all!}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ std::set<std::pair<ff\_node*,\ SetEnum>>\ children\ =\ \mbox{\hyperlink{namespaceff_a52463f5eef80c9fdb21aa49ed79f5f05}{getChildBB}}(pair.first);}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ std::erase\_if(children,\ [\&](\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}.contains(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\&\ groupName\ =\ \mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}[\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first];\ }
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (((isSrc\ \&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.second\ ==\ \mbox{\hyperlink{namespaceff_ae2980b109d0a7591e4678014fbb40552a61cab97ce913925da9db1434b20124d3}{SetEnum::L}})\ ||\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first-\/>isDeserializable())\ \&\&\ (isSnk\ ||\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first-\/>isSerializable()))\{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[groupName].insertInList(std::make\_pair(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first,\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.second));\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!children.empty())\{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ seconda\ passata\ per\ verificare\ se\ ce\ da\ qualche\ parte\ c'è\ copertura\ completa\ altrimenti\ errore}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ std::string\&\ gName\ :\ pair.second)\{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff___i_r}{ff\_IR}}\&\ ir\ =\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName];}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ ir.\mbox{\hyperlink{classff_1_1ff___i_r_a4cbbde05c48197ffb59499becf40ed6f}{computeCoverage}}();}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ir.\mbox{\hyperlink{classff_1_1ff___i_r_ab1c7809ae13b29c5e02f42f64c11b391}{coverageL}})}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::erase\_if(children,\ [\&](\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.second\ ==\ \mbox{\hyperlink{namespaceff_ae2980b109d0a7591e4678014fbb40552ab952638c2af059c3a08a8b996bb4a758}{SetEnum::R}}\ \&\&\ (isSnk\ ||\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first-\/>isSerializable())\ \&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first-\/>isDeserializable())\{}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ir.\mbox{\hyperlink{classff_1_1ff___i_r_a21cd18c7503dd9b082d9c061aca1ab8c}{insertInList}}(std::make\_pair(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first,\ \mbox{\hyperlink{namespaceff_ae2980b109d0a7591e4678014fbb40552ab952638c2af059c3a08a8b996bb4a758}{SetEnum::R}}));\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ir.\mbox{\hyperlink{classff_1_1ff___i_r_a0c2cc308fb273ec6e9a8fd145400116e}{coverageR}})}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::erase\_if(children,\ [\&](\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\{}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.second\ ==\ \mbox{\hyperlink{namespaceff_ae2980b109d0a7591e4678014fbb40552a61cab97ce913925da9db1434b20124d3}{SetEnum::L}}\ \&\&\ (isSrc\ ||\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first-\/>isDeserializable())\ \&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first-\/>isSerializable())\{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ir.\mbox{\hyperlink{classff_1_1ff___i_r_a21cd18c7503dd9b082d9c061aca1ab8c}{insertInList}}(std::make\_pair(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.first,\ \mbox{\hyperlink{namespaceff_ae2980b109d0a7591e4678014fbb40552a61cab97ce913925da9db1434b20124d3}{SetEnum::L}}));\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ ancora\ dei\ building\ block\ figli\ non\ aggiunti\ a\ nessun\ gruppo,\ lancio\ errore\ e\ abortisco\ l'esecuzione}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!children.empty())\{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ std::cerr\ <<\ \textcolor{stringliteral}{"{}Some\ building\ block\ has\ not\ been\ annotated\ and\ no\ coverage\ found!\ You\ missed\ something.\ Aborting\ now"{}}\ <<\ std::endl;}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ abort();}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \ }
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ std::string\&\ gName\ :\ pair.second)\ \{}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].computeCoverage();}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ compute\ the\ coverage\ anyway}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ std::string\&\ \_gName\ :\ pair.second)\{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ \_ir\ =\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\_gName];}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set\ the\ isSrc\ and\ isSink\ fields}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \_ir.isSink\ =\ isSnk;\ \_ir.isSource\ =\ isSrc;}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ populate\ the\ set\ with\ the\ names\ of\ other\ groups\ created\ from\ this\ 1st\ level\ BB}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \_ir.otherGroupsFromSameParentBB\ =\ pair.second;}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \textcolor{comment}{//runningGroup\_IR.isSink\ =\ isSnk;\ runningGroup\_IR.isSource\ =\ isSrc;}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \textcolor{comment}{//runningGroup\_IR.otherGroupsFromSameParentBB\ =\ pair.second;}}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \textcolor{comment}{//\ compute\ routing\ for\ horizzontally\ splitted\ A2A}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \textcolor{comment}{//\ this\ is\ meaningful\ only\ if\ the\ group\ is\ horizontal\ and\ made\ of\ an\ a2a}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a810d0e1a2c92625af369515c7ba64548}{isVertical}}())\{}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ assert(runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_ac8e132cbcab68af6a4ca13bbcccd62f3}{isAll2All}}());}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff__a2a}{ff\_a2a}}*\ parentA2A\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classff_1_1ff__a2a}{ff\_a2a}}*\textcolor{keyword}{>}(runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}});}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1svector}{ff::svector<ff\_node*>}}\ inputs;}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classff_1_1ff__node}{ff\_node}}*\ child\ :\ parentA2A-\/>\mbox{\hyperlink{classff_1_1ff__a2a_a15e634b23e08ae53f1d5296cae30fb9d}{getSecondSet}}())\ child-\/>get\_in\_nodes(inputs);}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_adca69e32ababf5091191ed9df75acfa4}{rightTotalInputs}}\ =\ inputs.\mbox{\hyperlink{classff_1_1svector_a29125256281f793b0808ecfae6ea68ec}{size}}();}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1svector}{ff::svector<ff\_node*>}}\ outputs;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classff_1_1ff__node}{ff\_node}}*\ child\ :\ parentA2A-\/>\mbox{\hyperlink{classff_1_1ff__a2a_aab5b0ed53d04a6ae56fcc801f7f7ce7c}{getFirstSet}}())\ child-\/>get\_out\_nodes(outputs);}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a94ec2ef1246a090b2146f28fadeca358}{leftTotalOuputs}}\ =\ outputs.\mbox{\hyperlink{classff_1_1svector_a29125256281f793b0808ecfae6ea68ec}{size}}();}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ \ \ }
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \textcolor{comment}{//\#\#\#\#\#\#\#\#\#\#\#\#\#\ compute\ the\ number\ of\ excpected\ input\ connections}}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ }
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \textcolor{comment}{//\ handle\ horizontal\ groups\ }}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_aa429d14204d6da2f111e934f985427c1}{hasRightChildren}}())\{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ currentGroups\ =\ parentBB2GroupsName[runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}];}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a9ad90566dbbf3c7f9931d62505f9b308}{expectedEOS}}\ =\ std::count\_if(currentGroups.cbegin(),\ currentGroups.cend(),\ [\&](\textcolor{keyword}{auto}\&\ gName)\{return\ (!annotatedGroups[gName].isVertical()\ ||\ annotatedGroups[gName].hasLeftChildren());\});}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ current\ group\ is\ horizontal\ count\ out\ itsleft\ from\ the\ all\ horizontals}}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a810d0e1a2c92625af369515c7ba64548}{isVertical}}())\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a9ad90566dbbf3c7f9931d62505f9b308}{expectedEOS}}\ -\/=\ 1;}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ previousStage\ exists,\ count\ all\ the\ ouput\ groups\ pointing\ to\ the\ one\ i'm\ going\ to\ run}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ runningGroup\ comes\ from\ a\ pipe,\ make\ sure\ i'm\ the\ head\ }}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (previousStage\ \&\&\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a925fa346a6125c908705f72b461198da}{hasLeftChildren}}()\ \&\&\ (!runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_af6f2c022154421e2908065194b3cc75e}{isPipe}}()\ ||\ \mbox{\hyperlink{classff_1_1d_groups_a66091ed66d55f4c95c87c96be381750d}{inputGroups}}(parentBB2GroupsName[runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}]).contains(\mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}})))}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a9ad90566dbbf3c7f9931d62505f9b308}{expectedEOS}}\ +=\ \mbox{\hyperlink{classff_1_1d_groups_ae6f5ff45fa9531a230ecd74763a851a5}{outputGroups}}(parentBB2GroupsName[previousStage]).size();}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ }
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \textcolor{comment}{//\ FEEDBACK\ RELATED\ (wrap\ around\ of\ the\ main\ pipe!)}}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ main\ pipe\ is\ wrapped-\/around\ i\ take\ all\ the\ outputgroups\ of\ the\ last\ stage\ of\ the\ pipeline\ and\ the\ cardinality\ must\ set\ to\ the\ expected\ input\ connections}}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!previousStage\ \&\&\ parentPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a5ba27b6a4a49b946466ecbd3f562728a}{isset\_wraparound}}())}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a9ad90566dbbf3c7f9931d62505f9b308}{expectedEOS}}\ +=\ \mbox{\hyperlink{classff_1_1d_groups_ae6f5ff45fa9531a230ecd74763a851a5}{outputGroups}}(parentBB2GroupsName[parentPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a98c5c28af305a11748597e34e65f150e}{getStages}}().back()]).size();}
+\DoxyCodeLine{00448\ }
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a9ad90566dbbf3c7f9931d62505f9b308}{expectedEOS}}\ >\ 0)\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a48bc7a08d2a06f5d23e888e2c0c126b3}{hasReceiver}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \textcolor{comment}{//\#\#\#\#\#\#\#\#\#\#\#\#\ compute\ the\ name\ of\ the\ outgoing\ connection\ groups}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_ac8e132cbcab68af6a4ca13bbcccd62f3}{isAll2All}}()\ \&\&\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a810d0e1a2c92625af369515c7ba64548}{isVertical}}()\ \&\&\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a925fa346a6125c908705f72b461198da}{hasLeftChildren}}()\ \&\&\ !runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a078b841a772f6a003a3750ff4a0f2c01}{wholeParent}})\{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ inserisci\ tutte\ i\ gruppi\ di\ questo\ bb\ a\ destra}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gName:\ parentBB2GroupsName[runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}])}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].isVertical()\ ||\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].hasRightChildren())}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a4dcdd894af35dacaaebb2a35cfab9753}{destinationEndpoints}}.push\_back(\{\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8a7e34b7ae523ac22114cdb965ee8db601}{ChannelType::FWD}},\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].listenEndpoint\});}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_af6f2c022154421e2908065194b3cc75e}{isPipe}}()\ \&\&\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}\ !=\ parentPipe)\{}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nextStage\ \&\&\ \mbox{\hyperlink{classff_1_1d_groups_ae6f5ff45fa9531a230ecd74763a851a5}{outputGroups}}(parentBB2GroupsName[runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}]).contains(\mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}}))}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gName\ :\ \mbox{\hyperlink{classff_1_1d_groups_a66091ed66d55f4c95c87c96be381750d}{inputGroups}}(parentBB2GroupsName[nextStage]))}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a4dcdd894af35dacaaebb2a35cfab9753}{destinationEndpoints}}.push\_back(\{\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8a7e34b7ae523ac22114cdb965ee8db601}{ChannelType::FWD}},\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].listenEndpoint\});}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a810d0e1a2c92625af369515c7ba64548}{isVertical}}())\{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ inserisci\ tutti\ i\ gruppi\ come\ sopra}}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gName:\ parentBB2GroupsName[runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}])}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((!\mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].isVertical()\ ||\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].hasRightChildren())\ \&\&\ gName\ !=\ \mbox{\hyperlink{classff_1_1d_groups_a37c81f616e62ed8e9df44356b6bfbbc0}{runningGroup}})}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a4dcdd894af35dacaaebb2a35cfab9753}{destinationEndpoints}}.push\_back(\{\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8afd5a5f51ce25953f3db2c7e93eb7864a}{ChannelType::INT}},\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].listenEndpoint\});}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nextStage)}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gName\ :\ \mbox{\hyperlink{classff_1_1d_groups_a66091ed66d55f4c95c87c96be381750d}{inputGroups}}(parentBB2GroupsName[nextStage]))}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a4dcdd894af35dacaaebb2a35cfab9753}{destinationEndpoints}}.push\_back(\{\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8a7e34b7ae523ac22114cdb965ee8db601}{ChannelType::FWD}},\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].listenEndpoint\});}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FEEDBACK\ RELATED\ (wrap\ around\ of\ the\ main\ pipe!)}}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (parentPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a5ba27b6a4a49b946466ecbd3f562728a}{isset\_wraparound}}())\{}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gName\ :\ \mbox{\hyperlink{classff_1_1d_groups_a66091ed66d55f4c95c87c96be381750d}{inputGroups}}(parentBB2GroupsName[parentPipe-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a98c5c28af305a11748597e34e65f150e}{getStages}}().front()]))}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a4dcdd894af35dacaaebb2a35cfab9753}{destinationEndpoints}}.push\_back(\{\mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8ac53d16911739e991ff812058af14979c}{ChannelType::FBK}},\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].listenEndpoint\});}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ }
+\DoxyCodeLine{00483\ \ \ \ \ \ \ }
+\DoxyCodeLine{00484\ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a17fc0dacee33717f169dc57820684f38}{buildIndexes}}();}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a4dcdd894af35dacaaebb2a35cfab9753}{destinationEndpoints}}.empty())\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_acddb2ea01f51fed9d97fc8eea796cc02}{hasSender}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ }
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \textcolor{comment}{//\ experimental\ building\ the\ expected\ routing\ table\ for\ the\ running\ group\ offline\ (i.e.,\ statically)}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_acddb2ea01f51fed9d97fc8eea796cc02}{hasSender}})}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ [ct,\ \mbox{\hyperlink{_json_8c_a00793ba086b417bb3d75ab79af8c83fb}{ep}}]\ :\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a4dcdd894af35dacaaebb2a35cfab9753}{destinationEndpoints}})\{}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ destIR\ =\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[\mbox{\hyperlink{_json_8c_a00793ba086b417bb3d75ab79af8c83fb}{ep}}.groupName];}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ destIR.buildIndexes();}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ internalConnection\ =\ ct\ ==\ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8afd5a5f51ce25953f3db2c7e93eb7864a}{ChannelType::INT}}\ ||\ (ct\ ==\ \mbox{\hyperlink{ff__network_8hpp_a19a96edeeb9d37072c4ce9f862d19ba8a7e34b7ae523ac22114cdb965ee8db601}{ChannelType::FWD}}\ \&\&\ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}\ ==\ destIR.parentBB);\ \textcolor{comment}{//runningGroup\_IR.parentBB\ ==\ destIR.parentBB;}}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ runningGroup\_IR.\mbox{\hyperlink{classff_1_1ff___i_r_afc54d23b6031c3c5fc6c94046379809e}{routingTable}}[\mbox{\hyperlink{_json_8c_a00793ba086b417bb3d75ab79af8c83fb}{ep}}.groupName]\ =\ std::make\_pair(destIR.getInputIndexes(internalConnection),\ ct);}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00496\ }
+\DoxyCodeLine{00497\ \ \ \ \ \}}
+\DoxyCodeLine{00498\ }
+\DoxyCodeLine{00499\ \ \ std::set<std::string>\ \mbox{\hyperlink{classff_1_1d_groups_ae6f5ff45fa9531a230ecd74763a851a5}{outputGroups}}(std::set<std::string>\ groupNames)\{}
+\DoxyCodeLine{00500\ \ \ \ \ \textcolor{keywordflow}{if}\ (groupNames.size()\ >\ 1)}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ std::erase\_if(groupNames,\ [\textcolor{keyword}{this}](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gName)\{}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff___i_r}{ff\_IR}}\&\ ir\ =\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName];}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((ir.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_ac8e132cbcab68af6a4ca13bbcccd62f3}{isAll2All}}()\ \&\&\ ir.\mbox{\hyperlink{classff_1_1ff___i_r_a810d0e1a2c92625af369515c7ba64548}{isVertical}}()\ \&\&\ ir.\mbox{\hyperlink{classff_1_1ff___i_r_a925fa346a6125c908705f72b461198da}{hasLeftChildren}}())\ ||\ (ir.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_af6f2c022154421e2908065194b3cc75e}{isPipe}}()\ \&\&\ \mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}[\textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}*\textcolor{keyword}{>}(ir.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}})-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a2646d913cfe74b24a981862e48316c99}{get\_laststage}}()]\ !=\ gName));}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00505\ \ \ \ \ \textcolor{keywordflow}{return}\ groupNames;}
+\DoxyCodeLine{00506\ \ \ \}}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ std::set<std::string>\ \mbox{\hyperlink{classff_1_1d_groups_a66091ed66d55f4c95c87c96be381750d}{inputGroups}}(std::set<std::string>\ groupNames)\{}
+\DoxyCodeLine{00509\ \ \ \ \ \textcolor{keywordflow}{if}\ (groupNames.size()\ >\ 1)\ }
+\DoxyCodeLine{00510\ \ \ \ \ \ \ std::erase\_if(groupNames,[\textcolor{keyword}{this}](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gName)\{}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1ff___i_r}{ff\_IR}}\&\ ir\ =\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName];}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((ir.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_ac8e132cbcab68af6a4ca13bbcccd62f3}{isAll2All}}()\ \&\&\ ir.\mbox{\hyperlink{classff_1_1ff___i_r_a810d0e1a2c92625af369515c7ba64548}{isVertical}}()\ \&\&\ \mbox{\hyperlink{classff_1_1d_groups_a9d835e4a5931d02c8b78a42f9be450ea}{annotatedGroups}}[gName].hasRightChildren())\ ||\ (ir.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}}-\/>\mbox{\hyperlink{classff_1_1ff__node_af6f2c022154421e2908065194b3cc75e}{isPipe}}()\ \&\&\ \mbox{\hyperlink{classff_1_1d_groups_a5275717e6ba44b8a548293d647a5962f}{annotated}}[\textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classff_1_1ff__pipeline}{ff\_pipeline}}*\textcolor{keyword}{>}(ir.\mbox{\hyperlink{classff_1_1ff___i_r_a49ab272da0ff843d0fce3dd5a5acff05}{parentBB}})-\/>\mbox{\hyperlink{classff_1_1ff__pipeline_a7cc0d9d21a4d9f1f3c3b8ba1c09d57ea}{get\_firststage}}()]\ !=\ gName));}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \});}
+\DoxyCodeLine{00514\ \ \ \ \ \textcolor{keywordflow}{return}\ groupNames;}
+\DoxyCodeLine{00515\ \ \ \}}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \};}
+\DoxyCodeLine{00518\ }
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ }
+\DoxyCodeLine{00521\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceff_a781b85d5d76f5eacb150ed99df750b4c}{DFF\_Init}}(\textcolor{keywordtype}{int}\&\ argc,\ \textcolor{keywordtype}{char}**\&\ argv)\{}
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{keyword}{struct\ }sigaction\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}};}
+\DoxyCodeLine{00523\ \ \ \ \ memset(\&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},0,\textcolor{keyword}{sizeof}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}));\ \ \ \ }
+\DoxyCodeLine{00524\ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.sa\_handler=SIG\_IGN;}
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (sigaction(SIGPIPE,\&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ )\ ==\ -\/1\ )\ \{\ \ \ }
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ perror(\textcolor{stringliteral}{"{}sigaction"{}});}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00528\ \ \ \ \ \}\ }
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ std::string\ \mbox{\hyperlink{dff__run_8cpp_a38ae412dc79c65b339fe314c3aaf4544}{configFile}},\ groupName;\ \ }
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ argc;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\{}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (strstr(argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}],\ \textcolor{stringliteral}{"{}-\/-\/DFF\_Config"{}})\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\{}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *\ equalPosition\ =\ strchr(argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}],\ \textcolor{charliteral}{'='});}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (equalPosition\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\{}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ option\ is\ in\ the\ next\ argument\ array\ position}}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{dff__run_8cpp_a38ae412dc79c65b339fe314c3aaf4544}{configFile}}\ =\ std::string(argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1]);}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ \ argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1]\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++;}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ option\ is\ in\ the\ next\ position\ of\ this\ string}}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{dff__run_8cpp_a38ae412dc79c65b339fe314c3aaf4544}{configFile}}\ =\ std::string(++equalPosition);}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \ \ argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (strstr(argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}],\ \textcolor{stringliteral}{"{}-\/-\/DFF\_GName"{}})\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\{}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ *\ equalPosition\ =\ strchr(argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}],\ \textcolor{charliteral}{'='});}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (equalPosition\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\{}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ option\ is\ in\ the\ next\ argument\ array\ position}}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \ \ groupName\ =\ std::string(argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1]);}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1]\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++;}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ option\ is\ in\ the\ next\ position\ of\ this\ string}}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ groupName\ =\ std::string(++equalPosition);}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{00564\ \ \ \ \ \}}
+\DoxyCodeLine{00565\ }
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{dff__run_8cpp_a38ae412dc79c65b339fe314c3aaf4544}{configFile}}.empty())\{}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{ff::error}}(\textcolor{stringliteral}{"{}Config\ file\ not\ passed\ as\ argument!\(\backslash\)nUse\ option\ -\/-\/DFF\_Config=\(\backslash\)"{}config-\/file-\/name\(\backslash\)"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00569\ \ \ \ \ \}}
+\DoxyCodeLine{00570\ \ \ \ \ }
+\DoxyCodeLine{00571\ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a20c1bd59176c09b9d60673f476648841}{parseConfig}}(\mbox{\hyperlink{dff__run_8cpp_a38ae412dc79c65b339fe314c3aaf4544}{configFile}});}
+\DoxyCodeLine{00572\ }
+\DoxyCodeLine{00573\ \ \ \ \ \textcolor{keywordflow}{if}\ (!groupName.empty())}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a1a9a5860791645ee41fa60229f2ce6d6}{forceProtocol}}(\mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaa040cd7feeb588104634cdadf35abf1c}{Proto::TCP}});}
+\DoxyCodeLine{00575\ \textcolor{preprocessor}{\ \ \#ifdef\ DFF\_MPI}}
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a1a9a5860791645ee41fa60229f2ce6d6}{forceProtocol}}(\mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaece8c4cb0f2685308261ef5409676a18}{Proto::MPI}});}
+\DoxyCodeLine{00578\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00579\ }
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{dff__run_8cpp_a1ab2d65faee25026cef05ac410e9668b}{usedProtocol}}\ ==\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaa040cd7feeb588104634cdadf35abf1c}{Proto::TCP}})\{}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (groupName.empty())\{}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{ff::error}}(\textcolor{stringliteral}{"{}Group\ not\ passed\ as\ argument!\(\backslash\)nUse\ option\ -\/-\/DFF\_GName=\(\backslash\)"{}group-\/name\(\backslash\)"{}\(\backslash\)n"{}});}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \}\ }
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_abab0934ddcd9ce74d3c16533f743fc9a}{setRunningGroup}}(groupName);\ }
+\DoxyCodeLine{00587\ \ \ \ \ \}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \textcolor{preprocessor}{\ \ \#ifdef\ DFF\_MPI}}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{dff__run_8cpp_a1ab2d65faee25026cef05ac410e9668b}{usedProtocol}}\ ==\ \mbox{\hyperlink{ff__network_8hpp_a935ab6746fea268e5bb60a8755bc3c1eaece8c4cb0f2685308261ef5409676a18}{Proto::MPI}})\{}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \textcolor{comment}{//MPI\_Init(\&argc,\ \&argv);}}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ provided;}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ }
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (MPI\_Init\_thread(\&argc,\ \&argv,\ MPI\_THREAD\_MULTIPLE,\ \&provided)\ !=\ MPI\_SUCCESS)}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ }
+\DoxyCodeLine{00597\ \ \ \ \ \ \ }
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \textcolor{comment}{//\ no\ thread\ support\ }}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (provided\ <\ MPI\_THREAD\_MULTIPLE)\{}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceff_a27d926d29b55e019eba5b70672301d82}{error}}(\textcolor{stringliteral}{"{}No\ thread\ support\ by\ MPI\(\backslash\)n"{}});}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ myrank;}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ MPI\_Comm\_rank(MPI\_COMM\_WORLD,\ \&myrank);}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_ad80b7f9c00c1621a4657980636996e52}{setRunningGroupByRank}}(myrank);}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Running\ group:\ "{}}\ <<\ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a5e1240a7d9f19c470d0b9698eefd6958}{getRunningGroup}}()\ <<\ \textcolor{stringliteral}{"{}\ on\ rank:\ "{}}\ <<\ \ myrank\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00609\ \ \ \ \ \}}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ \textcolor{preprocessor}{\ \ \#endif\ }}
+\DoxyCodeLine{00612\ }
+\DoxyCodeLine{00613\ \ \ \ \ \textcolor{comment}{//\ set\ the\ mapping\ if\ specified}}
+\DoxyCodeLine{00614\ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a2ce0bbe9949e68743506d14c283683da}{setThreadMapping}}();}
+\DoxyCodeLine{00615\ }
+\DoxyCodeLine{00616\ \ \ \ \ \textcolor{comment}{//\ set\ the\ name\ for\ the\ printer}}
+\DoxyCodeLine{00617\ \ \ \ \ \mbox{\hyperlink{namespaceff_a1b0b61cafcd23d7133825158ea481f42}{ff::cout}}.setPrefix(\mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>getRunningGroup());}
+\DoxyCodeLine{00618\ }
+\DoxyCodeLine{00619\ \ \ \ \ \textcolor{comment}{//\ recompact\ the\ argv\ array}}
+\DoxyCodeLine{00620\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;}
+\DoxyCodeLine{00621\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ argc;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ argv[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}++]\ =\ argv[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{00624\ \ \ \ \ }
+\DoxyCodeLine{00625\ \ \ \ \ \textcolor{comment}{//\ update\ the\ argc\ value}}
+\DoxyCodeLine{00626\ \ \ \ \ argc\ =\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};}
+\DoxyCodeLine{00627\ }
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00629\ \}}
+\DoxyCodeLine{00630\ }
+\DoxyCodeLine{00631\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ std::string\ \mbox{\hyperlink{namespaceff_ab2e78d6657d41ab36d47327f17157ccb}{DFF\_getMyGroup}}()\ \{}
+\DoxyCodeLine{00632\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a5e1240a7d9f19c470d0b9698eefd6958}{getRunningGroup}}();}
+\DoxyCodeLine{00633\ \}}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff_1_1ff__pipeline_a5e4e944478605c55f4fbad3465b95b3e}{ff\_pipeline::run\_and\_wait\_end}}()\ \{}
+\DoxyCodeLine{00636\ \ \ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a77bdfae3f0329f0b903abfc89dba9c17}{run\_and\_wait\_end}}(\textcolor{keyword}{this});}
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00638\ \}}
+\DoxyCodeLine{00639\ }
+\DoxyCodeLine{00640\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classff_1_1ff__a2a_a7b6ff80c6788adca23cafbfa6f4e44a3}{ff\_a2a::run\_and\_wait\_end}}()\{}
+\DoxyCodeLine{00641\ \ \ \mbox{\hyperlink{classff_1_1ff__a2a_a3f36c1cb1d96150c90c517c1cae31d7e}{ff\_pipeline}}\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}};}
+\DoxyCodeLine{00642\ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}.add\_stage(\textcolor{keyword}{this});}
+\DoxyCodeLine{00643\ \ \ \mbox{\hyperlink{classff_1_1d_groups_a89675fbfa24bb29f5d31a93ed1fff153}{dGroups::Instance}}()-\/>\mbox{\hyperlink{classff_1_1d_groups_a77bdfae3f0329f0b903abfc89dba9c17}{run\_and\_wait\_end}}(\&\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{00644\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00645\ \}}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ }
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \ \ }
+\DoxyCodeLine{00650\ \}}
+\DoxyCodeLine{00651\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

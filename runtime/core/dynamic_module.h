@@ -1,9 +1,9 @@
 #pragma once
 
-#include <luisa/core/stl/optional.h>
-#include <luisa/core/stl/functional.h>
-#include <luisa/core/platform.h>
-#include <luisa/core/concepts.h>
+#include <runtime/core/stl/optional.h>
+#include <runtime/core/stl/functional.h>
+#include <runtime/core/platform.h>
+#include <runtime/core/concepts.h>
 
 namespace luisa {
 

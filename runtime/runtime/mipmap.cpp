@@ -1,6 +1,6 @@
-#include <luisa/core/logging.h>
-#include <luisa/core/magic_enum.h>
-#include <luisa/runtime/mipmap.h>
+#include <runtime/core/logging.h>
+#include <runtime/core/magic_enum.h>
+#include <runtime/runtime/mipmap.h>
 
 namespace luisa::compute::detail {
 

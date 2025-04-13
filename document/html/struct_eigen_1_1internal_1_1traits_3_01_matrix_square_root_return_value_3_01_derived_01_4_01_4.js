@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1traits_3_01_matrix_square_root_return_value_3_01_derived_01_4_01_4 =
+[
+    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01_matrix_square_root_return_value_3_01_derived_01_4_01_4.html#a140e381a31d5d89eb4aa3ac4504cc28c", null ]
+];

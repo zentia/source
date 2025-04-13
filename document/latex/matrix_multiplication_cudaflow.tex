@@ -1,0 +1,125 @@
+\doxysection{Matrix Multiplication (cuda\+Flow)}
+\hypertarget{matrix_multiplication_cudaflow}{}\label{matrix_multiplication_cudaflow}\index{Matrix Multiplication (cudaFlow)@{Matrix Multiplication (cudaFlow)}}
+Following up on \doxylink{matrix_multiplication}{Matrix Multiplication}, this page studies how to accelerate a matrix multiplication workload on a GPU using \doxylink{classtf_1_1cuda_flow}{tf\+::cuda\+Flow}.\hypertarget{matrix_multiplication_cudaflow_GPUAcceleratedMatrixMultiplication}{}\doxysubsection{\texorpdfstring{Define a Matrix Multiplication Kernel}{Define a Matrix Multiplication Kernel}}\label{matrix_multiplication_cudaflow_GPUAcceleratedMatrixMultiplication}
+GPU can perform a lot of parallel computations more than CPUs. It is especially useful for data-\/intensive computing such as matrix multiplication. With GPU, we express the parallel patterns at a fine-\/grained level. The kernel, written in CUDA, is described as follows\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ CUDA\ kernel\ to\ perform\ matrix\ multiplication}}
+\DoxyCodeLine{\_\_global\_\_\ \textcolor{keywordtype}{void}\ matmul(\textcolor{keywordtype}{int}\ *\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}},\ \textcolor{keywordtype}{int}\ *\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \textcolor{keywordtype}{int}\ *\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}},\ \textcolor{keywordtype}{int}\ K,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.y\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.y\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.y;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__parallel__for__each_8cpp_a539b07c7f86d3a9854ed81da50a4fb7d}{sum}}\ =\ 0;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ <\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ \&\&\ \mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ <\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}})\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ K;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{test__parallel__for__each_8cpp_a539b07c7f86d3a9854ed81da50a4fb7d}{sum}}\ +=\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}[\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ *\ K\ +\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ *\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ *\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}];}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}[\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ *\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}]\ =\ \mbox{\hyperlink{test__parallel__for__each_8cpp_a539b07c7f86d3a9854ed81da50a4fb7d}{sum}};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Each CUDA thread corresponds to an element of {\ttfamily C} and compute its result. Instead of storing each matrix in a 2D array, we use 1D layout to ease the data transfer between CPU and GPU. In a row-\/major layout, an element {\ttfamily (x, y)} in the 2D matrix can be addressed at {\ttfamily x \texorpdfstring{$\ast$}{*} width + y} in the transformed 1D layout.
+
+\hypertarget{matrix_multiplication_cudaflow_DefineAcudaFlowForMatrixMultiplication}{}\doxysubsection{\texorpdfstring{Define a cuda\+Flow for Matrix Multiplication}{Define a cuda\+Flow for Matrix Multiplication}}\label{matrix_multiplication_cudaflow_DefineAcudaFlowForMatrixMultiplication}
+The next step is to allocate memory for {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}, {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}, and {\ttfamily C} at a GPU. We create three tasks each calling {\ttfamily cuda\+Malloc} to allocate space for one matrix. Then, we create a cuda\+Flow to offload matrix multiplication to a GPU. The entire code is described as follows\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \mbox{\hyperlink{external_2taskflow_2benchmarks_2matrix__multiplication_2main_8cpp_a3a744240c07a8320395e70bc269dba64}{matrix\_multiplication}}(\textcolor{keywordtype}{int}*\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}},\ \textcolor{keywordtype}{int}*\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \textcolor{keywordtype}{int}*\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}},\ \textcolor{keywordtype}{int}\ K,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \{}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ allocate\ the\ host\ and\ gpu\ storage\ for\ A}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ allocate\_a\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ cudaMalloc(\&da,\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}*K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_a"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ allocate\ the\ host\ and\ gpu\ storage\ for\ B}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ allocate\_b\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ cudaMalloc(\&db,\ K*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_b"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ allocate\ the\ host\ and\ gpu\ storage\ for\ C}}
+\DoxyCodeLine{\ \ tf::Task\ allocate\_c\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ cudaMalloc(\&dc,\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{int}));}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_c"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ a\ cudaFlow\ task\ to\ run\ the\ matrix\ multiplication}}
+\DoxyCodeLine{\ \ tf::Task\ \mbox{\hyperlink{classtf_1_1cuda_flow}{cudaFlow}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ tf::cudaFlow\ cf;}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ copy\ data\ to\ da,\ db,\ and\ dc}}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ copy\_da\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(da,\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}*K).name(\textcolor{stringliteral}{"{}H2D\_A"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ copy\_db\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(db,\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ K*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}).name(\textcolor{stringliteral}{"{}H2D\_B"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ copy\_hc\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a02a041d5dd9e1e8958eb43e09331051e}{copy}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}},\ dc,\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}).name(\textcolor{stringliteral}{"{}D2H\_C"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \ \ dim3\ grid\ \ ((K+16-\/1)/16,\ (\mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}+16-\/1)/16);}
+\DoxyCodeLine{\ \ \ \ dim3\ \mbox{\hyperlink{mimalloc_8h_af7f922b73e3acdb4a430b72f1a1334a5}{block}}\ (16,\ 16);}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ kmatmul\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a1473a15a6023fbc25e1f029f2ff84aec}{kernel}}(grid,\ \mbox{\hyperlink{mimalloc_8h_af7f922b73e3acdb4a430b72f1a1334a5}{block}},\ 0,\ matmul,\ da,\ db,\ dc,\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}},\ K,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .name(\textcolor{stringliteral}{"{}matmul"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \ \ kmatmul.\mbox{\hyperlink{classtf_1_1cuda_task_a4a9ca1a34bac47e4c9b04eb4fb2f7775}{succeed}}(copy\_da,\ copy\_db)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1cuda_task_abdd68287ec4dff4216af34d1db44d1b4}{precede}}(copy\_hc);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ launch\ the\ cudaFlow}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\ \ \ \ cf.run(stream);}
+\DoxyCodeLine{\ \ \ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}cudaFlow"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ free\ the\ gpu\ storage}}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{mimalloc-override_8h_a9d4b5df3530d1bc733070a4669ba6ebc}{free}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ cudaFree(da);}
+\DoxyCodeLine{\ \ \ \ cudaFree(db);}
+\DoxyCodeLine{\ \ \ \ cudaFree(dc);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}free"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ dependency}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1cuda_flow}{cudaFlow}}.succeed(allocate\_a,\ allocate\_b,\ allocate\_c)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ .precede(\mbox{\hyperlink{mimalloc-override_8h_a9d4b5df3530d1bc733070a4669ba6ebc}{free}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ dump\ the\ graph\ without\ unfolding\ the\ cudaFlow}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.\mbox{\hyperlink{classtf_1_1cuda_graph_base_abd73a9268b80e74803f241ee10a842b6}{dump}}(std::cout);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ run\ the\ taskflow}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ dump\ the\ entire\ execution\ graph\ including\ unfolded\ cudaFlow}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Within the cuda\+Flow, we create two host-\/to-\/device (H2D) tasks that copy data from {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} and {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} to {\ttfamily da} and {\ttfamily db}, one device-\/to-\/host (D2H) task that copies the result from {\ttfamily dc} to {\ttfamily C}, and one kernel task that launches {\ttfamily matmul} on the GPU (by default, GPU 0). H2D tasks precede the kernel and the kernel precedes the D2H task. These GPU operations form a GPU task graph managed by a cuda\+Flow. The first dump of the taskflow gives the following graph\+:
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} cuda\+Flow encapsulates a GPU task dependency graph similar to a \doxylink{classtf_1_1_subflow}{tf\+::\+Subflow} (see \doxylink{SubflowTasking}{Subflow Tasking}). In order to visualize it, we need to execute the graph first and then dump the taskflow.\hypertarget{matrix_multiplication_cudaflow_MatrixMultiplicationcudaFlowBenchmarking}{}\doxysubsection{\texorpdfstring{Benchmarking}{Benchmarking}}\label{matrix_multiplication_cudaflow_MatrixMultiplicationcudaFlowBenchmarking}
+We run three versions of matrix multiplication, sequential CPU, parallel CPUs, and one GPU, on a machine of 12 Intel i7-\/8700 CPUs at 3.\+20 GHz and a Nvidia RTX 2080 GPU using various matrix sizes of {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}, {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}, and {\ttfamily C}.
+
+ \tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{6}{|X[-1]}|}
+\hline
+\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ C   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Sequential   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Parallel   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ GPU Parallel    }\\\cline{1-6}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ C   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Sequential   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Parallel   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ GPU Parallel    }\\\cline{1-6}
+\endhead
+\PBS\centering 10x10   &\PBS\centering 10x10   &\PBS\centering 10x10   &\PBS\centering 0.\+142 ms   &\PBS\centering 0.\+414 ms   &\PBS\centering 82 ms    \\\cline{1-6}
+\PBS\centering 100x100   &\PBS\centering 100x100   &\PBS\centering 100x100   &\PBS\centering 1.\+641 ms   &\PBS\centering 0.\+733 ms   &\PBS\centering 83 ms    \\\cline{1-6}
+\PBS\centering 1000x1000   &\PBS\centering 1000x1000   &\PBS\centering 1000x1000   &\PBS\centering 1532 ms   &\PBS\centering 504 ms   &\PBS\centering 85 ms    \\\cline{1-6}
+\PBS\centering 2000x2000   &\PBS\centering 2000x2000   &\PBS\centering 2000x2000   &\PBS\centering 25688 ms   &\PBS\centering 4387 ms   &\PBS\centering 133 ms    \\\cline{1-6}
+\PBS\centering 3000x3000   &\PBS\centering 3000x3000   &\PBS\centering 3000x3000   &\PBS\centering 104838 ms   &\PBS\centering 16170 ms   &\PBS\centering 214 ms    \\\cline{1-6}
+\PBS\centering 4000x4000   &\PBS\centering 4000x4000   &\PBS\centering 4000x4000   &\PBS\centering 250133 ms   &\PBS\centering 39646 ms   &\PBS\centering 427 ms   \\\cline{1-6}
+\end{longtabu}
+
+
+As the matrix size increases, the speed-\/up of GPU over CPUs becomes prominent. For example, at {\ttfamily 4000x4000}, the GPU runtime is 585.\+8 times faster than the sequential CPU runtime and is 92.\+8 times faster than the parallel CPU solutions. 

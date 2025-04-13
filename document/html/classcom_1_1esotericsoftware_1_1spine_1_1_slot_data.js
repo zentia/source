@@ -1,0 +1,25 @@
+var classcom_1_1esotericsoftware_1_1spine_1_1_slot_data =
+[
+    [ "SlotData", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a41f840fce64a46806561a36fb14e5440", null ],
+    [ "getAttachmentName", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#ad96dfe182e006dc89a0f47e1b078f33c", null ],
+    [ "getBlendMode", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#ac405ff3b8e32854779a1348e7b635c93", null ],
+    [ "getBoneData", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a93a11909b68f4365355ffb718da0b3aa", null ],
+    [ "getColor", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a276db2407623b0adcdf6d7498996057a", null ],
+    [ "getDarkColor", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a3eaf2dd978a6c625d2e82096543b862d", null ],
+    [ "getIndex", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#af123ff37cb5056a61ed215fc8e2798eb", null ],
+    [ "getName", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#aff1858bf1df100c74e12d671593af59f", null ],
+    [ "getVisible", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#ac6f1ef03c00fb34d4b839bf6422c7523", null ],
+    [ "setAttachmentName", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#ab990a1ffb997439eefae4c81725ad7aa", null ],
+    [ "setBlendMode", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#aeb9a8c33f4cc39679593121729d4a78a", null ],
+    [ "setDarkColor", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a42cbbdd8ceb19db438dc02393607bc19", null ],
+    [ "setVisible", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a6930a43486b29e955702b199a3584f95", null ],
+    [ "toString", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a5c0aaec50d62bbfae28adb3963125d53", null ],
+    [ "attachmentName", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#aebefc7961742720a4b955f5a9032f8dd", null ],
+    [ "blendMode", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a807e86e9348b35c52602dd23804633ad", null ],
+    [ "boneData", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a1010a4acd64abd7ee5f5d368c0dff9aa", null ],
+    [ "color", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a327db90f652ee1af0318a534ea9ed42d", null ],
+    [ "darkColor", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a591e6be42cbef3f1c304f4b94e105f90", null ],
+    [ "index", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a16e657da95019f70a70e1739b965ec9f", null ],
+    [ "name", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#af4e1ca861e00ebf4b979dc3e7fe0aeff", null ],
+    [ "visible", "classcom_1_1esotericsoftware_1_1spine_1_1_slot_data.html#a25a41d20fd66c5d53eea6663493cf92d", null ]
+];

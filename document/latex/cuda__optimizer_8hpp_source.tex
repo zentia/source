@@ -1,0 +1,347 @@
+\doxysection{cuda\+\_\+optimizer.\+hpp}
+\hypertarget{cuda__optimizer_8hpp_source}{}\label{cuda__optimizer_8hpp_source}\index{external/taskflow/taskflow/cuda/cuda\_optimizer.hpp@{external/taskflow/taskflow/cuda/cuda\_optimizer.hpp}}
+\mbox{\hyperlink{cuda__optimizer_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{cuda__graph_8hpp}{cuda\_graph.hpp}}"{}}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetf}{tf}}\ \{}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ cudaFlowOptimizerBase}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base}{cudaFlowOptimizerBase}}\ \{}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \ \ std::vector<cudaFlowNode*>\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base_a25bb1274b6ab2279e261690a5fe46007}{\_toposort}}(cudaFlowGraph\&);}
+\DoxyCodeLine{00026\ \ \ \ \ std::vector<std::vector<cudaFlowNode*>>\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base_ae20d9b88a98439f8d8ee5f6280b15744}{\_levelize}}(cudaFlowGraph\&);}
+\DoxyCodeLine{00027\ \};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ Function:\ \_toposort}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{inline}\ std::vector<cudaFlowNode*>\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base_a25bb1274b6ab2279e261690a5fe46007}{cudaFlowOptimizerBase::\_toposort}}(cudaFlowGraph\&\ graph)\ \{}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ std::vector<cudaFlowNode*>\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}};}
+\DoxyCodeLine{00033\ \ \ std::queue<cudaFlowNode*>\ bfs;}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.reserve(graph.\_nodes.size());}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \textcolor{comment}{//\ insert\ the\ first\ level\ of\ nodes\ into\ the\ queue}}
+\DoxyCodeLine{00038\ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}\ :\ graph.\_nodes)\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keyword}{auto}\ hu\ =\ std::get\_if<cudaFlowNode::Capture>(\&\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_handle);}
+\DoxyCodeLine{00041\ \ \ \ \ hu-\/>level\ =\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_dependents.size();}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordflow}{if}(hu-\/>level\ ==\ 0)\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ bfs.push(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}.get());}
+\DoxyCodeLine{00045\ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \textcolor{comment}{//\ levelize\ the\ graph\ using\ bfs}}
+\DoxyCodeLine{00049\ \ \ \textcolor{keywordflow}{while}(!bfs.empty())\ \{}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}\ =\ bfs.front();}
+\DoxyCodeLine{00052\ \ \ \ \ bfs.pop();}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.push\_back(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}});}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}\ :\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_successors)\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hv\ =\ std::get\_if<cudaFlowNode::Capture>(\&\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}-\/>\_handle);}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(-\/-\/hv-\/>level\ ==\ 0)\ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ bfs.push(\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}});}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00061\ \ \ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}};}
+\DoxyCodeLine{00065\ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{comment}{//\ Function:\ \_levelize}}
+\DoxyCodeLine{00068\ \textcolor{keyword}{inline}\ std::vector<std::vector<cudaFlowNode*>>}
+\DoxyCodeLine{00069\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base_ae20d9b88a98439f8d8ee5f6280b15744}{cudaFlowOptimizerBase::\_levelize}}(cudaFlowGraph\&\ graph)\ \{}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ std::queue<cudaFlowNode*>\ bfs;}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \textcolor{keywordtype}{size\_t}\ max\_level\ =\ 0;}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \textcolor{comment}{//\ insert\ the\ first\ level\ of\ nodes\ into\ the\ queue}}
+\DoxyCodeLine{00076\ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}\ :\ graph.\_nodes)\ \{}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{auto}\ hu\ =\ std::get\_if<cudaFlowNode::Capture>(\&\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_handle);}
+\DoxyCodeLine{00079\ \ \ \ \ hu-\/>level\ =\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_dependents.size();}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{if}(hu-\/>level\ ==\ 0)\ \{}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ bfs.push(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}.get());}
+\DoxyCodeLine{00083\ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \textcolor{comment}{//\ levelize\ the\ graph\ using\ bfs}}
+\DoxyCodeLine{00087\ \ \ \textcolor{keywordflow}{while}(!bfs.empty())\ \{}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}\ =\ bfs.front();}
+\DoxyCodeLine{00090\ \ \ \ \ bfs.pop();}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{auto}\ hu\ =\ std::get\_if<cudaFlowNode::Capture>(\&\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_handle);}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}\ :\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_successors)\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hv\ =\ std::get\_if<cudaFlowNode::Capture>(\&\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}}-\/>\_handle);}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(-\/-\/hv-\/>level\ ==\ 0)\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ hv-\/>level\ =\ hu-\/>level\ +\ 1;}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(hv-\/>level\ >\ max\_level)\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ max\_level\ =\ hv-\/>level;}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ bfs.push(\mbox{\hyperlink{_cwise__arg_8cpp_a49bb5a0db288a22a099643d44c5abbd6}{v}});}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \ \ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \textcolor{comment}{//\ set\ level\_graph\ and\ each\ node's\ idx}}
+\DoxyCodeLine{00107\ \ \ std::vector<std::vector<cudaFlowNode*>>\ level\_graph(max\_level+1);}
+\DoxyCodeLine{00108\ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}\ :\ graph.\_nodes)\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{auto}\ hu\ =\ std::get\_if<cudaFlowNode::Capture>(\&\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_handle);}
+\DoxyCodeLine{00110\ \ \ \ \ hu-\/>lid\ =\ level\_graph[hu-\/>level].size();}
+\DoxyCodeLine{00111\ \ \ \ \ level\_graph[hu-\/>level].emplace\_back(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}.get());}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{comment}{//for(auto\ s\ :\ u-\/>\_successors)\ \{}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ \ assert(hu.level\ <\ std::get\_if<cudaFlowNode::Capture>(\&s-\/>\_handle)-\/>level);}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00116\ \ \ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \textcolor{keywordflow}{return}\ level\_graph;}
+\DoxyCodeLine{00119\ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ class\ definition:\ cudaFlowSequentialOptimizer}}
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00134\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1cuda_flow_sequential_optimizer_a83c8d618b0e3ea4a838845bd819057e1}{cudaFlowSequentialOptimizer}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base}{cudaFlowOptimizerBase}}\ \{}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1cuda_flow_sequential_optimizer_a672b45d300c57d726c203c62f950efbd}{cudaFlowCapturer}};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00143\ \ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow_sequential_optimizer_a83c8d618b0e3ea4a838845bd819057e1}{cudaFlowSequentialOptimizer}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ cudaGraph\_t\ \mbox{\hyperlink{classtf_1_1cuda_flow_sequential_optimizer_a0bf59a8ce8c0ee8dd2ae9f7af192e3ad}{\_optimize}}(cudaFlowGraph\&\ graph);}
+\DoxyCodeLine{00148\ \};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{keyword}{inline}\ cudaGraph\_t\ \mbox{\hyperlink{classtf_1_1cuda_flow_sequential_optimizer_a0bf59a8ce8c0ee8dd2ae9f7af192e3ad}{cudaFlowSequentialOptimizer::\_optimize}}(cudaFlowGraph\&\ graph)\ \{}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \textcolor{comment}{//\ acquire\ per-\/thread\ stream\ and\ turn\ it\ into\ capture\ mode}}
+\DoxyCodeLine{00153\ \ \ \textcolor{comment}{//\ we\ must\ use\ ThreadLocal\ mode\ to\ avoid\ clashing\ with\ CUDA\ global\ states}}
+\DoxyCodeLine{00154\ \ \ }
+\DoxyCodeLine{00155\ \ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{cudaStream}}\ stream;}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a4ad9778fb045ebc9e9d87ca72c2cc772}{begin\_capture}}(cudaStreamCaptureModeThreadLocal);}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \textcolor{keyword}{auto}\ ordered\ =\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base_a25bb1274b6ab2279e261690a5fe46007}{\_toposort}}(graph);}
+\DoxyCodeLine{00160\ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ node\ :\ ordered)\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ std::get\_if<cudaFlowNode::Capture>(\&node-\/>\_handle)-\/>work(stream);}
+\DoxyCodeLine{00162\ \ \ \}}
+\DoxyCodeLine{00163\ \ \ }
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordflow}{return}\ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a4c23849c994f6e797bb547f6229a55e3}{end\_capture}}();}
+\DoxyCodeLine{00165\ \}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00168\ \textcolor{comment}{//\ class\ definition:\ cudaFlowLinearOptimizer}}
+\DoxyCodeLine{00169\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00182\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1cuda_flow_linear_optimizer_a58e1021e702e553834c6696637b736f1}{cudaFlowLinearOptimizer}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base}{cudaFlowOptimizerBase}}\ \{}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1cuda_flow_linear_optimizer_a672b45d300c57d726c203c62f950efbd}{cudaFlowCapturer}};}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00191\ \ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow_linear_optimizer_a58e1021e702e553834c6696637b736f1}{cudaFlowLinearOptimizer}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ cudaGraph\_t\ \mbox{\hyperlink{classtf_1_1cuda_flow_linear_optimizer_a272177ccabb376ad862f4afd0c87d2b2}{\_optimize}}(cudaFlowGraph\&\ graph);}
+\DoxyCodeLine{00196\ \};}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{keyword}{inline}\ cudaGraph\_t\ \mbox{\hyperlink{classtf_1_1cuda_flow_linear_optimizer_a272177ccabb376ad862f4afd0c87d2b2}{cudaFlowLinearOptimizer::\_optimize}}(cudaFlowGraph\&\ graph)\ \{}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \ \ \textcolor{comment}{//\ acquire\ per-\/thread\ stream\ and\ turn\ it\ into\ capture\ mode}}
+\DoxyCodeLine{00201\ \ \ \textcolor{comment}{//\ we\ must\ use\ ThreadLocal\ mode\ to\ avoid\ clashing\ with\ CUDA\ global\ states}}
+\DoxyCodeLine{00202\ \ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{cudaStream}}\ stream;}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a4ad9778fb045ebc9e9d87ca72c2cc772}{begin\_capture}}(cudaStreamCaptureModeThreadLocal);}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \textcolor{comment}{//\ find\ the\ source\ node}}
+\DoxyCodeLine{00207\ \ \ cudaFlowNode*\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00208\ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}\ :\ graph.\_nodes)\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}-\/>\_dependents.size()\ ==\ 0)\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}\ =\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}}.get();}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(\mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}})\ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ std::get\_if<cudaFlowNode::Capture>(\&\mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}-\/>\_handle)-\/>work(stream);}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}\ =\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}-\/>\_successors.empty()\ ?\ nullptr\ :\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}-\/>\_successors[0];}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00216\ \ \ \ \ \}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ ideally,\ there\ should\ be\ only\ one\ source}}
+\DoxyCodeLine{00218\ \ \ \}}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \textcolor{keywordflow}{return}\ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a4c23849c994f6e797bb547f6229a55e3}{end\_capture}}();}
+\DoxyCodeLine{00221\ \}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00224\ \textcolor{comment}{//\ class\ definition:\ cudaFlowRoundRobinOptimizer}}
+\DoxyCodeLine{00225\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00243\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_aef646675174ffcab6135fbfb7f0eecfe}{cudaFlowRoundRobinOptimizer}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base}{cudaFlowOptimizerBase}}\ \{}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a672b45d300c57d726c203c62f950efbd}{cudaFlowCapturer}};}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00252\ \ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_aef646675174ffcab6135fbfb7f0eecfe}{cudaFlowRoundRobinOptimizer}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_aef646675174ffcab6135fbfb7f0eecfe}{cudaFlowRoundRobinOptimizer}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{num\_streams}});}
+\DoxyCodeLine{00258\ \ \ \ \ }
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{num\_streams}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{num\_streams}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}});}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}}\ \{4\};}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \ \ cudaGraph\_t\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_ad612d3b6c169a65eebcf300eaca358aa}{\_optimize}}(cudaFlowGraph\&\ graph);}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a66a1f7b04965fe6478b0c48a6c69c4a3}{\_reset}}(std::vector<std::vector<cudaFlowNode*>>\&\ graph);}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \};}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{comment}{//\ Constructor}}
+\DoxyCodeLine{00280\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_aef646675174ffcab6135fbfb7f0eecfe}{cudaFlowRoundRobinOptimizer::cudaFlowRoundRobinOptimizer}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{num\_streams}})\ :}
+\DoxyCodeLine{00281\ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}}\ \{\mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{num\_streams}}\}\ \{}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{num\_streams}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \mbox{\hyperlink{error_8hpp_aecd66f17d01de60aeb9cae992c9dd4bf}{TF\_THROW}}(\textcolor{stringliteral}{"{}number\ of\ streams\ must\ be\ at\ least\ one"{}});}
+\DoxyCodeLine{00285\ \ \ \}}
+\DoxyCodeLine{00286\ \}}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \textcolor{comment}{//\ Function:\ num\_streams}}
+\DoxyCodeLine{00289\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{cudaFlowRoundRobinOptimizer::num\_streams}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00290\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}};}
+\DoxyCodeLine{00291\ \}}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \textcolor{comment}{//\ Procedure:\ num\_streams}}
+\DoxyCodeLine{00294\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a22fb9667ce393c31d908c3cc4f0ba650}{cudaFlowRoundRobinOptimizer::num\_streams}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}})\ \{}
+\DoxyCodeLine{00295\ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \mbox{\hyperlink{error_8hpp_aecd66f17d01de60aeb9cae992c9dd4bf}{TF\_THROW}}(\textcolor{stringliteral}{"{}number\ of\ streams\ must\ be\ at\ least\ one"{}});}
+\DoxyCodeLine{00297\ \ \ \}}
+\DoxyCodeLine{00298\ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}}\ =\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};}
+\DoxyCodeLine{00299\ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a66a1f7b04965fe6478b0c48a6c69c4a3}{cudaFlowRoundRobinOptimizer::\_reset}}(}
+\DoxyCodeLine{00302\ \ \ std::vector<std::vector<cudaFlowNode*>>\&\ graph}
+\DoxyCodeLine{00303\ )\ \{}
+\DoxyCodeLine{00304\ \ \ \textcolor{comment}{//level\ ==\ global\ id}}
+\DoxyCodeLine{00305\ \ \ \textcolor{comment}{//idx\ ==\ stream\ id\ we\ want\ to\ skip}}
+\DoxyCodeLine{00306\ \ \ \textcolor{keywordtype}{size\_t}\ \textcolor{keywordtype}{id}\{0\};}
+\DoxyCodeLine{00307\ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ each\_level:\ graph)\ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ node:\ each\_level)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hn\ =\ std::get\_if<cudaFlowNode::Capture>(\&node-\/>\_handle);}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ hn-\/>level\ =\ \textcolor{keywordtype}{id}++;}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ hn-\/>idx\ =\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}};}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ hn-\/>event\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00313\ \ \ \ \ \}}
+\DoxyCodeLine{00314\ \ \ \}}
+\DoxyCodeLine{00315\ \}}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \textcolor{comment}{//\ Function:\ \_optimize}}
+\DoxyCodeLine{00318\ \textcolor{keyword}{inline}\ cudaGraph\_t\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_ad612d3b6c169a65eebcf300eaca358aa}{cudaFlowRoundRobinOptimizer::\_optimize}}(cudaFlowGraph\&\ graph)\ \{}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \textcolor{comment}{//\ levelize\ the\ graph}}
+\DoxyCodeLine{00321\ \ \ \textcolor{keyword}{auto}\ levelized\ =\ \mbox{\hyperlink{classtf_1_1cuda_flow_optimizer_base_ae20d9b88a98439f8d8ee5f6280b15744}{\_levelize}}(graph);}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \textcolor{comment}{//\ initialize\ the\ data\ structure}}
+\DoxyCodeLine{00324\ \ \ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a66a1f7b04965fe6478b0c48a6c69c4a3}{\_reset}}(levelized);}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \textcolor{comment}{//\ begin\ to\ capture}}
+\DoxyCodeLine{00327\ \ \ std::vector<cudaStream>\ streams(\mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}});}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ streams[0].begin\_capture(cudaStreamCaptureModeThreadLocal);}
+\DoxyCodeLine{00330\ \ \ }
+\DoxyCodeLine{00331\ \ \ \textcolor{comment}{//\ reserve\ space\ for\ scoped\ events}}
+\DoxyCodeLine{00332\ \ \ std::vector<cudaEvent>\ events;}
+\DoxyCodeLine{00333\ \ \ events.reserve((\mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}}\ >>\ 1)\ +\ levelized.size());}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \textcolor{comment}{//\ fork}}
+\DoxyCodeLine{00336\ \ \ cudaEvent\_t\ fork\_event\ =\ events.emplace\_back();}
+\DoxyCodeLine{00337\ \ \ streams[0].record(fork\_event);}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 1;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ streams.size();\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{00340\ \ \ \ \ streams[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].wait(fork\_event);}
+\DoxyCodeLine{00341\ \ \ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \textcolor{comment}{//\ assign\ streams\ to\ levelized\ nodes\ in\ a\ round-\/robin\ manner}}
+\DoxyCodeLine{00344\ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ each\_level:\ levelized)\ \{}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ node:\ each\_level)\ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hn\ =\ std::get\_if<cudaFlowNode::Capture>(\&node-\/>\_handle);}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ sid\ =\ hn-\/>lid\ \%\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}};}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \textcolor{comment}{//wait\ events}}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ cudaFlowNode*\ wait\_node\{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ pn:\ node-\/>\_dependents)\ \{}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ phn\ =\ std::get\_if<cudaFlowNode::Capture>(\&pn-\/>\_handle);}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ psid\ =\ phn-\/>lid\ \%\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}};}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \textcolor{comment}{//level\ ==\ global\ id}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{comment}{//idx\ ==\ stream\ id\ we\ want\ to\ skip}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(psid\ ==\ hn-\/>idx)\ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(wait\_node\ ==\ \textcolor{keyword}{nullptr}\ ||}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \ \ \ std::get\_if<cudaFlowNode::Capture>(\&wait\_node-\/>\_handle)-\/>level\ <\ phn-\/>level)\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ wait\_node\ =\ pn;}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(psid\ !=\ sid)\ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ streams[sid].wait(phn-\/>event);}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(wait\_node\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ assert(std::get\_if<cudaFlowNode::Capture>(\&wait\_node-\/>\_handle)-\/>event);\ }
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ streams[sid].wait(std::get\_if<cudaFlowNode::Capture>(\&wait\_node-\/>\_handle)-\/>event);}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{comment}{//capture}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ hn-\/>work(streams[sid]);}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \textcolor{comment}{//create/record\ stream}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\&\ sn:\ node-\/>\_successors)\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ shn\ =\ std::get\_if<cudaFlowNode::Capture>(\&sn-\/>\_handle);}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ ssid\ =\ shn-\/>lid\ \%\ \mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}};}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(ssid\ !=\ sid)\ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!hn-\/>event)\ \{}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ hn-\/>event\ =\ events.emplace\_back();}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ streams[sid].record(hn-\/>event);}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//idx\ ==\ stream\ id\ we\ want\ to\ skip}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ shn-\/>idx\ =\ sid;}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00389\ \ \ \ \ \}}
+\DoxyCodeLine{00390\ \ \ \}}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \textcolor{comment}{//\ join}}
+\DoxyCodeLine{00393\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=1;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{classtf_1_1cuda_flow_round_robin_optimizer_a1354083daa786bad9df520f4ddb03511}{\_num\_streams}};\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{00394\ \ \ \ \ cudaEvent\_t\ join\_event\ =\ events.emplace\_back();}
+\DoxyCodeLine{00395\ \ \ \ \ streams[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}].record(join\_event);}
+\DoxyCodeLine{00396\ \ \ \ \ streams[0].wait(join\_event);}
+\DoxyCodeLine{00397\ \ \ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \textcolor{keywordflow}{return}\ streams[0].end\_capture();}
+\DoxyCodeLine{00400\ \}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \}\ \ \textcolor{comment}{//\ end\ of\ namespace\ tf\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00404\ }
+
+\end{DoxyCode}

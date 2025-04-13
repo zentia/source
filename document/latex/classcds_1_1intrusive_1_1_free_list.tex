@@ -1,0 +1,168 @@
+\doxysection{cds\+::intrusive\+::Free\+List类 参考}
+\hypertarget{classcds_1_1intrusive_1_1_free_list}{}\label{classcds_1_1intrusive_1_1_free_list}\index{cds::intrusive::FreeList@{cds::intrusive::FreeList}}
+
+
+Lock-\/free free list  
+
+
+
+
+{\ttfamily \#include $<$free\+\_\+list.\+h$>$}
+
+\doxysubsubsection*{类}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}}
+\begin{DoxyCompactList}\small\item\em Free list node \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Public 成员函数}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_ab35055f90f0fc0146d73abb92e52253a}{Free\+List}} ()
+\begin{DoxyCompactList}\small\item\em Creates empty free list \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a07216d37aebffae230561a72833ee220}{\texorpdfstring{$\sim$}{\string~}\+Free\+List}} ()
+\begin{DoxyCompactList}\small\item\em Destroys the free list. Free-\/list must be empty. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}} \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a1817a151aa794f7b4208e4824793a96c}{put}} (\mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}} \texorpdfstring{$\ast$}{*}p\+Node)
+\begin{DoxyCompactList}\small\item\em Puts {\ttfamily p\+Node} to the free list \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_acd3f6e0bbf4d5d0f5f8784f8d5743b99}{get}} ()
+\begin{DoxyCompactList}\small\item\em Gets a node from the free list. If the list is empty, returns {\ttfamily nullptr} \end{DoxyCompactList}\item 
+\mbox{\hyperlink{sugar_8h_abb452686968e48b67397da5f97445f5b}{bool}} \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a237e46d094f0bb242175332d3b4457b2}{empty}} () const
+\begin{DoxyCompactList}\small\item\em Checks whether the free list is empty \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Disposer$>$ }\\\mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}} \mbox{\hyperlink{classcds_1_1intrusive_1_1_free_list_a5fa9e87030b8fe35b2c05e2d71d89ae3}{clear}} (Disposer disp)
+\begin{DoxyCompactList}\small\item\em Clears the free list (not atomic) \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{详细描述}
+Lock-\/free free list 
+
+Free list is a helper class intended for reusing objects instead of freeing them completely; this avoids the overhead of {\ttfamily \doxylink{mimalloc-override_8h_a99aa8fd9f4831e1b0fa9e1cdcde3e249}{malloc()}}, and also avoids its worst-\/case behavior of taking an operating system lock. So, the free list can be considered as a specialized allocator for objects of some type.
+
+The algorithm is taken from \href{http://moodycamel.com/blog/2014/solving-the-aba-problem-for-lock-free-free-lists}{\texttt{ this article}}. The algo does not require any SMR like Hazard Pointer to prevent ABA problem.
+
+There is \doxylink{classcds_1_1intrusive_1_1_tagged_free_list}{tagged pointers} variant of free list for processors with double-\/width CAS support.
+
+{\bfseries{How}} to use 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{free__list_8h}{cds/intrusive/free\_list.h}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Your\ struct\ should\ be\ derived\ from\ FreeList::node}}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }\mbox{\hyperlink{bug1213_8cpp_add4cd82fef2db3867de22e0c84c750a1aca2a3a2b2da8e517565fb654a86639b6}{Foo}}:\ \textcolor{keyword}{public}\ cds::intrusive::FreeList::node}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Foo\ fields}}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Simplified\ Foo\ allocator}}
+\DoxyCodeLine{\textcolor{keyword}{class\ }FooAllocator}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\textcolor{keyword}{public}:}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ free-\/list\ clear()\ must\ be\ explicitly\ called\ before\ destroying\ the\ free-\/list\ object}}
+\DoxyCodeLine{\ \ \ \ \string~FooAllocator()}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ m\_FreeList.clear(\ [](\ freelist\_node\ *\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )\ \{\ \textcolor{keyword}{delete}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{bug1213_8cpp_add4cd82fef2db3867de22e0c84c750a1aca2a3a2b2da8e517565fb654a86639b6}{Foo}}\ *\textcolor{keyword}{>}(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );\ \});}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{bug1213_8cpp_add4cd82fef2db3867de22e0c84c750a1aca2a3a2b2da8e517565fb654a86639b6}{Foo}}\ *\ alloc()}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ freelist\_node\ *\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ m\_FreeList.get();}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{bug1213_8cpp_add4cd82fef2db3867de22e0c84c750a1aca2a3a2b2da8e517565fb654a86639b6}{Foo}}\ *\textcolor{keyword}{>}(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ );}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{new}\ \mbox{\hyperlink{bug1213_8cpp_add4cd82fef2db3867de22e0c84c750a1aca2a3a2b2da8e517565fb654a86639b6}{Foo}};}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{void}\ dealloc(\ Foo\ *\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ )}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ m\_FreeList.put(\ \textcolor{keyword}{static\_cast<}freelist\_node\ *\textcolor{keyword}{>}(\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ ));}
+\DoxyCodeLine{\ \ \ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{private}:}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{typedef}\ cds::intrusive::FreeList::node\ freelist\_node;}
+\DoxyCodeLine{\ \ \ \ cds::intrusive::FreeList\ m\_FreeList;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+ 
+
+\doxysubsection{构造及析构函数说明}
+\Hypertarget{classcds_1_1intrusive_1_1_free_list_ab35055f90f0fc0146d73abb92e52253a}\index{cds::intrusive::FreeList@{cds::intrusive::FreeList}!FreeList@{FreeList}}
+\index{FreeList@{FreeList}!cds::intrusive::FreeList@{cds::intrusive::FreeList}}
+\doxysubsubsection{\texorpdfstring{FreeList()}{FreeList()}}
+{\footnotesize\ttfamily \label{classcds_1_1intrusive_1_1_free_list_ab35055f90f0fc0146d73abb92e52253a} 
+cds\+::intrusive\+::\+Free\+List\+::\+Free\+List (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Creates empty free list 
+
+\Hypertarget{classcds_1_1intrusive_1_1_free_list_a07216d37aebffae230561a72833ee220}\index{cds::intrusive::FreeList@{cds::intrusive::FreeList}!````~FreeList@{\texorpdfstring{$\sim$}{\string~}FreeList}}
+\index{````~FreeList@{\texorpdfstring{$\sim$}{\string~}FreeList}!cds::intrusive::FreeList@{cds::intrusive::FreeList}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}FreeList()}{\string~FreeList()}}
+{\footnotesize\ttfamily \label{classcds_1_1intrusive_1_1_free_list_a07216d37aebffae230561a72833ee220} 
+cds\+::intrusive\+::\+Free\+List\+::\texorpdfstring{$\sim$}{\string~}\+Free\+List (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Destroys the free list. Free-\/list must be empty. 
+
+\begin{DoxyWarning}{警告}
+dtor does not free elements of the list. To free elements you should manually call {\ttfamily \doxylink{classcds_1_1intrusive_1_1_free_list_a5fa9e87030b8fe35b2c05e2d71d89ae3}{clear()}} with an appropriate disposer. 
+\end{DoxyWarning}
+函数调用图\+:
+% FIG 0
+
+
+\doxysubsection{成员函数说明}
+\Hypertarget{classcds_1_1intrusive_1_1_free_list_a5fa9e87030b8fe35b2c05e2d71d89ae3}\index{cds::intrusive::FreeList@{cds::intrusive::FreeList}!clear@{clear}}
+\index{clear@{clear}!cds::intrusive::FreeList@{cds::intrusive::FreeList}}
+\doxysubsubsection{\texorpdfstring{clear()}{clear()}}
+{\footnotesize\ttfamily \label{classcds_1_1intrusive_1_1_free_list_a5fa9e87030b8fe35b2c05e2d71d89ae3} 
+template$<$typename Disposer$>$ \\
+\mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}} cds\+::intrusive\+::\+Free\+List\+::clear (\begin{DoxyParamCaption}\item[{Disposer}]{disp}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Clears the free list (not atomic) 
+
+For each element {\ttfamily disp} disposer is called to free memory. The {\ttfamily Disposer} interface\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }disposer}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{void}\ operator()(\ FreeList::node\ *\ node\ );}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+This method must be explicitly called before the free list destructor. \Hypertarget{classcds_1_1intrusive_1_1_free_list_a237e46d094f0bb242175332d3b4457b2}\index{cds::intrusive::FreeList@{cds::intrusive::FreeList}!empty@{empty}}
+\index{empty@{empty}!cds::intrusive::FreeList@{cds::intrusive::FreeList}}
+\doxysubsubsection{\texorpdfstring{empty()}{empty()}}
+{\footnotesize\ttfamily \label{classcds_1_1intrusive_1_1_free_list_a237e46d094f0bb242175332d3b4457b2} 
+\mbox{\hyperlink{sugar_8h_abb452686968e48b67397da5f97445f5b}{bool}} cds\+::intrusive\+::\+Free\+List\+::empty (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Checks whether the free list is empty 
+
+\Hypertarget{classcds_1_1intrusive_1_1_free_list_acd3f6e0bbf4d5d0f5f8784f8d5743b99}\index{cds::intrusive::FreeList@{cds::intrusive::FreeList}!get@{get}}
+\index{get@{get}!cds::intrusive::FreeList@{cds::intrusive::FreeList}}
+\doxysubsubsection{\texorpdfstring{get()}{get()}}
+{\footnotesize\ttfamily \label{classcds_1_1intrusive_1_1_free_list_acd3f6e0bbf4d5d0f5f8784f8d5743b99} 
+\mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}} \texorpdfstring{$\ast$}{*} cds\+::intrusive\+::\+Free\+List\+::get (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a node from the free list. If the list is empty, returns {\ttfamily nullptr} 
+
+\Hypertarget{classcds_1_1intrusive_1_1_free_list_a1817a151aa794f7b4208e4824793a96c}\index{cds::intrusive::FreeList@{cds::intrusive::FreeList}!put@{put}}
+\index{put@{put}!cds::intrusive::FreeList@{cds::intrusive::FreeList}}
+\doxysubsubsection{\texorpdfstring{put()}{put()}}
+{\footnotesize\ttfamily \label{classcds_1_1intrusive_1_1_free_list_a1817a151aa794f7b4208e4824793a96c} 
+\mbox{\hyperlink{ittnotify__static_8h_a61af67d9d838a9497ca5b188dabc1aa0}{void}} cds\+::intrusive\+::\+Free\+List\+::put (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structcds_1_1intrusive_1_1_free_list_1_1node}{node}} \texorpdfstring{$\ast$}{*}}]{p\+Node}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Puts {\ttfamily p\+Node} to the free list 
+
+
+
+该类的文档由以下文件生成\+:\begin{DoxyCompactItemize}
+\item 
+external/libcds/cds/intrusive/\mbox{\hyperlink{free__list_8h}{free\+\_\+list.\+h}}\end{DoxyCompactItemize}

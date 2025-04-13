@@ -1,0 +1,4 @@
+var structcds_1_1algo_1_1flat__combining_1_1wait__strategy_1_1single__mutex__multi__condvar_1_1make__publication__record =
+[
+    [ "type", "structcds_1_1algo_1_1flat__combining_1_1wait__strategy_1_1single__mutex__multi__condvar_1_1make__publication__record_1_1type.html", null ]
+];

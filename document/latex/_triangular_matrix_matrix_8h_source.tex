@@ -1,0 +1,472 @@
+\doxysection{Triangular\+Matrix\+Matrix.\+h}
+\hypertarget{_triangular_matrix_matrix_8h_source}{}\label{_triangular_matrix_matrix_8h_source}\index{external/taskflow/3rd-\/party/eigen-\/3.3.7/Eigen/src/Core/products/TriangularMatrixMatrix.h@{external/taskflow/3rd-\/party/eigen-\/3.3.7/Eigen/src/Core/products/TriangularMatrixMatrix.h}}
+\mbox{\hyperlink{_triangular_matrix_matrix_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_TRIANGULAR\_MATRIX\_MATRIX\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_TRIANGULAR\_MATRIX\_MATRIX\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ template<typename\ Scalar,\ int\ mr,\ int\ StorageOrder,\ bool\ Conjugate,\ int\ Mode>}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ struct\ gemm\_pack\_lhs\_triangular}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ \ Matrix<Scalar,mr,mr,}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ \ void\ operator()(Scalar*\ blockA,\ const\ EIGEN\_RESTRICT\ Scalar*\ \_lhs,\ int\ lhsStride,\ int\ depth,\ int\ rows)}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ \ \ conj\_if<NumTraits<Scalar>::IsComplex\ \&\&\ Conjugate>\ cj;}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ \ const\_blas\_data\_mapper<Scalar,\ StorageOrder>\ lhs(\_lhs,lhsStride);}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ \ \ int\ count\ =\ 0;}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ \ \ const\ int\ peeled\_mc\ =\ (rows/mr)*mr;}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ \ \ \ for(int\ i=0;\ i<peeled\_mc;\ i+=mr)}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ \ \ \ \ for(int\ k=0;\ k<depth;\ k++)}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ for(int\ w=0;\ w<mr;\ w++)}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ blockA[count++]\ =\ cj(lhs(i+w,\ k));}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ \ \ for(int\ i=peeled\_mc;\ i<rows;\ i++)}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ \{}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ \ \ \ \ for(int\ k=0;\ k<depth;\ k++)}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ blockA[count++]\ =\ cj(lhs(i,\ k));}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ \ \ \}}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{comment}{/*\ Optimized\ triangular\ matrix\ *\ matrix\ (\_TRMM++)\ product\ built\ on\ top\ of}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *\ the\ general\ matrix\ matrix\ product.}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},\ \textcolor{keywordtype}{bool}\ LhsIsTriangular,}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ LhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ RhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ ResStorageOrder,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}\ =\ \mbox{\hyperlink{namespace_eigen_a8f4ff3ed63ee9637dda3fedea4bba1eaa085337e2c0776564af9b0ab436639ce6}{Specialized}}>}
+\DoxyCodeLine{00049\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix}{product\_triangular\_matrix\_matrix}};}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},\ \textcolor{keywordtype}{bool}\ LhsIsTriangular,}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ LhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ RhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00055\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix}{product\_triangular\_matrix\_matrix}}<\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},LhsIsTriangular,}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LhsStorageOrder,ConjugateLhs,}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsStorageOrder,ConjugateRhs,\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}},\mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_af2b60117c00a6e75812de43bfe7db3b1}{EIGEN\_STRONG\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_moa7595ecc6fa7617b9a7dfbf733dbf94b_a9322956d1262bb73351b6e78e39bbfea}{run}}(}
+\DoxyCodeLine{00060\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ depth,}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ lhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ lhsStride,}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ rhsStride,}
+\DoxyCodeLine{00063\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}},\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ resStride,}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ \mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking}{level3\_blocking<Scalar,Scalar>}}\&\ blocking)}
+\DoxyCodeLine{00065\ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix}{product\_triangular\_matrix\_matrix}}<\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ (\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&(\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cda2ef430bff6cc12c2d1e0ef01b95f7ff3}{UnitDiag}}|\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdac4dc554a61510151ddd5bafaf6040223}{ZeroDiag}}))\ |\ ((\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdafca2ccebb604f171656deb53e8c083c1}{Upper}})\ ?\ \mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}}\ :\ \mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdafca2ccebb604f171656deb53e8c083c1}{Upper}}),}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ (!LhsIsTriangular),}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ RhsStorageOrder==\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}},}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ ConjugateRhs,}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ LhsStorageOrder==\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}},}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ ConjugateLhs,}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}>}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{::run}}(\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}},\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}},\ depth,\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}},\ rhsStride,\ lhs,\ lhsStride,\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}},\ resStride,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ blocking);}
+\DoxyCodeLine{00075\ \ \ \}}
+\DoxyCodeLine{00076\ \};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ implements\ col-\/major\ +=\ alpha\ *\ op(triangular)\ *\ op(general)}}
+\DoxyCodeLine{00079\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_tensor}{Index}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ LhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ RhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00082\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix}{product\_triangular\_matrix\_matrix}}<\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},\mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}},}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LhsStorageOrder,ConjugateLhs,}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsStorageOrder,ConjugateRhs,\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ \ \ }
+\DoxyCodeLine{00087\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1gebp__traits}{gebp\_traits<Scalar,Scalar>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a259733da8fa6b08909126e3026dcfbc7}{Traits}};}
+\DoxyCodeLine{00088\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beab29097581d9eff75f4acf18bf611d2a1}{SmallPanelWidth}}\ \ \ =\ 2\ *\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a062701c0cea4b04350c0ac6980db81ec}{EIGEN\_PLAIN\_ENUM\_MAX}}(\mbox{\hyperlink{class_eigen_1_1internal_1_1gebp__traits_a4d7cb34620bcab1eed6d284888596f53a6728d0808a3cb5995198eaf8c060441a}{Traits::mr}},\mbox{\hyperlink{class_eigen_1_1internal_1_1gebp__traits_a4d7cb34620bcab1eed6d284888596f53a9a6a54f05effa66c8a0acee7722fa9d3}{Traits::nr}}),}
+\DoxyCodeLine{00090\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ =\ (\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}})\ ==\ \mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}},}
+\DoxyCodeLine{00091\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000bea1a3c9d6e3d5c60d21e854cdeddef797f}{SetDiag}}\ =\ (\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&(\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdac4dc554a61510151ddd5bafaf6040223}{ZeroDiag}}|\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cda2ef430bff6cc12c2d1e0ef01b95f7ff3}{UnitDiag}}))\ ?\ 0\ :\ 1}
+\DoxyCodeLine{00092\ \ \ \};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_aa715c1fe854205b27e962ee7d7e06faf}{EIGEN\_DONT\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(}
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_rows,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_cols,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_depth,}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_lhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ lhsStride,}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_rhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ rhsStride,}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}},\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ resStride,}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ \mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking}{level3\_blocking<Scalar,Scalar>}}\&\ blocking);}
+\DoxyCodeLine{00100\ \};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_tensor}{Index}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ LhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ RhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00105\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_aa715c1fe854205b27e962ee7d7e06faf}{EIGEN\_DONT\_INLINE}}\ \textcolor{keywordtype}{void}\ product\_triangular\_matrix\_matrix<\mbox{\hyperlink{class_eigen_1_1_product}{Scalar}},\mbox{\hyperlink{class_eigen_1_1_tensor}{Index}},\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},\textcolor{keyword}{true},}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LhsStorageOrder,ConjugateLhs,}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsStorageOrder,ConjugateRhs,\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>\mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{::run}}(}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_rows,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_cols,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_depth,}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_lhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ lhsStride,}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_rhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ rhsStride,}
+\DoxyCodeLine{00111\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_res,\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ resStride,}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ \mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking}{level3\_blocking<Scalar,Scalar>}}\&\ blocking)}
+\DoxyCodeLine{00113\ \ \ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{comment}{//\ strip\ zeros}}
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ diagSize\ \ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\_rows,\_depth);}
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}}\ \ \ \ \ \ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ \_rows\ :\ diagSize;}
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ depth\ \ \ \ \ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ diagSize\ :\ \_depth;}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}}\ \ \ \ \ \ =\ \_cols;}
+\DoxyCodeLine{00119\ \ \ \ \ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1const__blas__data__mapper}{const\_blas\_data\_mapper<Scalar,\ Index,\ LhsStorageOrder>}}\ LhsMapper;}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1const__blas__data__mapper}{const\_blas\_data\_mapper<Scalar,\ Index,\ RhsStorageOrder>}}\ RhsMapper;}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1blas__data__mapper}{blas\_data\_mapper<typename\ Traits::ResScalar,\ Index,\ ColMajor>}}\ ResMapper;}
+\DoxyCodeLine{00123\ \ \ \ \ LhsMapper\ lhs(\_lhs,lhsStride);}
+\DoxyCodeLine{00124\ \ \ \ \ RhsMapper\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}(\_rhs,rhsStride);}
+\DoxyCodeLine{00125\ \ \ \ \ ResMapper\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}(\_res,\ resStride);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ kc\ =\ blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_a2348863b8e4618d9cf28ac3274320959}{kc}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ cache\ block\ size\ along\ the\ K\ direction}}
+\DoxyCodeLine{00128\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ mc\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}},blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_a42652281565b0d88009c6a2c69a61b90}{mc}}());\ \ \textcolor{comment}{//\ cache\ block\ size\ along\ the\ M\ direction}}
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{//\ The\ small\ panel\ size\ must\ not\ be\ larger\ than\ blocking\ size.}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//\ Usually\ this\ should\ never\ be\ the\ case\ because\ SmallPanelWidth\string^2\ is\ very\ small}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{comment}{//\ compared\ to\ L2\ cache\ size,\ but\ let's\ be\ safe:}}
+\DoxyCodeLine{00132\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ panelWidth\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beab29097581d9eff75f4acf18bf611d2a1}{SmallPanelWidth}}),(\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(kc,mc));}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ std::size\_t\ sizeA\ =\ kc*mc;}
+\DoxyCodeLine{00135\ \ \ \ \ std::size\_t\ sizeB\ =\ kc*\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}};}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2memory_8h_ae4bf2b34741512d206aa238550a2c42c}{ei\_declare\_aligned\_stack\_constructed\_variable}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ blockA,\ sizeA,\ blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_ac30a1136915526882fa153bda28ad5b5}{blockA}}());}
+\DoxyCodeLine{00138\ \ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2memory_8h_ae4bf2b34741512d206aa238550a2c42c}{ei\_declare\_aligned\_stack\_constructed\_variable}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ blockB,\ sizeB,\ blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_a12c88d4bc6a4da1787da32044b3c2dab}{blockB}}());}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{comment}{//\ To\ work\ around\ an\ "{}error:\ member\ reference\ base\ type\ 'Matrix<...>}}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{comment}{//\ (Eigen::internal::constructor\_without\_unaligned\_array\_assert\ (*)())'\ is}}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{//\ not\ a\ structure\ or\ union"{}\ compilation\ error\ in\ nvcc\ (tested\ V8.0.61),}}
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ create\ a\ dummy\ internal::constructor\_without\_unaligned\_array\_assert}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ object\ to\ pass\ to\ the\ Matrix\ constructor.}}
+\DoxyCodeLine{00145\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1constructor__without__unaligned__array__assert}{internal::constructor\_without\_unaligned\_array\_assert}}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}};}
+\DoxyCodeLine{00146\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,SmallPanelWidth,SmallPanelWidth,LhsStorageOrder>}}\ triangularBuffer(\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}});}
+\DoxyCodeLine{00147\ \ \ \ \ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keywordflow}{if}((\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdac4dc554a61510151ddd5bafaf6040223}{ZeroDiag}})==\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdac4dc554a61510151ddd5bafaf6040223}{ZeroDiag}})}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ triangularBuffer.diagonal().\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ triangularBuffer.diagonal().\mbox{\hyperlink{class_eigen_1_1_plain_object_base_a2871e88e1feb1cc665fa1f1cc800078b}{setOnes}}();}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel<Scalar,\ Scalar,\ Index,\ ResMapper,\ Traits::mr,\ Traits::nr,\ ConjugateLhs,\ ConjugateRhs>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel}};}
+\DoxyCodeLine{00154\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gemm__pack__lhs}{gemm\_pack\_lhs<Scalar,\ Index,\ LhsMapper,\ Traits::mr,\ Traits::LhsProgress,\ LhsStorageOrder>}}\ pack\_lhs;}
+\DoxyCodeLine{00155\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gemm__pack__rhs}{gemm\_pack\_rhs<Scalar,\ Index,\ RhsMapper,\ Traits::nr,RhsStorageOrder>}}\ pack\_rhs;}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ k2=\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ depth\ :\ 0;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ k2>0\ :\ k2<depth;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ k2-\/=kc\ :\ k2+=kc)}
+\DoxyCodeLine{00160\ \ \ \ \ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actual\_kc\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ k2\ :\ depth-\/k2,\ kc);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actual\_k2\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ k2-\/actual\_kc\ :\ k2;}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \textcolor{comment}{//\ align\ blocks\ with\ the\ end\ of\ the\ triangular\ part\ for\ trapezoidal\ lhs}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \textcolor{keywordflow}{if}((!\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}})\&\&(k2<\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}})\&\&(k2+actual\_kc>\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}}))}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ actual\_kc\ =\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}}-\/k2;}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ k2\ =\ k2+actual\_kc-\/kc;}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \ \ \ \ pack\_rhs(blockB,\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.getSubMapper(actual\_k2,0),\ actual\_kc,\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}});}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \textcolor{comment}{//\ the\ selected\ lhs's\ panel\ has\ to\ be\ split\ in\ three\ different\ parts:}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \textcolor{comment}{//\ \ 1\ -\/\ the\ part\ which\ is\ zero\ =>\ skip\ it}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{comment}{//\ \ 2\ -\/\ the\ diagonal\ block\ =>\ special\ kernel}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{comment}{//\ \ 3\ -\/\ the\ dense\ panel\ below\ (lower\ case)\ or\ above\ (upper\ case)\ the\ diagonal\ block\ =>\ GEPP}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \textcolor{comment}{//\ the\ block\ diagonal,\ if\ any:}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ||\ actual\_k2<\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}})}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ for\ each\ small\ vertical\ panels\ of\ lhs}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ k1=0;\ k1<actual\_kc;\ k1+=panelWidth)}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actualPanelWidth\ =\ \mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min<Index>}}(actual\_kc-\/k1,\ panelWidth);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ lengthTarget\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ actual\_kc-\/k1-\/actualPanelWidth\ :\ k1;}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ startBlock\ \ \ =\ actual\_k2+k1;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ blockBOffset\ =\ k1;}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ =>\ GEBP\ with\ the\ micro\ triangular\ block}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ trick\ is\ to\ pack\ this\ micro\ block\ while\ filling\ the\ opposite\ triangular\ part\ with\ zeros.}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ To\ this\ end\ we\ do\ an\ extra\ triangular\ copy\ to\ a\ small\ temporary\ buffer}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ k=0;k<actualPanelWidth;++k)}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000bea1a3c9d6e3d5c60d21e854cdeddef797f}{SetDiag}})}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_matrix_aec085505a683eaffbd9b6680e99611af}{coeffRef}}(k,k)\ =\ lhs(startBlock+k,startBlock+k);}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ k+1\ :\ 0;\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<actualPanelWidth\ :\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<k;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_matrix_aec085505a683eaffbd9b6680e99611af}{coeffRef}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},k)\ =\ lhs(startBlock+\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},startBlock+k);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ pack\_lhs(blockA,\ LhsMapper(triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_plain_object_base_a322d4d48cc285b60e0dff100db522342}{data}}(),\ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_matrix_a4ef63bbf7e04163bee2556944cee7472}{outerStride}}()),\ actualPanelWidth,\ actualPanelWidth);}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel}}(\mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.getSubMapper(startBlock,\ 0),\ blockA,\ blockB,}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actualPanelWidth,\ actualPanelWidth,\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actualPanelWidth,\ actual\_kc,\ 0,\ blockBOffset);}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ GEBP\ with\ remaining\ micro\ panel}}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (lengthTarget>0)}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ startTarget\ \ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ actual\_k2+k1+actualPanelWidth\ :\ actual\_k2;}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ pack\_lhs(blockA,\ lhs.getSubMapper(startTarget,startBlock),\ actualPanelWidth,\ lengthTarget);}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel}}(\mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.getSubMapper(startTarget,\ 0),\ blockA,\ blockB,}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lengthTarget,\ actualPanelWidth,\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actualPanelWidth,\ actual\_kc,\ 0,\ blockBOffset);}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \textcolor{comment}{//\ the\ part\ below\ (lower\ case)\ or\ above\ (upper\ case)\ the\ diagonal\ =>\ GEPP}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}}\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ k2\ :\ 0;}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}}\ \ \ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mocecf6b0a946de08ae1ae622ae91f7d88_a08c7807aeaadde7d71446cd7c0e000beacb953709bc8e8b50fb3dcd52fd277407}{IsLower}}\ ?\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}}\ :\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(actual\_k2,\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}});}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ i2=\mbox{\hyperlink{cpq__pdes_8cpp_a455a4d1d80a69762a133ad026f1cba43}{start}};\ i2<\mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}};\ i2+=mc)}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actual\_mc\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(i2+mc,\mbox{\hyperlink{ittnotify__static_8h_a30bf4ccd4623b7a8276bbc7f99e491c7}{end}})-\/i2;}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gemm__pack__lhs}{gemm\_pack\_lhs<Scalar,\ Index,\ LhsMapper,\ Traits::mr,Traits::LhsProgress,\ LhsStorageOrder,false>}}()}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \ \ \ \ \ \ (blockA,\ lhs.getSubMapper(i2,\ actual\_k2),\ actual\_kc,\ actual\_mc);}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel}}(\mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.getSubMapper(i2,\ 0),\ blockA,\ blockB,\ actual\_mc,}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_kc,\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ -\/1,\ -\/1,\ 0,\ 0);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00232\ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \textcolor{comment}{//\ implements\ col-\/major\ +=\ alpha\ *\ op(general)\ *\ op(triangular)}}
+\DoxyCodeLine{00236\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ LhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ RhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00239\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix}{product\_triangular\_matrix\_matrix}}<\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}},}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LhsStorageOrder,ConjugateLhs,}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsStorageOrder,ConjugateRhs,\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00242\ \{}
+\DoxyCodeLine{00243\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1gebp__traits}{gebp\_traits<Scalar,Scalar>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_afbc7bbc5adffa2e0e67e9f13238fcf35}{Traits}};}
+\DoxyCodeLine{00244\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa9938bb7854675714704fd3b1945114b0}{SmallPanelWidth}}\ \ \ =\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a062701c0cea4b04350c0ac6980db81ec}{EIGEN\_PLAIN\_ENUM\_MAX}}(\mbox{\hyperlink{class_eigen_1_1internal_1_1gebp__traits_a4d7cb34620bcab1eed6d284888596f53a6728d0808a3cb5995198eaf8c060441a}{Traits::mr}},\mbox{\hyperlink{class_eigen_1_1internal_1_1gebp__traits_a4d7cb34620bcab1eed6d284888596f53a9a6a54f05effa66c8a0acee7722fa9d3}{Traits::nr}}),}
+\DoxyCodeLine{00246\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ =\ (\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}})\ ==\ \mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}},}
+\DoxyCodeLine{00247\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aae5c33f1ea16476443e7fa3749739abe9}{SetDiag}}\ =\ (\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&(\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdac4dc554a61510151ddd5bafaf6040223}{ZeroDiag}}|\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cda2ef430bff6cc12c2d1e0ef01b95f7ff3}{UnitDiag}}))\ ?\ 0\ :\ 1}
+\DoxyCodeLine{00248\ \ \ \};}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_aa715c1fe854205b27e962ee7d7e06faf}{EIGEN\_DONT\_INLINE}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(}
+\DoxyCodeLine{00251\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_rows,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_cols,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_depth,}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_lhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ lhsStride,}
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_rhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ rhsStride,}
+\DoxyCodeLine{00254\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}},\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ resStride,}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ \mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking}{level3\_blocking<Scalar,Scalar>}}\&\ blocking);}
+\DoxyCodeLine{00256\ \};}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}},\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_tensor}{Index}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ LhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ RhsStorageOrder,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>}
+\DoxyCodeLine{00261\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_aa715c1fe854205b27e962ee7d7e06faf}{EIGEN\_DONT\_INLINE}}\ \textcolor{keywordtype}{void}\ product\_triangular\_matrix\_matrix<\mbox{\hyperlink{class_eigen_1_1_product}{Scalar}},\mbox{\hyperlink{class_eigen_1_1_tensor}{Index}},\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},\textcolor{keyword}{false},}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ LhsStorageOrder,ConjugateLhs,}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsStorageOrder,ConjugateRhs,\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\mbox{\hyperlink{rml__omp__stub_8cpp_a3823a95d15eff2c3831deb98b149415f}{Version}}>\mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{::run}}(}
+\DoxyCodeLine{00264\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_rows,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_cols,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \_depth,}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_lhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ lhsStride,}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_rhs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ rhsStride,}
+\DoxyCodeLine{00267\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ \_res,\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ resStride,}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ \mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking}{level3\_blocking<Scalar,Scalar>}}\&\ blocking)}
+\DoxyCodeLine{00269\ \ \ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ PacketBytes\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits_a1a7c1c7a8ae861f1a84a32c3982b8fe0a60adf1b5b0dbd4b0ae81fe0b70b9d9eb}{packet\_traits<Scalar>::size}}*\textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}});}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ strip\ zeros}}
+\DoxyCodeLine{00272\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ diagSize\ \ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\_cols,\_depth);}
+\DoxyCodeLine{00273\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}}\ \ \ \ \ \ =\ \_rows;}
+\DoxyCodeLine{00274\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ depth\ \ \ \ \ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ \_depth\ :\ diagSize;}
+\DoxyCodeLine{00275\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}}\ \ \ \ \ \ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ diagSize\ :\ \_cols;}
+\DoxyCodeLine{00276\ \ \ \ \ }
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1const__blas__data__mapper}{const\_blas\_data\_mapper<Scalar,\ Index,\ LhsStorageOrder>}}\ LhsMapper;}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1const__blas__data__mapper}{const\_blas\_data\_mapper<Scalar,\ Index,\ RhsStorageOrder>}}\ RhsMapper;}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1blas__data__mapper}{blas\_data\_mapper<typename\ Traits::ResScalar,\ Index,\ ColMajor>}}\ ResMapper;}
+\DoxyCodeLine{00280\ \ \ \ \ LhsMapper\ lhs(\_lhs,lhsStride);}
+\DoxyCodeLine{00281\ \ \ \ \ RhsMapper\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}(\_rhs,rhsStride);}
+\DoxyCodeLine{00282\ \ \ \ \ ResMapper\ \mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}(\_res,\ resStride);}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ kc\ =\ blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_a2348863b8e4618d9cf28ac3274320959}{kc}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ cache\ block\ size\ along\ the\ K\ direction}}
+\DoxyCodeLine{00285\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ mc\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}},blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_a42652281565b0d88009c6a2c69a61b90}{mc}}());\ \ \textcolor{comment}{//\ cache\ block\ size\ along\ the\ M\ direction}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ std::size\_t\ sizeA\ =\ kc*mc;}
+\DoxyCodeLine{00288\ \ \ \ \ std::size\_t\ sizeB\ =\ kc*\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}}+\mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_aabf37293a258a90b1aa96a5d5ec04bfb}{EIGEN\_MAX\_ALIGN\_BYTES}}/\textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}});}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ \ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2memory_8h_ae4bf2b34741512d206aa238550a2c42c}{ei\_declare\_aligned\_stack\_constructed\_variable}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ blockA,\ sizeA,\ blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_ac30a1136915526882fa153bda28ad5b5}{blockA}}());}
+\DoxyCodeLine{00291\ \ \ \ \ \mbox{\hyperlink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2memory_8h_ae4bf2b34741512d206aa238550a2c42c}{ei\_declare\_aligned\_stack\_constructed\_variable}}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ blockB,\ sizeB,\ blocking.\mbox{\hyperlink{class_eigen_1_1internal_1_1level3__blocking_a12c88d4bc6a4da1787da32044b3c2dab}{blockB}}());}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1constructor__without__unaligned__array__assert}{internal::constructor\_without\_unaligned\_array\_assert}}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}};}
+\DoxyCodeLine{00294\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,SmallPanelWidth,SmallPanelWidth,RhsStorageOrder>}}\ triangularBuffer(\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}});}
+\DoxyCodeLine{00295\ \ \ \ \ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{if}((\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdac4dc554a61510151ddd5bafaf6040223}{ZeroDiag}})==\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdac4dc554a61510151ddd5bafaf6040223}{ZeroDiag}})}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ triangularBuffer.diagonal().\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ triangularBuffer.diagonal().\mbox{\hyperlink{class_eigen_1_1_plain_object_base_a2871e88e1feb1cc665fa1f1cc800078b}{setOnes}}();}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel<Scalar,\ Scalar,\ Index,\ ResMapper,\ Traits::mr,\ Traits::nr,\ ConjugateLhs,\ ConjugateRhs>}}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel}};}
+\DoxyCodeLine{00302\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gemm__pack__lhs}{gemm\_pack\_lhs<Scalar,\ Index,\ LhsMapper,\ Traits::mr,\ Traits::LhsProgress,\ LhsStorageOrder>}}\ pack\_lhs;}
+\DoxyCodeLine{00303\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gemm__pack__rhs}{gemm\_pack\_rhs<Scalar,\ Index,\ RhsMapper,\ Traits::nr,RhsStorageOrder>}}\ pack\_rhs;}
+\DoxyCodeLine{00304\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gemm__pack__rhs}{gemm\_pack\_rhs<Scalar,\ Index,\ RhsMapper,\ Traits::nr,RhsStorageOrder,false,true>}}\ pack\_rhs\_panel;}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ k2=\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ 0\ :\ depth;}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ k2<depth\ \ :\ k2>0;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ k2+=kc\ \ \ :\ k2-\/=kc)}
+\DoxyCodeLine{00309\ \ \ \ \ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actual\_kc\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ depth-\/k2\ :\ k2,\ kc);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actual\_k2\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ k2\ :\ k2-\/actual\_kc;}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \textcolor{comment}{//\ align\ blocks\ with\ the\ end\ of\ the\ triangular\ part\ for\ trapezoidal\ rhs}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ \&\&\ (k2<\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}})\ \&\&\ (actual\_k2+actual\_kc>\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}}))}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ actual\_kc\ =\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}}-\/k2;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ k2\ =\ actual\_k2\ +\ actual\_kc\ -\/\ kc;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \textcolor{comment}{//\ remaining\ size}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ rs\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}},actual\_k2)\ :\ \mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}}\ -\/\ k2;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \textcolor{comment}{//\ size\ of\ the\ triangular\ part}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ ts\ =\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ \&\&\ actual\_k2>=\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}})\ ?\ 0\ :\ actual\_kc;}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}*\ geb\ =\ blockB+ts*ts;}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ geb\ =\ geb\ +\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab83986b0ebbd20ebde1f9033162ca121}{internal::first\_aligned<PacketBytes>}}(geb,PacketBytes/\textcolor{keyword}{sizeof}(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}));}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \ \ pack\_rhs(geb,\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.getSubMapper(actual\_k2,\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ 0\ :\ k2),\ actual\_kc,\ rs);}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \textcolor{comment}{//\ pack\ the\ triangular\ part\ of\ the\ rhs\ padding\ the\ unrolled\ blocks\ with\ zeros}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(ts>0)}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ j2=0;\ j2<actual\_kc;\ j2+=\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa9938bb7854675714704fd3b1945114b0}{SmallPanelWidth}})}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actualPanelWidth\ =\ \mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min<Index>}}(actual\_kc-\/j2,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa9938bb7854675714704fd3b1945114b0}{SmallPanelWidth}});}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actual\_j2\ =\ actual\_k2\ +\ j2;}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ panelOffset\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ j2+actualPanelWidth\ :\ 0;}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ panelLength\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ actual\_kc-\/j2-\/actualPanelWidth\ :\ j2;}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ general\ part}}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ pack\_rhs\_panel(blockB+j2*actual\_kc,}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.getSubMapper(actual\_k2+panelOffset,\ actual\_j2),}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ panelLength,\ actualPanelWidth,}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_kc,\ panelOffset);}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ append\ the\ triangular\ part\ via\ a\ temporary\ buffer}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}=0;\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}<actualPanelWidth;++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aae5c33f1ea16476443e7fa3749739abe9}{SetDiag}})}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_matrix_aec085505a683eaffbd9b6680e99611af}{coeffRef}}(\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}},\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\ =\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}(actual\_j2+\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}},actual\_j2+\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}});}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ k=\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}+1\ :\ 0;\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ k<actualPanelWidth\ :\ k<\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};\ ++k)}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_matrix_aec085505a683eaffbd9b6680e99611af}{coeffRef}}(k,\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\ =\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}(actual\_j2+k,actual\_j2+\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}});}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ pack\_rhs\_panel(blockB+j2*actual\_kc,}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsMapper(triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_plain_object_base_a322d4d48cc285b60e0dff100db522342}{data}}(),\ triangularBuffer.\mbox{\hyperlink{class_eigen_1_1_matrix_a4ef63bbf7e04163bee2556944cee7472}{outerStride}}()),}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actualPanelWidth,\ actualPanelWidth,}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_kc,\ j2);}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ i2=0;\ i2<\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}};\ i2+=mc)}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actual\_mc\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(mc,\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}}-\/i2);}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ pack\_lhs(blockA,\ lhs.getSubMapper(i2,\ actual\_k2),\ actual\_kc,\ actual\_mc);}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ triangular\ kernel}}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(ts>0)}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ j2=0;\ j2<actual\_kc;\ j2+=\mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa9938bb7854675714704fd3b1945114b0}{SmallPanelWidth}})}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ actualPanelWidth\ =\ \mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min<Index>}}(actual\_kc-\/j2,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa9938bb7854675714704fd3b1945114b0}{SmallPanelWidth}});}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ panelLength\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ actual\_kc-\/j2\ :\ j2+actualPanelWidth;}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ blockOffset\ =\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ j2\ :\ 0;}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel}}(\mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.getSubMapper(i2,\ actual\_k2\ +\ j2),}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockA,\ blockB+j2*actual\_kc,}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_mc,\ panelLength,\ actualPanelWidth,}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ actual\_kc,\ actual\_kc,\ \ \textcolor{comment}{//\ strides}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockOffset,\ blockOffset);\textcolor{comment}{//\ offsets}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1gebp__kernel}{gebp\_kernel}}(\mbox{\hyperlink{_partial_redux__count_8cpp_acbe60897559b79afc28b79b0687b5f29}{res}}.getSubMapper(i2,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix_3_01_scalar_00_01_index_00_01_mo073ec17ef20b8a50e2a38e240dd8d795_a241a5f2113e5ba8837c929265c194f5aa697dce7e9aa9f8da7ff3bc161ec8d56b}{IsLower}}\ ?\ 0\ :\ k2),}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ blockA,\ geb,\ actual\_mc,\ actual\_kc,\ rs,}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/1,\ -\/1,\ 0,\ 0);}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00388\ \ \ \ \ \}}
+\DoxyCodeLine{00389\ \ \ \}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{00392\ \textcolor{comment}{*\ Wrapper\ to\ product\_triangular\_matrix\_matrix}}
+\DoxyCodeLine{00393\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceinternal}{internal}}\ \{}
+\DoxyCodeLine{00398\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ Mode,\ \textcolor{keywordtype}{bool}\ LhsIsTriangular,\ \textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00399\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1triangular__product__impl}{triangular\_product\_impl}}<\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},LhsIsTriangular,\mbox{\hyperlink{namespace_eigen_1_1internal_a091d923f61a5d455b1573e17b015adf9a1a7f4ccbeaf23168b50a83680f8f35fb}{Lhs}},\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}},\mbox{\hyperlink{namespace_eigen_1_1internal_a091d923f61a5d455b1573e17b015adf9a6c8de80f9984c6a6da22b7c288fee57d}{Rhs}},\mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}>}
+\DoxyCodeLine{00400\ \{}
+\DoxyCodeLine{00401\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1triangular__product__impl_3_01_mode_00_01_lhs_is_triangular_00_01_lh44afb66a9d3654cd1beb7f851ecab864_a94a33a21f729a7ce916ea08ddd0c56f4}{run}}(Dest\&\ \mbox{\hyperlink{shortpath_8cpp_a720827d53e80d32b23f708768099d331}{dst}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a091d923f61a5d455b1573e17b015adf9a1a7f4ccbeaf23168b50a83680f8f35fb}{Lhs}}\ \&a\_lhs,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_eigen_1_1internal_a091d923f61a5d455b1573e17b015adf9a6c8de80f9984c6a6da22b7c288fee57d}{Rhs}}\ \&a\_rhs,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Dest::Scalar\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}})}
+\DoxyCodeLine{00402\ \ \ \{}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Lhs::Scalar\ \ LhsScalar;}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Rhs::Scalar\ \ RhsScalar;}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Dest::Scalar\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00406\ \ \ \ \ }
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1blas__traits}{internal::blas\_traits<Lhs>}}\ LhsBlasTraits;}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ LhsBlasTraits::DirectLinearAccessType\ ActualLhsType;}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1remove__all_a5779acf852f62735a7d293d29b18e321}{internal::remove\_all<ActualLhsType>::type}}\ ActualLhsTypeCleaned;}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1blas__traits}{internal::blas\_traits<Rhs>}}\ RhsBlasTraits;}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ RhsBlasTraits::DirectLinearAccessType\ ActualRhsType;}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1remove__all_a5779acf852f62735a7d293d29b18e321}{internal::remove\_all<ActualRhsType>::type}}\ ActualRhsTypeCleaned;}
+\DoxyCodeLine{00413\ \ \ \ \ }
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1add__const__on__value__type_a7e1901ec0dabdc36b5458664d354d35a}{internal::add\_const\_on\_value\_type<ActualLhsType>::type}}\ lhs\ =\ LhsBlasTraits::extract(a\_lhs);}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1add__const__on__value__type_a7e1901ec0dabdc36b5458664d354d35a}{internal::add\_const\_on\_value\_type<ActualRhsType>::type}}\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}\ =\ RhsBlasTraits::extract(a\_rhs);}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \ \ \ \ LhsScalar\ lhs\_alpha\ =\ LhsBlasTraits::extractScalarFactor(a\_lhs);}
+\DoxyCodeLine{00418\ \ \ \ \ RhsScalar\ rhs\_alpha\ =\ RhsBlasTraits::extractScalarFactor(a\_rhs);}
+\DoxyCodeLine{00419\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\ actualAlpha\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}}\ *\ lhs\_alpha\ *\ rhs\_alpha;}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1internal_1_1gemm__blocking__space}{internal::gemm\_blocking\_space}}<(Dest::Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Lhs::MaxRowsAtCompileTime,\ Rhs::MaxColsAtCompileTime,\ Lhs::MaxColsAtCompileTime,4>\ BlockingType;}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ IsLower\ =\ (\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}})\ ==\ \mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}}\ \};}
+\DoxyCodeLine{00425\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ stripedRows\ \ =\ ((!LhsIsTriangular)\ ||\ (IsLower))\ \ ?\ lhs.rows()\ :\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(lhs.rows(),lhs.cols());}
+\DoxyCodeLine{00426\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ stripedCols\ \ =\ ((LhsIsTriangular)\ \ ||\ (!IsLower))\ ?\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.cols()\ :\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.cols(),\mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.rows());}
+\DoxyCodeLine{00427\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ stripedDepth\ =\ LhsIsTriangular\ ?\ ((!IsLower)\ ?\ lhs.cols()\ :\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(lhs.cols(),lhs.rows()))}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ ((IsLower)\ \ ?\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.rows()\ :\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.rows(),\mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.cols()));}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ BlockingType\ blocking(stripedRows,\ stripedCols,\ stripedDepth,\ 1,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1product__triangular__matrix__matrix}{internal::product\_triangular\_matrix\_matrix}}<\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}},}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}},\ LhsIsTriangular,}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{internal::traits<ActualLhsTypeCleaned>::Flags}}\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\ LhsBlasTraits::NeedToConjugate,}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{internal::traits<ActualRhsTypeCleaned>::Flags}}\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\ RhsBlasTraits::NeedToConjugate,}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{internal::traits<Dest\ \ \ \ \ \ \ \ \ \ >::Flags}}\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}>}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{::run}}(}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ stripedRows,\ stripedCols,\ stripedDepth,\ \ \ \textcolor{comment}{//\ sizes}}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \ \ \&lhs.coeffRef(0,0),\ lhs.outerStride(),\ \ \ \ \textcolor{comment}{//\ lhs\ info}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \&\mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.coeffRef(0,0),\ \mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.outerStride(),\ \ \ \ \textcolor{comment}{//\ rhs\ info}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \ \ \&\mbox{\hyperlink{shortpath_8cpp_a720827d53e80d32b23f708768099d331}{dst}}.coeffRef(0,0),\ \mbox{\hyperlink{shortpath_8cpp_a720827d53e80d32b23f708768099d331}{dst}}.outerStride(),\ \ \ \ \textcolor{comment}{//\ result\ info}}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ actualAlpha,\ blocking}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ );}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \textcolor{comment}{//\ Apply\ correction\ if\ the\ diagonal\ is\ unit\ and\ a\ scalar\ factor\ was\ nested:}}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{monitors_8c_a46c8a310cf4c094f8c80e1cb8dc1f911}{Mode}}\&\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cda2ef430bff6cc12c2d1e0ef01b95f7ff3}{UnitDiag}})==\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cda2ef430bff6cc12c2d1e0ef01b95f7ff3}{UnitDiag}})}
+\DoxyCodeLine{00447\ \ \ \ \ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (LhsIsTriangular\ \&\&\ lhs\_alpha!=LhsScalar(1))}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ diagSize\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(lhs.rows(),lhs.cols());}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{shortpath_8cpp_a720827d53e80d32b23f708768099d331}{dst}}.topRows(diagSize)\ -\/=\ ((lhs\_alpha-\/LhsScalar(1))*a\_rhs).\mbox{\hyperlink{_block_methods_8h_af9cde899d5b63f65a3f125f76bc1295b}{topRows}}(diagSize);}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ ((!LhsIsTriangular)\ \&\&\ rhs\_alpha!=RhsScalar(1))}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ diagSize\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.rows(),\mbox{\hyperlink{poisson_8cpp_a38c677f5cc4e47bc7505aef707c1bb83}{rhs}}.cols());}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{shortpath_8cpp_a720827d53e80d32b23f708768099d331}{dst}}.leftCols(diagSize)\ -\/=\ (rhs\_alpha-\/RhsScalar(1))*a\_lhs.leftCols(diagSize);}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00458\ \ \ \ \ \}}
+\DoxyCodeLine{00459\ \ \ \}}
+\DoxyCodeLine{00460\ \};}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_TRIANGULAR\_MATRIX\_MATRIX\_H}}
+
+\end{DoxyCode}

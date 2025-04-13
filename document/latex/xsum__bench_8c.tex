@@ -1,0 +1,414 @@
+\doxysection{runtime/xx\+Hash/cli/xsum\+\_\+bench.c 文件参考}
+\hypertarget{xsum__bench_8c}{}\label{xsum__bench_8c}\index{runtime/xxHash/cli/xsum\_bench.c@{runtime/xxHash/cli/xsum\_bench.c}}
+{\ttfamily \#include "{}xsum\+\_\+output.\+h"{}}\newline
+{\ttfamily \#include "{}xsum\+\_\+bench.\+h"{}}\newline
+{\ttfamily \#include "{}xsum\+\_\+sanity\+\_\+check.\+h"{}}\newline
+{\ttfamily \#include "{}xsum\+\_\+os\+\_\+specific.\+h"{}}\newline
+{\ttfamily \#include "{}../xxhash.\+h"{}}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$assert.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$time.\+h$>$}\newline
+{\ttfamily \#include $<$errno.\+h$>$}\newline
+xsum\+\_\+bench.\+c 的引用(Include)关系图\+:
+% FIG 0
+\doxysubsubsection*{类}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structhash_info}{hash\+Info}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{宏定义}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a546f2633ae1036f49bdc5582971d7f1e}{XXH\+\_\+\+STATIC\+\_\+\+LINKING\+\_\+\+ONLY}}
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a5bbd46119667d74de70c9e0e13f341fb}{TIMELOOP\+\_\+S}}~1
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a1cd38f1d38cc393d020c536df8364220}{TIMELOOP}}~(\mbox{\hyperlink{xsum__bench_8c_a5bbd46119667d74de70c9e0e13f341fb}{TIMELOOP\+\_\+S}} \texorpdfstring{$\ast$}{*} CLOCKS\+\_\+\+PER\+\_\+\+SEC)   /\texorpdfstring{$\ast$}{*} target timing per iteration \texorpdfstring{$\ast$}{*}/
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a02f84a88b616476aa84141df8897217d}{TIMELOOP\+\_\+\+MIN}}~(\mbox{\hyperlink{xsum__bench_8c_a1cd38f1d38cc393d020c536df8364220}{TIMELOOP}} / 2)               /\texorpdfstring{$\ast$}{*} minimum timing to validate a \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}} \texorpdfstring{$\ast$}{*}/
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a8a8968d446de499bdbebeb40da774136}{XXH\+\_\+1\+ST\+\_\+\+SPEED\+\_\+\+TARGET}}~10
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_affdefef0fc3a1673cac10cf4d16aa326}{MAX\+\_\+\+MEM}}~(2 \mbox{\hyperlink{xsum__config_8h_a44172ac633c517cb4c9e278cef36b000}{GB}} -\/ 64 \mbox{\hyperlink{xsum__config_8h_aa6b38d492364d98453284934ed7caee9}{MB}})
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a8b84a4030e91cf511fa9f65dea093760}{NB\+\_\+\+HASHFUNC}}~(sizeof(\mbox{\hyperlink{xsum__bench_8c_a0bfeb8002af24e76b1e2bf41700060ae}{g\+\_\+hashes\+To\+Bench}}) / sizeof(\texorpdfstring{$\ast$}{*}\mbox{\hyperlink{xsum__bench_8c_a0bfeb8002af24e76b1e2bf41700060ae}{g\+\_\+hashes\+To\+Bench}}))
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}{NB\+\_\+\+TESTFUNC}}~(1 + 2 \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xsum__bench_8c_a8b84a4030e91cf511fa9f65dea093760}{NB\+\_\+\+HASHFUNC}})
+\item 
+\#define \mbox{\hyperlink{xsum__bench_8c_a380990d136b0bd54c9abc2e4f2056e69}{HASHNAME\+\_\+\+MAX}}~29
+\end{DoxyCompactItemize}
+\doxysubsubsection*{类型定义}
+\begin{DoxyCompactItemize}
+\item 
+typedef \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}(\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xsum__bench_8c_ac2d483ccda15f730462000ad741fc06c}{hash\+Function}}) (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{函数}
+\begin{DoxyCompactItemize}
+\item 
+static clock\+\_\+t \mbox{\hyperlink{xsum__bench_8c_afcf5e1abe676c753f6c312ce49db41f2}{XSUM\+\_\+clock\+Span}} (clock\+\_\+t start)
+\item 
+static size\+\_\+t \mbox{\hyperlink{xsum__bench_8c_a0fdd53a3e367c01ced244bc593f06f5b}{XSUM\+\_\+find\+Max\+Mem}} (\mbox{\hyperlink{xsum__config_8h_a5d7c1404eed61b671c54e3e54430a4a6}{XSUM\+\_\+\+U64}} required\+Mem)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a57e5a0bfa6689137e700ac26c4f1e23b}{local\+XXH32}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a51033cd3706b28195d540284f6850ef0}{local\+XXH32\+\_\+stream}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a0068352615c14751e0eb283174076a62}{local\+XXH64}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a53086fc3f81831baa0e5e838b6549bbf}{local\+XXH64\+\_\+stream}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_adf4d90f21cc03414969f4570f3b142fb}{local\+XXH3\+\_\+64b}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a8688d8da314f8655d1ad03573b6b34c0}{local\+XXH3\+\_\+64b\+\_\+seeded}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a8221517730c8ff78c1660e7dc0b8eb4c}{local\+XXH3\+\_\+64b\+\_\+secret}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a168972dcbec4077465aadf65e4aba2cd}{local\+XXH3\+\_\+128b}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a0e4539e49f74eb839346d0c9509b2cb2}{local\+XXH3\+\_\+128b\+\_\+seeded}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a9d98dc99ec78fc792203f673824db20e}{local\+XXH3\+\_\+128b\+\_\+secret}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a6bb7468b3bc53189bcba4ea66a615c80}{local\+XXH3\+\_\+stream}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_aa8e128f052437b0396723d1735545eba}{local\+XXH3\+\_\+stream\+\_\+seeded}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_ac9249da60d751e7aade10eeeac18ef7e}{local\+XXH128\+\_\+stream}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} \mbox{\hyperlink{xsum__bench_8c_a3a32aa3d356fb7bed4e2050f0cde5324}{local\+XXH128\+\_\+stream\+\_\+seeded}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xsum__bench_8c_a12f9c60d0f129e83b37474b1860daccb}{XSUM\+\_\+bench\+Hash}} (\mbox{\hyperlink{xsum__bench_8c_ac2d483ccda15f730462000ad741fc06c}{hash\+Function}} h, const char \texorpdfstring{$\ast$}{*}h\+Name, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} test\+ID, const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size)
+\item 
+static char \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xsum__bench_8c_a476e9c4f31828f734992d640a359061e}{XSUM\+\_\+strcat\+Dup}} (const char \texorpdfstring{$\ast$}{*}s1, const char \texorpdfstring{$\ast$}{*}s2)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{xsum__bench_8c_a4b11f873ac3ebcbf8c9d4829884df9e6}{XSUM\+\_\+bench\+Mem}} (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size)
+\item 
+static size\+\_\+t \mbox{\hyperlink{xsum__bench_8c_a088e5d4f64a05e9d936f37eac9e8279f}{XSUM\+\_\+select\+Benched\+Size}} (const char \texorpdfstring{$\ast$}{*}file\+Name)
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xsum__bench_8c_a179efeb5312aef1e467c183dbfd2c4af}{XSUM\+\_\+bench\+Files}} (const char \texorpdfstring{$\ast$}{*}file\+Names\+Table\mbox{[}$\,$\mbox{]}, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} nb\+Files)
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xsum__bench_8c_a040a6574ec51814316a93d62c88341e1}{XSUM\+\_\+bench\+Internal}} (size\+\_\+t key\+Size)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{变量}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{xsum__config_8h_ab81cffa7d6055f9c26681c5e2613fff2}{XSUM\+\_\+\+U8}} \mbox{\hyperlink{xsum__bench_8c_a28779ec26e08d9fdd4e36b17a12d6556}{g\+\_\+bench\+Secret\+Buf}} \mbox{[}\mbox{\hyperlink{group___x_x_h3__family_gaeb79a9111c58af32599f8e5cd71d67d2}{XXH3\+\_\+\+SECRET\+\_\+\+SIZE\+\_\+\+MIN}}\mbox{]}
+\item 
+static const \mbox{\hyperlink{structhash_info}{hash\+Info}} \mbox{\hyperlink{xsum__bench_8c_a0bfeb8002af24e76b1e2bf41700060ae}{g\+\_\+hashes\+To\+Bench}} \mbox{[}$\,$\mbox{]}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} const \mbox{\hyperlink{xsum__bench_8c_a49c5eb3d6be3d9e06a23b64c367df1d1}{g\+\_\+nb\+Test\+Functions}} = \mbox{\hyperlink{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}{NB\+\_\+\+TESTFUNC}}
+\item 
+char \mbox{\hyperlink{xsum__bench_8c_a983c3c35c571e44752cfca0f6d91a7b4}{g\+\_\+test\+IDs}} \mbox{[}\mbox{\hyperlink{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}{NB\+\_\+\+TESTFUNC}}\mbox{]} = \{ 0 \}
+\item 
+const char \mbox{\hyperlink{xsum__bench_8c_a1669f9a0e7e5eefaccd15119f751c911}{k\+\_\+test\+IDs\+\_\+default}} \mbox{[}\mbox{\hyperlink{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}{NB\+\_\+\+TESTFUNC}}\mbox{]}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{xsum__bench_8c_adcfc1f7909eaff30e6fe7f15d1ea541d}{g\+\_\+nb\+Iterations}} = \mbox{\hyperlink{xsum__bench_8h_a1696a38fc6af2b819f400394d26853af}{NBLOOPS\+\_\+\+DEFAULT}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{宏定义说明}
+\Hypertarget{xsum__bench_8c_a380990d136b0bd54c9abc2e4f2056e69}\index{xsum\_bench.c@{xsum\_bench.c}!HASHNAME\_MAX@{HASHNAME\_MAX}}
+\index{HASHNAME\_MAX@{HASHNAME\_MAX}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{HASHNAME\_MAX}{HASHNAME\_MAX}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a380990d136b0bd54c9abc2e4f2056e69} 
+\#define HASHNAME\+\_\+\+MAX~29}
+
+\Hypertarget{xsum__bench_8c_affdefef0fc3a1673cac10cf4d16aa326}\index{xsum\_bench.c@{xsum\_bench.c}!MAX\_MEM@{MAX\_MEM}}
+\index{MAX\_MEM@{MAX\_MEM}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{MAX\_MEM}{MAX\_MEM}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_affdefef0fc3a1673cac10cf4d16aa326} 
+\#define MAX\+\_\+\+MEM~(2 \mbox{\hyperlink{xsum__config_8h_a44172ac633c517cb4c9e278cef36b000}{GB}} -\/ 64 \mbox{\hyperlink{xsum__config_8h_aa6b38d492364d98453284934ed7caee9}{MB}})}
+
+\Hypertarget{xsum__bench_8c_a8b84a4030e91cf511fa9f65dea093760}\index{xsum\_bench.c@{xsum\_bench.c}!NB\_HASHFUNC@{NB\_HASHFUNC}}
+\index{NB\_HASHFUNC@{NB\_HASHFUNC}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{NB\_HASHFUNC}{NB\_HASHFUNC}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a8b84a4030e91cf511fa9f65dea093760} 
+\#define NB\+\_\+\+HASHFUNC~(sizeof(\mbox{\hyperlink{xsum__bench_8c_a0bfeb8002af24e76b1e2bf41700060ae}{g\+\_\+hashes\+To\+Bench}}) / sizeof(\texorpdfstring{$\ast$}{*}\mbox{\hyperlink{xsum__bench_8c_a0bfeb8002af24e76b1e2bf41700060ae}{g\+\_\+hashes\+To\+Bench}}))}
+
+\Hypertarget{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}\index{xsum\_bench.c@{xsum\_bench.c}!NB\_TESTFUNC@{NB\_TESTFUNC}}
+\index{NB\_TESTFUNC@{NB\_TESTFUNC}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{NB\_TESTFUNC}{NB\_TESTFUNC}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a} 
+\#define NB\+\_\+\+TESTFUNC~(1 + 2 \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{xsum__bench_8c_a8b84a4030e91cf511fa9f65dea093760}{NB\+\_\+\+HASHFUNC}})}
+
+\Hypertarget{xsum__bench_8c_a1cd38f1d38cc393d020c536df8364220}\index{xsum\_bench.c@{xsum\_bench.c}!TIMELOOP@{TIMELOOP}}
+\index{TIMELOOP@{TIMELOOP}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{TIMELOOP}{TIMELOOP}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a1cd38f1d38cc393d020c536df8364220} 
+\#define TIMELOOP~(\mbox{\hyperlink{xsum__bench_8c_a5bbd46119667d74de70c9e0e13f341fb}{TIMELOOP\+\_\+S}} \texorpdfstring{$\ast$}{*} CLOCKS\+\_\+\+PER\+\_\+\+SEC)   /\texorpdfstring{$\ast$}{*} target timing per iteration \texorpdfstring{$\ast$}{*}/}
+
+\Hypertarget{xsum__bench_8c_a02f84a88b616476aa84141df8897217d}\index{xsum\_bench.c@{xsum\_bench.c}!TIMELOOP\_MIN@{TIMELOOP\_MIN}}
+\index{TIMELOOP\_MIN@{TIMELOOP\_MIN}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{TIMELOOP\_MIN}{TIMELOOP\_MIN}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a02f84a88b616476aa84141df8897217d} 
+\#define TIMELOOP\+\_\+\+MIN~(\mbox{\hyperlink{xsum__bench_8c_a1cd38f1d38cc393d020c536df8364220}{TIMELOOP}} / 2)               /\texorpdfstring{$\ast$}{*} minimum timing to validate a \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}} \texorpdfstring{$\ast$}{*}/}
+
+\Hypertarget{xsum__bench_8c_a5bbd46119667d74de70c9e0e13f341fb}\index{xsum\_bench.c@{xsum\_bench.c}!TIMELOOP\_S@{TIMELOOP\_S}}
+\index{TIMELOOP\_S@{TIMELOOP\_S}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{TIMELOOP\_S}{TIMELOOP\_S}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a5bbd46119667d74de70c9e0e13f341fb} 
+\#define TIMELOOP\+\_\+S~1}
+
+\Hypertarget{xsum__bench_8c_a8a8968d446de499bdbebeb40da774136}\index{xsum\_bench.c@{xsum\_bench.c}!XXH\_1ST\_SPEED\_TARGET@{XXH\_1ST\_SPEED\_TARGET}}
+\index{XXH\_1ST\_SPEED\_TARGET@{XXH\_1ST\_SPEED\_TARGET}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XXH\_1ST\_SPEED\_TARGET}{XXH\_1ST\_SPEED\_TARGET}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a8a8968d446de499bdbebeb40da774136} 
+\#define XXH\+\_\+1\+ST\+\_\+\+SPEED\+\_\+\+TARGET~10}
+
+\Hypertarget{xsum__bench_8c_a546f2633ae1036f49bdc5582971d7f1e}\index{xsum\_bench.c@{xsum\_bench.c}!XXH\_STATIC\_LINKING\_ONLY@{XXH\_STATIC\_LINKING\_ONLY}}
+\index{XXH\_STATIC\_LINKING\_ONLY@{XXH\_STATIC\_LINKING\_ONLY}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XXH\_STATIC\_LINKING\_ONLY}{XXH\_STATIC\_LINKING\_ONLY}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a546f2633ae1036f49bdc5582971d7f1e} 
+\#define XXH\+\_\+\+STATIC\+\_\+\+LINKING\+\_\+\+ONLY}
+
+
+
+\doxysubsection{类型定义说明}
+\Hypertarget{xsum__bench_8c_ac2d483ccda15f730462000ad741fc06c}\index{xsum\_bench.c@{xsum\_bench.c}!hashFunction@{hashFunction}}
+\index{hashFunction@{hashFunction}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{hashFunction}{hashFunction}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_ac2d483ccda15f730462000ad741fc06c} 
+typedef \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}(\texorpdfstring{$\ast$}{*} hash\+Function) (const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3667f558219c90437106b544a3ca00b8}{buffer}}, size\+\_\+t buffer\+Size, \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} seed)}
+
+
+
+\doxysubsection{函数说明}
+\Hypertarget{xsum__bench_8c_ac9249da60d751e7aade10eeeac18ef7e}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH128\_stream@{localXXH128\_stream}}
+\index{localXXH128\_stream@{localXXH128\_stream}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH128\_stream()}{localXXH128\_stream()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_ac9249da60d751e7aade10eeeac18ef7e} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH128\+\_\+stream (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 1
+\Hypertarget{xsum__bench_8c_a3a32aa3d356fb7bed4e2050f0cde5324}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH128\_stream\_seeded@{localXXH128\_stream\_seeded}}
+\index{localXXH128\_stream\_seeded@{localXXH128\_stream\_seeded}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH128\_stream\_seeded()}{localXXH128\_stream\_seeded()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a3a32aa3d356fb7bed4e2050f0cde5324} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH128\+\_\+stream\+\_\+seeded (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 2
+\Hypertarget{xsum__bench_8c_a57e5a0bfa6689137e700ac26c4f1e23b}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH32@{localXXH32}}
+\index{localXXH32@{localXXH32}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH32()}{localXXH32()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a57e5a0bfa6689137e700ac26c4f1e23b} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH32 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 3
+\Hypertarget{xsum__bench_8c_a51033cd3706b28195d540284f6850ef0}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH32\_stream@{localXXH32\_stream}}
+\index{localXXH32\_stream@{localXXH32\_stream}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH32\_stream()}{localXXH32\_stream()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a51033cd3706b28195d540284f6850ef0} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH32\+\_\+stream (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 4
+\Hypertarget{xsum__bench_8c_a168972dcbec4077465aadf65e4aba2cd}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_128b@{localXXH3\_128b}}
+\index{localXXH3\_128b@{localXXH3\_128b}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_128b()}{localXXH3\_128b()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a168972dcbec4077465aadf65e4aba2cd} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+128b (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 5
+\Hypertarget{xsum__bench_8c_a9d98dc99ec78fc792203f673824db20e}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_128b\_secret@{localXXH3\_128b\_secret}}
+\index{localXXH3\_128b\_secret@{localXXH3\_128b\_secret}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_128b\_secret()}{localXXH3\_128b\_secret()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a9d98dc99ec78fc792203f673824db20e} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+128b\+\_\+secret (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 6
+\Hypertarget{xsum__bench_8c_a0e4539e49f74eb839346d0c9509b2cb2}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_128b\_seeded@{localXXH3\_128b\_seeded}}
+\index{localXXH3\_128b\_seeded@{localXXH3\_128b\_seeded}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_128b\_seeded()}{localXXH3\_128b\_seeded()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a0e4539e49f74eb839346d0c9509b2cb2} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+128b\+\_\+seeded (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xsum__bench_8c_adf4d90f21cc03414969f4570f3b142fb}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_64b@{localXXH3\_64b}}
+\index{localXXH3\_64b@{localXXH3\_64b}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_64b()}{localXXH3\_64b()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_adf4d90f21cc03414969f4570f3b142fb} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+64b (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 7
+\Hypertarget{xsum__bench_8c_a8221517730c8ff78c1660e7dc0b8eb4c}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_64b\_secret@{localXXH3\_64b\_secret}}
+\index{localXXH3\_64b\_secret@{localXXH3\_64b\_secret}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_64b\_secret()}{localXXH3\_64b\_secret()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a8221517730c8ff78c1660e7dc0b8eb4c} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+64b\+\_\+secret (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 8
+\Hypertarget{xsum__bench_8c_a8688d8da314f8655d1ad03573b6b34c0}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_64b\_seeded@{localXXH3\_64b\_seeded}}
+\index{localXXH3\_64b\_seeded@{localXXH3\_64b\_seeded}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_64b\_seeded()}{localXXH3\_64b\_seeded()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a8688d8da314f8655d1ad03573b6b34c0} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+64b\+\_\+seeded (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xsum__bench_8c_a6bb7468b3bc53189bcba4ea66a615c80}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_stream@{localXXH3\_stream}}
+\index{localXXH3\_stream@{localXXH3\_stream}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_stream()}{localXXH3\_stream()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a6bb7468b3bc53189bcba4ea66a615c80} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+stream (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 9
+\Hypertarget{xsum__bench_8c_aa8e128f052437b0396723d1735545eba}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH3\_stream\_seeded@{localXXH3\_stream\_seeded}}
+\index{localXXH3\_stream\_seeded@{localXXH3\_stream\_seeded}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH3\_stream\_seeded()}{localXXH3\_stream\_seeded()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_aa8e128f052437b0396723d1735545eba} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH3\+\_\+stream\+\_\+seeded (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 10
+\Hypertarget{xsum__bench_8c_a0068352615c14751e0eb283174076a62}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH64@{localXXH64}}
+\index{localXXH64@{localXXH64}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH64()}{localXXH64()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a0068352615c14751e0eb283174076a62} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH64 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 11
+\Hypertarget{xsum__bench_8c_a53086fc3f81831baa0e5e838b6549bbf}\index{xsum\_bench.c@{xsum\_bench.c}!localXXH64\_stream@{localXXH64\_stream}}
+\index{localXXH64\_stream@{localXXH64\_stream}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{localXXH64\_stream()}{localXXH64\_stream()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a53086fc3f81831baa0e5e838b6549bbf} 
+static \mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}} local\+XXH64\+\_\+stream (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{, }\item[{\mbox{\hyperlink{xsum__config_8h_a916b2052376fa089e74bc71c922efc34}{XSUM\+\_\+\+U32}}}]{seed}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 12
+\Hypertarget{xsum__bench_8c_a179efeb5312aef1e467c183dbfd2c4af}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_benchFiles@{XSUM\_benchFiles}}
+\index{XSUM\_benchFiles@{XSUM\_benchFiles}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_benchFiles()}{XSUM\_benchFiles()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a179efeb5312aef1e467c183dbfd2c4af} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} XSUM\+\_\+bench\+Files (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{file\+Names\+Table}{\mbox{[}$\,$\mbox{]}, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{nb\+Files}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 13
+\Hypertarget{xsum__bench_8c_a12f9c60d0f129e83b37474b1860daccb}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_benchHash@{XSUM\_benchHash}}
+\index{XSUM\_benchHash@{XSUM\_benchHash}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_benchHash()}{XSUM\_benchHash()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a12f9c60d0f129e83b37474b1860daccb} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} XSUM\+\_\+bench\+Hash (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{xsum__bench_8c_ac2d483ccda15f730462000ad741fc06c}{hash\+Function}}}]{h}{, }\item[{const char \texorpdfstring{$\ast$}{*}}]{h\+Name}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{test\+ID}{, }\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 14
+\Hypertarget{xsum__bench_8c_a040a6574ec51814316a93d62c88341e1}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_benchInternal@{XSUM\_benchInternal}}
+\index{XSUM\_benchInternal@{XSUM\_benchInternal}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_benchInternal()}{XSUM\_benchInternal()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a040a6574ec51814316a93d62c88341e1} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} XSUM\+\_\+bench\+Internal (\begin{DoxyParamCaption}\item[{size\+\_\+t}]{key\+Size}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 15
+\Hypertarget{xsum__bench_8c_a4b11f873ac3ebcbf8c9d4829884df9e6}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_benchMem@{XSUM\_benchMem}}
+\index{XSUM\_benchMem@{XSUM\_benchMem}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_benchMem()}{XSUM\_benchMem()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a4b11f873ac3ebcbf8c9d4829884df9e6} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} XSUM\+\_\+bench\+Mem (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \texorpdfstring{$\ast$}{*}}]{buffer}{, }\item[{size\+\_\+t}]{buffer\+Size}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\doxylink{xsum__bench_8c_a4b11f873ac3ebcbf8c9d4829884df9e6}{XSUM\+\_\+bench\+Mem()}\+: Benchmark provided content up to twice per function\+:
+\begin{DoxyItemize}
+\item once at provided aligned memory address (\%16)
+\item second time at unaligned memory address (+3) Enabled functions and modes are provided via @g\+\_\+hashes\+To\+Bench global variable. @buffer\+: Must be 16-\/byte aligned. The allocated size of underlying @buffer must be \texorpdfstring{$>$}{>}= (@buffer\+Size+3). This function also fills @g\+\_\+bench\+Secret\+Buf, to bench XXH3\textquotesingle{}s \+\_\+with\+Secret() variants. 
+\end{DoxyItemize}函数调用图\+:
+% FIG 16
+\Hypertarget{xsum__bench_8c_afcf5e1abe676c753f6c312ce49db41f2}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_clockSpan@{XSUM\_clockSpan}}
+\index{XSUM\_clockSpan@{XSUM\_clockSpan}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_clockSpan()}{XSUM\_clockSpan()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_afcf5e1abe676c753f6c312ce49db41f2} 
+static clock\+\_\+t XSUM\+\_\+clock\+Span (\begin{DoxyParamCaption}\item[{clock\+\_\+t}]{start}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xsum__bench_8c_a0fdd53a3e367c01ced244bc593f06f5b}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_findMaxMem@{XSUM\_findMaxMem}}
+\index{XSUM\_findMaxMem@{XSUM\_findMaxMem}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_findMaxMem()}{XSUM\_findMaxMem()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a0fdd53a3e367c01ced244bc593f06f5b} 
+static size\+\_\+t XSUM\+\_\+find\+Max\+Mem (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{xsum__config_8h_a5d7c1404eed61b671c54e3e54430a4a6}{XSUM\+\_\+\+U64}}}]{required\+Mem}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xsum__bench_8c_a088e5d4f64a05e9d936f37eac9e8279f}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_selectBenchedSize@{XSUM\_selectBenchedSize}}
+\index{XSUM\_selectBenchedSize@{XSUM\_selectBenchedSize}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_selectBenchedSize()}{XSUM\_selectBenchedSize()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a088e5d4f64a05e9d936f37eac9e8279f} 
+static size\+\_\+t XSUM\+\_\+select\+Benched\+Size (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{file\+Name}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+函数调用图\+:
+% FIG 17
+\Hypertarget{xsum__bench_8c_a476e9c4f31828f734992d640a359061e}\index{xsum\_bench.c@{xsum\_bench.c}!XSUM\_strcatDup@{XSUM\_strcatDup}}
+\index{XSUM\_strcatDup@{XSUM\_strcatDup}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{XSUM\_strcatDup()}{XSUM\_strcatDup()}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a476e9c4f31828f734992d640a359061e} 
+static char \texorpdfstring{$\ast$}{*} XSUM\+\_\+strcat\+Dup (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{s1}{, }\item[{const char \texorpdfstring{$\ast$}{*}}]{s2}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+\doxysubsection{变量说明}
+\Hypertarget{xsum__bench_8c_a28779ec26e08d9fdd4e36b17a12d6556}\index{xsum\_bench.c@{xsum\_bench.c}!g\_benchSecretBuf@{g\_benchSecretBuf}}
+\index{g\_benchSecretBuf@{g\_benchSecretBuf}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{g\_benchSecretBuf}{g\_benchSecretBuf}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a28779ec26e08d9fdd4e36b17a12d6556} 
+\mbox{\hyperlink{xsum__config_8h_ab81cffa7d6055f9c26681c5e2613fff2}{XSUM\+\_\+\+U8}} g\+\_\+bench\+Secret\+Buf\mbox{[}\mbox{\hyperlink{group___x_x_h3__family_gaeb79a9111c58af32599f8e5cd71d67d2}{XXH3\+\_\+\+SECRET\+\_\+\+SIZE\+\_\+\+MIN}}\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{xsum__bench_8c_a0bfeb8002af24e76b1e2bf41700060ae}\index{xsum\_bench.c@{xsum\_bench.c}!g\_hashesToBench@{g\_hashesToBench}}
+\index{g\_hashesToBench@{g\_hashesToBench}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{g\_hashesToBench}{g\_hashesToBench}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a0bfeb8002af24e76b1e2bf41700060ae} 
+const \mbox{\hyperlink{structhash_info}{hash\+Info}} g\+\_\+hashes\+To\+Bench\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries 初始值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH32"{}},\ \ \ \ \ \ \ \ \ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a57e5a0bfa6689137e700ac26c4f1e23b}{localXXH32}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH64"{}},\ \ \ \ \ \ \ \ \ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a0068352615c14751e0eb283174076a62}{localXXH64}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH3\_64b"{}},\ \ \ \ \ \ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_adf4d90f21cc03414969f4570f3b142fb}{localXXH3\_64b}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH3\_64b\ w/seed"{}},\ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a8688d8da314f8655d1ad03573b6b34c0}{localXXH3\_64b\_seeded}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH3\_64b\ w/secret"{}},\ \&\mbox{\hyperlink{xsum__bench_8c_a8221517730c8ff78c1660e7dc0b8eb4c}{localXXH3\_64b\_secret}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH128"{}},\ \ \ \ \ \ \ \ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a168972dcbec4077465aadf65e4aba2cd}{localXXH3\_128b}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH128\ w/seed"{}},\ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a0e4539e49f74eb839346d0c9509b2cb2}{localXXH3\_128b\_seeded}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH128\ w/secret"{}},\ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a9d98dc99ec78fc792203f673824db20e}{localXXH3\_128b\_secret}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH32\_stream"{}},\ \ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a51033cd3706b28195d540284f6850ef0}{localXXH32\_stream}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH64\_stream"{}},\ \ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a53086fc3f81831baa0e5e838b6549bbf}{localXXH64\_stream}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH3\_stream"{}},\ \ \ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_a6bb7468b3bc53189bcba4ea66a615c80}{localXXH3\_stream}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH3\_stream\ w/seed"{}},\&\mbox{\hyperlink{xsum__bench_8c_aa8e128f052437b0396723d1735545eba}{localXXH3\_stream\_seeded}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH128\_stream"{}},\ \ \ \ \ \&\mbox{\hyperlink{xsum__bench_8c_ac9249da60d751e7aade10eeeac18ef7e}{localXXH128\_stream}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{stringliteral}{"{}XXH128\_stream\ w/seed"{}},\&\mbox{\hyperlink{xsum__bench_8c_a3a32aa3d356fb7bed4e2050f0cde5324}{localXXH128\_stream\_seeded}}\ \},}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\Hypertarget{xsum__bench_8c_adcfc1f7909eaff30e6fe7f15d1ea541d}\index{xsum\_bench.c@{xsum\_bench.c}!g\_nbIterations@{g\_nbIterations}}
+\index{g\_nbIterations@{g\_nbIterations}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{g\_nbIterations}{g\_nbIterations}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_adcfc1f7909eaff30e6fe7f15d1ea541d} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} g\+\_\+nb\+Iterations = \mbox{\hyperlink{xsum__bench_8h_a1696a38fc6af2b819f400394d26853af}{NBLOOPS\+\_\+\+DEFAULT}}}
+
+\Hypertarget{xsum__bench_8c_a49c5eb3d6be3d9e06a23b64c367df1d1}\index{xsum\_bench.c@{xsum\_bench.c}!g\_nbTestFunctions@{g\_nbTestFunctions}}
+\index{g\_nbTestFunctions@{g\_nbTestFunctions}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{g\_nbTestFunctions}{g\_nbTestFunctions}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a49c5eb3d6be3d9e06a23b64c367df1d1} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} const g\+\_\+nb\+Test\+Functions = \mbox{\hyperlink{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}{NB\+\_\+\+TESTFUNC}}}
+
+\Hypertarget{xsum__bench_8c_a983c3c35c571e44752cfca0f6d91a7b4}\index{xsum\_bench.c@{xsum\_bench.c}!g\_testIDs@{g\_testIDs}}
+\index{g\_testIDs@{g\_testIDs}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{g\_testIDs}{g\_testIDs}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a983c3c35c571e44752cfca0f6d91a7b4} 
+char g\+\_\+test\+IDs\mbox{[}\mbox{\hyperlink{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}{NB\+\_\+\+TESTFUNC}}\mbox{]} = \{ 0 \}}
+
+\Hypertarget{xsum__bench_8c_a1669f9a0e7e5eefaccd15119f751c911}\index{xsum\_bench.c@{xsum\_bench.c}!k\_testIDs\_default@{k\_testIDs\_default}}
+\index{k\_testIDs\_default@{k\_testIDs\_default}!xsum\_bench.c@{xsum\_bench.c}}
+\doxysubsubsection{\texorpdfstring{k\_testIDs\_default}{k\_testIDs\_default}}
+{\footnotesize\ttfamily \label{xsum__bench_8c_a1669f9a0e7e5eefaccd15119f751c911} 
+const char k\+\_\+test\+IDs\+\_\+default\mbox{[}\mbox{\hyperlink{xsum__bench_8c_a2a38bf44c889d649182307c67c340c6a}{NB\+\_\+\+TESTFUNC}}\mbox{]}}
+
+{\bfseries 初始值\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ 1\ ,\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ 1\ ,\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ 1\ ,\ 0,\ 0,\ 0,\ 0,\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ 1\ \ \}}
+
+\end{DoxyCode}

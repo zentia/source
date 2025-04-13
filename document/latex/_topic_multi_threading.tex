@@ -1,0 +1,52 @@
+\doxysubsection{Eigen and multi-\/threading}
+\hypertarget{_topic_multi_threading}{}\label{_topic_multi_threading}\index{Eigen and multi-\/threading@{Eigen and multi-\/threading}}
+\hypertarget{_topic_multi_threading_TopicMultiThreading_MakingEigenMT}{}\doxysubsubsection{\texorpdfstring{Make Eigen run in parallel}{Make Eigen run in parallel}}\label{_topic_multi_threading_TopicMultiThreading_MakingEigenMT}
+Some \doxylink{namespace_eigen}{Eigen}\textquotesingle{}s algorithms can exploit the multiple cores present in your hardware. To this end, it is enough to enable Open\+MP on your compiler, for instance\+: GCC\+: {\ttfamily -\/fopenmp} ICC\+: {\ttfamily -\/openmp} MSVC\+: check the respective option in the build properties. You can control the number of thread that will be used using either the Open\+MP API or \doxylink{namespace_eigen}{Eigen}\textquotesingle{}s API using the following priority\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{OMP\_NUM\_THREADS=\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ ./my\_program}
+\DoxyCodeLine{omp\_set\_num\_threads(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}});}
+\DoxyCodeLine{\mbox{\hyperlink{namespace_eigen_af9cd17c2fe18204239cd11c88c120b50}{Eigen::setNbThreads}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}});}
+
+\end{DoxyCode}
+ Unless set\+Nb\+Threads has been called, \doxylink{namespace_eigen}{Eigen} uses the number of threads specified by Open\+MP. You can restore this behavior by calling 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespace_eigen_af9cd17c2fe18204239cd11c88c120b50}{setNbThreads}}(0);\ }
+
+\end{DoxyCode}
+ You can query the number of threads that will be used with\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ =\ \mbox{\hyperlink{namespace_eigen_a9aca97d83e21b91a04ec079360dfffeb}{Eigen::nbThreads}}(\ );}
+
+\end{DoxyCode}
+ You can disable \doxylink{namespace_eigen}{Eigen}\textquotesingle{}s multi threading at compile time by defining the EIGEN\+\_\+\+DONT\+\_\+\+PARALLELIZE preprocessor token.
+
+Currently, the following algorithms can make use of multi-\/threading\+:
+\begin{DoxyItemize}
+\item general dense matrix -\/ matrix products
+\item \doxylink{class_eigen_1_1_partial_piv_l_u}{Partial\+Piv\+LU}
+\item row-\/major-\/sparse \texorpdfstring{$\ast$}{*} dense vector/matrix products
+\item \doxylink{class_eigen_1_1_conjugate_gradient}{Conjugate\+Gradient} with {\ttfamily Lower\texorpdfstring{$\vert$}{|}\+Upper} as the {\ttfamily Up\+Lo} template parameter.
+\item \doxylink{class_eigen_1_1_bi_c_g_s_t_a_b}{Bi\+CGSTAB} with a row-\/major sparse matrix format.
+\item \doxylink{class_eigen_1_1_least_squares_conjugate_gradient}{Least\+Squares\+Conjugate\+Gradient}
+\end{DoxyItemize}\hypertarget{_topic_multi_threading_TopicMultiThreading_UsingEigenWithMT}{}\doxysubsubsection{\texorpdfstring{Using Eigen in a multi-\/threaded application}{Using Eigen in a multi-\/threaded application}}\label{_topic_multi_threading_TopicMultiThreading_UsingEigenWithMT}
+In the case your own application is multithreaded, and multiple threads make calls to \doxylink{namespace_eigen}{Eigen}, then you have to initialize \doxylink{namespace_eigen}{Eigen} by calling the following routine {\bfseries{before}} creating the threads\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <Eigen/Core>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}**\ argv)}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{namespace_eigen_a820c0e0460934cc17eb6dacbad54a9f5}{Eigen::initParallel}}();}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ ...}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+\begin{DoxyNote}{注解}
+With \doxylink{namespace_eigen}{Eigen} 3.\+3, and a fully C++11 compliant compiler (i.\+e., \href{http://en.cppreference.com/w/cpp/language/storage_duration\#Static_local_variables}{\texttt{ thread-\/safe static local variable initialization}}), then calling {\ttfamily \doxylink{namespace_eigen_a820c0e0460934cc17eb6dacbad54a9f5}{init\+Parallel()}} is optional.
+\end{DoxyNote}
+\begin{DoxyWarning}{警告}
+note that all functions generating random matrices are {\bfseries{not}} re-\/entrant nor thread-\/safe. Those include \doxylink{class_eigen_1_1_dense_base_ae814abb451b48ed872819192dc188c19}{Dense\+Base\+::\+Random()}, and \doxylink{class_eigen_1_1_dense_base_ac476e5852129ba32beaa1a8a3d7ee0db}{Dense\+Base\+::set\+Random()} despite a call to \doxylink{namespace_eigen_a820c0e0460934cc17eb6dacbad54a9f5}{Eigen\+::init\+Parallel()}. This is because these functions are based on std\+::rand which is not re-\/entrant. For thread-\/safe random generator, we recommend the use of boost\+::random or c++11 random feature.
+\end{DoxyWarning}
+In the case your application is parallelized with Open\+MP, you might want to disable \doxylink{namespace_eigen}{Eigen}\textquotesingle{}s own parallization as detailed in the previous section. 

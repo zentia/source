@@ -1,0 +1,100 @@
+\doxysection{Profile Taskflow Programs}
+\hypertarget{_profiler}{}\label{_profiler}\index{Profile Taskflow Programs@{Profile Taskflow Programs}}
+Taskflow comes with a built-\/in profiler, {\itshape TFProf}, for you to profile and visualize taskflow programs.
+
+\hypertarget{_profiler_ProfilerEnableTFProf}{}\doxysubsection{\texorpdfstring{Enable Taskflow Profiler}{Enable Taskflow Profiler}}\label{_profiler_ProfilerEnableTFProf}
+All taskflow programs come with a lightweight profiling module to observer worker activities in every executor. To enable the profiler, set the environment variable {\ttfamily TF\+\_\+\+ENABLE\+\_\+\+PROFILER} to a file name in which the profiling result will be stored.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ \mbox{\hyperlink{environment_8hpp_ae89273a224aed50f8e9b446fdd871b12}{TF\_ENABLE\_PROFILER}}=\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}.json\ ./my\_taskflow}
+\DoxyCodeLine{\string~\$\ cat\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}.json}
+\DoxyCodeLine{[}
+\DoxyCodeLine{\{\textcolor{stringliteral}{"{}executor"{}}:\textcolor{stringliteral}{"{}0"{}},\textcolor{stringliteral}{"{}data"{}}:[\{\textcolor{stringliteral}{"{}worker"{}}:12,\textcolor{stringliteral}{"{}level"{}}:0,\textcolor{stringliteral}{"{}data"{}}:[\{\textcolor{stringliteral}{"{}span"{}}:[72,117],\textcolor{stringliteral}{"{}name"{}}:\textcolor{stringliteral}{"{}12\_0"{}},\textcolor{stringliteral}{"{}type"{}}:\textcolor{stringliteral}{"{}static"{}}\},\{\textcolor{stringliteral}{"{}span"{}}:[121,123],\textcolor{stringliteral}{"{}name"{}}:\textcolor{stringliteral}{"{}12\_1"{}},\textcolor{stringliteral}{"{}type"{}}:\textcolor{stringliteral}{"{}static"{}}\},\{\textcolor{stringliteral}{"{}span"{}}:[123,125],\textcolor{stringliteral}{"{}name"{}}:\textcolor{stringliteral}{"{}12\_2"{}},\textcolor{stringliteral}{"{}type"{}}:\textcolor{stringliteral}{"{}static"{}}\},\{\textcolor{stringliteral}{"{}span"{}}:[125,127],\textcolor{stringliteral}{"{}name"{}}:\textcolor{stringliteral}{"{}12\_3"{}},\textcolor{stringliteral}{"{}type"{}}:\textcolor{stringliteral}{"{}static"{}}\}]\}]\}}
+\DoxyCodeLine{]}
+
+\end{DoxyCode}
+
+
+When the program finishes, it generates and saves the profiling data to {\ttfamily result.\+json} in Java\+Script \doxylink{class_object}{Object} Notation (JSON) format. You can then paste the JSON data to our web-\/based interface, @\+TFProf, to visualize the execution timelines of tasks and workers. The web interface supports the following features\+:
+\begin{DoxyItemize}
+\item zoom into a selected window
+\item double click to zoom back to the previously selected window
+\item filter workers
+\item mouse over to show the tooltip of the task
+\item rank tasks in decreasing order of criticality (i.\+e., execution time)
+\end{DoxyItemize}
+
+TFProf implements a clustering-\/based algorithm to efficiently visualize tasks and their execution timelines in a browser. Without losing much visual accuracy, each {\itshape clustered} task indicates a group of adjacent tasks clustered by the algorithm, and you can zoom in to see these tasks.\hypertarget{_profiler_ProfilerEnableTFProfServer}{}\doxysubsection{\texorpdfstring{Enable Taskflow Profiler on a HTTP Server}{Enable Taskflow Profiler on a HTTP Server}}\label{_profiler_ProfilerEnableTFProfServer}
+When profiling large taskflow programs, the method in the previous section may not work because of the limitation of processing large JSON files. For example, a taskflow program of a million tasks can produce several GBs of profiling data, and the profile may respond to your requests very slowly. To solve this problem, we have implemented a C++-\/based http server optimized for our profiling data. To compile the server, enable the cmake option {\ttfamily TF\+\_\+\+BUILD\+\_\+\+PROFILER}. You may visit \doxysectlink{install}{Building and Installing}{0} to understand Taskflow\textquotesingle{}s build environment.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ under\ the\ build\ directory}}
+\DoxyCodeLine{\string~\$\ \mbox{\hyperlink{cblat2_8f_a02c505d1046fe3c18a9f17c1f1dc6b51}{cmake}}\ ../\ -\/DTF\_BUILD\_PROFILER=ON}
+\DoxyCodeLine{\string~\$\ make}
+
+\end{DoxyCode}
+
+
+After successfully compiling the server, you can find the executable at {\ttfamily tfprof/server/tfprof}. Now, generate profiling data from running a taskflow program but specify the output file with extension {\ttfamily }.tfp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ \mbox{\hyperlink{environment_8hpp_ae89273a224aed50f8e9b446fdd871b12}{TF\_ENABLE\_PROFILER}}=my\_taskflow.tfp\ ./my\_taskflow}
+\DoxyCodeLine{\string~\$\ ls}
+\DoxyCodeLine{my\_taskflow.tfp\ \ \ \ \#\ my\_taskflow.tfp\ is\ of\ binary\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1e3b09934060e9d373139c3557730d37}{format}}}
+
+\end{DoxyCode}
+
+
+Launch the server program {\ttfamily tfprof/server/tfprof} and pass (1) the directory of {\ttfamily index.\+html} (default at {\ttfamily tfprof/}) via the option {\ttfamily -\/-\/mount} and (2) the {\ttfamily my\+\_\+taskflow.\+tfp} via the option {\ttfamily -\/-\/input}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ under\ the\ build/\ directory}}
+\DoxyCodeLine{\string~\$\ ./\mbox{\hyperlink{namespacetfprof}{tfprof}}/server/\mbox{\hyperlink{namespacetfprof}{tfprof}}\ -\/-\/mount\ ../\mbox{\hyperlink{namespacetfprof}{tfprof}}/\ -\/-\/\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}\ my\_taskflow.tfp}
+
+\end{DoxyCode}
+
+
+Now, open your favorite browser at {\ttfamily localhost\+:8080} to visualize and profile your {\ttfamily my\+\_\+taskflow} program.
+
+
+
+The compiled profiler is a more powerful version than the pure Java\+Script-\/based interface and it is able to more efficiently handle large profiling data under different queries. We currently support the following two view types\+:
+\begin{DoxyItemize}
+\item Cluster\+: visualize the profiling data using a clustering algorithm with a limit
+\item Criticality\+: visualize the top-\/limit tasks in decreasing order of their execution times
+\end{DoxyItemize}\hypertarget{_profiler_ProfilerDisplayProfileSummary}{}\doxysubsection{\texorpdfstring{Display Profile Summary}{Display Profile Summary}}\label{_profiler_ProfilerDisplayProfileSummary}
+You can display a profile summary by specifying only the environment variable {\ttfamily TF\+\_\+\+ENABLE\+\_\+\+PROFILER} without any value. The Taskflow will generate a separate summary report of tasks and workers for each executor created by the program.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ enable\ the\ environment\ variable\ without\ any\ value}}
+\DoxyCodeLine{\string~\$\ \mbox{\hyperlink{environment_8hpp_ae89273a224aed50f8e9b446fdd871b12}{TF\_ENABLE\_PROFILER}}=\ \ \ \ ./my\_taskflow\_program\ \ }
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ your\ program\ output}}
+\DoxyCodeLine{...}
+\DoxyCodeLine{...\ }
+\DoxyCodeLine{...}
+\DoxyCodeLine{\#\ Taskflow\ profile\ summary}
+\DoxyCodeLine{==Observer\ 0:\ 1\ workers\ completed\ 18\ tasks\ in\ 28\ us}
+\DoxyCodeLine{\ \ \ \ -\/Task-\/\ \ \mbox{\hyperlink{test__indexer__node_8cpp_a542c8d3c796b3c2830946ecf417c2ae5}{Count}}\ \ Time\ (us)\ \ \ Avg\ (us)\ \ Min\ (us)\ \ Max\ (us)}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{static}\ \ \ \ \ \ 7\ \ \ \ \ \ \ \ \ \ 5\ \ \ 0.714286\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ 4}
+\DoxyCodeLine{\ condition\ \ \ \ \ 11\ \ \ \ \ \ \ \ \ \ 0\ \ \ 0.000000\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ 0}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ -\/Worker-\/\ \ Level\ \ \ \ \ \ Task\ \ \mbox{\hyperlink{test__indexer__node_8cpp_a542c8d3c796b3c2830946ecf417c2ae5}{Count}}\ \ Time\ (us)\ \ Avg\ (us)\ \ Min\ (us)\ \ Max\ (us)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ 14\ \ \ \ \ \ 0\ \ \ \ \textcolor{keyword}{static}\ \ \ \ \ \ 7\ \ \ \ \ \ \ \ \ \ 5\ \ 0.714286\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ 4}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ condition\ \ \ \ \ 11\ \ \ \ \ \ \ \ \ \ 0\ \ 0.000000\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ 0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 18\ \ \ \ \ \ \ \ \ \ 5\ \ 0.277778\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ \ \ \ \ 4}
+
+\end{DoxyCode}
+
+
+The report consists of two sections, task summary and worker summary. In the first section, the summary reports for each task type the number of executions ({\ttfamily Count}), the total execution time ({\ttfamily Time}), average execution time per task ({\ttfamily Avg}), and the minimum ({\ttfamily Min}) and the maximum ({\ttfamily Max}) execution time among all tasks. Similarly in the second section, the summary reports for each worker the task execution statistics. 

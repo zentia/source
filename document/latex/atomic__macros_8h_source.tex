@@ -1,0 +1,71 @@
+\doxysection{atomic\+\_\+macros.\+h}
+\hypertarget{atomic__macros_8h_source}{}\label{atomic__macros_8h_source}\index{runtime/EASTL/include/EASTL/internal/atomic/atomic\_macros.h@{runtime/EASTL/include/EASTL/internal/atomic/atomic\_macros.h}}
+\mbox{\hyperlink{atomic__macros_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (c)\ Electronic\ Arts\ Inc.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ EASTL\_ATOMIC\_INTERNAL\_MACROS\_H}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ EASTL\_ATOMIC\_INTERNAL\_MACROS\_H}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#if\ defined(EA\_PRAGMA\_ONCE\_SUPPORTED)}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ once}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ The\ reason\ for\ the\ implementation\ separating\ out\ into\ a\ compiler\ and\ architecture}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ folder\ is\ as\ follows.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ The\ compiler\ directory\ is\ meant\ to\ implement\ atomics\ using\ the\ compiler\ provided}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ intrinsics.\ This\ also\ implies\ that\ usually\ the\ same\ compiler\ instrinsic\ implementation}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ can\ be\ used\ for\ any\ architecture\ the\ compiler\ supports.\ If\ a\ compiler\ provides\ intrinsics}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ to\ support\ barriers\ or\ atomic\ operations,\ then\ that\ implementation\ should\ be\ in\ the}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ compiler\ directory.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ The\ arch\ directory\ is\ meant\ to\ manually\ implement\ atomics\ for\ a\ specific\ architecture}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ such\ as\ power\ or\ x86.\ There\ may\ be\ some\ compiler\ specific\ code\ in\ this\ directory\ because}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ GCC\ inline\ assembly\ syntax\ may\ be\ different\ than\ another\ compiler\ as\ an\ example.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ The\ arch\ directory\ can\ also\ be\ used\ to\ implement\ some\ atomic\ operations\ ourselves}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ if\ we\ deem\ the\ compiler\ provided\ implementation\ to\ be\ inefficient\ for\ the\ given}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ architecture\ or\ we\ need\ to\ do\ some\ things\ manually\ for\ a\ given\ compiler.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ The\ atomic\_macros\ directory\ implements\ the\ macros\ that\ the\ rest\ of\ the\ atomic}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ library\ uses.\ These\ macros\ will\ expand\ to\ either\ the\ compiler\ or\ arch\ implemented}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ macro.\ The\ arch\ implemented\ macro\ is\ given\ priority\ over\ the\ compiler\ implemented}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ macro\ if\ both\ are\ implemented\ otherwise\ whichever\ is\ implemented\ is\ chosen\ or}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ an\ error\ is\ emitted\ if\ none\ are\ implemented.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ The\ implementation\ being\ all\ macros\ has\ a\ couple\ nice\ side\ effects\ as\ well.}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ 1.\ All\ the\ implementation\ ends\ up\ funneling\ into\ one\ low\ level\ macro\ implementation}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ \ which\ makes\ it\ easy\ to\ verify\ correctness,\ reduce\ copy-\/paste\ errors\ and\ differences}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ in\ various\ platform\ implementations.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ 2.\ Allows\ for\ the\ implementation\ to\ be\ implemented\ efficiently\ on\ compilers\ that\ do\ not}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ \ directly\ implement\ the\ C++\ memory\ model\ in\ their\ intrinsics\ such\ as\ msvc.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ 3.\ Allows\ for\ the\ implementation\ of\ atomics\ that\ may\ not\ be\ supported\ on\ the\ given\ platform,}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \ such\ as\ 128-\/bit\ atomics\ on\ 32-\/bit\ platforms\ since\ the\ macros\ will\ only\ ever\ be\ expanded}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \ \ \ on\ platforms\ that\ support\ said\ features.\ This\ makes\ implementing\ said\ features\ pretty\ easy}}
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ \ \ \ since\ we\ do\ not\ have\ to\ worry\ about\ complicated\ feature\ detection\ in\ the\ low\ level\ implementations.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ The\ macro\ implementation\ may\ asume\ that\ all\ passed\ in\ types\ are\ trivially\ constructible\ thus\ it\ is}}
+\DoxyCodeLine{00054\ \textcolor{comment}{//\ free\ to\ create\ local\ variables\ of\ the\ passed\ in\ types\ as\ it\ may\ please.}}
+\DoxyCodeLine{00055\ \textcolor{comment}{//\ It\ may\ also\ assume\ that\ all\ passed\ in\ types\ are\ trivially\ copyable\ as\ well.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ It\ cannot\ assume\ any\ passed\ in\ type\ is\ any\ given\ type\ thus\ is\ a\ specific\ type\ if\ needed,\ it\ must\ do\ an}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ EASTL\_ATOMIC\_TYPE\_PUN\_CAST()\ to\ the\ required\ type.}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{compiler_8h}{compiler/compiler.h}}"{}}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{arch_8h}{arch/arch.h}}"{}}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomic__macros_2atomic__macros_8h}{atomic\_macros/atomic\_macros.h}}"{}}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ EASTL\_ATOMIC\_INTERNAL\_MACROS\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

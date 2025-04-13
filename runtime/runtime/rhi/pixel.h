@@ -231,7 +231,7 @@ constexpr auto pixel_format_count = to_underlying(PixelFormat::BC7UNorm) + 1u;
     if (is_block_compressed(storage)) {
         auto block_width = (size.x + 3u) / 4u;
         auto block_height = (size.y + 3u) / 4u;
-        auto block_count = block_width * block_height * std::max(size.z, 1u);
+        auto block_count = block_width * block_height * (std::max)(size.z, 1u);
         switch (storage) {
             case PixelStorage::BC1:
             case PixelStorage::BC4: return block_count * 8u;

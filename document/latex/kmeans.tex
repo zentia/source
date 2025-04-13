@@ -1,0 +1,251 @@
+\doxysection{k-\/means Clustering}
+\hypertarget{kmeans}{}\label{kmeans}\index{k-\/means Clustering@{k-\/means Clustering}}
+We study a fundamental clustering problem in unsupervised learning, {\itshape k-\/means clustering}. We will begin by discussing the problem formulation and then learn how to write a parallel k-\/means algorithm.\hypertarget{kmeans_KMeansProblemFormulation}{}\doxysubsection{\texorpdfstring{Problem Formulation}{Problem Formulation}}\label{kmeans_KMeansProblemFormulation}
+k-\/means clustering uses {\itshape centroids}, k different randomly-\/initiated points in the data, and assigns every data point to the nearest centroid. After every point has been assigned, the centroid is moved to the average of all of the points assigned to it. We describe the k-\/means algorithm in the following steps\+:
+
+
+\begin{DoxyItemize}
+\item Step 1\+: initialize k random centroids 
+\item Step 2\+: for every data point, find the nearest centroid (L2 distance or other measurements) and assign the point to it 
+\item Step 3\+: for every centroid, move the centroid to the average of the points assigned to that centroid 
+\item Step 4\+: go to Step 2 until converged (no more changes in the last few iterations) or maximum iterations reached 
+\end{DoxyItemize}
+
+The algorithm is illustrated as follows\+:
+
+
+
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} sequential implementation of k-\/means is described as follows\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ sequential\ implementation\ of\ k-\/means\ on\ a\ CPU}}
+\DoxyCodeLine{\textcolor{comment}{//\ N:\ number\ of\ points}}
+\DoxyCodeLine{\textcolor{comment}{//\ K:\ number\ of\ clusters}}
+\DoxyCodeLine{\textcolor{comment}{//\ M:\ number\ of\ iterations}}
+\DoxyCodeLine{\textcolor{comment}{//\ px/py:\ 2D\ point\ vector\ }}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ kmeans\_seq(}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \textcolor{keywordtype}{int}\ K,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}},\ \textcolor{keyword}{const}\ std::vector<float>\&\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}},\ \textcolor{keyword}{const}\ std::vector<float>\&\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}}
+\DoxyCodeLine{)\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ std::vector<int>\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}(K);}
+\DoxyCodeLine{\ \ std::vector<float>\ sx(K),\ sy(K),\ mx(K),\ my(K);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ initial\ centroids}}
+\DoxyCodeLine{\ \ std::copy\_n(\mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}.begin(),\ K,\ mx.begin());}
+\DoxyCodeLine{\ \ std::copy\_n(\mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}.begin(),\ K,\ my.begin());}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ k-\/means\ iteration}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}=0;\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}<\mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}};\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}++)\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ clear\ the\ storage}}
+\DoxyCodeLine{\ \ \ \ std::fill\_n(sx.begin(),\ K,\ 0.0f);}
+\DoxyCodeLine{\ \ \ \ std::fill\_n(sy.begin(),\ K,\ 0.0f);}
+\DoxyCodeLine{\ \ \ \ std::fill\_n(\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}.begin(),\ K,\ 0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ find\ the\ best\ k\ (cluster\ id)\ for\ each\ point}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordtype}{float}\ best\_d\ =\ std::numeric\_limits<float>::max();}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordtype}{int}\ best\_k\ =\ 0;}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ =\ L2(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}},\ mx[k],\ my[k]);}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ <\ best\_d)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ best\_d\ =\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ best\_k\ =\ k;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \ \ sx[best\_k]\ +=\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};}
+\DoxyCodeLine{\ \ \ \ \ \ sy[best\_k]\ +=\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}};}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}\ [best\_k]\ +=\ 1;}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ update\ the\ centroid}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k=0;\ k<K;\ k++)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ =\ \mbox{\hyperlink{datatypes_8h_affe776513b24d84b39af8ab0930fef7f}{max}}(1,\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}[k]);\ \ \textcolor{comment}{//\ turn\ 0/0\ to\ 0/1}}
+\DoxyCodeLine{\ \ \ \ \ \ mx[k]\ =\ sx[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\ \ \ \ \ \ my[k]\ =\ sy[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ print\ the\ k\ centroids\ found}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k=0;\ k<K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}centroid\ "{}}\ <<\ k\ <<\ \textcolor{stringliteral}{"{}:\ "{}}\ <<\ std::setw(10)\ <<\ mx[k]\ <<\ \textcolor{charliteral}{'\ '}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::setw(10)\ <<\ my[k]\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\hypertarget{kmeans_ParallelKMeansUsingCPUs}{}\doxysubsection{\texorpdfstring{Parallel k-\/means using CPUs}{Parallel k-\/means using CPUs}}\label{kmeans_ParallelKMeansUsingCPUs}
+The second step of k-\/means algorithm, {\itshape assigning every point to the nearest centroid}, is highly parallelizable across individual points. We can create a {\itshape parallel-\/for} task to run parallel iterations.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ best\_ks(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \textcolor{comment}{//\ nearest\ centroid\ of\ each\ point}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{namespace_p}{P}}\ =\ 12;\ \ \textcolor{comment}{//\ 12\ partitioned\ tasks}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ update\ cluster}}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each\_index(0,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ 1,\ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ best\_d\ =\ std::numeric\_limits<float>::max();}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ best\_k\ =\ 0;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ =\ L2(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}},\ mx[k],\ my[k]);}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ <\ best\_d)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ best\_d\ =\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}};}
+\DoxyCodeLine{\ \ \ \ \ \ best\_k\ =\ k;}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ best\_k;}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+
+
+The third step of moving every centroid to the average of points is also parallelizable across individual centroids. However, since k is typically not large, one task of doing this update is sufficient.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ sum\ of\ points}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ sx[best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]]\ +=\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ sy[best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]]\ +=\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}\ [best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]]\ +=\ 1;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ average\ of\ points}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k=0;\ k<K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ =\ \mbox{\hyperlink{datatypes_8h_affe776513b24d84b39af8ab0930fef7f}{max}}(1,\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}[k]);\ \ \textcolor{comment}{//\ turn\ 0/0\ to\ 0/1}}
+\DoxyCodeLine{\ \ \ \ mx[k]\ =\ sx[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\ \ \ \ my[k]\ =\ sy[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+
+
+To describe {\ttfamily M} iterations, we create a condition task that loops the second step of the algorithm by {\ttfamily M} times. The return value of zero goes to the first successor which we will connect to the task of the second step later; otherwise, k-\/means completes.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}=0,\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}]()\ \textcolor{keyword}{mutable}\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}++\ <\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}})\ ?\ 0\ :\ 1;}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+
+
+The entire code of CPU-\/parallel k-\/means is shown below. Here we use an additional storage, {\ttfamily best\+\_\+ks}, to record the nearest centroid of a point at an iteration.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ N:\ number\ of\ points}}
+\DoxyCodeLine{\textcolor{comment}{//\ K:\ number\ of\ clusters}}
+\DoxyCodeLine{\textcolor{comment}{//\ M:\ number\ of\ iterations}}
+\DoxyCodeLine{\textcolor{comment}{//\ px/py:\ 2D\ point\ vector\ }}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ kmeans\_par(}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \textcolor{keywordtype}{int}\ K,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}},\ cconst\ std::vector<float>\&\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}},\ \textcolor{keyword}{const}\ std::vector<float>\&\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}}
+\DoxyCodeLine{)\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{namespace_p}{P}}\ =\ 12;\ \ \textcolor{comment}{//\ 12\ partitions\ of\ the\ parallel-\/for\ graph}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}K-\/Means"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ std::vector<int>\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}(K),\ best\_ks(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\ \ std::vector<float>\ sx(K),\ sy(K),\ mx(K),\ my(K);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ initial\ centroids}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{structinit}{init}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<K;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ mx[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \ \ my[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}init"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ clear\ the\ storage}}
+\DoxyCodeLine{\ \ tf::Task\ clean\_up\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k=0;\ k<K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ sx[k]\ =\ 0.0f;}
+\DoxyCodeLine{\ \ \ \ \ \ sy[k]\ =\ 0.0f;}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}\ [k]\ =\ 0;}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}clean\_up"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ update\ cluster}}
+\DoxyCodeLine{\ \ tf::Task\ pf\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each\_index(0,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ 1,\ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{float}\ best\_d\ =\ std::numeric\_limits<float>::max();}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{int}\ best\_k\ =\ 0;}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ =\ L2(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}},\ mx[k],\ my[k]);}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ <\ best\_d)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ best\_d\ =\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}};}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ best\_k\ =\ k;}
+\DoxyCodeLine{\ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ best\_k;}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}parallel-\/for"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Task\ update\_cluster\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ sx[best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]]\ +=\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \ \ sy[best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]]\ +=\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}\ [best\_ks[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]]\ +=\ 1;}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k=0;\ k<K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ =\ \mbox{\hyperlink{datatypes_8h_affe776513b24d84b39af8ab0930fef7f}{max}}(1,\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}[k]);\ \ \textcolor{comment}{//\ turn\ 0/0\ to\ 0/1}}
+\DoxyCodeLine{\ \ \ \ \ \ mx[k]\ =\ sx[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\ \ \ \ \ \ my[k]\ =\ sy[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}update\_cluster"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ convergence\ check}}
+\DoxyCodeLine{\ \ tf::Task\ condition\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}=0,\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}]()\ \textcolor{keyword}{mutable}\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}++\ <\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}})\ ?\ 0\ :\ 1;}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}converged?"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}.precede(clean\_up);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ clean\_up.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(pf);}
+\DoxyCodeLine{\ \ pf.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(update\_cluster);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ condition.\mbox{\hyperlink{classtf_1_1_task_a8c78c453295a553c1c016e4062da8588}{precede}}(clean\_up)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1_task_a331b1b726555072e7c7d10941257f664}{succeed}}(update\_cluster);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The taskflow consists of two parts, a {\ttfamily clean\+\_\+up} task and a parallel-\/for graph. The former cleans up the storage {\ttfamily sx}, {\ttfamily sy}, and {\ttfamily c} that are used to average points for new centroids, and the later parallelizes the searching for nearest centroids across individual points using 12 tasks (may vary depending on the machine). If the iteration count is smaller than {\ttfamily M}, the condition task returns 0 to let the execution path go back to {\ttfamily clean\+\_\+up}. Otherwise, it returns 1 to stop (i.\+e., no successor tasks at index 1). The taskflow graph is illustrated below\+:
+
+The scheduler starts with {\ttfamily init}, moves on to {\ttfamily clean\+\_\+up}, and then enters the parallel-\/for task {\ttfamily parallel-\/for} that spawns a subflow of 12 workers to perform parallel iterations. When {\ttfamily parallel-\/for} completes, it updates the cluster centroids and checks if they have converged through a condition task. If not, the condition task informs the scheduler to go back to {\ttfamily clean\+\_\+up} and then {\ttfamily parallel-\/for}; otherwise, it returns a nominal index to stop the scheduler.\hypertarget{kmeans_KMeansBenchmarking}{}\doxysubsection{\texorpdfstring{Benchmarking}{Benchmarking}}\label{kmeans_KMeansBenchmarking}
+Based on the discussion above, we compare the runtime of computing various k-\/means problem sizes between a sequential CPU and parallel CPUs on a machine of 12 Intel i7-\/8700 CPUs at 3.\+2 GHz.
+
+ \tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{5}{|X[-1]}|}
+\hline
+\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ N   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ K   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ M   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Sequential   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Parallel    }\\\cline{1-5}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ N   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ K   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ M   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Sequential   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Parallel    }\\\cline{1-5}
+\endhead
+\PBS\centering 10   &\PBS\centering 5   &\PBS\centering 10   &\PBS\centering 0.\+14 ms   &\PBS\centering 77 ms    \\\cline{1-5}
+\PBS\centering 100   &\PBS\centering 10   &\PBS\centering 100   &\PBS\centering 0.\+56 ms   &\PBS\centering 86 ms    \\\cline{1-5}
+\PBS\centering 1000   &\PBS\centering 10   &\PBS\centering 1000   &\PBS\centering 10 ms   &\PBS\centering 98 ms    \\\cline{1-5}
+\PBS\centering 10000   &\PBS\centering 10   &\PBS\centering 10000   &\PBS\centering 1006 ms   &\PBS\centering 713 ms    \\\cline{1-5}
+\PBS\centering 100000   &\PBS\centering 10   &\PBS\centering 100000   &\PBS\centering 102483 ms   &\PBS\centering 49966 ms   \\\cline{1-5}
+\end{longtabu}
+
+
+When the number of points is larger than 10K, the parallel CPU implementation starts to outperform the sequential CPU implementation. 

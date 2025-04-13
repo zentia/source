@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mutex>
-#include <luisa/core/stl/functional.h>
+#include <runtime/core/stl/functional.h>
 
 namespace luisa {
 

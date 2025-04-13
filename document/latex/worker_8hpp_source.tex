@@ -1,0 +1,172 @@
+\doxysection{worker.\+hpp}
+\hypertarget{worker_8hpp_source}{}\label{worker_8hpp_source}\index{external/taskflow/taskflow/core/worker.hpp@{external/taskflow/taskflow/core/worker.hpp}}
+\mbox{\hyperlink{worker_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{declarations_8hpp}{declarations.hpp}}"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{tsq_8hpp}{tsq.hpp}}"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{atomic__notifier_8hpp}{atomic\_notifier.hpp}}"{}}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{nonblocking__notifier_8hpp}{nonblocking\_notifier.hpp}}"{}}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetf}{tf}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ Default\ Notifier}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#ifdef\ TF\_ENABLE\_ATOMIC\_NOTIFIER\_V1}}
+\DoxyCodeLine{00025\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetf_a4d296d21f4a109b13bdb773fe2b54b01}{DefaultNotifier}}\ =\ \mbox{\hyperlink{classtf_1_1_atomic_notifier_v1}{AtomicNotifierV1}};}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#elif\ TF\_ENABLE\_ATOMIC\_NOTIFIER\_V2}}
+\DoxyCodeLine{00027\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetf_a4d296d21f4a109b13bdb773fe2b54b01}{DefaultNotifier}}\ =\ \mbox{\hyperlink{classtf_1_1_atomic_notifier_v2}{AtomicNotifierV2}};}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#elif\ TF\_ENABLE\_NONBLOCKING\_NOTIFIER\_V1}}
+\DoxyCodeLine{00029\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetf_a4d296d21f4a109b13bdb773fe2b54b01}{DefaultNotifier}}\ =\ \mbox{\hyperlink{classtf_1_1_nonblocking_notifier_v1}{NonblockingNotifierV1}};}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#elif\ TF\_ENABLE\_NONBLOCKING\_NOTIFIER\_V2}}
+\DoxyCodeLine{00031\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetf_a4d296d21f4a109b13bdb773fe2b54b01}{DefaultNotifier}}\ =\ \mbox{\hyperlink{classtf_1_1_nonblocking_notifier_v2}{NonblockingNotifierV2}};}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\ \ \#if\ \_\_cplusplus\ >=\ TF\_CPP20}}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetf_a4d296d21f4a109b13bdb773fe2b54b01}{DefaultNotifier}}\ =\ \mbox{\hyperlink{classtf_1_1_atomic_notifier_v2}{AtomicNotifierV2}};}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespacetf_a4d296d21f4a109b13bdb773fe2b54b01}{DefaultNotifier}}\ =\ \mbox{\hyperlink{classtf_1_1_nonblocking_notifier_v2}{NonblockingNotifierV2}};}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ Class\ Definition:\ Worker}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00054\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_worker}{Worker}}\ \{}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_worker_a763b2f90bc53f92d680a635fe28e858e}{Executor}};}
+\DoxyCodeLine{00057\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_worker_af3d14e26ba8af9e6cc5a32aad8446de7}{Runtime}};}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_worker_a0f36eeb628ab3803180651682f5821f3}{WorkerView}};}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_a0180ea51cc46551157eaae451b50c7d8}{id}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1_worker_ab21837ab13c416c19d133fc2a73f031c}{\_id}};\ \}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_a5e1ec48fd2295d260e8f335ff22b95ae}{queue\_size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1_worker_a582ddc7de274ecd0988af3dfb5d0f5bf}{\_wsq}}.size();\ \}}
+\DoxyCodeLine{00076\ \ \ \ \ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_a0c0505b0ce5b464d4458b5278265429a}{queue\_capacity}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{classtf_1_1_worker_a582ddc7de274ecd0988af3dfb5d0f5bf}{\_wsq}}.capacity());\ \}}
+\DoxyCodeLine{00081\ \ \ \ \ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classtf_1_1_worker_a763b2f90bc53f92d680a635fe28e858e}{Executor}}*\ \mbox{\hyperlink{classtf_1_1_worker_a6be4d2da8d539bec4ff9899bf7d74929}{executor}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1_worker_a0884258c54f630a3b31e4d1e208852bb}{\_executor}};\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00090\ \ \ \ \ std::thread\&\ \mbox{\hyperlink{classtf_1_1_worker_a6158f91db3b980e3072cc0329cbe3c14}{thread}}()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1_worker_a23ecb42bb5da7483e269427ccbd84d4f}{\_thread}};\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00093\ \ \ }
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\ \ \#if\ \_\_cplusplus\ >=\ TF\_CPP20}}
+\DoxyCodeLine{00095\ \ \ \ \ std::atomic\_flag\ \mbox{\hyperlink{classtf_1_1_worker_ada70062226121ca425070a6d52d9c8d2}{\_done}}\ =\ ATOMIC\_FLAG\_INIT;\ }
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00097\ \ \ \ \ std::atomic<bool>\ \mbox{\hyperlink{classtf_1_1_worker_ada70062226121ca425070a6d52d9c8d2}{\_done}}\ \{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_ab21837ab13c416c19d133fc2a73f031c}{\_id}};}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_a59a04a39db3d147221eed60da75a9744}{\_vtm}};}
+\DoxyCodeLine{00102\ \ \ \ \ \mbox{\hyperlink{classtf_1_1_worker_a763b2f90bc53f92d680a635fe28e858e}{Executor}}*\ \mbox{\hyperlink{classtf_1_1_worker_a0884258c54f630a3b31e4d1e208852bb}{\_executor}}\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{structtf_1_1_nonblocking_notifier_v2_1_1_waiter}{DefaultNotifier::Waiter}}*\ \mbox{\hyperlink{classtf_1_1_worker_a559e98c3b61a201903d70952e39ab14f}{\_waiter}};}
+\DoxyCodeLine{00104\ \ \ \ \ std::thread\ \mbox{\hyperlink{classtf_1_1_worker_a23ecb42bb5da7483e269427ccbd84d4f}{\_thread}};}
+\DoxyCodeLine{00105\ \ \ \ \ }
+\DoxyCodeLine{00106\ \ \ \ \ std::default\_random\_engine\ \mbox{\hyperlink{classtf_1_1_worker_a753b13866ccf3badaebf5e92af0bf63f}{\_rdgen}};}
+\DoxyCodeLine{00107\ \ \ \ \ std::uniform\_int\_distribution<size\_t>\ \mbox{\hyperlink{classtf_1_1_worker_a4e227fc985367f5cbc0ae94273b21b0e}{\_udist}};}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \ \ \ \ \mbox{\hyperlink{classtf_1_1_bounded_task_queue}{BoundedTaskQueue<Node*>}}\ \mbox{\hyperlink{classtf_1_1_worker_a582ddc7de274ecd0988af3dfb5d0f5bf}{\_wsq}};}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \ \ \mbox{\hyperlink{macros_8hpp_a579f8be7dacb19f3c7cd55d79da8b0ff}{TF\_FORCE\_INLINE}}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_a069f9b5fbdfa57484fe7a9131514a186}{\_rdvtm}}()\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ \mbox{\hyperlink{classtf_1_1_worker_a4e227fc985367f5cbc0ae94273b21b0e}{\_udist}}(\mbox{\hyperlink{classtf_1_1_worker_a753b13866ccf3badaebf5e92af0bf63f}{\_rdgen}});}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ +\ (\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ >=\ \mbox{\hyperlink{classtf_1_1_worker_ab21837ab13c416c19d133fc2a73f031c}{\_id}});}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ Per-\/thread}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacetf_1_1pt}{pt}}\ \{}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00128\ \textcolor{keyword}{inline}\ \textcolor{keyword}{thread\_local}\ \mbox{\hyperlink{classtf_1_1_worker}{Worker}}*\ \mbox{\hyperlink{namespacetf_1_1pt_a70a6dd7df97bb7da11a723d96fdef945}{this\_worker}}\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//\ Class\ Definition:\ WorkerView}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00146\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_worker_view_af5023cb4d6b24fab8992310741952bea}{WorkerView}}\ \{}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_worker_view_a763b2f90bc53f92d680a635fe28e858e}{Executor}};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_view_ab12c901b0bd8a9f1fa33d305a32ae259}{id}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_view_afb99c27c8224732921fadb98ceff42e4}{queue\_size}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_view_aed408a9cbf65b0598fa27cd75d9b915e}{queue\_capacity}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \mbox{\hyperlink{classtf_1_1_worker_view_af5023cb4d6b24fab8992310741952bea}{WorkerView}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classtf_1_1_worker}{Worker}}\&);}
+\DoxyCodeLine{00175\ \ \ \ \ \mbox{\hyperlink{classtf_1_1_worker_view_a4b39c214f3cd23c241faa56f4c94042f}{WorkerView}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classtf_1_1_worker_view_af5023cb4d6b24fab8992310741952bea}{WorkerView}}\&)\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classtf_1_1_worker}{Worker}}\&\ \mbox{\hyperlink{classtf_1_1_worker_view_ad4df9bf3972a4fe4253fd27477f51808}{\_worker}};}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{comment}{//\ Constructor}}
+\DoxyCodeLine{00182\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classtf_1_1_worker_view_af5023cb4d6b24fab8992310741952bea}{WorkerView::WorkerView}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classtf_1_1_worker}{Worker}}\&\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}})\ :\ \mbox{\hyperlink{classtf_1_1_worker_view_ad4df9bf3972a4fe4253fd27477f51808}{\_worker}}\{\mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}\}\ \{}
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{comment}{//\ function:\ id}}
+\DoxyCodeLine{00186\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_view_ab12c901b0bd8a9f1fa33d305a32ae259}{WorkerView::id}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00187\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1_worker_view_ad4df9bf3972a4fe4253fd27477f51808}{\_worker}}.\_id;}
+\DoxyCodeLine{00188\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \textcolor{comment}{//\ Function:\ queue\_size}}
+\DoxyCodeLine{00191\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_view_afb99c27c8224732921fadb98ceff42e4}{WorkerView::queue\_size}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classtf_1_1_worker_view_ad4df9bf3972a4fe4253fd27477f51808}{\_worker}}.\_wsq.size();}
+\DoxyCodeLine{00193\ \}}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \textcolor{comment}{//\ Function:\ queue\_capacity}}
+\DoxyCodeLine{00196\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classtf_1_1_worker_view_aed408a9cbf65b0598fa27cd75d9b915e}{WorkerView::queue\_capacity}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00197\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\mbox{\hyperlink{classtf_1_1_worker_view_ad4df9bf3972a4fe4253fd27477f51808}{\_worker}}.\_wsq.capacity());}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00201\ \textcolor{comment}{//\ Class\ Definition:\ WorkerInterface}}
+\DoxyCodeLine{00202\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00249\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_worker_interface}{WorkerInterface}}\ \{}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00256\ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classtf_1_1_worker_interface_a4f086cadaabff4094cf07fd387b2e185}{\string~WorkerInterface}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00264\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1_worker_interface_a41c3b931a36bde8eff4aa8d375e8888a}{scheduler\_prologue}}(\mbox{\hyperlink{classtf_1_1_worker}{Worker}}\&\ worker)\ =\ 0;}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00273\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1_worker_interface_a3e6d68fd4041f433d1b7ca9e5786b57c}{scheduler\_epilogue}}(\mbox{\hyperlink{classtf_1_1_worker}{Worker}}\&\ worker,\ std::exception\_ptr\ \mbox{\hyperlink{yyjson_8h_a26c622783fa717b24fe0bbd3e060f74a}{ptr}})\ =\ 0;}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \};}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00285\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}},\ \textcolor{keyword}{typename}...\ ArgsT>}
+\DoxyCodeLine{00286\ std::unique\_ptr<T>\ \mbox{\hyperlink{namespacetf_aa10195f7d5f2f1dd32bb852a9aa560f4}{make\_worker\_interface}}(ArgsT\&\&...\ \mbox{\hyperlink{tbbproxy_8cpp_acd08a6295eccfeb30c79985f047e4be5}{args}})\ \{}
+\DoxyCodeLine{00287\ \ \ \textcolor{keyword}{static\_assert}(}
+\DoxyCodeLine{00288\ \ \ \ \ std::is\_base\_of\_v<WorkerInterface,\ T>,}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{stringliteral}{"{}T\ must\ be\ derived\ from\ WorkerInterface"{}}}
+\DoxyCodeLine{00290\ \ \ );}
+\DoxyCodeLine{00291\ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<T>(std::forward<ArgsT>(\mbox{\hyperlink{tbbproxy_8cpp_acd08a6295eccfeb30c79985f047e4be5}{args}})...);}
+\DoxyCodeLine{00292\ \}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00297\ \}\ \ \textcolor{comment}{//\ end\ of\ namespact\ tf\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ \ }}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ }
+
+\end{DoxyCode}

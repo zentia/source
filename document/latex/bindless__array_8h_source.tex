@@ -1,0 +1,158 @@
+\doxysection{bindless\+\_\+array.\+h}
+\hypertarget{bindless__array_8h_source}{}\label{bindless__array_8h_source}\index{runtime/runtime/bindless\_array.h@{runtime/runtime/bindless\_array.h}}
+\mbox{\hyperlink{bindless__array_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <mutex>}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{core_2stl_2unordered__map_8h}{runtime/core/stl/unordered\_map.h}}>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{spin__mutex_8h}{runtime/core/spin\_mutex.h}}>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{sampler_8h}{runtime/runtime/rhi/sampler.h}}>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{mipmap_8h}{runtime/runtime/mipmap.h}}>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{runtime_2rhi_2resource_8h}{runtime/runtime/rhi/resource.h}}>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{buffer_8h}{runtime/runtime/buffer.h}}>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{sparse__image_8h}{runtime/runtime/sparse\_image.h}}>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{sparse__volume_8h}{runtime/runtime/sparse\_volume.h}}>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceluisa_1_1compute}{luisa::compute}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{class\ }BindlessTexture2D;}
+\DoxyCodeLine{00017\ \textcolor{keyword}{class\ }BindlessTexture3D;}
+\DoxyCodeLine{00018\ \textcolor{keyword}{class\ }Command;}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceluisa_1_1compute_1_1detail}{detail}}\ \{}
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }BindlessArrayExprProxy;}
+\DoxyCodeLine{00022\ \}\textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00025\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_buffer}{BindlessBuffer}};}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00028\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structluisa_1_1compute_1_1_expr}{Expr}};}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ BindlessArray\ is\ a\ heap\ that\ contain\ references\ to\ buffer,\ 2d-\/image\ and\ 3d-\/image}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ every\ element\ can\ contain\ one\ buffer,\ one\ 2d-\/image\ and\ one\ 3d-\/image's\ reference}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ see\ test\_bindless.cpp\ as\ example}}
+\DoxyCodeLine{00033\ \textcolor{keyword}{class\ }\mbox{\hyperlink{dll__export_8h_ad06d699c99cabff41979e596b53ac25a}{LC\_RUNTIME\_API}}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}\ final\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_resource_ad04c9df5461ad463bc3bfa340590a61a}{Resource}}\ \{}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a55cc7febb34248f55221288a2f07dd50}{Modification}}\ =\ \mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_update_command_1_1_modification}{BindlessArrayUpdateCommand::Modification}};}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_hash}{ModSlotHash}}\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_hash_afff422ccce78ec60864992bfe6c76fc8}{is\_transparent}}\ =\ \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}};}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_hash_a5fbf09ad09e5dddd7b3631e90ad15ba6}{is\_avalanching}}\ =\ \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}};}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_hash_ab487b7af7e804e933f0fd4e98628afc2}{operator()}}(\textcolor{keywordtype}{size\_t}\ slot)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceluisa_a448fa5ab8bb8ff5e97f093f42993cb9a}{hash\_value}}(slot);}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_hash_a8045310a656cc4ab58a1951c12b016b3}{operator()}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a55cc7febb34248f55221288a2f07dd50}{Modification}}\ \&m)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (*\textcolor{keyword}{this})(m.slot);}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00047\ \ \ \ \ \};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_equal}{ModSlotEqual}}\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_equal_a8e102b75bf5c630f8e4bbea8ee7a48a0}{is\_transparent}}\ =\ \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_equal_aba040178c9027c4aa1fc2d3bafa2787b}{slot}}(\textcolor{keyword}{const}\ T\ \&m)\ \textcolor{keyword}{noexcept}\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\textcolor{keyword}{requires}(T\ m)\ \{\ m.slot;\ \})\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m.slot;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m;}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_equal_ae9fcaeabed18a7c825cd1bab7d598d39}{operator()}}(\textcolor{keyword}{const}\ Lhs\ \&lhs,\ \textcolor{keyword}{const}\ Rhs\ \&rhs)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ \textcolor{keywordtype}{bool}\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_equal_aba040178c9027c4aa1fc2d3bafa2787b}{slot}}(lhs)\ ==\ \mbox{\hyperlink{structluisa_1_1compute_1_1_bindless_array_1_1_mod_slot_equal_aba040178c9027c4aa1fc2d3bafa2787b}{slot}}(rhs);}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00065\ \ \ \ \ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_aca390dac1e74d8413a4ba5901bf8c886}{\_size}}\{0u\};}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{comment}{//\ "{}emplace"{}\ and\ "{}remove"{}\ operations\ will\ be\ cached\ under\ \_updates\ and\ commit\ in\ update()\ command}}
+\DoxyCodeLine{00070\ \ \ \ \ luisa::unordered\_set<Modification,\ ModSlotHash,\ ModSlotEqual>\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a25ef4379e150214b900928f8476244e8}{\_updates}};}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{mutable}\ luisa::spin\_mutex\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a6aa10cc2a3434a29fb659bbcf8b04c2d}{\_mtx}};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a520fa05e0bf58785da428f7a0241eee2}{Device}};}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a4d5c9e6cc1719f4391c4bc1c47163ee1}{ManagedBindless}};}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}(\mbox{\hyperlink{classluisa_1_1compute_1_1_device_interface}{DeviceInterface}}\ *\mbox{\hyperlink{classluisa_1_1compute_1_1_resource_a80d70cb175660af12e01637de33f32bc}{device}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_aaaf4902e6eb25750c4c23643b47e5fa5}{size}})\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00079\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a31f36cdc6be938716e85c621e8c88954}{BindlessArray}}()\ noexcept\ =\ \mbox{\hyperlink{sugar_8h_a6face89e97cccad5464dd9bb9c7efd23}{default}};}
+\DoxyCodeLine{00080\ \ \ \ \ \string~\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}()\ noexcept\ override;}
+\DoxyCodeLine{00081\ \ \ \ \ using\ \mbox{\hyperlink{classluisa_1_1compute_1_1_resource_ad04c9df5461ad463bc3bfa340590a61a}{Resource}}::operator\ \textcolor{keywordtype}{bool};}
+\DoxyCodeLine{00082\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}(\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}\ \&\&)\ noexcept;}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}(\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}\ const\ \&)\ noexcept\ =\ delete;}
+\DoxyCodeLine{00084\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}\ \&operator=(\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}\ \&\&rhs)\ noexcept\ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_resource_ac8bd4f95e29f120931f646355e51323a}{\_move\_from}}(std::move(rhs));}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}\ \&\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_ac1258b3a9deddbdd4d914666c6470b5a}{operator=}}(\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_afec721fd52b1eb4e0ffb2e8f033fa0e6}{BindlessArray}}\ \textcolor{keyword}{const}\ \&)\ \textcolor{keyword}{noexcept}\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{comment}{//\ properties}}
+\DoxyCodeLine{00090\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_aaaf4902e6eb25750c4c23643b47e5fa5}{size}}()\ const\ noexcept\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_resource_acd4eeb601dbaa644497541380a30c9aa}{\_check\_is\_valid}}();}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ std::lock\_guard\ lck\{\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a6aa10cc2a3434a29fb659bbcf8b04c2d}{\_mtx}}\};}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_aca390dac1e74d8413a4ba5901bf8c886}{\_size}};}
+\DoxyCodeLine{00094\ \ \ \ \ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{comment}{//\ whether\ there\ are\ any\ stashed\ updates}}
+\DoxyCodeLine{00096\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a2267c79de2533a7d23fc35e31641f550}{dirty}}()\ const\ noexcept\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_resource_acd4eeb601dbaa644497541380a30c9aa}{\_check\_is\_valid}}();}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ std::lock\_guard\ lck\{\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a6aa10cc2a3434a29fb659bbcf8b04c2d}{\_mtx}}\};}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a25ef4379e150214b900928f8476244e8}{\_updates}}.empty();}
+\DoxyCodeLine{00100\ \ \ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ on-\/update\ functions'\ operations\ will\ be\ committed\ by\ update()}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keywordtype}{void}\ emplace\_buffer\_handle\_on\_update(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ handle,\ \textcolor{keywordtype}{size\_t}\ offset\_bytes)\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordtype}{void}\ emplace\_tex2d\_handle\_on\_update(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ handle,\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sampler}{Sampler}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}})\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordtype}{void}\ emplace\_tex3d\_handle\_on\_update(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ handle,\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sampler}{Sampler}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}})\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array}{BindlessArray}}\ \&remove\_buffer\_on\_update(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}})\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00107\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array}{BindlessArray}}\ \&remove\_tex2d\_on\_update(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}})\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array}{BindlessArray}}\ \&remove\_tex3d\_on\_update(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}})\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}\ \mbox{\hyperlink{namespaceluisa_1_1compute_af90edbcad40e9bc117817242536c45ce}{is\_buffer\_or\_view\_v<std::remove\_cvref\_t<T>}}>}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{auto}\ \&\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a0f9fcd5b0b60a769b484a0376a688a12}{emplace\_on\_update}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ T\ \&\&\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}})\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ offset\_bytes;}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\mbox{\hyperlink{namespaceluisa_1_1compute_a27ee68fd242abcc2a2062e05754aad7a}{is\_buffer\_view\_v<std::remove\_cvref\_t<T>}}>)\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ offset\_bytes\ =\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}.offset\_bytes();}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ offset\_bytes\ =\ 0;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a8207ff7ceeb1d93563ab1e2ae45988eb}{emplace\_buffer\_handle\_on\_update}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}.handle(),\ offset\_bytes);}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00121\ \ \ \ \ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{auto}\ \&\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_ac57c9f88bd780e431a3e70fd92c3ec23}{emplace\_on\_update}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_image}{Image<float>}}\ \&\mbox{\hyperlink{sugar_8h_a06234ed94ec57f5880e6b23ca7c17891}{image}},\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sampler}{Sampler}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}})\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a9f7ae5d617f217731c5086715c55a862}{emplace\_tex2d\_handle\_on\_update}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{sugar_8h_a06234ed94ec57f5880e6b23ca7c17891}{image}}.handle(),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}});}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00126\ \ \ \ \ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ \textcolor{keyword}{auto}\ \&\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a9000745bb44c57a8e289a1cf3d0d8a84}{emplace\_on\_update}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_volume}{Volume<float>}}\ \&\mbox{\hyperlink{sugar_8h_adcb81e0af783d8f809d1f00eb598dbce}{volume}},\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sampler}{Sampler}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}})\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_aa0c52eb0a4ae13b0038af13743a709ea}{emplace\_tex3d\_handle\_on\_update}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{sugar_8h_adcb81e0af783d8f809d1f00eb598dbce}{volume}}.handle(),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}});}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00131\ \ \ \ \ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{auto}\ \&\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a4c7c993db1b93c6af3032208d28a9ea6}{emplace\_on\_update}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sparse_image}{SparseImage<float>}}\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a0b57774cb59b667df4a205ae0b1a50e2}{texture}},\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sampler}{Sampler}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}})\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a9f7ae5d617f217731c5086715c55a862}{emplace\_tex2d\_handle\_on\_update}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a0b57774cb59b667df4a205ae0b1a50e2}{texture}}.handle(),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}});}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00136\ \ \ \ \ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keyword}{auto}\ \&\mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_a30d9203c08ffc23460cabd1ce7c1a73a}{emplace\_on\_update}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sparse_volume}{SparseVolume<float>}}\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a0b57774cb59b667df4a205ae0b1a50e2}{texture}},\ \mbox{\hyperlink{classluisa_1_1compute_1_1_sampler}{Sampler}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}})\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_bindless_array_aa0c52eb0a4ae13b0038af13743a709ea}{emplace\_tex3d\_handle\_on\_update}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a0b57774cb59b667df4a205ae0b1a50e2}{texture}}.handle(),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4f7acaf0f814147f227f72b9065e8ed0}{sampler}});}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00141\ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ [[nodiscard]]\ luisa::unique\_ptr<Command>\ update()\ noexcept;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{comment}{//\ DSL\ interface}}
+\DoxyCodeLine{00146\ \ \ \ \ [[nodiscard]]\ auto\ operator-\/>()\ const\ noexcept\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classluisa_1_1compute_1_1_resource_acd4eeb601dbaa644497541380a30c9aa}{\_check\_is\_valid}}();}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\mbox{\hyperlink{classluisa_1_1compute_1_1detail_1_1_bindless_array_expr_proxy}{detail::BindlessArrayExprProxy}}\ *\textcolor{keyword}{>}(\textcolor{keyword}{this});}
+\DoxyCodeLine{00149\ \ \ \ \ \}}
+\DoxyCodeLine{00150\ \};}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \}\textcolor{comment}{//\ namespace\ luisa::compute}}
+
+\end{DoxyCode}

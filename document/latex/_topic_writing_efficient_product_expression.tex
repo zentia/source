@@ -1,0 +1,124 @@
+\doxysection{Writing efficient matrix product expressions}
+\hypertarget{_topic_writing_efficient_product_expression}{}\label{_topic_writing_efficient_product_expression}\index{Writing efficient matrix product expressions@{Writing efficient matrix product expressions}}
+In general achieving good performance with \doxylink{namespace_eigen}{Eigen} does no require any special effort\+: simply write your expressions in the most high level way. This is especially true for small fixed size matrices. For large matrices, however, it might be useful to take some care when writing your expressions in order to minimize useless evaluations and optimize the performance. In this page we will give a brief overview of the \doxylink{namespace_eigen}{Eigen}\textquotesingle{}s internal mechanism to simplify and evaluate complex product expressions, and discuss the current limitations. In particular we will focus on expressions matching level 2 and 3 BLAS routines, i.\+e, all kind of matrix products and triangular solvers.
+
+Indeed, in \doxylink{namespace_eigen}{Eigen} we have implemented a set of highly optimized routines which are very similar to BLAS\textquotesingle{}s ones. Unlike BLAS, those routines are made available to user via a high level and natural API. Each of these routines can compute in a single evaluation a wide variety of expressions. Given an expression, the challenge is then to map it to a minimal set of routines. As explained latter, this mechanism has some limitations, and knowing them will allow you to write faster code by making your expressions more \doxylink{namespace_eigen}{Eigen} friendly.\hypertarget{_topic_writing_efficient_product_expression_GEMM}{}\doxysubsection{\texorpdfstring{General Matrix-\/\+Matrix product (GEMM)}{General Matrix-\/\+Matrix product (GEMM)}}\label{_topic_writing_efficient_product_expression_GEMM}
+Let\textquotesingle{}s start with the most common primitive\+: the matrix product of general dense matrices. In the BLAS world this corresponds to the GEMM routine. Our equivalent primitive can perform the following operation\+: $ C.noalias() += \alpha op1(A) op2(B) $ where \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}, \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}, and C are column and/or row major matrices (or sub-\/matrices), alpha is a scalar value, and op1, op2 can be transpose, adjoint, conjugate, or the identity. When \doxylink{namespace_eigen}{Eigen} detects a matrix product, it analyzes both sides of the product to extract a unique scalar factor alpha, and for each side, its effective storage order, shape, and conjugation states. More precisely each side is simplified by iteratively removing trivial expressions such as scalar multiple, negation and conjugation. \doxylink{class_eigen_1_1_transpose}{Transpose} and \doxylink{class_eigen_1_1_block}{Block} expressions are not evaluated and they only modify the storage order and shape. All other expressions are immediately evaluated. For instance, the following expression\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ -\/=\ \mbox{\hyperlink{test_8cpp_a21f4f7c5167375f4c94da96e76e944e2a7e7cb6814b74d6596098fc80127569a5}{s4}}\ *\ (\mbox{\hyperlink{test_8cpp_a699149a8a0361dd2130f512a98582e85a9aad8b8adbe6ec1aef47dba5064b8785}{s1}}\ *\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}.adjoint()\ *\ (-\/(\mbox{\hyperlink{test_8cpp_a37b62beb33c3cd7f0dff8e168225f0d8ac0828e0381730befd1f7a025057c74fb}{s3}}*m3).\mbox{\hyperlink{_common_cwise_unary_ops_8h_acea5b38fcb99c3e0b91a43bfcca923ce}{conjugate}}()*\mbox{\hyperlink{test_8cpp_aa21f5b78c3b20ddd438dee22514b99e0a2ba65cf51dfe40e58e06095ee2c3fec4}{s2}}))\ \ }
+
+\end{DoxyCode}
+ is automatically simplified to\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ (\mbox{\hyperlink{test_8cpp_a699149a8a0361dd2130f512a98582e85a9aad8b8adbe6ec1aef47dba5064b8785}{s1}}*\mbox{\hyperlink{test_8cpp_aa21f5b78c3b20ddd438dee22514b99e0a2ba65cf51dfe40e58e06095ee2c3fec4}{s2}}*\mbox{\hyperlink{namespace_eigen_a065d353fcbff30a8e902d2900a784d45}{conj}}(\mbox{\hyperlink{test_8cpp_a37b62beb33c3cd7f0dff8e168225f0d8ac0828e0381730befd1f7a025057c74fb}{s3}})*\mbox{\hyperlink{test_8cpp_a21f4f7c5167375f4c94da96e76e944e2a7e7cb6814b74d6596098fc80127569a5}{s4}})\ *\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}.adjoint()\ *\ m3.conjugate()\ }
+
+\end{DoxyCode}
+ which exactly matches our GEMM routine.\hypertarget{_topic_writing_efficient_product_expression_GEMM_Limitations}{}\doxysubsubsection{\texorpdfstring{Limitations}{Limitations}}\label{_topic_writing_efficient_product_expression_GEMM_Limitations}
+Unfortunately, this simplification mechanism is not perfect yet and not all expressions which could be handled by a single GEMM-\/like call are correctly detected. \tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{4}{|X[-1]}|}
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Not optimal expression }&\cellcolor{\tableheadbgcolor}\textbf{ Evaluated as }&\cellcolor{\tableheadbgcolor}\textbf{ Optimal version (single evaluation) }&\cellcolor{\tableheadbgcolor}\textbf{ Comments  }\\\cline{1-4}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Not optimal expression }&\cellcolor{\tableheadbgcolor}\textbf{ Evaluated as }&\cellcolor{\tableheadbgcolor}\textbf{ Optimal version (single evaluation) }&\cellcolor{\tableheadbgcolor}\textbf{ Comments  }\\\cline{1-4}
+\endhead
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ +=\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{temp\ =\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ +=\ temp;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;\ }
+
+\end{DoxyCode}
+ &Use .noalias() to tell \doxylink{namespace_eigen}{Eigen} the result and right-\/hand-\/sides do not alias. Otherwise the product m2 \texorpdfstring{$\ast$}{*} m3 is evaluated into a temporary.  \\\cline{1-4}
+&&
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ \mbox{\hyperlink{test_8cpp_a699149a8a0361dd2130f512a98582e85a9aad8b8adbe6ec1aef47dba5064b8785}{s1}}\ *\ (\mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3);\ }
+
+\end{DoxyCode}
+ &This is a special feature of \doxylink{namespace_eigen}{Eigen}. Here the product between a scalar and a matrix product does not evaluate the matrix product but instead it returns a matrix product expression tracking the scalar scaling factor. ~\newline
+ Without this optimization, the matrix product would be evaluated into a temporary as in the next example.  \\\cline{1-4}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ (\mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3).\mbox{\hyperlink{adjoint_8cpp_a7333648f53414b05be9e4fd2f009fc22}{adjoint}}();\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{temp\ =\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ +=\ temp.adjoint();\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ m3.adjoint()}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}.adjoint();\ }
+
+\end{DoxyCode}
+ &This is because the product expression has the Eval\+Before\+Nesting bit which enforces the evaluation of the product by the Tranpose expression.  \\\cline{1-4}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ =\ \mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ +\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{temp\ =\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ =\ \mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ +\ temp;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;\ }
+
+\end{DoxyCode}
+ &Here there is no way to detect at compile time that the two m1 are the same, and so the matrix product will be immediately evaluated.  \\\cline{1-4}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ =\ m4\ +\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{temp\ =\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ =\ m4\ +\ temp;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ =\ m4;}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}\ *\ m3;\ }
+
+\end{DoxyCode}
+ &First of all, here the .noalias() in the first expression is useless because m2\texorpdfstring{$\ast$}{*}m3 will be evaluated anyway. However, note how this expression can be rewritten so that no temporary is required. (tip\+: for very small fixed size matrix it is slighlty better to rewrite it like this\+: m1.\+noalias() = m2 \texorpdfstring{$\ast$}{*} m3; m1 += m4;  \\\cline{1-4}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ (\mbox{\hyperlink{test_8cpp_a699149a8a0361dd2130f512a98582e85a9aad8b8adbe6ec1aef47dba5064b8785}{s1}}*\mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}).\mbox{\hyperlink{mimalloc_8h_af7f922b73e3acdb4a430b72f1a1334a5}{block}}(..)\ *\ m3;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{temp\ =\ (\mbox{\hyperlink{test_8cpp_a699149a8a0361dd2130f512a98582e85a9aad8b8adbe6ec1aef47dba5064b8785}{s1}}*\mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}).\mbox{\hyperlink{mimalloc_8h_af7f922b73e3acdb4a430b72f1a1334a5}{block}}(..);}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}\ +=\ temp\ *\ m3;\ }
+
+\end{DoxyCode}
+ &
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.noalias()\ +=\ \mbox{\hyperlink{test_8cpp_a699149a8a0361dd2130f512a98582e85a9aad8b8adbe6ec1aef47dba5064b8785}{s1}}\ *\ \mbox{\hyperlink{_tutorial___map__using_8cpp_ab3a01b595d22393ace0d30d5fa299f76}{m2}}.block(..)\ *\ m3;\ }
+
+\end{DoxyCode}
+ &This is because our expression analyzer is currently not able to extract trivial expressions nested in a \doxylink{class_eigen_1_1_block}{Block} expression. Therefore the nested scalar multiple cannot be properly extracted.  \\\cline{1-4}
+\end{longtabu}
+
+
+Of course all these remarks hold for all other kind of products involving triangular or selfadjoint matrices. 

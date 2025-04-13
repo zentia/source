@@ -515,9 +515,9 @@ private:
             _mesh_handle = _device.impl()->create_mesh(o).handle;
             _accel.emplace_back_handle(_mesh_handle, make_float4x4(1.f), 0xffu, true, 0u);
         }
-        if (!_vertex_buffer) { _vertex_buffer = _device.create_buffer<Vertex>(std::max(next_pow2(_vertices.size()), 64_k)); }
-        if (!_triangle_buffer) { _triangle_buffer = _device.create_buffer<Triangle>(std::max(next_pow2(_triangles.size()), 64_k)); }
-        if (!_clip_buffer) { _clip_buffer = _device.create_buffer<float4>(std::max(next_pow2(_clip_rects.size()), static_cast<size_t>(64u))); }
+        if (!_vertex_buffer) { _vertex_buffer = _device.create_buffer<Vertex>((std::max)(next_pow2(_vertices.size()), 64_k)); }
+        if (!_triangle_buffer) { _triangle_buffer = _device.create_buffer<Triangle>((std::max)(next_pow2(_triangles.size()), 64_k)); }
+        if (!_clip_buffer) { _clip_buffer = _device.create_buffer<float4>((std::max)(next_pow2(_clip_rects.size()), static_cast<size_t>(64u))); }
 
         // resize buffers if insufficient
         if (_vertex_buffer.size() < _vertices.size() ||
@@ -526,15 +526,15 @@ private:
             _stream.synchronize();
             if (_vertex_buffer.size() < _vertices.size()) {
                 _vertex_buffer = {};
-                _vertex_buffer = _device.create_buffer<Vertex>(std::max(next_pow2(_vertices.size()), 64_k));
+                _vertex_buffer = _device.create_buffer<Vertex>((std::max)(next_pow2(_vertices.size()), 64_k));
             }
             if (_triangle_buffer.size() < _triangles.size()) {
                 _triangle_buffer = {};
-                _triangle_buffer = _device.create_buffer<Triangle>(std::max(next_pow2(_triangles.size()), 64_k));
+                _triangle_buffer = _device.create_buffer<Triangle>((std::max)(next_pow2(_triangles.size()), 64_k));
             }
             if (_clip_buffer.size() < _clip_rects.size()) {
                 _clip_buffer = {};
-                _clip_buffer = _device.create_buffer<float4>(std::max(next_pow2(_clip_rects.size()), static_cast<size_t>(64u)));
+                _clip_buffer = _device.create_buffer<float4>((std::max)(next_pow2(_clip_rects.size()), static_cast<size_t>(64u)));
             }
         }
         // update the buffers and build the accel
@@ -578,8 +578,8 @@ private:
             _vertices.reserve(64_k);
             _triangles.reserve(64_k);
             _clip_rects.reserve(64u);
-            auto accum_clip_min = make_float2(std::numeric_limits<float>::max());
-            auto accum_clip_max = make_float2(-std::numeric_limits<float>::max());
+            auto accum_clip_min = make_float2((std::numeric_limits<float>::max)());
+            auto accum_clip_max = make_float2(-(std::numeric_limits<float>::max)());
             for (auto i = 0u; i < draw_data->CmdListsCount; i++) {
                 auto cmd_list = draw_data->CmdLists[i];
                 for (auto j = 0u; j < cmd_list->CmdBuffer.Size; j++) {
@@ -594,8 +594,8 @@ private:
                         continue;
                     }
                     // render command
-                    auto clip_min = max((make_float2(cmd->ClipRect.x, cmd->ClipRect.y) - clip_offset) * clip_scale, 0.f);
-                    auto clip_max = min((make_float2(cmd->ClipRect.z, cmd->ClipRect.w) - clip_offset) * clip_scale, clip_size);
+                    float2 clip_min = (luisa::max)((make_float2(cmd->ClipRect.x, cmd->ClipRect.y) - clip_offset) * clip_scale, 0.f);
+                    auto clip_max = (luisa::min)((make_float2(cmd->ClipRect.z, cmd->ClipRect.w) - clip_offset) * clip_scale, clip_size);
                     if (any(clip_max <= clip_min) || cmd->ElemCount == 0) { continue; }
                     // process the command
                     auto clip_idx = static_cast<uint>(_clip_rects.size());
@@ -611,8 +611,8 @@ private:
                         }
                         return static_cast<uint>(t);
                     }();
-                    accum_clip_min = min(accum_clip_min, clip_min);
-                    accum_clip_max = max(accum_clip_max, clip_max);
+                    accum_clip_min = (luisa::min)(accum_clip_min, clip_min);
+                    accum_clip_max = (luisa::max)(accum_clip_max, clip_max);
                     // triangles
                     for (auto t = 0u; t < cmd->ElemCount; t += 3u) {
                         auto o = static_cast<uint>(_triangles.size());
@@ -702,7 +702,7 @@ public:
 ImGuiWindow::ImGuiWindow(Device &device, Stream &stream,
                          luisa::string name,
                          const Config &config) noexcept
-    : ImGuiWindow{} { create(device, stream, std::move(name), config); }
+     { create(device, stream, std::move(name), config); }
 
 ImGuiWindow::~ImGuiWindow() noexcept = default;
 

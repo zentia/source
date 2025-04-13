@@ -1,0 +1,363 @@
+\doxysection{spin-\/lock.hpp}
+\hypertarget{spin-lock_8hpp_source}{}\label{spin-lock_8hpp_source}\index{external/taskflow/3rd-\/party/ff/spin-\/lock.hpp@{external/taskflow/3rd-\/party/ff/spin-\/lock.hpp}}
+\mbox{\hyperlink{spin-lock_8hpp}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ -\/*-\/\ Mode:\ C++;\ tab-\/width:\ 4;\ c-\/basic-\/offset:\ 4;\ indent-\/tabs-\/mode:\ nil\ -\/*-\/\ */}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{/*\ ***************************************************************************}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ }}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ FastFlow\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ under\ the\ terms\ of\ the\ GNU\ Lesser\ General\ Public\ License\ version\ 3\ as}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ published\ by\ the\ Free\ Software\ Foundation.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ \ Starting\ from\ version\ 3.0.1\ FastFlow\ is\ dual\ licensed\ under\ the\ GNU\ LGPLv3}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ \ or\ MIT\ License\ (https://github.com/ParaGroup/WindFlow/blob/vers3.x/LICENSE.MIT)}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ \ This\ program\ is\ distributed\ in\ the\ hope\ that\ it\ will\ be\ useful,\ but\ WITHOUT}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ \ ANY\ WARRANTY;\ without\ even\ the\ implied\ warranty\ of\ MERCHANTABILITY\ or}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ \ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE.\ \ See\ the\ GNU\ Lesser\ General\ Public}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ \ License\ for\ more\ details.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ \ You\ should\ have\ received\ a\ copy\ of\ the\ GNU\ Lesser\ General\ Public\ License}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ \ along\ with\ this\ program;\ if\ not,\ write\ to\ the\ Free\ Software\ Foundation,}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ \ Inc.,\ 59\ Temple\ Place\ -\/\ Suite\ 330,\ Boston,\ MA\ 02111-\/1307,\ USA.}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ ****************************************************************************}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00034\ \textcolor{comment}{/*\ }}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ *\ \ \ Author:\ }}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ *\ \ \ \ \ \ Massimo\ Torquati\ <torquati@di.unipi.it>\ or\ <massimotor@gmail.com>\ \ \ \ }}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ *\ \ \ \ -\/\ April\ 2013\ added\ CLHSpinLock\ }}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *\ \ \ \ -\/\ February\ 2014\ added\ AtomicFlagWrapper-\/based\ spin-\/lock}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00042\ \ }
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#ifndef\ FF\_SPINLOCK\_HPP}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\#define\ FF\_SPINLOCK\_HPP}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ This\ code\ requires\ a\ c++11\ compiler\ }}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{sysdep_8h}{ff/sysdep.h}}>}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{external_2taskflow_23rd-party_2ff_2platforms_2_platform_8h}{ff/platforms/platform.h}}>}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{config_8hpp}{ff/config.hpp}}>}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#if\ (\_\_cplusplus\ >=\ 201103L)\ ||\ (defined\ \_\_GXX\_EXPERIMENTAL\_CXX0X\_\_)\ ||\ (defined(HAS\_CXX11\_VARIADIC\_TEMPLATES))}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00054\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceff}{ff}}\ \{}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#define\ \_INLINE\ static\ inline}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ ALIGN\_TO\_PRE(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}})\ \textcolor{keyword}{struct\ }AtomicFlagWrapper\ \{}
+\DoxyCodeLine{00058\ \textcolor{comment}{/*\ MA:\ MSVS\ 2013\ does\ not\ allow\ initialisation\ of\ lock-\/free\ atomic\_flag\ in\ the\ constructor.\ }}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ \ \ \ Before\ removing\ the\ conditional\ compilation\ we\ should\ double-\/check\ that\ initialisation\ with\ .clear()\ really\ works\ in\ }}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ \ \ all\ platforms.\ \ }}
+\DoxyCodeLine{00061\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00063\ \ \ \ \ AtomicFlagWrapper()\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}.clear();}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ std::atomic\_flag\ isn't\ copy-\/constructible,\ nor\ copy-\/assignable}}
+\DoxyCodeLine{00068\ \ \ \ \ }
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordtype}{bool}\ test\_and\_set(std::memory\_order\ mo)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}.test\_and\_set(mo);}
+\DoxyCodeLine{00071\ \ \ \ \ \}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordtype}{void}\ clear(std::memory\_order\ mo)\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}.clear(mo);}
+\DoxyCodeLine{00074\ \ \ \ \ \}\ \ \ }
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00076\ \ \ \ \ std::atomic\_flag\ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}};}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00078\ \ \ \ \ std::atomic\_flag\ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}=ATOMIC\_FLAG\_INIT;}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00080\ \}ALIGN\_TO\_POST(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}});}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{typedef}\ AtomicFlagWrapper\ lock\_t[1];}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_unlocked(lock\_t)\ \{\ \}}
+\DoxyCodeLine{00085\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_locked(lock\_t)\ \ \ \{\ \mbox{\hyperlink{namespacedetail_a619f3502677571222147bfadcc64392ea5bb94a1c12413a2e5d14deabab29f2aa}{abort}}();\ \}}
+\DoxyCodeLine{00086\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_lock(lock\_t\ l)\ \{\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{while}(l-\/>test\_and\_set(std::memory\_order\_acquire))\ ;}
+\DoxyCodeLine{00088\ \}}
+\DoxyCodeLine{00089\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_unlock(lock\_t\ l)\ \{\ l-\/>clear(std::memory\_order\_release);\}}
+\DoxyCodeLine{00090\ \}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#pragma\ message\ ("{}FastFlow\ requires\ a\ c++11\ compiler"{})}}
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#if\ !defined(\_\_GNUC\_\_)\ \&\&\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ An\ acquire-\/barrier\ exchange,\ despite\ the\ name}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#define\ \_\_sync\_lock\_test\_and\_set(\_PTR,\_VAL)\ \ InterlockedExchangePointer(\ (\ \_PTR\ ),\ (\ \_VAL\ ))}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)\ ||\ defined(\_MSC\_VER)\ ||\ defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00104\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ *\ CLH\ spin-\/lock\ is\ a\ FIFO\ lock\ implementation\ which\ uses\ only\ the\ }}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ *\ atomic\ swap\ operation.\ More\ info\ can\ be\ found\ in:\ \ }}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ *\ "{}Building\ FIFO\ and\ Priority-\/Queuing\ Spin\ Locks\ from\ Atomic\ Swap"{}}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ *\ by\ Travis\ S.\ Craig\ in\ Techical\ Report\ 93-\/02-\/02\ University\ of\ Washington}}
+\DoxyCodeLine{00110\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00111\ \textcolor{comment}{\ *\ The\ following\ code\ is\ based\ on\ the\ implementation\ presented}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ *\ in\ the\ synch1.0.1\ (http://code.google.com/p/sim-\/universal-\/construction/)\ }}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ *\ by\ Nikolaos\ D.\ Kallimanis\ (released\ under\ the\ New\ BSD\ licence).}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ ALIGN\_TO\_PRE(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}})\ \textcolor{keyword}{struct\ }CLHSpinLock\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{union\ }CLHLockNode\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ locked;}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ \mbox{\hyperlink{runtime_2spdlog_2include_2spdlog_2fmt_2bundled_2base_8h_a6c52c4bac77f6744fdc338766e9e8a6f}{align}}[\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}}];}
+\DoxyCodeLine{00121\ \ \ \ \ \}\ CLHLockNode;}
+\DoxyCodeLine{00122\ \ \ \ \ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{volatile}\ ALIGN\_TO\_PRE(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}})\ CLHLockNode\ *Tail\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ALIGN\_TO\_POST(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}});}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{volatile}\ ALIGN\_TO\_PRE(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}})\ CLHLockNode\ *MyNode[\mbox{\hyperlink{config_8hpp_a5747ce5beae65002b9ee2c4a4cf8c329}{MAX\_NUM\_THREADS}}]\ ALIGN\_TO\_POST(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}});}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{volatile}\ ALIGN\_TO\_PRE(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}})\ CLHLockNode\ *MyPred[\mbox{\hyperlink{config_8hpp_a5747ce5beae65002b9ee2c4a4cf8c329}{MAX\_NUM\_THREADS}}]\ ALIGN\_TO\_POST(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}});}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ CLHSpinLock():Tail(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{config_8hpp_a5747ce5beae65002b9ee2c4a4cf8c329}{MAX\_NUM\_THREADS}};\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}++)\ \{}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ MyNode[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ MyPred[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \ \string~CLHSpinLock()\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Tail)\ \mbox{\hyperlink{sysdep_8h_a8d0b69a707e38b6ee06c8039cce3a9ae}{freeAlignedMemory}}((\textcolor{keywordtype}{void}*)Tail);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{config_8hpp_a5747ce5beae65002b9ee2c4a4cf8c329}{MAX\_NUM\_THREADS}};\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}++)\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (MyNode[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}])\ \mbox{\hyperlink{sysdep_8h_a8d0b69a707e38b6ee06c8039cce3a9ae}{freeAlignedMemory}}((\textcolor{keywordtype}{void}*)(MyNode[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]));}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}()\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Tail\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ -\/1;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ Tail\ =\ (CLHLockNode*)\mbox{\hyperlink{sysdep_8h_ae77dd87ccd6c736ac3eb1aa624d05269}{getAlignedMemory}}(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}},\ \textcolor{keyword}{sizeof}(CLHLockNode));}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ Tail-\/>locked\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{config_8hpp_a5747ce5beae65002b9ee2c4a4cf8c329}{MAX\_NUM\_THREADS}};\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}++)\ }
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ MyNode[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ =\ (CLHLockNode*)\mbox{\hyperlink{sysdep_8h_ae77dd87ccd6c736ac3eb1aa624d05269}{getAlignedMemory}}(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}},\ \textcolor{keyword}{sizeof}(CLHLockNode));}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00146\ \ \ \ \ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{comment}{//\ FIX}}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ spin\_lock(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ pid)\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ MyNode[\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adbde86613bd4e98205cffb43184df625}{pid}}]-\/>locked\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)\ }\textcolor{comment}{//\ To\ be\ tested}}
+\DoxyCodeLine{00152\ \ \ \ \ MyPred[\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adbde86613bd4e98205cffb43184df625}{pid}}]\ =\ (CLHLockNode\ *)\ \_\_sync\_lock\_test\_and\_set((\textcolor{keywordtype}{void}\ *\textcolor{keyword}{volatile}\ *)\&Tail,\ (\textcolor{keywordtype}{void}\ *)MyNode[pid]);}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00154\ \ \ \ \ MyPred[\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adbde86613bd4e98205cffb43184df625}{pid}}]\ =\ (CLHLockNode\ *)\ \_\_sync\_lock\_test\_and\_set((\textcolor{keywordtype}{long}\ *)\&Tail,\ (\textcolor{keywordtype}{long})MyNode[pid]);}
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{while}\ (MyPred[pid]-\/>locked\ ==\ \textcolor{keyword}{true})\ ;}
+\DoxyCodeLine{00157\ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ spin\_unlock(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ pid)\ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ MyNode[\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adbde86613bd4e98205cffb43184df625}{pid}}]-\/>locked\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ MyNode[\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adbde86613bd4e98205cffb43184df625}{pid}}]=\ MyPred[\mbox{\hyperlink{namespacespdlog_1_1details_1_1os_adbde86613bd4e98205cffb43184df625}{pid}}];}
+\DoxyCodeLine{00162\ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ }
+\DoxyCodeLine{00164\ \}\ ALIGN\_TO\_POST(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}});}
+\DoxyCodeLine{00165\ \ \ \ \ }
+\DoxyCodeLine{00166\ \textcolor{keyword}{typedef}\ CLHSpinLock\ clh\_lock\_t[1];}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_unlocked(clh\_lock\_t\ l)\ \{\ l-\/>init();\}}
+\DoxyCodeLine{00169\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_locked(clh\_lock\_t)\ \{\ \mbox{\hyperlink{namespacedetail_a619f3502677571222147bfadcc64392ea5bb94a1c12413a2e5d14deabab29f2aa}{abort}}();\ \}}
+\DoxyCodeLine{00170\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_lock(clh\_lock\_t\ l,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ pid)\ \{\ l-\/>spin\_lock(pid);\ \}}
+\DoxyCodeLine{00171\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_unlock(clh\_lock\_t\ l,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ pid)\ \{\ l-\/>spin\_unlock(pid);\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#endif\ }}
+\DoxyCodeLine{00174\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\#if\ !defined(\_\_GNUC\_\_)\ \&\&\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00176\ \textcolor{comment}{//\ An\ acquire-\/barrier\ exchange,\ despite\ the\ name}}
+\DoxyCodeLine{00177\ \textcolor{comment}{}}
+\DoxyCodeLine{00178\ \textcolor{comment}{\#define\ \_\_sync\_lock\_test\_and\_set(\_PTR,\_VAL)\ \ InterlockedExchangePointer(\ (\ \_PTR\ ),\ (\ \_VAL\ ))}}
+\DoxyCodeLine{00179\ \textcolor{comment}{\#endif}}
+\DoxyCodeLine{00180\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00184\ \textcolor{comment}{//\ OLD\ IMPLEMENTATION\ -\/-\/\ TO\ BE\ DELETED}}
+\DoxyCodeLine{00185\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{comment}{//\ REW\ -\/-\/\ documentation}}
+\DoxyCodeLine{00188\ \textcolor{comment}{//\#include\ <ff/sysdep.h>}}
+\DoxyCodeLine{00189\ \textcolor{comment}{//\#include\ <ff/platforms/platform.h>}}
+\DoxyCodeLine{00190\ \textcolor{comment}{//\#include\ <ff/config.hpp>}}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{abstraction__dcas_8h}{ff/mpmc/asm/abstraction\_dcas.h}}>}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ NOTE:\ A\ better\ check\ would\ be\ needed\ !}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ both\ GNU\ g++\ and\ Intel\ icpc\ define\ \_\_GXX\_EXPERIMENTAL\_CXX0X\_\_\ if\ -\/std=c++0x\ or\ -\/std=c++11\ is\ used\ }}
+\DoxyCodeLine{00195\ \textcolor{comment}{//\ (icpc\ -\/E\ -\/dM\ -\/std=c++11\ -\/x\ c++\ /dev/null\ |\ grep\ GXX\_EX)}}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\#if\ (\_\_cplusplus\ >=\ 201103L)\ ||\ (defined\ \_\_GXX\_EXPERIMENTAL\_CXX0X\_\_)\ ||\ (defined(HAS\_CXX11\_VARIADIC\_TEMPLATES))}}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00201\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceff}{ff}}\ \{}
+\DoxyCodeLine{00202\ \textcolor{preprocessor}{\#define\ \_INLINE\ static\ inline}}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\#define\ \_INLINE\ \_\_forceinline}}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{comment}{//\ to\ be\ moved\ in\ platforms-\/specific,\ redefine\ some\ gcc\ intrinsics}}
+\DoxyCodeLine{00208\ \textcolor{preprocessor}{\#if\ !defined(\_\_GNUC\_\_)\ \&\&\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00209\ \textcolor{comment}{//\ An\ acquire-\/barrier\ exchange,\ despite\ the\ name}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\#define\ \_\_sync\_lock\_test\_and\_set(\_PTR,\_VAL)\ \ InterlockedExchangePointer(\ (\ \_PTR\ ),\ (\ \_VAL\ ))}}
+\DoxyCodeLine{00212\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \textcolor{preprocessor}{\#if\ defined(USE\_TICKETLOCK)}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{comment}{//\ NOTE:\ ticket\ lock\ implementation\ is\ experimental\ and\ for\ Linux\ only!}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \textcolor{preprocessor}{\#if\ !defined(\_\_linux\_\_)}}
+\DoxyCodeLine{00219\ \textcolor{preprocessor}{\#error\ "{}Ticket-\/lock\ implementation\ only\ for\ Linux!"{}}}
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\#if\ !defined(LOCK\_PREFIX)}}
+\DoxyCodeLine{00223\ \textcolor{preprocessor}{\#define\ LOCK\_PREFIX\ "{}lock\ ;\ "{}}}
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{keyword}{typedef}\ \ \textcolor{keyword}{struct\ }\{\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ slock;\}\ \ lock\_t[1];}
+\DoxyCodeLine{00227\ \textcolor{keyword}{enum}\ \{\ UNLOCKED=0\ \};}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ init\_unlocked(lock\_t\ l)\ \{\ l[0].slock=UNLOCKED;\}}
+\DoxyCodeLine{00230\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ init\_locked(lock\_t\ l)\ \ \ \{\ \mbox{\hyperlink{namespacedetail_a619f3502677571222147bfadcc64392ea5bb94a1c12413a2e5d14deabab29f2aa}{abort}}();\ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{comment}{/*\ Ticket-\/Lock\ from\ Linux\ kernel\ 2.6.37\ */}}
+\DoxyCodeLine{00233\ \textcolor{keyword}{static}\ \_\_always\_inline\ \textcolor{keywordtype}{void}\ spin\_lock(lock\_t\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}})}
+\DoxyCodeLine{00234\ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordtype}{int}\ inc\ =\ 0x00010000;}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespacegenerate__static__link__cmd__macos_a7c2dcd7f9bee7a5258b5c61341deb157}{tmp}};}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keyword}{asm}\ \textcolor{keyword}{volatile}(\mbox{\hyperlink{atomic-i386_8h_ad2d1e7e207fd2e97e9965d65ef5ed273}{LOCK\_PREFIX}}\ \textcolor{stringliteral}{"{}xaddl\ \%0,\ \%1\(\backslash\)n"{}}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}movzwl\ \%w0,\ \%2\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}shrl\ \$16,\ \%0\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}1:\(\backslash\)t"{}}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}cmpl\ \%0,\ \%2\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}je\ 2f\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}rep\ ;\ nop\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}movzwl\ \%1,\ \%2\(\backslash\)n\(\backslash\)t"{}}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ don't\ need\ lfence\ here,\ because\ loads\ are\ in-\/order\ */}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}jmp\ 1b\(\backslash\)n"{}}}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}2:"{}}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}+r"{}}\ (inc),\ \textcolor{stringliteral}{"{}+m"{}}\ (\mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}-\/>slock),\ \textcolor{stringliteral}{"{}=\&r"{}}\ (\mbox{\hyperlink{namespacegenerate__static__link__cmd__macos_a7c2dcd7f9bee7a5258b5c61341deb157}{tmp}})}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}memory"{}},\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00252\ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{keyword}{static}\ \_\_always\_inline\ \textcolor{keywordtype}{void}\ spin\_unlock(lock\_t\ \mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}})}
+\DoxyCodeLine{00255\ \{}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keyword}{asm}\ \textcolor{keyword}{volatile}(\mbox{\hyperlink{atomic-i386_8h_ad2d1e7e207fd2e97e9965d65ef5ed273}{LOCK\_PREFIX}}\ \textcolor{stringliteral}{"{}incw\ \%0"{}}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}+m"{}}\ (\mbox{\hyperlink{ittnotify__static_8h_a46e8be2e3aadb2f6ee62e762a36b9243}{lock}}-\/>slock)}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ :}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ :\ \textcolor{stringliteral}{"{}memory"{}},\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00260\ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{/*\ TICKET\_LOCK\ \ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \textcolor{comment}{//\ NOTE:\ A\ better\ check\ would\ be\ needed\ !}}
+\DoxyCodeLine{00270\ \textcolor{comment}{//\ both\ GNU\ g++\ and\ Intel\ icpc\ define\ \_\_GXX\_EXPERIMENTAL\_CXX0X\_\_\ if\ -\/std=c++0x\ or\ -\/std=c++11\ is\ used\ }}
+\DoxyCodeLine{00271\ \textcolor{comment}{//\ (icpc\ -\/E\ -\/dM\ -\/std=c++11\ -\/x\ c++\ /dev/null\ |\ grep\ GXX\_EX)}}
+\DoxyCodeLine{00272\ \textcolor{preprocessor}{\#if\ (\_\_cplusplus\ >=\ 201103L)\ ||\ (defined\ \_\_GXX\_EXPERIMENTAL\_CXX0X\_\_)\ ||\ (defined(HAS\_CXX11\_VARIADIC\_TEMPLATES))}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ ALIGN\_TO\_PRE(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}})\ \textcolor{keyword}{struct\ }AtomicFlagWrapper\ \{}
+\DoxyCodeLine{00275\ \textcolor{comment}{/*\ MA:\ MSVS\ 2013\ does\ not\ allow\ initialisation\ of\ lock-\/free\ atomic\_flag\ in\ the\ constructor.\ }}
+\DoxyCodeLine{00276\ \textcolor{comment}{\ \ \ \ Before\ removing\ the\ conditional\ compilation\ we\ should\ double-\/check\ that\ initialisation\ with\ .clear()\ really\ works\ in\ all\ platforms.\ }}
+\DoxyCodeLine{00277\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00278\ \textcolor{preprocessor}{\#ifndef\ \_MSC\_VER}}
+\DoxyCodeLine{00279\ \ \ \ \ AtomicFlagWrapper():\mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}(ATOMIC\_FLAG\_INIT)\ \{\}}
+\DoxyCodeLine{00280\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00281\ \ \ \ \ AtomicFlagWrapper()\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}.clear();}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00285\ \ \ \ \ \textcolor{comment}{//\ std::atomic\_flag\ isn't\ copy-\/constructible,\ nor\ copy-\/assignable}}
+\DoxyCodeLine{00286\ \ \ \ \ }
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keywordtype}{bool}\ test\_and\_set(std::memory\_order\ mo)\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}.test\_and\_set(mo);}
+\DoxyCodeLine{00289\ \ \ \ \ \}}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordtype}{void}\ clear(std::memory\_order\ mo)\ \{}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}.clear(mo);}
+\DoxyCodeLine{00292\ \ \ \ \ \}\ \ \ }
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \ \ \ \ std::atomic\_flag\ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}};}
+\DoxyCodeLine{00295\ \}ALIGN\_TO\_POST(\mbox{\hyperlink{config_8hpp_af89f60b07247176687889ade776c8e10}{CACHE\_LINE\_SIZE}});}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \textcolor{keyword}{typedef}\ AtomicFlagWrapper\ lock\_t[1];}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_unlocked(lock\_t\ l)\ \{\ \}}
+\DoxyCodeLine{00300\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_locked(lock\_t\ l)\ \ \ \{\ \mbox{\hyperlink{namespacedetail_a619f3502677571222147bfadcc64392ea5bb94a1c12413a2e5d14deabab29f2aa}{abort}}();\ \}}
+\DoxyCodeLine{00301\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_lock(lock\_t\ l)\ \{\ }
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{while}(l-\/>test\_and\_set(std::memory\_order\_acquire))\ ;}
+\DoxyCodeLine{00303\ \}}
+\DoxyCodeLine{00304\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_unlock(lock\_t\ l)\ \{\ l-\/>clear(std::memory\_order\_release);\}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\#else\ \ }\textcolor{comment}{//\ non\ C++11}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/\ XCHG-\/based\ spin-\/lock\ -\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00309\ \ \ \ \ }
+\DoxyCodeLine{00310\ \textcolor{keyword}{enum}\ \{\ UNLOCKED=0\ \};}
+\DoxyCodeLine{00311\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{int}\ lock\_t[1];}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_unlocked(lock\_t\ l)\ \{\ l[0]=UNLOCKED;\}}
+\DoxyCodeLine{00314\ \_INLINE\ \textcolor{keywordtype}{void}\ init\_locked(lock\_t\ l)\ \ \ \{\ l[0]=!UNLOCKED;\}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00317\ \textcolor{comment}{\ *\ NOTE:\ }}
+\DoxyCodeLine{00318\ \textcolor{comment}{\ *\ \ The\ following\ 2\ functions\ has\ been\ taken\ from\ Cilk\ (version\ 5.4.6).\ }}
+\DoxyCodeLine{00319\ \textcolor{comment}{\ *\ \ The\ Cilk\ Project\ web\ site\ is\ \ http://supertech.csail.mit.edu/cilk/}}
+\DoxyCodeLine{00320\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00321\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\#if\ (defined(\_MSC\_VER)\ ||\ defined(\_\_INTEL\_COMPILER))\ \&\&\ defined(\_WIN32)}}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\#include\ <WinBase.h>}}
+\DoxyCodeLine{00325\ \textcolor{comment}{//\ windows\ platform}}
+\DoxyCodeLine{00326\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_lock(lock\_t\ l)\ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordflow}{while}\ (InterlockedExchange((\textcolor{keywordtype}{long}\ *)l,\ 1)\ !=\ UNLOCKED)\ \{\ }
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (l[0])\ ;\ \ \textcolor{comment}{/*\ spin\ using\ only\ reads\ -\/\ reduces\ bus\ traffic\ */}}
+\DoxyCodeLine{00329\ \ \ \ \ \}}
+\DoxyCodeLine{00330\ \}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_unlock(lock\_t\ l)\ \{}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00334\ \textcolor{comment}{\ \ \ \ \ *\ \ Ensure\ that\ all\ previous\ writes\ are\ globally\ visible\ before\ any}}
+\DoxyCodeLine{00335\ \textcolor{comment}{\ \ \ \ \ *\ \ future\ writes\ become\ visible.}}
+\DoxyCodeLine{00336\ \textcolor{comment}{\ \ \ \ \ */}\ \ \ \ }
+\DoxyCodeLine{00337\ \ \ \ \ WMB();}
+\DoxyCodeLine{00338\ \ \ \ \ l[0]=UNLOCKED;}
+\DoxyCodeLine{00339\ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//\ non\ windows\ platform}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_lock(lock\_t\ l)\ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keywordflow}{while}\ (xchg((\textcolor{keywordtype}{int}\ *)l,\ 1)\ !=\ UNLOCKED)\ \{}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (l[0])\ ;\ \ \textcolor{comment}{/*\ spin\ using\ only\ reads\ -\/\ reduces\ bus\ traffic\ */}}
+\DoxyCodeLine{00346\ \ \ \ \ \}}
+\DoxyCodeLine{00347\ \}}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \_INLINE\ \textcolor{keywordtype}{void}\ spin\_unlock(lock\_t\ l)\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00351\ \textcolor{comment}{\ \ \ \ \ *\ \ Ensure\ that\ all\ previous\ writes\ are\ globally\ visible\ before\ any}}
+\DoxyCodeLine{00352\ \textcolor{comment}{\ \ \ \ \ *\ \ future\ writes\ become\ visible.}}
+\DoxyCodeLine{00353\ \textcolor{comment}{\ \ \ \ \ */}\ \ \ \ }
+\DoxyCodeLine{00354\ \ \ \ \ WMB();}
+\DoxyCodeLine{00355\ \ \ \ \ l[0]=UNLOCKED;}
+\DoxyCodeLine{00356\ \}}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ windows\ platform\ spin\_lock}}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ C++11\ check}}
+\DoxyCodeLine{00359\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ TICKET\_LOCK}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00363\ \}\ \textcolor{comment}{//\ namespace\ ff}}
+\DoxyCodeLine{00364\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ 0}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ FF\_SPINLOCK\_HPP\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

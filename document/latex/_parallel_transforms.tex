@@ -1,0 +1,127 @@
+\doxysection{Parallel Transforms}
+\hypertarget{_parallel_transforms}{}\label{_parallel_transforms}\index{Parallel Transforms@{Parallel Transforms}}
+Taskflow provides template functions for constructing tasks to perform parallel transforms over ranges of items.\hypertarget{_parallel_transforms_ParallelTransformsInclude}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_parallel_transforms_ParallelTransformsInclude}
+You need to include the header file, {\ttfamily \doxylink{algorithm_2transform_8hpp}{taskflow/algorithm/transform.\+hpp}}, for creating a parallel-\/transform task.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{algorithm_2transform_8hpp}{taskflow/algorithm/transform.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_parallel_transforms_ParallelTransformsOverARange}{}\doxysubsection{\texorpdfstring{Create a Unary Parallel-\/\+Transform Task}{Create a Unary Parallel-\/\+Transform Task}}\label{_parallel_transforms_ParallelTransformsOverARange}
+Parallel-\/transform transforms a range of items, possibly with a different type for the transformed data, and stores the result in another range. The task created by \doxylink{classtf_1_1_flow_builder_a97be7ceef6fa4276e3b074c10c13b826}{tf\+::\+Taskflow\+::transform(\+B first1, E last1, O d\+\_\+first, C c, P part)} is equivalent to a parallel execution of the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (first1\ !=\ last1)\ \{}
+\DoxyCodeLine{\ \ *d\_first++\ =\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}(*first1++);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+\doxylink{classtf_1_1_flow_builder_a97be7ceef6fa4276e3b074c10c13b826}{tf\+::\+Taskflow\+::transform} simultaneously applies the callable {\ttfamily c} to the object obtained by dereferencing every iterator in the range {\ttfamily \mbox{[}first1, last1)} and stores the result in another range beginning at {\ttfamily d\+\_\+first}. It is user\textquotesingle{}s responsibility for ensuring the range is valid within the execution of the parallel-\/transform task.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}\ =\ \{1,\ 2,\ 3,\ 4,\ 5\};}
+\DoxyCodeLine{std::vector<int>\ tgt(\mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.size());}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.transform(\mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.begin(),\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.end(),\ tgt.begin(),\ [](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\{\ }
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}transforming\ item\ "{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{}\ to\ "{}}\ <<\ i\ +\ 1\ <<\ \textcolor{stringliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ return\ i\ +\ 1;}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+\hypertarget{_parallel_transforms_ParallelTransformsCaptureIteratorsByReference}{}\doxysubsection{\texorpdfstring{Capture Iterators by Reference}{Capture Iterators by Reference}}\label{_parallel_transforms_ParallelTransformsCaptureIteratorsByReference}
+You can pass iterators by reference using @std\+\_\+ref to marshal parameter update between dependent tasks. This is especially useful when the range is unknown at the time of creating a parallel-\/transform task, but needs initialization from another task.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}},\ tgt;}
+\DoxyCodeLine{std::vector<int>::iterator\ first,\ last,\ d\_first;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{structinit}{init}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.resize(1000);}
+\DoxyCodeLine{\ \ tgt.resize(1000);}
+\DoxyCodeLine{\ \ first\ \ \ =\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.begin();}
+\DoxyCodeLine{\ \ last\ \ \ \ =\ \mbox{\hyperlink{shortpath_8cpp_a8648ffe7342bea77e2698690589da3c1}{src}}.end();}
+\DoxyCodeLine{\ \ d\_first\ =\ tgt.begin();}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{geometry_8cpp_ad05130a1d9f2e9708c1125b4cc2fe7cb}{transform}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.transform(}
+\DoxyCodeLine{\ \ std::ref(first),\ std::ref(last),\ std::ref(d\_first),\ }
+\DoxyCodeLine{\ \ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}transforming\ item\ "{}}\ <<\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <<\ \textcolor{stringliteral}{"{}\ to\ "{}}\ <<\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +\ 1\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}.precede(\mbox{\hyperlink{sycl__algorithms_8cpp_abe0cf4a907cfd4631a4d7c7647692a0a}{transform}});}
+
+\end{DoxyCode}
+
+
+When {\ttfamily init} finishes, the parallel-\/transform task {\ttfamily transform} will see {\ttfamily first} pointing to the beginning of {\ttfamily src} and {\ttfamily last} pointing to the end of {\ttfamily src}. Then, it simultaneously transforms these 1000 items by adding one to each element and stores the result in another range starting at {\ttfamily d\+\_\+first}.\hypertarget{_parallel_transforms_ParallelBinaryTransformsOverARange}{}\doxysubsection{\texorpdfstring{Create a Binary Parallel-\/\+Transform Task}{Create a Binary Parallel-\/\+Transform Task}}\label{_parallel_transforms_ParallelBinaryTransformsOverARange}
+You can use the overload, \doxylink{classtf_1_1_flow_builder_a7ea96d3fa0aa9e3ff337a9f1e37682b0}{tf\+::\+Taskflow\+::transform(\+B1 first1, E1 last1, B2 first2, O d\+\_\+first, C c, P part)}, to perform parallel transforms on two source ranges pointed by {\ttfamily first1} and {\ttfamily first2} using the binary operator {\ttfamily c} and store the result in another range pointed by {\ttfamily d\+\_\+first}. This method is equivalent to the parallel execution of the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (first1\ !=\ last1)\ \{}
+\DoxyCodeLine{\ \ *d\_first++\ =\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}(*first1++,\ *first2++);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The following example creates a parallel-\/transform task that adds two ranges of elements one by one and stores the result in a target range\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ src1\ =\ \{1,\ 2,\ 3,\ 4,\ 5\};}
+\DoxyCodeLine{std::vector<int>\ src2\ =\ \{5,\ 4,\ 3,\ 2,\ 1\};}
+\DoxyCodeLine{std::vector<int>\ tgt(src1.size());}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.transform(}
+\DoxyCodeLine{\ \ src1.begin(),\ src1.end(),\ src2.begin(),\ tgt.begin(),\ }
+\DoxyCodeLine{\ \ [](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\{\ }
+\DoxyCodeLine{\ \ \ \ return\ i\ +\ j;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{);}
+
+\end{DoxyCode}
+\hypertarget{_parallel_transforms_ParallelTransformsCfigureAPartitioner}{}\doxysubsection{\texorpdfstring{Configure a Partitioner}{Configure a Partitioner}}\label{_parallel_transforms_ParallelTransformsCfigureAPartitioner}
+You can configure a partitioner for parallel-\/transform tasks to run with different scheduling methods, such as guided partitioning, dynamic partitioning, and static partitioning. The following example creates two parallel-\/transform tasks using two different partitioners, one with the static partitioning algorithm and another one with the guided partitioning algorithm\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_static_partitioner}{tf::StaticPartitioner}}\ static\_partitioner;}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_guided_partitioner}{tf::GuidedPartitioner}}\ guided\_partitioner;}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::vector<int>\ src1\ =\ \{1,\ 2,\ 3,\ 4,\ 5\};}
+\DoxyCodeLine{std::vector<int>\ src2\ =\ \{5,\ 4,\ 3,\ 2,\ 1\};}
+\DoxyCodeLine{std::vector<int>\ tgt1(src1.size());}
+\DoxyCodeLine{std::vector<int>\ tgt2(src2.size());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ parallel-\/transform\ task\ with\ static\ execution\ partitioner}}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.transform(}
+\DoxyCodeLine{\ \ src1.begin(),\ src1.end(),\ src2.begin(),\ tgt1.begin(),\ }
+\DoxyCodeLine{\ \ [](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\{\ }
+\DoxyCodeLine{\ \ \ \ return\ i\ +\ j;}
+\DoxyCodeLine{\ \ \},}
+\DoxyCodeLine{\ \ static\_partitioner}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ parallel-\/transform\ task\ with\ guided\ execution\ partitioner}}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.transform(}
+\DoxyCodeLine{\ \ src1.begin(),\ src1.end(),\ src2.begin(),\ tgt2.begin(),\ }
+\DoxyCodeLine{\ \ [](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\{\ }
+\DoxyCodeLine{\ \ \ \ return\ i\ +\ j;}
+\DoxyCodeLine{\ \ \},}
+\DoxyCodeLine{\ \ guided\_partitioner}
+\DoxyCodeLine{);}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+By default, parallel-\/transform tasks use \doxylink{namespacetf_ace2c5adcd5039483eebb6dbdbb6f33e3}{tf\+::\+Default\+Partitioner} if no partitioner is specified. 
+\end{DoxyAttention}

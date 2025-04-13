@@ -1,6 +1,6 @@
-#include <luisa/runtime/sparse_heap.h>
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/rhi/device_interface.h>
+#include <runtime/runtime/sparse_heap.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/rhi/device_interface.h>
 
 namespace luisa::compute {
 SparseBufferHeap::SparseBufferHeap(DeviceInterface *device, size_t byte_size) noexcept

@@ -1,0 +1,5 @@
+var structnlohmann_1_1detail_1_1has__to__json_3_01_basic_json_type_00_01_t_00_01enable__if__t_3_01_96b7bbbe462cd4ff87697dab3bc993a77 =
+[
+    [ "serializer", "structnlohmann_1_1detail_1_1has__to__json_3_01_basic_json_type_00_01_t_00_01enable__if__t_3_01_96b7bbbe462cd4ff87697dab3bc993a77.html#a7af8dd95a01e7ca32f10075c9934b107", null ],
+    [ "value", "structnlohmann_1_1detail_1_1has__to__json_3_01_basic_json_type_00_01_t_00_01enable__if__t_3_01_96b7bbbe462cd4ff87697dab3bc993a77.html#a25600efc3dbab20cebe1a90f97505d6a", null ]
+];

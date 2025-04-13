@@ -1,0 +1,55 @@
+\doxysection{Execution Policy}
+\hypertarget{_c_u_d_a_s_t_d_execution_policy}{}\label{_c_u_d_a_s_t_d_execution_policy}\index{Execution Policy@{Execution Policy}}
+Taskflow provides standalone template methods for expressing common parallel algorithms on a GPU. Each of these methods is governed by an {\itshape execution policy object} to configure the kernel execution parameters.\hypertarget{_c_u_d_a_s_t_d_execution_policy_CUDASTDExecutionPolicyIncludeTheHeader}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_c_u_d_a_s_t_d_execution_policy_CUDASTDExecutionPolicyIncludeTheHeader}
+You need to include the header file, {\ttfamily taskflow/cuda/cudaflow.hpp}, for creating a CUDA execution policy object.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{cudaflow_8hpp}{taskflow/cuda/cudaflow.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_c_u_d_a_s_t_d_execution_policy_CUDASTDParameterizePerformance}{}\doxysubsection{\texorpdfstring{Parameterize Performance}{Parameterize Performance}}\label{_c_u_d_a_s_t_d_execution_policy_CUDASTDParameterizePerformance}
+Taskflow parameterizes most CUDA algorithms in terms of {\itshape the number of threads per block} and {\itshape units of work per thread}, which can be specified in the execution policy template type, \doxylink{classtf_1_1cuda_execution_policy}{tf\+::cuda\+Execution\+Policy}. The design is inspired by \href{https://moderngpu.github.io/}{\texttt{ Modern GPU Programming}} authored by Sean Baxter to achieve high-\/performance GPU computing.\hypertarget{_c_u_d_a_s_t_d_execution_policy_CUDASTDDefineAnExecutionPolicy}{}\doxysubsection{\texorpdfstring{Define an Execution Policy}{Define an Execution Policy}}\label{_c_u_d_a_s_t_d_execution_policy_CUDASTDDefineAnExecutionPolicy}
+The following example defines an execution policy object, {\ttfamily policy}, which configures (1) each block to invoke 512 threads and (2) each of these {\ttfamily 512} threads to perform {\ttfamily 11} units of work. Block size must be a power of two. It is always a good idea to specify an odd number in the second parameter to avoid bank conflicts.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1cuda_execution_policy}{tf::cudaExecutionPolicy<512,\ 11>}}\ policy;}
+
+\end{DoxyCode}
+
+
+By default, the execution policy object is associated with the CUDA {\itshape default stream} (i.\+e., 0). Default stream can incur significant overhead due to the global synchronization. You can associate an execution policy with another stream as shown below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ RAII-\/styled\ stream\ object}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream1,\ stream2;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ assign\ a\ stream\ to\ a\ policy\ at\ construction\ time}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1cuda_execution_policy}{tf::cudaExecutionPolicy<512,\ 11>}}\ policy(stream1);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ assign\ another\ stream\ to\ the\ policy}}
+\DoxyCodeLine{policy.\mbox{\hyperlink{classtf_1_1cuda_execution_policy_a5be1b273985800ab886665d28663c29b}{stream}}(stream2);}
+
+\end{DoxyCode}
+
+
+All the CUDA standard algorithms in Taskflow are asynchronous with respect to the stream assigned to the execution policy. This enables high execution efficiency for large GPU workloads that call for many different algorithms. You can synchronize the stream the block until all tasks in the stream finish\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{cudaStreamSynchronize(policy.\mbox{\hyperlink{classtf_1_1cuda_execution_policy_a5be1b273985800ab886665d28663c29b}{stream}}());\ }
+
+\end{DoxyCode}
+
+
+The best-\/performing configurations for each algorithm, each GPU architecture, and each data type can vary significantly. You should experiment different configurations and find the optimal tuning parameters for your applications. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} default policy is given in \doxylink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf\+::cuda\+Default\+Execution\+Policy}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ default\_policy;}
+
+\end{DoxyCode}
+\hypertarget{_c_u_d_a_s_t_d_execution_policy_CUDASTDAllocateMemoryBufferForAlgorithms}{}\doxysubsection{\texorpdfstring{Allocate Memory Buffer for Algorithms}{Allocate Memory Buffer for Algorithms}}\label{_c_u_d_a_s_t_d_execution_policy_CUDASTDAllocateMemoryBufferForAlgorithms}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} key difference between our CUDA standard algorithms and others (e.\+g., Thrust) is the {\itshape memory management}. Unlike CPU-\/parallel algorithms, many GPU-\/parallel algorithms require extra buffer to store the temporary results during the multi-\/phase computation, for instance, \doxylink{namespacetf_a8a872d2a0ac73a676713cb5be5aa688c}{tf\+::cuda\+\_\+reduce} and \doxylink{namespacetf_a06804cb1598e965febc7bd35fc0fbbb0}{tf\+::cuda\+\_\+sort}. We {\itshape DO NOT} allocate any memory during these algorithms call but ask you to provide the memory buffer required for each of such algorithms. This decision seems to complicate the code a little bit, but it gives applications freedom to optimize the memory; also, it makes all algorithm calls capturable to a CUDA graph to improve the execution efficiency. 

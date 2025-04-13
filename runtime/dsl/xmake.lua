@@ -1,12 +1,3 @@
-target("lc-dsl")
-_config_project({
-	project_kind = "static",
-	batch_size = 16
-})
-set_pcxxheader("pch.h")
-add_deps("lc-ast", "lc-runtime")
-add_headerfiles("../../include/luisa/dsl/**.h")
-add_files("**.cpp")
-add_defines("LUISA_DSL_STATIC_LIB", {
-    public = true
-})
+table.insert(global_headerfiles, "runtime/dsl/**.h")
+table.insert(global_files, "runtime/dsl/**.cpp")
+table.insert(global_defines, "LC_DSL_EXPORT_DLL=")

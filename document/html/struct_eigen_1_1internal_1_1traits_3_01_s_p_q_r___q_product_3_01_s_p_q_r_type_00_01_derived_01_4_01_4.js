@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1traits_3_01_s_p_q_r___q_product_3_01_s_p_q_r_type_00_01_derived_01_4_01_4 =
+[
+    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01_s_p_q_r___q_product_3_01_s_p_q_r_type_00_01_derived_01_4_01_4.html#ab2bb8a51d34349489fc6ac9d15dda5e0", null ]
+];

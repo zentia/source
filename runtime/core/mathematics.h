@@ -124,8 +124,8 @@ template<typename T>
 
 LUISA_MAKE_VECTOR_BINARY_FUNC(atan2)
 LUISA_MAKE_VECTOR_BINARY_FUNC(pow)
-LUISA_MAKE_VECTOR_BINARY_FUNC(min)
-LUISA_MAKE_VECTOR_BINARY_FUNC(max)
+LUISA_MAKE_VECTOR_BINARY_FUNC((min))
+LUISA_MAKE_VECTOR_BINARY_FUNC((max))
 LUISA_MAKE_VECTOR_BINARY_FUNC(fmod)
 
 #undef LUISA_MAKE_VECTOR_BINARY_FUNC
@@ -150,63 +150,63 @@ LUISA_MAKE_VECTOR_BINARY_FUNC(fmod)
 
 // min
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto min(T v, Vector<T, 2> u) noexcept {
+[[nodiscard]] constexpr auto (min)(T v, Vector<T, 2> u) noexcept {
     return Vector<T, 2>{min(v, u.x), min(v, u.y)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto min(T v, Vector<T, 3> u) noexcept {
+[[nodiscard]] constexpr auto (min)(T v, Vector<T, 3> u) noexcept {
     return Vector<T, 3>{min(v, u.x), min(v, u.y), min(v, u.z)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto min(T v, Vector<T, 4> u) noexcept {
+[[nodiscard]] constexpr auto (min)(T v, Vector<T, 4> u) noexcept {
     return Vector<T, 4>{min(v, u.x), min(v, u.y), min(v, u.z), min(v, u.w)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto min(Vector<T, 2> v, T u) noexcept {
+[[nodiscard]] constexpr auto (min)(Vector<T, 2> v, T u) noexcept {
     return Vector<T, 2>{min(v.x, u), min(v.y, u)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto min(Vector<T, 3> v, T u) noexcept {
+[[nodiscard]] constexpr auto (min)(Vector<T, 3> v, T u) noexcept {
     return Vector<T, 3>{min(v.x, u), min(v.y, u), min(v.z, u)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto min(Vector<T, 4> v, T u) noexcept {
+[[nodiscard]] constexpr auto (min)(Vector<T, 4> v, T u) noexcept {
     return Vector<T, 4>{min(v.x, u), min(v.y, u), min(v.z, u), min(v.w, u)};
 }
 
 // max
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto max(T v, Vector<T, 2> u) noexcept {
+[[nodiscard]] constexpr auto (max)(T v, Vector<T, 2> u) noexcept {
     return Vector<T, 2>{max(v, u.x), max(v, u.y)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto max(T v, Vector<T, 3> u) noexcept {
+[[nodiscard]] constexpr auto (max)(T v, Vector<T, 3> u) noexcept {
     return Vector<T, 3>{max(v, u.x), max(v, u.y), max(v, u.z)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto max(T v, Vector<T, 4> u) noexcept {
+[[nodiscard]] constexpr auto (max)(T v, Vector<T, 4> u) noexcept {
     return Vector<T, 4>{max(v, u.x), max(v, u.y), max(v, u.z), max(v, u.w)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto max(Vector<T, 2> v, T u) noexcept {
+[[nodiscard]] constexpr auto (max)(Vector<T, 2> v, T u) noexcept {
     return Vector<T, 2>{max(v.x, u), max(v.y, u)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto max(Vector<T, 3> v, T u) noexcept {
+[[nodiscard]] constexpr auto (max)(Vector<T, 3> v, T u) noexcept {
     return Vector<T, 3>{max(v.x, u), max(v.y, u), max(v.z, u)};
 }
 
 template<typename T, std::enable_if_t<is_scalar_v<T>, int> = 0>
-[[nodiscard]] constexpr auto max(Vector<T, 4> v, T u) noexcept {
+[[nodiscard]] constexpr auto (max)(Vector<T, 4> v, T u) noexcept {
     return Vector<T, 4>{max(v.x, u), max(v.y, u), max(v.z, u), max(v.w, u)};
 }
 
@@ -218,7 +218,7 @@ template<typename A, typename B, typename C,
     constexpr auto dim_a = vector_dimension_v<A>;
     constexpr auto dim_b = vector_dimension_v<B>;
     constexpr auto dim_c = vector_dimension_v<C>;
-    constexpr auto dim = std::max({dim_a, dim_b, dim_c});
+    constexpr auto dim = (std::max)({dim_a, dim_b, dim_c});
     static_assert((dim_a == 1 || dim_a == dim) &&
                   (dim_b == 1 || dim_b == dim) &&
                   (dim_c == 1 || dim_c == dim));

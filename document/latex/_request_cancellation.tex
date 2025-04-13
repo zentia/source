@@ -1,0 +1,84 @@
+\doxysection{Request Cancellation}
+\hypertarget{_request_cancellation}{}\label{_request_cancellation}\index{Request Cancellation@{Request Cancellation}}
+This chapters discusses how to cancel submitted tasks.\hypertarget{_request_cancellation_CancelARunningTaskflow}{}\doxysubsection{\texorpdfstring{Cancel Execution of Taskflows}{Cancel Execution of Taskflows}}\label{_request_cancellation_CancelARunningTaskflow}
+When you submit a taskflow to an executor (e.\+g., \doxylink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{tf\+::\+Executor\+::run}), the executor returns a \doxylink{classtf_1_1_future}{tf\+::\+Future} object that will hold the result of the execution. \doxylink{classtf_1_1_future}{tf\+::\+Future} is a derived class from std\+::future. In addition to base methods of std\+::future, you can call \doxylink{classtf_1_1_future_a3bf5f104864ab2590b6409712d3a469b}{tf\+::\+Future\+::cancel} to cancel the execution of a running taskflow. The following example cancels a submission of a taskflow that contains 1000 tasks each running one second.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<1000;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ }
+\DoxyCodeLine{\ \ \ \ std::this\_thread::sleep\_for(std::chrono::seconds(1));}
+\DoxyCodeLine{\ \ \});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ submit\ the\ taskflow}}
+\DoxyCodeLine{tf::Future<void>\ fu\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ request\ to\ cancel\ the\ above\ submitted\ execution}}
+\DoxyCodeLine{fu.\mbox{\hyperlink{classtf_1_1_future_a3bf5f104864ab2590b6409712d3a469b}{cancel}}();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ wait\ until\ the\ cancellation\ completes}}
+\DoxyCodeLine{fu.get();}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+\doxylink{classtf_1_1_future_a3bf5f104864ab2590b6409712d3a469b}{tf\+::\+Future\+::cancel} is {\itshape non-\/deterministic} and {\itshape out-\/of-\/order}.
+\end{DoxyAttention}
+When you request a cancellation, the executor will stop scheduling the rest tasks of the taskflow. Tasks that are already running will continue to finish, but their successor tasks will not be scheduled to run. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} cancellation is considered complete when all these running tasks finish. To wait for a cancellation to complete, you may explicitly call {\ttfamily tf\+::\+Future\+::get}.
+
+\begin{DoxyAttention}{注意}
+It is your responsibility to ensure that the taskflow remains alive before the cancellation completes.
+\end{DoxyAttention}
+For instance, the following code results in undefined behavior\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<1000;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Future\ fu\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ fu.\mbox{\hyperlink{classtf_1_1_future_a3bf5f104864ab2590b6409712d3a469b}{cancel}}();\ \ \textcolor{comment}{//\ there\ can\ still\ be\ task\ running\ after\ cancellation}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\}\ \textcolor{comment}{//\ destroying\ taskflow\ here\ can\ result\ in\ undefined\ behavior}}
+
+\end{DoxyCode}
+
+
+The undefined behavior problem exists because \doxylink{classtf_1_1_future_a3bf5f104864ab2590b6409712d3a469b}{tf\+::\+Future\+::cancel} does not guarantee an immediate cancellation. To fix the problem, call {\ttfamily get} to ensure the cancellation completes before the end of the scope destroys the taskflow.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<1000;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Future\ fu\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ fu.\mbox{\hyperlink{classtf_1_1_future_a3bf5f104864ab2590b6409712d3a469b}{cancel}}();\ \ \textcolor{comment}{//\ there\ can\ still\ be\ task\ running\ after\ cancellation}}
+\DoxyCodeLine{\ \ fu.get();\ \ \ \ \ \textcolor{comment}{//\ waits\ until\ the\ cancellation\ completes}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\hypertarget{_request_cancellation_UnderstandTheLimitationsOfCancellation}{}\doxysubsection{\texorpdfstring{Understand the Limitations of Cancellation}{Understand the Limitations of Cancellation}}\label{_request_cancellation_UnderstandTheLimitationsOfCancellation}
+Canceling the execution of a running taskflow has the following limitations\+:
+\begin{DoxyItemize}
+\item Cancellation is non-\/preemptive. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} running task will not be cancelled until it finishes.
+\item Cancelling a taskflow with tasks acquiring and/or releasing \doxylink{classtf_1_1_semaphore}{tf\+::\+Semaphore} results is currently not supported.
+\end{DoxyItemize}
+
+We may overcome these limitations in the future releases. 

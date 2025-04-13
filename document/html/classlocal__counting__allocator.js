@@ -1,0 +1,28 @@
+var classlocal__counting__allocator =
+[
+    [ "rebind", "structlocal__counting__allocator_1_1rebind.html", "structlocal__counting__allocator_1_1rebind" ],
+    [ "const_pointer", "classlocal__counting__allocator.html#a2d1d6c7a29b824e2b8e3ff94236611f2", null ],
+    [ "const_reference", "classlocal__counting__allocator.html#a90bf27851ec1639484d292f0c505b6cf", null ],
+    [ "difference_type", "classlocal__counting__allocator.html#a281a1843b9abd98fd3951fcaf8edd4ae", null ],
+    [ "pointer", "classlocal__counting__allocator.html#a2abad2fce804e326b8a571969a7dbe7b", null ],
+    [ "reference", "classlocal__counting__allocator.html#a5c1ff46aee7c63e35e058477140e63bf", null ],
+    [ "size_type", "classlocal__counting__allocator.html#aa6c892c05c91c2eb58a6a57b22b4ab03", null ],
+    [ "value_type", "classlocal__counting__allocator.html#a944f16957c36a414b20a8c91327fb520", null ],
+    [ "local_counting_allocator", "classlocal__counting__allocator.html#ab29c6d4ebd517265a2a893b667678303", null ],
+    [ "local_counting_allocator", "classlocal__counting__allocator.html#a0880d56f3f6de5142bdcd0cd89405a93", null ],
+    [ "local_counting_allocator", "classlocal__counting__allocator.html#a4226d7c01f928cbba303413d43e3e1e2", null ],
+    [ "local_counting_allocator", "classlocal__counting__allocator.html#a8d283a0835692aa40e2da8f870ae4cf9", null ],
+    [ "allocate", "classlocal__counting__allocator.html#adfa2210b129ac557b1986b6b8c7395ad", null ],
+    [ "allocate", "classlocal__counting__allocator.html#aa68d138beef6413989aa38da236ae361", null ],
+    [ "clear_counters", "classlocal__counting__allocator.html#a9b52249bb44d1d2fcadaf33ec95d7b72", null ],
+    [ "deallocate", "classlocal__counting__allocator.html#a8618fadaaebdb5e2fe105da3f0c872cc", null ],
+    [ "operator==", "classlocal__counting__allocator.html#af2c136b4ea815b95be728a95b3f60a91", null ],
+    [ "set_counters", "classlocal__counting__allocator.html#a7c36c12597164a2c2524819d9706d88f", null ],
+    [ "set_counters", "classlocal__counting__allocator.html#a20b97b26b4633f1f83dd5b97b7db8ca4", null ],
+    [ "set_limits", "classlocal__counting__allocator.html#a4c17b97b452bd11cda6fa6ff4d11a4bf", null ],
+    [ "allocations", "classlocal__counting__allocator.html#a56bd5245a006a1aacb36181c360c904b", null ],
+    [ "frees", "classlocal__counting__allocator.html#ac61b6e46b183a53da0abcb76c48611bb", null ],
+    [ "items_allocated", "classlocal__counting__allocator.html#af6b917c870a7e17b76ee39cf4289b81e", null ],
+    [ "items_freed", "classlocal__counting__allocator.html#abfa2c4e469ab9364d95b8577af86f446", null ],
+    [ "max_items", "classlocal__counting__allocator.html#a79afdd13df8736f8547ef2a2a7c09164", null ]
+];

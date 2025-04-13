@@ -1,0 +1,91 @@
+\chapter{Parallel Sort}
+\hypertarget{_c_u_d_a_s_t_d_sort}{}\label{_c_u_d_a_s_t_d_sort}\index{Parallel Sort@{Parallel Sort}}
+Taskflow provides standalone template methods for sorting ranges of items on a CUDA GPU.\hypertarget{_c_u_d_a_s_t_d_sort_CUDASTDParallelSortIncludeTheHeader}{}\doxysection{\texorpdfstring{Include the Header}{Include the Header}}\label{_c_u_d_a_s_t_d_sort_CUDASTDParallelSortIncludeTheHeader}
+You need to include the header file, {\ttfamily taskflow/cuda/algorithm/sort.hpp}, for using the parallel-\/sort algorithm.\hypertarget{_c_u_d_a_s_t_d_sort_CUDASTDSortItems}{}\doxysection{\texorpdfstring{Sort a Range of Items}{Sort a Range of Items}}\label{_c_u_d_a_s_t_d_sort_CUDASTDSortItems}
+\doxylink{namespacetf_a06804cb1598e965febc7bd35fc0fbbb0}{tf\+::cuda\+\_\+sort} performs an in-\/place parallel sort over a range of elements specified by {\ttfamily \mbox{[}first, last)} using the given comparator. The following code sorts one million random integers in an increasing order on a GPU.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 1000000;}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \textcolor{comment}{//\ vector}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ initializes\ the\ data}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ rand();}
+\DoxyCodeLine{\}\ }
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ queries\ the\ required\ buffer\ size\ to\ sort\ a\ vector}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy;}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{structbytes}{bytes}}\ \ =\ \mbox{\hyperlink{namespacetf_a9c69906a4dfd1e2d0cd7ed496d29dafd}{tf::cuda\_sort\_buffer\_size<tf::cudaDefaultExecutionPolicy,\ int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<std::byte>}}(\mbox{\hyperlink{structbytes}{bytes}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ sorts\ the\ vector}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a06804cb1598e965febc7bd35fc0fbbb0}{tf::cuda\_sort}}(}
+\DoxyCodeLine{\ \ policy,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ []\ \_\_device\_\_\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}\ <\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};\ \},\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ synchronizes\ the\ execution\ and\ verifies\ the\ result}}
+\DoxyCodeLine{policy.synchronize();}
+\DoxyCodeLine{assert(std::is\_sorted(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ deletes\ the\ memory}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_ac7a8fe7456b888d6072ba94783c5003c}{tf::cuda\_free}}(\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}});}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_ac7a8fe7456b888d6072ba94783c5003c}{tf::cuda\_free}}(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}});}
+
+\end{DoxyCode}
+
+
+The sort algorithm runs {\itshape asynchronously} through the stream specified in the execution policy. You need to synchronize the stream to obtain correct results. Since the GPU sort algorithm may require extra buffer to store the temporary results, you need provide a buffer of size at least bytes returned from \doxylink{namespacetf_a9c69906a4dfd1e2d0cd7ed496d29dafd}{tf\+::cuda\+\_\+sort\+\_\+buffer\+\_\+size}.
+
+\begin{DoxyAttention}{注意}
+You must keep the buffer alive before the merge call completes.
+\end{DoxyAttention}
+\hypertarget{_c_u_d_a_s_t_d_sort_CUDASTDSortKeyValueItems}{}\doxysection{\texorpdfstring{Sort a Range of Key-\/\+Value Items}{Sort a Range of Key-\/\+Value Items}}\label{_c_u_d_a_s_t_d_sort_CUDASTDSortKeyValueItems}
+\doxylink{namespacetf_a3461b9179221dd7230ce2a0e45156c7f}{tf\+::cuda\+\_\+sort\+\_\+by\+\_\+key} sorts a range of key-\/value items into ascending key order. If {\ttfamily i} and {\ttfamily j} are any two valid iterators in {\ttfamily \mbox{[}k\+\_\+first, k\+\_\+last)} such that {\ttfamily i} precedes {\ttfamily j}, and {\ttfamily p} and {\ttfamily q} are iterators in {\ttfamily \mbox{[}v\+\_\+first, v\+\_\+first + (k\+\_\+last -\/ k\+\_\+first))} corresponding to {\ttfamily i} and {\ttfamily j} respectively, then {\ttfamily comp(\texorpdfstring{$\ast$}{*}i, \texorpdfstring{$\ast$}{*}j)} is {\ttfamily true}. The following example sorts a range of items into ascending key order and swaps their corresponding values\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 4;}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \textcolor{comment}{//\ keys}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ idx\ =\ \mbox{\hyperlink{namespacetf_ad289846c38e3f122e1315d906243fc8b}{tf::cuda\_malloc\_shared<int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \textcolor{comment}{//\ values}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ initializes\ the\ data}}
+\DoxyCodeLine{\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[0]\ =\ 1,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[1]\ =\ 4,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[2]\ =\ -\/5,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[3]\ =\ 2;}
+\DoxyCodeLine{idx[0]\ =\ 0,\ idx[1]\ =\ 1,\ idx[2]\ =\ 2,\ \ idx[3]\ =\ 3;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ queries\ the\ required\ buffer\ size\ to\ sort\ a\ key-\/value\ range}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a0c8e4b43b5822445e2316659bbd44245}{tf::cudaDefaultExecutionPolicy}}\ policy;}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{structbytes}{bytes}}\ \ =\ \mbox{\hyperlink{namespacetf_a9c69906a4dfd1e2d0cd7ed496d29dafd}{tf::cuda\_sort\_buffer\_size<decltype(policy),\ int,\ int>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<std::byte>}}(\mbox{\hyperlink{structbytes}{bytes}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ sorts\ keys\ (vec)\ and\ swaps\ their\ corresponding\ values\ (idx)}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a3461b9179221dd7230ce2a0e45156c7f}{tf::cuda\_sort\_by\_key}}(}
+\DoxyCodeLine{\ \ policy,\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}},\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ idx,\ []\ \_\_device\_\_\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}<\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}};\ \},\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ synchronizes\ the\ execution\ and\ verifies\ the\ result}}
+\DoxyCodeLine{policy.synchronize();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ now\ vec\ =\ \{-\/5,\ 1,\ 2,\ 4\}}}
+\DoxyCodeLine{\textcolor{comment}{//\ now\ idx\ =\ \{\ 2,\ 0,\ 3,\ 1\}}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ deletes\ the\ memory}}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_ac7a8fe7456b888d6072ba94783c5003c}{tf::cuda\_free}}(\mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}});}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_ac7a8fe7456b888d6072ba94783c5003c}{tf::cuda\_free}}(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}});}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_ac7a8fe7456b888d6072ba94783c5003c}{tf::cuda\_free}}(idx);}
+
+\end{DoxyCode}
+
+
+The buffer size required by \doxylink{namespacetf_a3461b9179221dd7230ce2a0e45156c7f}{tf\+::cuda\+\_\+sort\+\_\+by\+\_\+key} is the same as \doxylink{namespacetf_a06804cb1598e965febc7bd35fc0fbbb0}{tf\+::cuda\+\_\+sort} and must be at least equal to or larger than the value returned by \doxylink{namespacetf_a9c69906a4dfd1e2d0cd7ed496d29dafd}{tf\+::cuda\+\_\+sort\+\_\+buffer\+\_\+size}. While you can capture the values into the lambda and sort them indirectly using plain \doxylink{namespacetf_a06804cb1598e965febc7bd35fc0fbbb0}{tf\+::cuda\+\_\+sort}, this organization will result in frequent and costly access to the global memory. For example, we can sort {\ttfamily idx} indirectly using the captured keys in {\ttfamily vec\+:} 
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespacetf_a06804cb1598e965febc7bd35fc0fbbb0}{tf::cuda\_sort}}(policy,\ }
+\DoxyCodeLine{\ \ idx,\ idx+\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ [\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}]\ \_\_device\_\_\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[\mbox{\hyperlink{_cwise__product_8cpp_ad2cbe4616e813eb9af81732dca777b24}{a}}]\ <\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[\mbox{\hyperlink{offscreen_8c_a846c9667e34d56c560bb7f0ac6e173f6}{b}}];\ \},\ \mbox{\hyperlink{sugar_8h_aaadc06b5dac8070de2c8677210967bdb}{buffer}}}
+\DoxyCodeLine{);}
+
+\end{DoxyCode}
+
+
+The comparator here will frequently access the global memory of {\ttfamily vec}, resulting in high memory latency. Instead, you should use \doxylink{namespacetf_a3461b9179221dd7230ce2a0e45156c7f}{tf\+::cuda\+\_\+sort\+\_\+by\+\_\+key} that has been optimized for this purpose. 

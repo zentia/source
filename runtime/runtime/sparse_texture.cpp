@@ -1,7 +1,7 @@
-#include <luisa/runtime/sparse_texture.h>
-#include <luisa/runtime/sparse_heap.h>
-#include <luisa/runtime/rhi/device_interface.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/sparse_texture.h>
+#include <runtime/runtime/sparse_heap.h>
+#include <runtime/runtime/rhi/device_interface.h>
+#include <runtime/core/logging.h>
 
 namespace luisa::compute {
 

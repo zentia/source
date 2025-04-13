@@ -1,0 +1,321 @@
+\chapter{Linear Algebra with cu\+BLAS}
+\hypertarget{_linear_algebracublas_flow_capturer}{}\label{_linear_algebracublas_flow_capturer}\index{Linear Algebra with cuBLAS@{Linear Algebra with cuBLAS}}
+Taskflow provides a library \doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer} to program and accelerate {\itshape basic linear algebra subprograms} (BLAS) on top of @cu\+BLAS.
+
+\hypertarget{_linear_algebracublas_flow_capturer_WhatIsBLAS}{}\doxysection{\texorpdfstring{What is BLAS?}{What is BLAS?}}\label{_linear_algebracublas_flow_capturer_WhatIsBLAS}
+The BLAS (Basic Linear Algebra Subprograms) are routines that provide standard building blocks for performing basic vector and matrix operations. There are three levels\+:
+
+
+\begin{DoxyEnumerate}
+\item Level 1\+: performs scalar, vector, and vector-\/vector operations
+\item Level 2\+: performs matrix-\/vector operations
+\item Level 3\+: performs matrix-\/matrix operations
+\end{DoxyEnumerate}
+
+BLAS is commonly used by linear algebra software. The @cu\+BLAS library is an implementation of BLAS (Basic Linear Algebra Subprograms) on top of the Nvidia CUDA runtime and it allows users to access the computational resources of Nvidia GPUs.\hypertarget{_linear_algebracublas_flow_capturer_HowToUsecublasFlowCapturer}{}\doxysection{\texorpdfstring{What is a cublas\+Flow Capturer? Why?}{What is a cublas\+Flow Capturer? Why?}}\label{_linear_algebracublas_flow_capturer_HowToUsecublasFlowCapturer}
+\doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer} provides an interface over native cu\+BLAS functions and allows users to express linear algebra algorithms using a {\itshape task graph model}. We transform the task graph into a CUDA graph using a stream capture algorithm optimized for maximum concurrency. When a cu\+BLAS program is transformed into a CUDA graph, we can launch the entire graph using a single kernel call. This organization minimizes kernels launch overhead and allows the CUDA runtime to optimize the whole workflow. The following example ({\ttfamily cublasflow.\+cu}) use \doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer} to perform a 2-\/norm operation on a vector.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <taskflow/cublasflow.hpp>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 1024;}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}cublas\ 2-\/norm"{}});\ \ \textcolor{comment}{//\ initialize\ an\ unit\ vector}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ std::vector<float>\ hvec(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ 1);\ }
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ \ hres;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ cpu\ vector}}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}*\ gvec\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});\ \ \textcolor{comment}{//\ gpu\ vector}}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}*\ gres\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(1);\ \ \textcolor{comment}{//\ gpu\ result}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&](\mbox{\hyperlink{classtf_1_1cuda_flow_capturer}{tf::cudaFlowCapturer}}\&\ capturer)\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ create\ a\ cuBLAS\ flow\ capturer}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ blas\ =\ capturer.make\_capturer<\mbox{\hyperlink{classtf_1_1cublas_flow_capturer}{tf::cublasFlowCapturer}}>();}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_task}{tf::cudaTask}}\ h2d\ =\ capturer.\mbox{\hyperlink{classtf_1_1cuda_flow_capturer_ab70f12050e78b588f5c23d874aa4e538}{copy}}(gvec,\ hvec.data(),\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}).name(\textcolor{stringliteral}{"{}h2d"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_task}{tf::cudaTask}}\ nrm\ =\ blas-\/>nrm2(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ gvec,\ 1,\ gres).name(\textcolor{stringliteral}{"{}2-\/norm"{}});}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{classtf_1_1cuda_task}{tf::cudaTask}}\ d2h\ =\ capturer.\mbox{\hyperlink{classtf_1_1cuda_flow_capturer_ab70f12050e78b588f5c23d874aa4e538}{copy}}(\&hres,\ gres,\ 1).name(\textcolor{stringliteral}{"{}d2h"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \ \ nrm.\mbox{\hyperlink{classtf_1_1cuda_task_abdd68287ec4dff4216af34d1db44d1b4}{precede}}(d2h)}
+\DoxyCodeLine{\ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1cuda_task_a4a9ca1a34bac47e4c9b04eb4fb2f7775}{succeed}}(h2d);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}capturer"{}});}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ assert(hres\ ==\ 32);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+You need to link the {\ttfamily cublas} library when compiling a cublas\+Flow capturer program\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\string~\$\ nvcc\ cublasflow.cpp\ -\/I\ \mbox{\hyperlink{ittnotify__static_8h_a7016119bc831a22d1a351d56128518ed}{path}}/to/\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}/include\ -\/lcublas}
+
+\end{DoxyCode}
+
+
+Please refer to the page \doxylink{CompileTaskflowWithCUDA}{Compile Taskflow with CUDA} for more details about compiling Taskflow with CUDA.\hypertarget{_linear_algebracublas_flow_capturer_DataModelOscublasFlowCapturer}{}\doxysection{\texorpdfstring{Understand the Data Model}{Understand the Data Model}}\label{_linear_algebracublas_flow_capturer_DataModelOscublasFlowCapturer}
+The data pointers used within \doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer} must sit in GPU memory space, including scalar pointers ({\ttfamily alpha} and {\ttfamily beta}), input pointers (e.\+g., vectors, matrices), and output pointers (e.\+g., result). By default, we set the pointer mode to {\ttfamily CUBLAS\+\_\+\+POINTER\+\_\+\+MODE\+\_\+\+DEVICE}. You must allocate required matrices and vectors in the GPU memory space, fill them with data, call the methods defined in \doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer}, and then upload the results from GPU memory space back to the host.
+
+\begin{DoxyNote}{注解}
+\doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer} currently supports only {\ttfamily float} and {\ttfamily double} data types.
+\end{DoxyNote}
+The cu\+BLAS library uses {\itshape column-\/major storage} and 1-\/based indexing. Since C/\+C++ adopts row-\/major layout, we cannot use the native array semantics when matrix-\/matrix or matrix-\/vector operations are involved. We often need extra transposition on input matrices before these operations can take place correctly. In terms of storage, a row-\/major matrix is equivalent to a transposed column-\/major matrix, as shown below\+:
+
+\[A_{RowMajor} \iff A^T_{ColumnMajor}
+\]\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerDataModelExample}{}\doxysubsection{\texorpdfstring{Example\+: Transform Data Layout in Matrix Multiplication}{Example\+: Transform Data Layout in Matrix Multiplication}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerDataModelExample}
+Suppose we have a method {\ttfamily matmul(\+A, B, C)} that multiplies two matrices {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} and {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and stores the result in {\ttfamily C}, using column-\/major storage. In C/\+C++, data layout is mostly row-\/major. Since we know a row-\/major matrix is equivalent in storage to a transposed column-\/major matrix, we can take a transposed view of this multiplication\+:
+
+\[C^T = B^T \times A^T
+\]
+
+If the given matrices {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}, {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}, and {\ttfamily C} are on row-\/major layout, calling {\ttfamily matmul(\+A, B, C)} is equivalent to the above transposed version. The function stores the result of transposed {\ttfamily C} in column-\/major storage which in turns translates to row-\/major layout of {\ttfamily C} -- {\itshape our desired solution}.\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel-1}{}\doxysection{\texorpdfstring{Use Level-\/1 Methods}{Use Level-\/1 Methods}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel-1}
+We currently support the following level-\/1 methods\+:
+
+
+\begin{DoxyItemize}
+\item \doxylink{classtf_1_1cublas_flow_capturer_ab1357bb1728f5fe526acef8afee7111e}{tf\+::cublas\+Flow\+Capturer\+::amax} finds the min element index of the max absolute magnitude in a vector
+\item \doxylink{classtf_1_1cublas_flow_capturer_a7a6485c37d50b9c79205f728ab380929}{tf\+::cublas\+Flow\+Capturer\+::amin} finds the min element index of the min magnitude in a vector
+\item \doxylink{classtf_1_1cublas_flow_capturer_ab7672cee3d219ccc75c48b62cf1d1bad}{tf\+::cublas\+Flow\+Capturer\+::asum} computes the sum of absolute values of elements over a vector
+\item \doxylink{classtf_1_1cublas_flow_capturer_a56f8649d43652597da1c9b0a5f88b0ee}{tf\+::cublas\+Flow\+Capturer\+::axpy} multiplies a vector by a scalar and adds it to another vector
+\item tf\+::cublas\+Flow\+Capturer\+::copy copies a vector into another vector
+\item \doxylink{classtf_1_1cublas_flow_capturer_afdfa01d9f277051e44d7ed9663555b52}{tf\+::cublas\+Flow\+Capturer\+::dot} computes the dot product of two vectors
+\item \doxylink{classtf_1_1cublas_flow_capturer_a8000fc6dbbb6f6f5a033f1b365e80d38}{tf\+::cublas\+Flow\+Capturer\+::nrm2} computes the Euclidean norm of a vector
+\item \doxylink{classtf_1_1cublas_flow_capturer_adb8f5d3137f5ccb3469a5bdde454a8bf}{tf\+::cublas\+Flow\+Capturer\+::scal} multiples a vector by a scalar
+\item \doxylink{classtf_1_1cublas_flow_capturer_a32451b05fd7eb937ce8e807b5d5abe1f}{tf\+::cublas\+Flow\+Capturer\+::swap} interchanges the elements of two vectors
+\end{DoxyItemize}
+
+Our level-\/1 methods capture the native \href{https://docs.nvidia.com/cuda/cublas/index.html\#cublas-level-1-function-reference}{\texttt{ cublas level-\/1 calls}} with internal stream(s) optimized for maximum concurrency. The two scalars, {\ttfamily alpha} and {\ttfamily beta}, and input and output matrices must sit in GPU memory space.\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerLeve2-1}{}\doxysection{\texorpdfstring{Use Level-\/2 Methods}{Use Level-\/2 Methods}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerLeve2-1}
+We currently support the following level-\/2 methods\+:
+
+
+\begin{DoxyItemize}
+\item \doxylink{classtf_1_1cublas_flow_capturer_a72185bf94321948b5b3657cc9c52ad0a}{tf\+::cublas\+Flow\+Capturer\+::gemv} performs general matrix-\/vector multiplication
+\item \doxylink{classtf_1_1cublas_flow_capturer_a3a492f3f22949e0e6b1058113eb475d0}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+gemv} performs general matrix-\/vector multiplication on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_aed19fb69f2242f4ac6429f94d7776727}{tf\+::cublas\+Flow\+Capturer\+::symv} performs symmetric matrix-\/vector multiplication
+\item \doxylink{classtf_1_1cublas_flow_capturer_a128ac1083f1dd05690998f5dac01959e}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+symv} performs symmetric matrix-\/vector multiplication on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a6765f845c7b95daefa197fdc2a1b426d}{tf\+::cublas\+Flow\+Capturer\+::syr} performs symmetric rank-\/1 update
+\item \doxylink{classtf_1_1cublas_flow_capturer_afd79fe59e463b91feb2cbb94079c7c8c}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+syr} performs symmetric rank-\/1 update on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a46443a7e6c36f2a0d655041f6227b544}{tf\+::cublas\+Flow\+Capturer\+::syr2} performs symmetric rank-\/2 update
+\item \doxylink{classtf_1_1cublas_flow_capturer_ac3ebc265f36b4c1205360a055f197873}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+syr2} performs symmetric rank-\/2 update on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_af0ff6efaa01bffbd20d2760b6f82bcb1}{tf\+::cublas\+Flow\+Capturer\+::trmv} performs triangular matrix-\/vector multiplication
+\item \doxylink{classtf_1_1cublas_flow_capturer_adb57fd25e55f0b4e2f4f0045a169f8d9}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+trmv} performs triangular matrix-\/vector multiplication on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a5f10c25901bff8c626235dfdd6d10b57}{tf\+::cublas\+Flow\+Capturer\+::trsv} solves triangular linear system with a single right-\/hand-\/side
+\item \doxylink{classtf_1_1cublas_flow_capturer_a27ae640e916e5f3d74886c57fe19342a}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+trsv} solves triangular linear system with a single right-\/hand-\/side on row-\/major layout
+\end{DoxyItemize}
+
+Our level-\/2 methods capture the native \href{https://docs.nvidia.com/cuda/cublas/index.html\#cublas-level-2-function-reference}{\texttt{ cublas level-\/2 calls}} with internal stream(s) optimized for maximum concurrency. The two scalars, {\ttfamily alpha} and {\ttfamily beta}, and input and output matrices must sit in GPU memory space.\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel2Example}{}\doxysubsection{\texorpdfstring{Example\+: Solve a Triangular Linear System}{Example\+: Solve a Triangular Linear System}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel2Example}
+The following program solves a triangular linear system on row-\/major layout using \doxylink{classtf_1_1cublas_flow_capturer_a27ae640e916e5f3d74886c57fe19342a}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+trsv}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <taskflow/cublasflow.hpp>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 3;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ std::vector<float>\ hA\ =\ \{}
+\DoxyCodeLine{\ \ \ \ 1,\ 0,\ 0,\ \ \textcolor{comment}{//\ x1}}
+\DoxyCodeLine{\ \ \ \ 1,\ 1,\ 0,\ \ \textcolor{comment}{//\ x1\ +\ x2}}
+\DoxyCodeLine{\ \ \ \ 1,\ 1,\ 1\ \ \ \textcolor{comment}{//\ x1\ +\ x2\ +\ x3}}
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ std::vector<float>\ hB\ =\ \{}
+\DoxyCodeLine{\ \ \ \ 5,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ x1\ \ \ \ \ \ \ \ \ \ \ =\ 5}}
+\DoxyCodeLine{\ \ \ \ 4,\ \ \ \ \ \ \ \ \textcolor{comment}{//\ x1\ +\ x2\ \ \ \ \ \ =\ 4}}
+\DoxyCodeLine{\ \ \ \ 7\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ x1\ +\ x2\ +\ x3\ =\ 7}}
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ std::vector<float>\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}(\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ 0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Taskflow\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}Ax\ =\ b"{}});}
+\DoxyCodeLine{\ \ tf::Executor\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}*\ dA\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(hA.size());}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}*\ dB\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(hB.size());}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&](tf::cudaFlowCapturer\&\ capturer)\{}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ blas\ =\ capturer.make\_capturer<tf::cublasFlowCapturer>();}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ h2dA\ =\ blas-\/>copy(dA,\ hA.data(),\ hA.size()).name(\textcolor{stringliteral}{"{}copy\ A"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ h2dB\ =\ blas-\/>copy(dB,\ hB.data(),\ hB.size()).name(\textcolor{stringliteral}{"{}copy\ B"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ \mbox{\hyperlink{level2__impl_8h_a98a11637ad91cac0e2a6520b31f9d825}{trsv}}\ =\ blas-\/>c\_trsv(}
+\DoxyCodeLine{\ \ \ \ \ \ CUBLAS\_FILL\_MODE\_LOWER,\ CUBLAS\_OP\_N,\ CUBLAS\_DIAG\_UNIT,\ }
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ dA,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ dB,\ 1}
+\DoxyCodeLine{\ \ \ \ ).name(\textcolor{stringliteral}{"{}trsv"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ d2h\ =\ blas-\/>copy(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}.data(),\ dB,\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}.size()).name(\textcolor{stringliteral}{"{}copy\ result"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{level2__impl_8h_a98a11637ad91cac0e2a6520b31f9d825}{trsv}}.\mbox{\hyperlink{classtf_1_1cuda_task_a4a9ca1a34bac47e4c9b04eb4fb2f7775}{succeed}}(h2dA,\ h2dB)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1cuda_task_abdd68287ec4dff4216af34d1db44d1b4}{precede}}(d2h);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}cublasFlow"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}solution\ of\ the\ linear\ system:\ \(\backslash\)n"{}};}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}.size();\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}x"{}}\ <<\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <<\ \textcolor{stringliteral}{"{}:\ "{}}\ <<\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The program uses one cuda\+Flow task that spawns a capturer of (1) two copy tasks, {\ttfamily h2dA} and {\ttfamily h2dB}, to copy the triangular matrix {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} and the solution vector {\ttfamily b}, (2) one kernel task {\ttfamily trsv} to solve the triangular linear system storing the result in {\ttfamily dB}, and (3) one copy task {\ttfamily d2h} to copy the solution in {\ttfamily dB} to {\ttfamily r}.\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel-3}{}\doxysection{\texorpdfstring{Use Level-\/3 Methods}{Use Level-\/3 Methods}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel-3}
+We currently support the following level-\/3 methods\+:
+
+
+\begin{DoxyItemize}
+\item \doxylink{classtf_1_1cublas_flow_capturer_a30b437e511b5719f6253d3a9cf0a992c}{tf\+::cublas\+Flow\+Capturer\+::geam} performs matrix-\/matrix addition/transposition
+\item \doxylink{classtf_1_1cublas_flow_capturer_a756dc6637521ef4f2249711effd1d0f5}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+geam} performs matrix-\/matrix addition/transposition on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a8adbe06476f146b27bb00ba6054e5879}{tf\+::cublas\+Flow\+Capturer\+::gemm} performs general matrix-\/matrix multiplication
+\item \doxylink{classtf_1_1cublas_flow_capturer_aecfd3b623b457d277dca40c2e1b3c1c0}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+gemm} performs general matrix-\/matrix multiplication on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a56af0e8ed80e5626fe2f594608afa405}{tf\+::cublas\+Flow\+Capturer\+::gemm\+\_\+batched} performs batched general matrix-\/matrix multiplication
+\item \doxylink{classtf_1_1cublas_flow_capturer_aa9415957e3e48df65dc3baad86d05b38}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+gemm\+\_\+batched} performs batched general matrix-\/matrix multiplication on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a36ecdcea0f24575187e44374e583df2e}{tf\+::cublas\+Flow\+Capturer\+::gemm\+\_\+sbatched} performs batched general matrix-\/matrix multiplication with strided memory access
+\item \doxylink{classtf_1_1cublas_flow_capturer_ae57c53a1a07c0b4f73d90bf21fee4e1c}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+gemm\+\_\+sbatched} performs batched general matrix-\/matrix multiplication with strided memory access on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a9d0eb2c37b48120bd40b1f725b507c42}{tf\+::cublas\+Flow\+Capturer\+::symm} performs symmetric matrix-\/matrix multiplication
+\item \doxylink{classtf_1_1cublas_flow_capturer_a23a4636954cfdb34835b0d7a275fe4a8}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+symm} performs symmetric matrix-\/matrix multiplication on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_aade5e9a358b7f4195367ef460921a236}{tf\+::cublas\+Flow\+Capturer\+::syrk} performs symmetric rank-\/k update
+\item \doxylink{classtf_1_1cublas_flow_capturer_af9b146e7a3d4afb6658fa5fd8a860527}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+syrk} performs symmetric rank-\/k update on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a45f110bd529b49531e3c83458a8990ac}{tf\+::cublas\+Flow\+Capturer\+::syr2k} performs symmetric rank-\/2k update
+\item \doxylink{classtf_1_1cublas_flow_capturer_ab2f1c253b6808ac011b7ea9d2fc82e58}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+syr2k} performs symmetric rank-\/2k update on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_af5461904ac5714c5cc7eb7bbd8e2883e}{tf\+::cublas\+Flow\+Capturer\+::syrkx} performs a variation of symmetric rank-\/k update
+\item \doxylink{classtf_1_1cublas_flow_capturer_a18ef82f489aaaa80d3d3c7cde6750729}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+syrkx} performs a variation of symmetric rank-\/k update on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_a11e49f148b84ebc95ddeb5f4c3af78d8}{tf\+::cublas\+Flow\+Capturer\+::trmm} performs triangular matrix-\/matrix multiplication
+\item \doxylink{classtf_1_1cublas_flow_capturer_ad9118a1eff03514a0c9f75e21e76fe35}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+trmm} performs triangular matrix-\/matrix multiplication on row-\/major layout
+\item \doxylink{classtf_1_1cublas_flow_capturer_aa8cc2fcfeb3ffbc1146dda358b2b8188}{tf\+::cublas\+Flow\+Capturer\+::trsm} solves a triangular linear system with multiple right-\/hand-\/sides
+\item \doxylink{classtf_1_1cublas_flow_capturer_a7a0282cc21707315d347b5e4d8d3f25e}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+trsm} solves a triangular linear system with multiple right-\/hand-\/sides on row-\/major layout
+\end{DoxyItemize}
+
+Our level-\/3 methods capture the native \href{https://docs.nvidia.com/cuda/cublas/index.html\#cublas-level-2-function-reference}{\texttt{ cublas level-\/3 calls}} and \href{https://docs.nvidia.com/cuda/cublas/index.html\#blas-like-extension}{\texttt{ cublas-\/extension calls}} with internal stream(s) optimized for maximum concurrency. The two scalars, {\ttfamily alpha} and {\ttfamily beta}, and input and output matrices must sit in GPU memory space.\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel3Example}{}\doxysubsection{\texorpdfstring{Example\+: Perform General Matrix-\/\+Matrix Multiplication}{Example\+: Perform General Matrix-\/\+Matrix Multiplication}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerLevel3Example}
+The following program performs general matrix multiplication on row-\/major layout using \doxylink{classtf_1_1cublas_flow_capturer_aecfd3b623b457d277dca40c2e1b3c1c0}{tf\+::cublas\+Flow\+Capturer\+::c\+\_\+gemm}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <taskflow/cublasflow.hpp>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}\ =\ 2,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ =\ 4,\ K\ =\ 3;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ std::vector<float>\ hA\ =\ \{\ \ \ \ \ \ \textcolor{comment}{//\ M\ x\ K\ matrix}}
+\DoxyCodeLine{\ \ \ \ 11,\ 12,\ 13,\ }
+\DoxyCodeLine{\ \ \ \ 14,\ 15,\ 16}
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ std::vector<float>\ hB\ =\ \{\ \ \ \ \ \ \textcolor{comment}{//\ K\ x\ N\ matrix}}
+\DoxyCodeLine{\ \ \ \ 11,\ 12,\ 13,\ 14,}
+\DoxyCodeLine{\ \ \ \ 15,\ 16,\ 17,\ 18,}
+\DoxyCodeLine{\ \ \ \ 19,\ 20,\ 21,\ 22}
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ std::vector<float>\ golden\ =\ \{\ \ \textcolor{comment}{//\ M\ x\ N\ matrix}}
+\DoxyCodeLine{\ \ \ \ 548,\ 584,\ 620,\ 656,}
+\DoxyCodeLine{\ \ \ \ 683,\ 728,\ 773,\ 818\ }
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ std::vector<float>\ hC(\mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}}*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}});}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ *dA,\ *dB,\ *dC,\ *dAlpha,\ *dBeta;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Taskflow\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}Matrix\ Multiplication"{}});}
+\DoxyCodeLine{\ \ tf::Executor\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Task\ malloc\_dA\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace(}
+\DoxyCodeLine{\ \ \ \ [\&]()\{\ dA\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(hA.size());\ \}}
+\DoxyCodeLine{\ \ ).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}malloc\_dA"{}});\ \ \ \ \ \ \textcolor{comment}{//\ allocate\ GPU\ memory\ for\ dA}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ tf::Task\ malloc\_dB\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace(}
+\DoxyCodeLine{\ \ \ \ [\&]()\{\ dB\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(hB.size());\ \}}
+\DoxyCodeLine{\ \ ).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}malloc\_dB"{}});\ \ \ \ \ \ \textcolor{comment}{//\ allocate\ GPU\ memory\ for\ dB}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ tf::Task\ malloc\_dC\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace(}
+\DoxyCodeLine{\ \ \ \ [\&]()\{\ dC\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(hC.size());\ \}}
+\DoxyCodeLine{\ \ ).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}malloc\_dC"{}});\ \ \ \ \ \ \textcolor{comment}{//\ allocate\ GPU\ memory\ for\ dC}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ tf::Task\ malloc\_dAlpha\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace(}
+\DoxyCodeLine{\ \ \ \ [\&]()\{\ dAlpha\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(1);\ \}}
+\DoxyCodeLine{\ \ ).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}malloc\_dAlpha"{}});\ \ \textcolor{comment}{//\ allocate\ GPU\ memory\ for\ scalar\ alpha}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ tf::Task\ malloc\_dBeta\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace(}
+\DoxyCodeLine{\ \ \ \ [\&]()\{\ dBeta\ =\ \mbox{\hyperlink{namespacetf_a2548e58af071bf1dbbbc945c84f237c9}{tf::cuda\_malloc\_device<float>}}(1);\ \}}
+\DoxyCodeLine{\ \ ).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}malloc\_dBeta"{}});\ \ \ \textcolor{comment}{//\ allocate\ GPU\ memory\ for\ scalar\ beta}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Task\ cublasFlow\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&](tf::cudaFlowCapturer\&\ capturer)\ \{}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ blas\ \ =\ capturer.make\_capturer<tf::cublasFlowCapturer>();}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}}\ =\ blas-\/>single\_task([=]\ \_\_device\_\_\ ()\ \{\ *dAlpha\ =\ 1;\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}alpha=1"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ \mbox{\hyperlink{wave_8c_aabc9b3ee8fafa62b353f3956f8e3c269}{beta}}\ \ =\ blas-\/>single\_task([=]\ \_\_device\_\_\ ()\ \{\ *dBeta\ \ =\ 0;\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}beta=0"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ copyA\ =\ blas-\/>copy(dA,\ hA.data(),\ hA.size()).name(\textcolor{stringliteral}{"{}copyA"{}});\ }
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ copyB\ =\ blas-\/>copy(dB,\ hB.data(),\ hB.size()).name(\textcolor{stringliteral}{"{}copyB"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ \mbox{\hyperlink{bench__gemm_8cpp_a4e3341ba4cc101e5c46e8d6f201b21f9}{gemm}}\ \ =\ blas-\/>c\_gemm(CUBLAS\_OP\_N,\ CUBLAS\_OP\_N,}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}},\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ K,\ dAlpha,\ dA,\ K,\ dB,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ dBeta,\ dC,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}}
+\DoxyCodeLine{\ \ \ \ ).name(\textcolor{stringliteral}{"{}C\ =\ alpha\ *\ A\ *\ B\ +\ beta\ *\ C"{}});}
+\DoxyCodeLine{\ \ \ \ tf::cudaTask\ copyC\ =\ blas-\/>copy(hC.data(),\ dC,\ hC.size()).name(\textcolor{stringliteral}{"{}copyC"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{bench__gemm_8cpp_a4e3341ba4cc101e5c46e8d6f201b21f9}{gemm}}.\mbox{\hyperlink{classtf_1_1cuda_task_a4a9ca1a34bac47e4c9b04eb4fb2f7775}{succeed}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a090ebe65994a3ee4bb60ae3472abffc5}{alpha}},\ \mbox{\hyperlink{wave_8c_aabc9b3ee8fafa62b353f3956f8e3c269}{beta}},\ copyA,\ copyB)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1cuda_task_abdd68287ec4dff4216af34d1db44d1b4}{precede}}(copyC);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}cublasFlow"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ cublasFlow.\mbox{\hyperlink{classtf_1_1_task_a331b1b726555072e7c7d10941257f664}{succeed}}(\ \ \textcolor{comment}{//\ cublasFlow\ runs\ after\ GPU\ memory\ operations}}
+\DoxyCodeLine{\ \ \ \ malloc\_dA,\ malloc\_dB,\ malloc\_dC,\ malloc\_dAlpha,\ malloc\_dBeta}
+\DoxyCodeLine{\ \ );}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Matrix\ C:\(\backslash\)n"{}};}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}=0;\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}<\mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}};\ \mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ std::cout\ <<\ hC[\mbox{\hyperlink{_angle_axis__mimic__euler_8cpp_ab3cd915d758008bd19d0f2428fbb354a}{m}}*\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}+\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]\ <<\ \textcolor{charliteral}{'\ '};}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The program uses five static tasks to allocate GPU memory for {\ttfamily dA}, {\ttfamily dB}, {\ttfamily dC}, {\ttfamily d\+Alpha}, and {\ttfamily d\+Beta}, in parallel such that the expensive GPU memory operations can overlap with each other as much as possible. The {\ttfamily cublas\+Flow} task spawns a cublas\+Flow capturer of (1) one single kernel task {\ttfamily alpha} to set {\ttfamily d\+Alpha} to 1, (2) one single kernel task {\ttfamily beta} to set {\ttfamily d\+Beta} to 0, (3) two copy tasks, {\ttfamily copyA} and {\ttfamily copyB}, to copy data from CPU to GPU, (4) one kernel task {\ttfamily gemm} to perform {\ttfamily dC = dA \texorpdfstring{$\ast$}{*} dB}, and (5) one copy task {\ttfamily copyC} to copy the result from GPU to CPU.\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerExtension}{}\doxysection{\texorpdfstring{Include Other cu\+BLAS Methods}{Include Other cu\+BLAS Methods}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerExtension}
+We do not include all the cu\+BLAS functions but users can easily make extension. \doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer} is derived from tf\+::cuda\+Flow\+Capturer\+Base and is created from a factory interface tf\+::cuda\+Flow\+Capturer\+::make\+\_\+capturer. Each tf\+::cuda\+Flow\+Capturer\+Base object has a pointer accessible by tf\+::cuda\+Flow\+Capturer\+Base\+::factory in which you can use \doxylink{classtf_1_1cuda_flow_capturer_ad0d937ae0d77239f148b66a77e35db41}{tf\+::cuda\+Flow\+Capturer\+::on} together with \doxylink{classtf_1_1cublas_flow_capturer_a2701b05226ef193e45482c1bb56f93de}{tf\+::cublas\+Flow\+Capturer\+::native\+\_\+handle} to capture other cu\+BLAS functions that are currently not available in \doxylink{classtf_1_1cuda_flow_capturer}{tf\+::cuda\+Flow\+Capturer}. The following example captures the Hermitian rank-\/k update using {\ttfamily cublas\+Cherkx}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&](\mbox{\hyperlink{classtf_1_1cuda_flow_capturer}{tf::cudaFlowCapturer}}\&\ capturer)\{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ a\ cublasFlow\ capturer}}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ blas\ =\ capturer.make\_capturer<\mbox{\hyperlink{classtf_1_1cublas_flow_capturer}{tf::cublasFlowCapturer}}>();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ use\ the\ base\ method\ tf::cudaFlowCapturer::on\ to\ capture\ other\ functions}}
+\DoxyCodeLine{\ \ blas-\/>factory()-\/>on([\&](cudaStream\_t\ stream)\{}
+\DoxyCodeLine{\ \ \ \ cublasSetStream(blas-\/>native\_handle(),\ stream);}
+\DoxyCodeLine{\ \ \ \ cublasCherkx(blas-\/>native\_handle(),\ your\_args...);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}Hermitian\ rank-\/k\ update"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}capturer"{}});}
+
+\end{DoxyCode}
+
+
+\begin{DoxyWarning}{警告}
+While \doxylink{classtf_1_1cublas_flow_capturer_a2701b05226ef193e45482c1bb56f93de}{tf\+::cublas\+Flow\+Capturer\+::native\+\_\+handle} returns the native cublas handle, you must not change its properties.
+\end{DoxyWarning}
+By default, we associate the native cublas handler with {\ttfamily CUBLAS\+\_\+\+POINTER\+\_\+\+MODE\+\_\+\+DEVICE}. The two scalars, {\ttfamily alpha} and/or {\ttfamily beta}, and input/output matrices must be accessible in GPU memory space.\hypertarget{_linear_algebracublas_flow_capturer_cublasFlowCapturerKnowMore}{}\doxysection{\texorpdfstring{Know More About cublas\+Flow Capturer}{Know More About cublas\+Flow Capturer}}\label{_linear_algebracublas_flow_capturer_cublasFlowCapturerKnowMore}
+We summarize below resources for you to know more about \doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer}\+:
+\begin{DoxyItemize}
+\item Study the reference of \doxylink{classtf_1_1cublas_flow_capturer}{tf\+::cublas\+Flow\+Capturer} and \doxylink{classtf_1_1cuda_flow_capturer}{tf\+::cuda\+Flow\+Capturer}
+\item Contribute to \doxylink{cublas__flow_8hpp}{cublas\+\_\+flow.\+hpp} by adding more BLAS methods
+\item See the complete list of BLAS functions offered by @cu\+BLAS 
+\end{DoxyItemize}

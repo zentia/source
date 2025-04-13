@@ -4,7 +4,7 @@
 #include <mutex>
 #include <array>
 
-#include "core_globals.h"
+#include "runtime/core/core_globals.h"
 #include "module/rhi/rhi_command_list.h"
 
 namespace source_runtime::render_core

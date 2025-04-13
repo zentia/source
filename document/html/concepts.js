@@ -1,0 +1,51 @@
+var concepts =
+[
+    [ "luisa", "namespaceluisa.html", [
+      [ "compute", "namespaceluisa_1_1compute.html", [
+        [ "detail", "namespaceluisa_1_1compute_1_1detail.html", [
+          [ "vector_expr_compatible", "conceptluisa_1_1compute_1_1detail_1_1vector__expr__compatible.html", null ]
+        ] ],
+        [ "device_extension", "conceptluisa_1_1compute_1_1device__extension.html", null ]
+      ] ],
+      [ "concepts", "namespaceluisa_1_1concepts.html", [
+        [ "iterable", "conceptluisa_1_1concepts_1_1iterable.html", null ],
+        [ "is_iterator", "conceptluisa_1_1concepts_1_1is__iterator.html", null ],
+        [ "string_viewable", "conceptluisa_1_1concepts_1_1string__viewable.html", null ],
+        [ "constructible", "conceptluisa_1_1concepts_1_1constructible.html", null ],
+        [ "trivially_default_constructible", "conceptluisa_1_1concepts_1_1trivially__default__constructible.html", null ],
+        [ "non_cvref", "conceptluisa_1_1concepts_1_1non__cvref.html", null ],
+        [ "static_convertible", "conceptluisa_1_1concepts_1_1static__convertible.html", null ],
+        [ "bitwise_convertible", "conceptluisa_1_1concepts_1_1bitwise__convertible.html", null ],
+        [ "reinterpret_convertible", "conceptluisa_1_1concepts_1_1reinterpret__convertible.html", null ],
+        [ "invocable", "conceptluisa_1_1concepts_1_1invocable.html", null ],
+        [ "invocable_with_return", "conceptluisa_1_1concepts_1_1invocable__with__return.html", null ],
+        [ "pointer", "conceptluisa_1_1concepts_1_1pointer.html", null ],
+        [ "non_pointer", "conceptluisa_1_1concepts_1_1non__pointer.html", null ],
+        [ "container", "conceptluisa_1_1concepts_1_1container.html", null ],
+        [ "integral", "conceptluisa_1_1concepts_1_1integral.html", null ],
+        [ "scalar", "conceptluisa_1_1concepts_1_1scalar.html", null ],
+        [ "vector", "conceptluisa_1_1concepts_1_1vector.html", null ],
+        [ "vector2", "conceptluisa_1_1concepts_1_1vector2.html", null ],
+        [ "vector3", "conceptluisa_1_1concepts_1_1vector3.html", null ],
+        [ "vector4", "conceptluisa_1_1concepts_1_1vector4.html", null ],
+        [ "bool_vector", "conceptluisa_1_1concepts_1_1bool__vector.html", null ],
+        [ "float_vector", "conceptluisa_1_1concepts_1_1float__vector.html", null ],
+        [ "int_vector", "conceptluisa_1_1concepts_1_1int__vector.html", null ],
+        [ "uint_vector", "conceptluisa_1_1concepts_1_1uint__vector.html", null ],
+        [ "matrix", "conceptluisa_1_1concepts_1_1matrix.html", null ],
+        [ "matrix2", "conceptluisa_1_1concepts_1_1matrix2.html", null ],
+        [ "matrix3", "conceptluisa_1_1concepts_1_1matrix3.html", null ],
+        [ "matrix4", "conceptluisa_1_1concepts_1_1matrix4.html", null ],
+        [ "basic", "conceptluisa_1_1concepts_1_1basic.html", null ],
+        [ "operator_access", "conceptluisa_1_1concepts_1_1operator__access.html", null ],
+        [ "function", "conceptluisa_1_1concepts_1_1function.html", null ],
+        [ "same", "conceptluisa_1_1concepts_1_1same.html", null ],
+        [ "different", "conceptluisa_1_1concepts_1_1different.html", null ],
+        [ "vector_same_dimension", "conceptluisa_1_1concepts_1_1vector__same__dimension.html", null ]
+      ] ]
+    ] ],
+    [ "pdqsort_detail", "namespacepdqsort__detail.html", [
+      [ "LinearIterable", "conceptpdqsort__detail_1_1_linear_iterable.html", null ],
+      [ "CompareFunc", "conceptpdqsort__detail_1_1_compare_func.html", null ]
+    ] ]
+];

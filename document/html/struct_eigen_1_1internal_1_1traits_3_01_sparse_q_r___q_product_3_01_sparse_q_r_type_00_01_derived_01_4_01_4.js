@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1traits_3_01_sparse_q_r___q_product_3_01_sparse_q_r_type_00_01_derived_01_4_01_4 =
+[
+    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01_sparse_q_r___q_product_3_01_sparse_q_r_type_00_01_derived_01_4_01_4.html#ae1e596296cf3e313d0248b6ffadd37d4", null ]
+];

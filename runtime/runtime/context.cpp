@@ -1,12 +1,12 @@
-#include <luisa/core/dynamic_module.h>
-#include <luisa/core/logging.h>
-#include <luisa/core/platform.h>
-#include <luisa/runtime/context.h>
-#include <luisa/runtime/device.h>
-#include <luisa/core/binary_io.h>
-#include <luisa/core/stl/algorithm.h>
-#include <luisa/core/stl/filesystem.h>
-#include <luisa/core/stl/unordered_map.h>
+#include <runtime/core/dynamic_module.h>
+#include <runtime/core/logging.h>
+#include <runtime/core/platform.h>
+#include <runtime/runtime/context.h>
+#include <runtime/runtime/device.h>
+#include <runtime/core/binary_io.h>
+#include <runtime/core/stl/algorithm.h>
+#include <runtime/core/stl/filesystem.h>
+#include <runtime/core/stl/unordered_map.h>
 
 // Hack to make LLVM happy. The following code is not used but *must* be included in the shared library!!!!
 

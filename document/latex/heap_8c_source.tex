@@ -1,0 +1,772 @@
+\doxysection{heap.\+c}
+\hypertarget{heap_8c_source}{}\label{heap_8c_source}\index{runtime/EASTL/packages/mimalloc/src/heap.c@{runtime/EASTL/packages/mimalloc/src/heap.c}}
+\mbox{\hyperlink{heap_8c}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{Copyright\ (c)\ 2018-\/2021,\ Microsoft\ Research,\ Daan\ Leijen}}
+\DoxyCodeLine{00003\ \textcolor{comment}{This\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it\ under\ the}}
+\DoxyCodeLine{00004\ \textcolor{comment}{terms\ of\ the\ MIT\ license.\ A\ copy\ of\ the\ license\ can\ be\ found\ in\ the\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{"{}LICENSE"{}\ at\ the\ root\ of\ this\ distribution.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{mimalloc_8h}{mimalloc.h}}"{}}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h}{mimalloc/internal.h}}"{}}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{prim_8h}{mimalloc/prim.h}}"{}}\ \ \textcolor{comment}{//\ mi\_prim\_get\_default\_heap}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)\ \&\&\ (\_MSC\_VER\ <\ 1920)}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#pragma\ warning(disable:4204)\ \ }\textcolor{comment}{//\ non-\/constant\ aggregate\ initializer}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ Helpers}}
+\DoxyCodeLine{00018\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ return\ \`{}true`\ if\ ok,\ \`{}false`\ to\ break}}
+\DoxyCodeLine{00021\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{sugar_8h_abb452686968e48b67397da5f97445f5b}{bool}}\ (\mbox{\hyperlink{heap_8c_aaae638aaef85eb2226d33ee26e6d0b34}{heap\_page\_visitor\_fun}})(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{types_8h_a9646624e7de8587984ec8e8cd5c5d780}{mi\_page\_queue\_t}}*\ pq,\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page,\ \textcolor{keywordtype}{void}*\ arg1,\ \textcolor{keywordtype}{void}*\ arg2);}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ Visit\ all\ pages\ in\ a\ heap;\ returns\ \`{}false`\ if\ break\ was\ called.}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_aaf0ac2b53e4e2e6abcbbcd10faf21b11}{mi\_heap\_visit\_pages}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{heap_8c_aaae638aaef85eb2226d33ee26e6d0b34}{heap\_page\_visitor\_fun}}*\ fn,\ \textcolor{keywordtype}{void}*\ arg1,\ \textcolor{keywordtype}{void}*\ arg2)}
+\DoxyCodeLine{00025\ \{}
+\DoxyCodeLine{00026\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a4d139f61ef10d6ef25a0d1f99fcdf18c}{page\_count}}==0)\ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \ \ \textcolor{comment}{//\ visit\ all\ pages}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\ \ \#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00030\ \ \ \textcolor{keywordtype}{size\_t}\ total\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a4d139f61ef10d6ef25a0d1f99fcdf18c}{page\_count}};}
+\DoxyCodeLine{00031\ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}\ =\ 0;}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <=\ \mbox{\hyperlink{types_8h_ade65859668d2b446caf257fbc8c8d684}{MI\_BIN\_FULL}};\ i++)\ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \mbox{\hyperlink{types_8h_a9646624e7de8587984ec8e8cd5c5d780}{mi\_page\_queue\_t}}*\ pq\ =\ \&heap-\/>\mbox{\hyperlink{structmi__heap__s_a132c64106a2662761ee57ea5dd4a996b}{pages}}[i];}
+\DoxyCodeLine{00036\ \ \ \ \ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page\ =\ pq-\/>\mbox{\hyperlink{structmi__page__queue__s_a2ac5077507dc4bf25a1a8df36955469a}{first}};}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keywordflow}{while}(page\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ next\ =\ page-\/>\mbox{\hyperlink{structmi__page__s_a3cb74f9debb9c29f48990a6b39ec4233}{next}};\ \textcolor{comment}{//\ save\ next\ in\ case\ the\ page\ gets\ removed\ from\ the\ queue}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a35ba87308ac94f73791017e50d3ab4c7}{mi\_page\_heap}}(page)\ ==\ heap);}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ \ \ \#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}++;}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!fn(heap,\ pq,\ page,\ arg1,\ arg2))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ page\ =\ next;\ \textcolor{comment}{//\ and\ continue}}
+\DoxyCodeLine{00045\ \ \ \ \ \}}
+\DoxyCodeLine{00046\ \ \ \}}
+\DoxyCodeLine{00047\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}\ ==\ total);}
+\DoxyCodeLine{00048\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00049\ \}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#if\ MI\_DEBUG>=2}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ mi\_heap\_page\_is\_valid(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{types_8h_a9646624e7de8587984ec8e8cd5c5d780}{mi\_page\_queue\_t}}*\ pq,\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page,\ \textcolor{keywordtype}{void}*\ arg1,\ \textcolor{keywordtype}{void}*\ arg2)\ \{}
+\DoxyCodeLine{00054\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(arg1);}
+\DoxyCodeLine{00055\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(arg2);}
+\DoxyCodeLine{00056\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(pq);}
+\DoxyCodeLine{00057\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a35ba87308ac94f73791017e50d3ab4c7}{mi\_page\_heap}}(page)\ ==\ heap);}
+\DoxyCodeLine{00058\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab812423812d2dd7af864b7e112055d8e}{mi\_assert\_expensive}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af1d572618734511626662f9f7befb8e9}{\_mi\_page\_is\_valid}}(page));}
+\DoxyCodeLine{00059\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#if\ MI\_DEBUG>=3}}
+\DoxyCodeLine{00063\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ mi\_heap\_is\_valid(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00064\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap!=\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00065\ \ \ \mbox{\hyperlink{heap_8c_aaf0ac2b53e4e2e6abcbbcd10faf21b11}{mi\_heap\_visit\_pages}}(heap,\ \&mi\_heap\_page\_is\_valid,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00066\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{base_8h_adfa139c9a1902753b3696794759b2c48ac1111bd512b29e821b120b86446026b8}{bin}}\ =\ 0;\ \mbox{\hyperlink{base_8h_adfa139c9a1902753b3696794759b2c48ac1111bd512b29e821b120b86446026b8}{bin}}\ <\ \mbox{\hyperlink{types_8h_a2928685f9d87bc3bd9e0fdac2a7f39ad}{MI\_BIN\_COUNT}};\ \mbox{\hyperlink{base_8h_adfa139c9a1902753b3696794759b2c48ac1111bd512b29e821b120b86446026b8}{bin}}++)\ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae5294035df48c4d1f952578d240effb5}{\_mi\_page\_queue\_is\_valid}}(heap,\ \&heap-\/>\mbox{\hyperlink{structmi__heap__s_a132c64106a2662761ee57ea5dd4a996b}{pages}}[\mbox{\hyperlink{base_8h_adfa139c9a1902753b3696794759b2c48ac1111bd512b29e821b120b86446026b8}{bin}}]));}
+\DoxyCodeLine{00068\ \ \ \}}
+\DoxyCodeLine{00069\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ "{}Collect"{}\ pages\ by\ migrating\ \`{}local\_free`\ and\ \`{}thread\_free`}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ lists\ and\ freeing\ empty\ pages.\ This\ is\ done\ when\ a\ thread}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ stops\ (and\ in\ that\ case\ abandons\ pages\ if\ there\ are\ still}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ blocks\ alive)}}
+\DoxyCodeLine{00081\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3}{mi\_collect\_e}}\ \{}
+\DoxyCodeLine{00084\ \ \ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3a246adacab3469102de17c226f0751dd0}{MI\_NORMAL}},}
+\DoxyCodeLine{00085\ \ \ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3abcf89ababf89aad696d19b7dbd2a6df6}{MI\_FORCE}},}
+\DoxyCodeLine{00086\ \ \ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3a6f84303e4da26dbbbe1c417286f3cd55}{MI\_ABANDON}}}
+\DoxyCodeLine{00087\ \}\ \mbox{\hyperlink{heap_8c_a6650b3345f256e5fbddb2135bcded26b}{mi\_collect\_t}};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a9873e3fab187aa9d658b87434ed8608c}{mi\_heap\_page\_collect}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{types_8h_a9646624e7de8587984ec8e8cd5c5d780}{mi\_page\_queue\_t}}*\ pq,\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page,\ \textcolor{keywordtype}{void}*\ arg\_collect,\ \textcolor{keywordtype}{void}*\ arg2\ )\ \{}
+\DoxyCodeLine{00091\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(arg2);}
+\DoxyCodeLine{00092\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(heap);}
+\DoxyCodeLine{00093\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(mi\_heap\_page\_is\_valid(heap,\ pq,\ page,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}));}
+\DoxyCodeLine{00094\ \ \ \mbox{\hyperlink{heap_8c_a6650b3345f256e5fbddb2135bcded26b}{mi\_collect\_t}}\ collect\ =\ *((\mbox{\hyperlink{heap_8c_a6650b3345f256e5fbddb2135bcded26b}{mi\_collect\_t}}*)arg\_collect);}
+\DoxyCodeLine{00095\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae2b78e1e45e4ac3db8102e9d333d2972}{\_mi\_page\_free\_collect}}(page,\ collect\ >=\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3abcf89ababf89aad696d19b7dbd2a6df6}{MI\_FORCE}});}
+\DoxyCodeLine{00096\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_adfd6d23350810ca36986ffbc5459c93d}{mi\_page\_all\_free}}(page))\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ no\ more\ used\ blocks,\ free\ the\ page.}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{comment}{//\ note:\ this\ will\ free\ retired\ pages\ as\ well.}}
+\DoxyCodeLine{00099\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1c5c78a8becee842d5b9444a2ee67a3b}{\_mi\_page\_free}}(page,\ pq);}
+\DoxyCodeLine{00100\ \ \ \}}
+\DoxyCodeLine{00101\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (collect\ ==\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3a6f84303e4da26dbbbe1c417286f3cd55}{MI\_ABANDON}})\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ still\ used\ blocks\ but\ the\ thread\ is\ done;\ abandon\ the\ page}}
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a5659ebbee47f26d3a49e03e0c5f2da79}{\_mi\_page\_abandon}}(page,\ pq);}
+\DoxyCodeLine{00104\ \ \ \}}
+\DoxyCodeLine{00105\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \textcolor{comment}{//\ don't\ break}}
+\DoxyCodeLine{00106\ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a13231466662ebaf79b77c254d4c7f389}{mi\_heap\_collect\_ex}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{heap_8c_a6650b3345f256e5fbddb2135bcded26b}{mi\_collect\_t}}\ collect)}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00112\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab812423812d2dd7af864b7e112055d8e}{mi\_assert\_expensive}}(mi\_heap\_is\_valid(heap));}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ force\ =\ (collect\ >=\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3abcf89ababf89aad696d19b7dbd2a6df6}{MI\_FORCE}});}
+\DoxyCodeLine{00115\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aede81c520000cbb08ad669e096c94d51}{\_mi\_deferred\_free}}(heap,\ force);}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{comment}{//\ python/cpython\#112532:\ we\ may\ be\ called\ from\ a\ thread\ that\ is\ not\ the\ owner\ of\ the\ heap}}
+\DoxyCodeLine{00118\ \ \ \textcolor{comment}{//\ const\ bool\ is\_main\_thread\ =\ (\_mi\_is\_main\_thread()\ \&\&\ heap-\/>thread\_id\ ==\ \_mi\_thread\_id());}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \ \ \textcolor{comment}{//\ collect\ retired\ pages}}
+\DoxyCodeLine{00121\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_abc5253b4341c8d7eab888068e4f9b951}{\_mi\_heap\_collect\_retired}}(heap,\ force);}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \textcolor{comment}{//\ if\ (\_mi\_is\_main\_thread())\ \{\ mi\_debug\_show\_arenas(true,\ false,\ false);\ \}}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{comment}{//\ collect\ all\ pages\ owned\ by\ this\ thread}}
+\DoxyCodeLine{00126\ \ \ \mbox{\hyperlink{heap_8c_aaf0ac2b53e4e2e6abcbbcd10faf21b11}{mi\_heap\_visit\_pages}}(heap,\ \&\mbox{\hyperlink{heap_8c_a9873e3fab187aa9d658b87434ed8608c}{mi\_heap\_page\_collect}},\ \&collect,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{//\ collect\ arenas\ (this\ is\ program\ wide\ so\ don't\ force\ purges\ on\ abandonment\ of\ threads)}}
+\DoxyCodeLine{00129\ \ \ \textcolor{comment}{//mi\_atomic\_storei64\_release(\&heap-\/>tld-\/>subproc-\/>purge\_expire,\ 1);}}
+\DoxyCodeLine{00130\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a6f7e5b0577ff900eb89e76701c43672f}{\_mi\_arenas\_collect}}(collect\ ==\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3abcf89ababf89aad696d19b7dbd2a6df6}{MI\_FORCE}}\ \textcolor{comment}{/*\ force\ purge?\ */},\ collect\ >=\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3abcf89ababf89aad696d19b7dbd2a6df6}{MI\_FORCE}}\ \textcolor{comment}{/*\ visit\ all?\ */},\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}});}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \textcolor{comment}{//\ merge\ statistics}}
+\DoxyCodeLine{00133\ \ \ \textcolor{keywordflow}{if}\ (collect\ <=\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3abcf89ababf89aad696d19b7dbd2a6df6}{MI\_FORCE}})\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \mbox{\hyperlink{group__extended_ga854b1de8cb067c7316286c28b2fcd3d1}{mi\_stats\_merge}}();}
+\DoxyCodeLine{00135\ \ \ \}}
+\DoxyCodeLine{00136\ \}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a3924fe17738a488f951d16e9216062b1}{\_mi\_heap\_collect\_abandon}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00139\ \ \ \mbox{\hyperlink{heap_8c_a13231466662ebaf79b77c254d4c7f389}{mi\_heap\_collect\_ex}}(heap,\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3a6f84303e4da26dbbbe1c417286f3cd55}{MI\_ABANDON}});}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__heap_ga7922f7495cde30b1984d0e6072419298}{mi\_heap\_collect}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keywordtype}{bool}\ force)\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00143\ \ \ \mbox{\hyperlink{heap_8c_a13231466662ebaf79b77c254d4c7f389}{mi\_heap\_collect\_ex}}(heap,\ (force\ ?\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3abcf89ababf89aad696d19b7dbd2a6df6}{MI\_FORCE}}\ :\ \mbox{\hyperlink{heap_8c_a4b132bba775ad2eec11106542ed3a9e3a246adacab3469102de17c226f0751dd0}{MI\_NORMAL}}));}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__extended_ga421430e2226d7d468529cec457396756}{mi\_collect}}(\textcolor{keywordtype}{bool}\ force)\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00147\ \ \ \mbox{\hyperlink{group__heap_ga7922f7495cde30b1984d0e6072419298}{mi\_heap\_collect}}(\mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}(),\ force);}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ \ Heap\ new}}
+\DoxyCodeLine{00153\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{group__heap_ga14c667a6e2c5d28762d8cb7d4e057909}{mi\_heap\_get\_default}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00156\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap\ =\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}();}
+\DoxyCodeLine{00157\ \ \ \textcolor{keywordflow}{if}\ \mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(!\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \mbox{\hyperlink{group__extended_gaf8e73efc2cbca9ebfdfb166983a04c17}{mi\_thread\_init}}();}
+\DoxyCodeLine{00159\ \ \ \ \ heap\ =\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}();}
+\DoxyCodeLine{00160\ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \textcolor{keywordflow}{return}\ heap;}
+\DoxyCodeLine{00162\ \}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a4a8ed126dd329d5796df580c6aa9865b}{mi\_heap\_is\_default}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00165\ \ \ \textcolor{keywordflow}{return}\ (heap\ ==\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}());}
+\DoxyCodeLine{00166\ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{group__heap_gac6ac9f0e7be9ab4ff70acfc8dad1235a}{mi\_heap\_get\_backing}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00170\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap\ =\ \mbox{\hyperlink{group__heap_ga14c667a6e2c5d28762d8cb7d4e057909}{mi\_heap\_get\_default}}();}
+\DoxyCodeLine{00171\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap!=\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00172\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ bheap\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a825d2bc68ca9880193f717fecdfc499e}{heap\_backing}};}
+\DoxyCodeLine{00173\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(bheap!=\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00174\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(bheap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a6629720f4a37c9dd71417ead57fdd8e7}{thread\_id}}\ ==\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac1c4e1fe7ce6d0939ff6c94eecacac61}{\_mi\_thread\_id}}());}
+\DoxyCodeLine{00175\ \ \ \textcolor{keywordflow}{return}\ bheap;}
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \textcolor{comment}{//\ todo:\ make\ order\ of\ parameters\ consistent\ (but\ would\ that\ break\ compat\ with\ CPython?)}}
+\DoxyCodeLine{00179\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a699ed0543c15171845b3778021c7d1c2}{\_mi\_heap\_init}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{group__extended_ga99fe38650d0b02e0e0f89ee024db91d3}{mi\_arena\_id\_t}}\ arena\_id,\ \textcolor{keywordtype}{bool}\ allow\_destroy,\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ heap\_tag,\ \mbox{\hyperlink{types_8h_af498cfcb63d2378172fc14f59d134fca}{mi\_tld\_t}}*\ tld)}
+\DoxyCodeLine{00180\ \{}
+\DoxyCodeLine{00181\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap!=\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00182\ \ \ \mbox{\hyperlink{types_8h_a56a2cb6eed720cdd1fa4b9907c44d7d0}{mi\_memid\_t}}\ memid\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a8939a8e836711da20849d9d5ae92f383}{memid}};}
+\DoxyCodeLine{00183\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a4dbcd4c6bee50fa4a3fb4b5e2a8d1438}{\_mi\_memcpy\_aligned}}(heap,\ \&\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_afa9be93ae7d17a355ce9f4d178257643}{\_mi\_heap\_empty}},\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}));}
+\DoxyCodeLine{00184\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a8939a8e836711da20849d9d5ae92f383}{memid}}\ =\ memid;}
+\DoxyCodeLine{00185\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}\ \ \ =\ tld;\ \ \textcolor{comment}{//\ avoid\ reading\ the\ thread-\/local\ tld\ during\ initialization}}
+\DoxyCodeLine{00186\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_aa0c7026d19f12f8d3a2539aa030c77cc}{tag}}\ \ \ =\ heap\_tag;}
+\DoxyCodeLine{00187\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a6d7737e586be3ac1c4a89f117898093b}{numa\_node}}\ =\ tld-\/>\mbox{\hyperlink{structmi__tld__s_ae38f5cc1bd07652954e007955fd3402d}{numa\_node}};}
+\DoxyCodeLine{00188\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a4eec2cb7a91ef34810687b013d1dab77}{exclusive\_arena}}\ \ \ \ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a3b9deaaeb6e6725448b686d3025260ef}{\_mi\_arena\_from\_id}}(arena\_id);}
+\DoxyCodeLine{00189\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a14d0f3925d40afb54ed89983fdefb805}{allow\_page\_reclaim}}\ =\ (!allow\_destroy\ \&\&\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930bac16e3f838e861338fb2357b430f6974c}{mi\_option\_page\_reclaim\_on\_free}})\ >=\ 0);}
+\DoxyCodeLine{00190\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a8d500d2e3ccde6de4e60682df8ea58ea}{allow\_page\_abandon}}\ =\ (!allow\_destroy\ \&\&\ \mbox{\hyperlink{group__options_ga7e8af195cc81d3fa64ccf2662caa565a}{mi\_option\_get}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930baeede7d0652e391940357e1c054d29829}{mi\_option\_page\_full\_retain}})\ >=\ 0);}
+\DoxyCodeLine{00191\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a3ff36ed80a0b89a0e0e913e57b028cb3}{page\_full\_retain}}\ =\ \mbox{\hyperlink{group__options_ga96ad9c406338bd314cfe878cfc9bf723}{mi\_option\_get\_clamp}}(\mbox{\hyperlink{mimalloc_8h_acf0af9f50d2fca76b4e158d611bc930baeede7d0652e391940357e1c054d29829}{mi\_option\_page\_full\_retain}},\ -\/1,\ 32);}
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a1ba88188c587e503fb860aefd69aefd1}{is\_in\_threadpool}})\ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ if\ we\ run\ as\ part\ of\ a\ thread\ pool\ it\ is\ better\ to\ not\ arbitrarily\ reclaim\ abandoned\ pages\ into\ our\ heap.}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ this\ is\ checked\ in\ \`{}free.c:mi\_free\_try\_collect\_mt`}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{comment}{//\ ..\ but\ abandoning\ is\ good\ in\ this\ case:\ halve\ the\ full\ page\ retain\ (possibly\ to\ 0)}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ (so\ blocked\ threads\ do\ not\ hold\ on\ to\ too\ much\ memory)}}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a3ff36ed80a0b89a0e0e913e57b028cb3}{page\_full\_retain}}\ >\ 0)\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a3ff36ed80a0b89a0e0e913e57b028cb3}{page\_full\_retain}}\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a3ff36ed80a0b89a0e0e913e57b028cb3}{page\_full\_retain}}\ /\ 4;}
+\DoxyCodeLine{00199\ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a825d2bc68ca9880193f717fecdfc499e}{heap\_backing}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a825d2bc68ca9880193f717fecdfc499e}{heap\_backing}}\ =\ heap;\ \ \textcolor{comment}{//\ first\ heap\ becomes\ the\ backing\ heap}}
+\DoxyCodeLine{00204\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aca9dc8a900f1b727e326063778b2eee1}{\_mi\_random\_init}}(\&heap-\/>\mbox{\hyperlink{structmi__heap__s_a90b8564d889dcda571bc31188e16778d}{random}});}
+\DoxyCodeLine{00205\ \ \ \}}
+\DoxyCodeLine{00206\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a13c96d966df7117657153137e4d06b11}{\_mi\_random\_split}}(\&heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a825d2bc68ca9880193f717fecdfc499e}{heap\_backing}}-\/>\mbox{\hyperlink{structmi__heap__s_a90b8564d889dcda571bc31188e16778d}{random}},\ \&heap-\/>\mbox{\hyperlink{structmi__heap__s_a90b8564d889dcda571bc31188e16778d}{random}});}
+\DoxyCodeLine{00208\ \ \ \}}
+\DoxyCodeLine{00209\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_ab6774a8a1c46ae4b726541fb1ebb4298}{cookie}}\ \ =\ \mbox{\hyperlink{heap_8c_a68ddb5f2c595ea9d4e8d450342b4713c}{\_mi\_heap\_random\_next}}(heap)\ |\ 1;}
+\DoxyCodeLine{00210\ \ \ \textcolor{comment}{//heap-\/>keys[0]\ =\ \_mi\_heap\_random\_next(heap);}}
+\DoxyCodeLine{00211\ \ \ \textcolor{comment}{//heap-\/>keys[1]\ =\ \_mi\_heap\_random\_next(heap);*/}}
+\DoxyCodeLine{00212\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a70e3672a1e08dcb5e7e311d403693394}{\_mi\_heap\_guarded\_init}}(heap);}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \textcolor{comment}{//\ push\ on\ the\ thread\ local\ heaps\ list}}
+\DoxyCodeLine{00215\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a1ccd0d74420921e2aa92fa9c9474f497}{next}}\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}};}
+\DoxyCodeLine{00216\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}}\ =\ heap;}
+\DoxyCodeLine{00217\ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{heap_8c_ab157bb90e19404331b916893a0ad27a2}{\_mi\_heap\_create}}(\textcolor{keywordtype}{int}\ heap\_tag,\ \textcolor{keywordtype}{bool}\ allow\_destroy,\ \mbox{\hyperlink{group__extended_ga99fe38650d0b02e0e0f89ee024db91d3}{mi\_arena\_id\_t}}\ arena\_id,\ \mbox{\hyperlink{types_8h_af498cfcb63d2378172fc14f59d134fca}{mi\_tld\_t}}*\ tld)\ \{}
+\DoxyCodeLine{00220\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(tld!=\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00221\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(heap\_tag\ >=\ 0\ \&\&\ heap\_tag\ <\ 256);}
+\DoxyCodeLine{00222\ \ \ \textcolor{comment}{//\ allocate\ and\ initialize\ a\ heap}}
+\DoxyCodeLine{00223\ \ \ \mbox{\hyperlink{types_8h_a56a2cb6eed720cdd1fa4b9907c44d7d0}{mi\_memid\_t}}\ memid;}
+\DoxyCodeLine{00224\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap;}
+\DoxyCodeLine{00225\ \ \ \textcolor{keywordflow}{if}\ (arena\_id\ ==\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a3f182e53b3afc059fe50cb4ad6756dc1}{\_mi\_arena\_id\_none}}())\ \{}
+\DoxyCodeLine{00226\ \ \ \ \ heap\ =\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a20044bcb599dd68a5f0905e1e2adae71}{\_mi\_meta\_zalloc}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}),\ \&memid);}
+\DoxyCodeLine{00227\ \ \ \}}
+\DoxyCodeLine{00228\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ heaps\ associated\ wita\ a\ specific\ arena\ are\ allocated\ in\ that\ arena}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ note:\ takes\ up\ at\ least\ one\ slice\ which\ is\ quite\ wasteful...}}
+\DoxyCodeLine{00231\ \ \ \ \ heap\ =\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a5ed8f06671f7233427d204c2e94e1243}{\_mi\_arenas\_alloc}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ad7ba0b811f08490a3e64e9a7b3a03486}{\_mi\_subproc}}(),\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a7f35944d44d8a16365072023dd19e0da}{\_mi\_align\_up}}(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}),\mbox{\hyperlink{types_8h_a3421cfe679a7046c92dc766c0946f56f}{MI\_ARENA\_MIN\_OBJ\_SIZE}}),\ \textcolor{keyword}{true},\ \textcolor{keyword}{true},\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a3b9deaaeb6e6725448b686d3025260ef}{\_mi\_arena\_from\_id}}(arena\_id),\ tld-\/>\mbox{\hyperlink{structmi__tld__s_ab55771fc6a4f02c50fe229bd358d2ddb}{thread\_seq}},\ tld-\/>\mbox{\hyperlink{structmi__tld__s_ae38f5cc1bd07652954e007955fd3402d}{numa\_node}},\ \&memid);}
+\DoxyCodeLine{00232\ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00234\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2atomic_8h_a2bebc073bcaac71658e57bb260c2e426}{\_mi\_error\_message}}(\mbox{\hyperlink{types_8h_a6a05c923dad0c1208043e9c20a58c8e5}{ENOMEM}},\ \textcolor{stringliteral}{"{}unable\ to\ allocate\ heap\ meta-\/data\(\backslash\)n"{}});}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00236\ \ \ \}}
+\DoxyCodeLine{00237\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a8939a8e836711da20849d9d5ae92f383}{memid}}\ =\ memid;}
+\DoxyCodeLine{00238\ \ \ \mbox{\hyperlink{heap_8c_a699ed0543c15171845b3778021c7d1c2}{\_mi\_heap\_init}}(heap,\ arena\_id,\ allow\_destroy,\ (\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}})heap\_tag,\ tld);}
+\DoxyCodeLine{00239\ \ \ \textcolor{keywordflow}{return}\ heap;}
+\DoxyCodeLine{00240\ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \mbox{\hyperlink{mimalloc_8h_acbaf5f4132fcfb51f0bf40e3b50f0981}{mi\_decl\_nodiscard}}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{group__extended_ga3ae360583f4351aa5267ee7e43008faf}{mi\_heap\_new\_ex}}(\textcolor{keywordtype}{int}\ heap\_tag,\ \textcolor{keywordtype}{bool}\ allow\_destroy,\ \mbox{\hyperlink{group__extended_ga99fe38650d0b02e0e0f89ee024db91d3}{mi\_arena\_id\_t}}\ arena\_id)\ \{}
+\DoxyCodeLine{00243\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ bheap\ =\ \mbox{\hyperlink{group__heap_gac6ac9f0e7be9ab4ff70acfc8dad1235a}{mi\_heap\_get\_backing}}();}
+\DoxyCodeLine{00244\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(bheap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00245\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{heap_8c_ab157bb90e19404331b916893a0ad27a2}{\_mi\_heap\_create}}(heap\_tag,\ allow\_destroy,\ arena\_id,\ bheap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}});}
+\DoxyCodeLine{00246\ \}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \mbox{\hyperlink{mimalloc_8h_acbaf5f4132fcfb51f0bf40e3b50f0981}{mi\_decl\_nodiscard}}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{group__extended_gaaf2d9976576d5efd5544be12848af949}{mi\_heap\_new\_in\_arena}}(\mbox{\hyperlink{group__extended_ga99fe38650d0b02e0e0f89ee024db91d3}{mi\_arena\_id\_t}}\ arena\_id)\ \{}
+\DoxyCodeLine{00249\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{group__extended_ga3ae360583f4351aa5267ee7e43008faf}{mi\_heap\_new\_ex}}(0\ \textcolor{comment}{/*\ default\ heap\ tag\ */},\ \textcolor{keyword}{false}\ \textcolor{comment}{/*\ allow\ destroy?\ */},\ arena\_id);}
+\DoxyCodeLine{00250\ \}}
+\DoxyCodeLine{00251\ }
+\DoxyCodeLine{00252\ \mbox{\hyperlink{mimalloc_8h_acbaf5f4132fcfb51f0bf40e3b50f0981}{mi\_decl\_nodiscard}}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{group__heap_gaa718bb226ec0546ba6d1b6cb32179f3a}{mi\_heap\_new}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00253\ \ \ \textcolor{comment}{//\ don't\ reclaim\ abandoned\ memory\ or\ otherwise\ destroy\ is\ unsafe}}
+\DoxyCodeLine{00254\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{group__extended_ga3ae360583f4351aa5267ee7e43008faf}{mi\_heap\_new\_ex}}(0\ \textcolor{comment}{/*\ default\ heap\ tag\ */},\ \textcolor{keyword}{true}\ \textcolor{comment}{/*\ allow\ destroy?\ */},\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a3f182e53b3afc059fe50cb4ad6756dc1}{\_mi\_arena\_id\_none}}());}
+\DoxyCodeLine{00255\ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a68364a42d59cdb40028c269f22c82a67}{\_mi\_heap\_memid\_is\_suitable}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{types_8h_a56a2cb6eed720cdd1fa4b9907c44d7d0}{mi\_memid\_t}}\ memid)\ \{}
+\DoxyCodeLine{00258\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a02890f29b2a92bc3631bfe0fb3e350bd}{\_mi\_arena\_memid\_is\_suitable}}(memid,\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a4eec2cb7a91ef34810687b013d1dab77}{exclusive\_arena}});}
+\DoxyCodeLine{00259\ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ uintptr\_t\ \mbox{\hyperlink{heap_8c_a68ddb5f2c595ea9d4e8d450342b4713c}{\_mi\_heap\_random\_next}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00262\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae7c0ab020aad85edd43240680cc4f76e}{\_mi\_random\_next}}(\&heap-\/>\mbox{\hyperlink{structmi__heap__s_a90b8564d889dcda571bc31188e16778d}{random}});}
+\DoxyCodeLine{00263\ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_aab93abbc0624f570e2900f95cac18591}{mi\_heap\_set\_numa\_affinity}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keywordtype}{int}\ numa\_node)\ \{}
+\DoxyCodeLine{00266\ \ \ \textcolor{keywordflow}{if}\ (heap\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00267\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a6d7737e586be3ac1c4a89f117898093b}{numa\_node}}\ =\ (numa\_node\ <\ 0\ ?\ -\/1\ :\ numa\_node\ \%\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a7104e74ef3302f691be1cca5120f1349}{\_mi\_os\_numa\_node\_count}}());}
+\DoxyCodeLine{00268\ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{comment}{//\ zero\ out\ the\ page\ queues}}
+\DoxyCodeLine{00271\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_aa04066f105381dc4ec279cbb0fa6e890}{mi\_heap\_reset\_pages}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00272\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00273\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap));}
+\DoxyCodeLine{00274\ \ \ \textcolor{comment}{//\ TODO:\ copy\ full\ empty\ heap\ instead?}}
+\DoxyCodeLine{00275\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae042f084f894809035813d45e3c43561}{\_mi\_memset}}(\&heap-\/>\mbox{\hyperlink{structmi__heap__s_a7a6716ebf08933f56921f8e1a582c30e}{pages\_free\_direct}},\ 0,\ \textcolor{keyword}{sizeof}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a7a6716ebf08933f56921f8e1a582c30e}{pages\_free\_direct}}));}
+\DoxyCodeLine{00276\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a4dbcd4c6bee50fa4a3fb4b5e2a8d1438}{\_mi\_memcpy\_aligned}}(\&heap-\/>\mbox{\hyperlink{structmi__heap__s_a132c64106a2662761ee57ea5dd4a996b}{pages}},\ \&\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_afa9be93ae7d17a355ce9f4d178257643}{\_mi\_heap\_empty}}.pages,\ \textcolor{keyword}{sizeof}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a132c64106a2662761ee57ea5dd4a996b}{pages}}));}
+\DoxyCodeLine{00277\ \ \ \textcolor{comment}{//\ heap-\/>thread\_delayed\_free\ =\ NULL;}}
+\DoxyCodeLine{00278\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a4d139f61ef10d6ef25a0d1f99fcdf18c}{page\_count}}\ =\ 0;}
+\DoxyCodeLine{00279\ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{comment}{//\ called\ from\ \`{}mi\_heap\_destroy`\ and\ \`{}mi\_heap\_delete`\ to\ free\ the\ internal\ heap\ resources.}}
+\DoxyCodeLine{00282\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a0b78721d61a2941477b5381a30cde1e6}{mi\_heap\_free}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keywordtype}{bool}\ do\_free\_mem)\ \{}
+\DoxyCodeLine{00283\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00284\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap));}
+\DoxyCodeLine{00285\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00286\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a9f4f9f1e020b8a62342ad9acbddda60f}{mi\_heap\_is\_backing}}(heap))\ \textcolor{keywordflow}{return};\ \textcolor{comment}{//\ dont\ free\ the\ backing\ heap}}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \ \ \textcolor{comment}{//\ reset\ default}}
+\DoxyCodeLine{00289\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{heap_8c_a4a8ed126dd329d5796df580c6aa9865b}{mi\_heap\_is\_default}}(heap))\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a96662339b7c5ce88bc64ce34ac3afd62}{\_mi\_heap\_set\_default\_direct}}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a825d2bc68ca9880193f717fecdfc499e}{heap\_backing}});}
+\DoxyCodeLine{00291\ \ \ \}}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \textcolor{comment}{//\ remove\ ourselves\ from\ the\ thread\ local\ heaps\ list}}
+\DoxyCodeLine{00294\ \ \ \textcolor{comment}{//\ linear\ search\ but\ we\ expect\ the\ number\ of\ heaps\ to\ be\ relatively\ small}}
+\DoxyCodeLine{00295\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ prev\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00296\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ curr\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}};}
+\DoxyCodeLine{00297\ \ \ \textcolor{keywordflow}{while}\ (curr\ !=\ heap\ \&\&\ curr\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00298\ \ \ \ \ prev\ =\ curr;}
+\DoxyCodeLine{00299\ \ \ \ \ curr\ =\ curr-\/>\mbox{\hyperlink{structmi__heap__s_a1ccd0d74420921e2aa92fa9c9474f497}{next}};}
+\DoxyCodeLine{00300\ \ \ \}}
+\DoxyCodeLine{00301\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(curr\ ==\ heap);}
+\DoxyCodeLine{00302\ \ \ \textcolor{keywordflow}{if}\ (curr\ ==\ heap)\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordflow}{if}\ (prev\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{\ prev-\/>next\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a1ccd0d74420921e2aa92fa9c9474f497}{next}};\ \}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}}\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a1ccd0d74420921e2aa92fa9c9474f497}{next}};\ \}}
+\DoxyCodeLine{00305\ \ \ \}}
+\DoxyCodeLine{00306\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}}\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \textcolor{comment}{//\ and\ free\ the\ used\ memory}}
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordflow}{if}\ (do\_free\_mem)\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af30115139fa3354838ce750895f571cf}{\_mi\_meta\_free}}(heap,\ \textcolor{keyword}{sizeof}(*heap),\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a8939a8e836711da20849d9d5ae92f383}{memid}});}
+\DoxyCodeLine{00311\ \ \ \}}
+\DoxyCodeLine{00312\ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \textcolor{comment}{//\ return\ a\ heap\ on\ the\ same\ thread\ as\ \`{}heap`\ specialized\ for\ the\ specified\ tag\ (if\ it\ exists)}}
+\DoxyCodeLine{00315\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{heap_8c_a0f06ce565965da587c960d80bbf488e9}{\_mi\_heap\_by\_tag}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ tag)\ \{}
+\DoxyCodeLine{00316\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_aa0c7026d19f12f8d3a2539aa030c77cc}{tag}}\ ==\ tag)\ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{return}\ heap;}
+\DoxyCodeLine{00318\ \ \ \}}
+\DoxyCodeLine{00319\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}\ *curr\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}};\ curr\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};\ curr\ =\ curr-\/>next)\ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keywordflow}{if}\ (curr-\/>tag\ ==\ tag)\ \{}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ curr;}
+\DoxyCodeLine{00322\ \ \ \ \ \}}
+\DoxyCodeLine{00323\ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00325\ \}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00328\ \textcolor{comment}{\ \ Heap\ destroy}}
+\DoxyCodeLine{00329\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_af64b8d8015291685b834fd97dd0762ba}{\_mi\_heap\_page\_destroy}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{types_8h_a9646624e7de8587984ec8e8cd5c5d780}{mi\_page\_queue\_t}}*\ pq,\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page,\ \textcolor{keywordtype}{void}*\ arg1,\ \textcolor{keywordtype}{void}*\ arg2)\ \{}
+\DoxyCodeLine{00332\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(arg1);}
+\DoxyCodeLine{00333\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(arg2);}
+\DoxyCodeLine{00334\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(heap);}
+\DoxyCodeLine{00335\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(pq);}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \textcolor{comment}{//\ ensure\ no\ more\ thread\_delayed\_free\ will\ be\ added}}
+\DoxyCodeLine{00338\ \ \ \textcolor{comment}{//\_mi\_page\_use\_delayed\_free(page,\ MI\_NEVER\_DELAYED\_FREE,\ false);}}
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \ \ \textcolor{comment}{//\ stats}}
+\DoxyCodeLine{00341\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ bsize\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a6134893990c1f09da2b40092ceecc780}{mi\_page\_block\_size}}(page);}
+\DoxyCodeLine{00342\ \ \ \textcolor{keywordflow}{if}\ (bsize\ >\ \mbox{\hyperlink{types_8h_aedfdf546ebfa1e91dcf909b8db7b21dc}{MI\_LARGE\_MAX\_OBJ\_SIZE}})\ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \mbox{\hyperlink{types_8h_a9a929f4920a380a78705a9dc7504945f}{mi\_heap\_stat\_decrease}}(heap,\ malloc\_huge,\ bsize);}
+\DoxyCodeLine{00344\ \ \ \}}
+\DoxyCodeLine{00345\ \textcolor{preprocessor}{\ \ \#if\ (MI\_STAT)}}
+\DoxyCodeLine{00346\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae2b78e1e45e4ac3db8102e9d333d2972}{\_mi\_page\_free\_collect}}(page,\ \textcolor{keyword}{false});\ \ \textcolor{comment}{//\ update\ used\ count}}
+\DoxyCodeLine{00347\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ inuse\ =\ page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}};}
+\DoxyCodeLine{00348\ \ \ \textcolor{keywordflow}{if}\ (bsize\ <=\ \mbox{\hyperlink{types_8h_aedfdf546ebfa1e91dcf909b8db7b21dc}{MI\_LARGE\_MAX\_OBJ\_SIZE}})\ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \mbox{\hyperlink{types_8h_a9a929f4920a380a78705a9dc7504945f}{mi\_heap\_stat\_decrease}}(heap,\ malloc\_normal,\ bsize\ *\ inuse);}
+\DoxyCodeLine{00350\ \textcolor{preprocessor}{\ \ \ \ \#if\ (MI\_STAT>1)}}
+\DoxyCodeLine{00351\ \ \ \ \ \mbox{\hyperlink{types_8h_a9a929f4920a380a78705a9dc7504945f}{mi\_heap\_stat\_decrease}}(heap,\ malloc\_bins[\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a0d92abe27db4a21968468b2fe73473d6}{\_mi\_bin}}(bsize)],\ inuse);}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00353\ \ \ \}}
+\DoxyCodeLine{00354\ \ \ \mbox{\hyperlink{types_8h_a9a929f4920a380a78705a9dc7504945f}{mi\_heap\_stat\_decrease}}(heap,\ malloc\_requested,\ bsize\ *\ inuse);\ \ \textcolor{comment}{//\ todo:\ off\ for\ aligned\ blocks...}}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00356\ }
+\DoxyCodeLine{00358\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aa8e0e6183cf707bee8707e2f5f5e5c3e}{mi\_page\_thread\_free}}(page)\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00359\ \ \ page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}}\ =\ 0;}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \textcolor{comment}{//\ and\ free\ the\ page}}
+\DoxyCodeLine{00362\ \ \ \textcolor{comment}{//\ mi\_page\_free(page,false);}}
+\DoxyCodeLine{00363\ \ \ page-\/>\mbox{\hyperlink{structmi__page__s_a3cb74f9debb9c29f48990a6b39ec4233}{next}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00364\ \ \ page-\/>\mbox{\hyperlink{structmi__page__s_a5d6c37ca83250fdb2b58cb2767cb0f4c}{prev}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00365\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a4f0664d2a3d9c81776a0f90311aef474}{mi\_page\_set\_heap}}(page,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00366\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a5c704481ee56f6588f680987f4359d45}{\_mi\_arenas\_page\_free}}(page);}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \textcolor{comment}{//\ keep\ going}}
+\DoxyCodeLine{00369\ \}}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_ad6a00b059e454ba5c9d1eee55648d15c}{\_mi\_heap\_destroy\_pages}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00372\ \ \ \mbox{\hyperlink{heap_8c_aaf0ac2b53e4e2e6abcbbcd10faf21b11}{mi\_heap\_visit\_pages}}(heap,\ \&\mbox{\hyperlink{heap_8c_af64b8d8015291685b834fd97dd0762ba}{\_mi\_heap\_page\_destroy}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00373\ \ \ \mbox{\hyperlink{heap_8c_aa04066f105381dc4ec279cbb0fa6e890}{mi\_heap\_reset\_pages}}(heap);}
+\DoxyCodeLine{00374\ \}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\#if\ MI\_TRACK\_HEAP\_DESTROY}}
+\DoxyCodeLine{00377\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{mimalloc_8h_a9bc76cd39d1bc0a5dc939246d1e30fa4}{mi\_cdecl}}\ mi\_heap\_track\_block\_free(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{group__analysis_gaf02b9aae093aa115fe44e6ee130b09c7}{mi\_heap\_area\_t}}*\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}},\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00378\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(heap);\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(\mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}});\ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(\mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}});}
+\DoxyCodeLine{00379\ \ \ \mbox{\hyperlink{track_8h_af7a8e838cb26deff135877a04188d6ff}{mi\_track\_free\_size}}(\mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}},\mbox{\hyperlink{group__extended_ga089c859d9eddc5f9b4bd946cd53cebee}{mi\_usable\_size}}(\mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}));}
+\DoxyCodeLine{00380\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00381\ \}}
+\DoxyCodeLine{00382\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__heap_ga9f9c0844edb9717f4feacd79116b8e0d}{mi\_heap\_destroy}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00385\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00386\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap));}
+\DoxyCodeLine{00387\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(!heap-\/>\mbox{\hyperlink{structmi__heap__s_a14d0f3925d40afb54ed89983fdefb805}{allow\_page\_reclaim}});}
+\DoxyCodeLine{00388\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(!heap-\/>\mbox{\hyperlink{structmi__heap__s_a8d500d2e3ccde6de4e60682df8ea58ea}{allow\_page\_abandon}});}
+\DoxyCodeLine{00389\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab812423812d2dd7af864b7e112055d8e}{mi\_assert\_expensive}}(mi\_heap\_is\_valid(heap));}
+\DoxyCodeLine{00390\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00391\ \textcolor{preprocessor}{\ \ \#if\ MI\_GUARDED}}
+\DoxyCodeLine{00392\ \ \ \textcolor{comment}{//\ \_mi\_warning\_message("{}'mi\_heap\_destroy'\ called\ but\ MI\_GUARDED\ is\ enabled\ -\/-\/\ using\ \`{}mi\_heap\_delete`\ instead\ (heap\ at\ \%p)\(\backslash\)n"{},\ heap);}}
+\DoxyCodeLine{00393\ \ \ \mbox{\hyperlink{group__heap_ga2ab1af8d438819b55319c7ef51d1e409}{mi\_heap\_delete}}(heap);}
+\DoxyCodeLine{00394\ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00396\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a14d0f3925d40afb54ed89983fdefb805}{allow\_page\_reclaim}})\ \{}
+\DoxyCodeLine{00397\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}'mi\_heap\_destroy'\ called\ but\ ignored\ as\ the\ heap\ was\ not\ created\ with\ 'allow\_destroy'\ (heap\ at\ \%p)\(\backslash\)n"{}},\ heap);}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{comment}{//\ don't\ free\ in\ case\ it\ may\ contain\ reclaimed\ pages,}}
+\DoxyCodeLine{00399\ \ \ \ \ \mbox{\hyperlink{group__heap_ga2ab1af8d438819b55319c7ef51d1e409}{mi\_heap\_delete}}(heap);}
+\DoxyCodeLine{00400\ \ \ \}}
+\DoxyCodeLine{00401\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{comment}{//\ track\ all\ blocks\ as\ freed}}
+\DoxyCodeLine{00403\ \textcolor{preprocessor}{\ \ \ \ \#if\ MI\_TRACK\_HEAP\_DESTROY}}
+\DoxyCodeLine{00404\ \ \ \ \ \mbox{\hyperlink{group__analysis_ga70c46687dc6e9dc98b232b02646f8bed}{mi\_heap\_visit\_blocks}}(heap,\ \textcolor{keyword}{true},\ mi\_heap\_track\_block\_free,\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00405\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{comment}{//\ free\ all\ pages}}
+\DoxyCodeLine{00407\ \ \ \ \ \mbox{\hyperlink{heap_8c_ad6a00b059e454ba5c9d1eee55648d15c}{\_mi\_heap\_destroy\_pages}}(heap);}
+\DoxyCodeLine{00408\ \ \ \ \ \mbox{\hyperlink{heap_8c_a0b78721d61a2941477b5381a30cde1e6}{mi\_heap\_free}}(heap,\textcolor{keyword}{true});}
+\DoxyCodeLine{00409\ \ \ \}}
+\DoxyCodeLine{00410\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00411\ \}}
+\DoxyCodeLine{00412\ }
+\DoxyCodeLine{00413\ \textcolor{comment}{//\ forcefully\ destroy\ all\ heaps\ in\ the\ current\ thread}}
+\DoxyCodeLine{00414\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a0f3be54d4c82f6711129f15c5352f100}{\_mi\_heap\_unsafe\_destroy\_all}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00415\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00416\ \ \ \textcolor{keywordflow}{if}\ (heap\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00417\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ curr\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}};}
+\DoxyCodeLine{00418\ \ \ \textcolor{keywordflow}{while}\ (curr\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00419\ \ \ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ next\ =\ curr-\/>\mbox{\hyperlink{structmi__heap__s_a1ccd0d74420921e2aa92fa9c9474f497}{next}};}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keywordflow}{if}\ (!curr-\/>\mbox{\hyperlink{structmi__heap__s_a14d0f3925d40afb54ed89983fdefb805}{allow\_page\_reclaim}})\ \{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \mbox{\hyperlink{group__heap_ga9f9c0844edb9717f4feacd79116b8e0d}{mi\_heap\_destroy}}(curr);}
+\DoxyCodeLine{00422\ \ \ \ \ \}}
+\DoxyCodeLine{00423\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \mbox{\hyperlink{heap_8c_ad6a00b059e454ba5c9d1eee55648d15c}{\_mi\_heap\_destroy\_pages}}(curr);}
+\DoxyCodeLine{00425\ \ \ \ \ \}}
+\DoxyCodeLine{00426\ \ \ \ \ curr\ =\ next;}
+\DoxyCodeLine{00427\ \ \ \}}
+\DoxyCodeLine{00428\ \}}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00431\ \textcolor{comment}{\ \ Safe\ Heap\ delete}}
+\DoxyCodeLine{00432\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \textcolor{comment}{//\ Transfer\ the\ pages\ from\ one\ heap\ to\ the\ other}}
+\DoxyCodeLine{00435\ \textcolor{comment}{//static\ void\ mi\_heap\_absorb(mi\_heap\_t*\ heap,\ mi\_heap\_t*\ from)\ \{}}
+\DoxyCodeLine{00436\ \textcolor{comment}{//\ \ mi\_assert\_internal(heap!=NULL);}}
+\DoxyCodeLine{00437\ \textcolor{comment}{//\ \ if\ (from==NULL\ ||\ from-\/>page\_count\ ==\ 0)\ return;}}
+\DoxyCodeLine{00438\ \textcolor{comment}{//}}
+\DoxyCodeLine{00439\ \textcolor{comment}{//\ \ //\ transfer\ all\ pages\ by\ appending\ the\ queues;\ this\ will\ set\ a\ new\ heap\ field}}
+\DoxyCodeLine{00440\ \textcolor{comment}{//\ \ for\ (size\_t\ i\ =\ 0;\ i\ <=\ MI\_BIN\_FULL;\ i++)\ \{}}
+\DoxyCodeLine{00441\ \textcolor{comment}{//\ \ \ \ mi\_page\_queue\_t*\ pq\ =\ \&heap-\/>pages[i];}}
+\DoxyCodeLine{00442\ \textcolor{comment}{//\ \ \ \ mi\_page\_queue\_t*\ append\ =\ \&from-\/>pages[i];}}
+\DoxyCodeLine{00443\ \textcolor{comment}{//\ \ \ \ size\_t\ pcount\ =\ \_mi\_page\_queue\_append(heap,\ pq,\ append);}}
+\DoxyCodeLine{00444\ \textcolor{comment}{//\ \ \ \ heap-\/>page\_count\ +=\ pcount;}}
+\DoxyCodeLine{00445\ \textcolor{comment}{//\ \ \ \ from-\/>page\_count\ -\/=\ pcount;}}
+\DoxyCodeLine{00446\ \textcolor{comment}{//\ \ \}}}
+\DoxyCodeLine{00447\ \textcolor{comment}{//\ \ mi\_assert\_internal(from-\/>page\_count\ ==\ 0);}}
+\DoxyCodeLine{00448\ \textcolor{comment}{//}}
+\DoxyCodeLine{00449\ \textcolor{comment}{//\ \ //\ and\ reset\ the\ \`{}from`\ heap}}
+\DoxyCodeLine{00450\ \textcolor{comment}{//\ \ mi\_heap\_reset\_pages(from);}}
+\DoxyCodeLine{00451\ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00454\ \textcolor{comment}{//static\ bool\ mi\_heaps\_are\_compatible(mi\_heap\_t*\ heap1,\ mi\_heap\_t*\ heap2)\ \{}}
+\DoxyCodeLine{00455\ \textcolor{comment}{//\ \ return\ (heap1-\/>tag\ ==\ heap2-\/>tag\ \&\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ store\ same\ kind\ of\ objects}}
+\DoxyCodeLine{00456\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ heap1-\/>tld-\/>subproc\ ==\ heap2-\/>tld-\/>subproc\ \&\&\ //\ same\ sub-\/process}}
+\DoxyCodeLine{00457\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ heap1-\/>arena\_id\ ==\ heap2-\/>arena\_id);\ \ \ \ \ \ \ \ \ \ //\ same\ arena\ preference}}
+\DoxyCodeLine{00458\ \textcolor{comment}{//\}}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \textcolor{comment}{//\ Safe\ delete\ a\ heap\ without\ freeing\ any\ still\ allocated\ blocks\ in\ that\ heap.}}
+\DoxyCodeLine{00461\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__heap_ga2ab1af8d438819b55319c7ef51d1e409}{mi\_heap\_delete}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)}
+\DoxyCodeLine{00462\ \{}
+\DoxyCodeLine{00463\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00464\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap));}
+\DoxyCodeLine{00465\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab812423812d2dd7af864b7e112055d8e}{mi\_assert\_expensive}}(mi\_heap\_is\_valid(heap));}
+\DoxyCodeLine{00466\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \ \ \textcolor{comment}{//\ abandon\ all\ pages}}
+\DoxyCodeLine{00469\ \ \ \mbox{\hyperlink{heap_8c_a3924fe17738a488f951d16e9216062b1}{\_mi\_heap\_collect\_abandon}}(heap);}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a4d139f61ef10d6ef25a0d1f99fcdf18c}{page\_count}}==0);}
+\DoxyCodeLine{00472\ \ \ \mbox{\hyperlink{heap_8c_a0b78721d61a2941477b5381a30cde1e6}{mi\_heap\_free}}(heap,\textcolor{keyword}{true});}
+\DoxyCodeLine{00473\ \}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{group__heap_ga349b677dec7da5eacdbc7a385bd62a4a}{mi\_heap\_set\_default}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00476\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00477\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap));}
+\DoxyCodeLine{00478\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00479\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab812423812d2dd7af864b7e112055d8e}{mi\_assert\_expensive}}(mi\_heap\_is\_valid(heap));}
+\DoxyCodeLine{00480\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ old\ =\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}();}
+\DoxyCodeLine{00481\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a96662339b7c5ce88bc64ce34ac3afd62}{\_mi\_heap\_set\_default\_direct}}(heap);}
+\DoxyCodeLine{00482\ \ \ \textcolor{keywordflow}{return}\ old;}
+\DoxyCodeLine{00483\ \}}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00487\ \textcolor{comment}{\ \ Load/unload\ heaps}}
+\DoxyCodeLine{00488\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00489\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a4c01a089dd4544c7082c6331c9e0bf1b}{mi\_heap\_unload}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap)\ \{}
+\DoxyCodeLine{00490\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap));}
+\DoxyCodeLine{00491\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab812423812d2dd7af864b7e112055d8e}{mi\_assert\_expensive}}(mi\_heap\_is\_valid(heap));}
+\DoxyCodeLine{00492\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00493\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a4eec2cb7a91ef34810687b013d1dab77}{exclusive\_arena}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00494\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}cannot\ unload\ heaps\ that\ are\ not\ associated\ with\ an\ exclusive\ arena\(\backslash\)n"{}});}
+\DoxyCodeLine{00495\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00496\ \ \ \}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \textcolor{comment}{//\ abandon\ all\ pages\ so\ all\ thread'id\ in\ the\ pages\ are\ cleared}}
+\DoxyCodeLine{00499\ \ \ \mbox{\hyperlink{heap_8c_a3924fe17738a488f951d16e9216062b1}{\_mi\_heap\_collect\_abandon}}(heap);}
+\DoxyCodeLine{00500\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a4d139f61ef10d6ef25a0d1f99fcdf18c}{page\_count}}==0);}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \ \ \textcolor{comment}{//\ remove\ from\ heap\ list}}
+\DoxyCodeLine{00503\ \ \ \mbox{\hyperlink{heap_8c_a0b78721d61a2941477b5381a30cde1e6}{mi\_heap\_free}}(heap,\ \textcolor{keyword}{false}\ \textcolor{comment}{/*\ but\ don't\ actually\ free\ the\ memory\ */});}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ \ \ \textcolor{comment}{//\ disassociate\ from\ the\ current\ thread-\/local\ and\ static\ state}}
+\DoxyCodeLine{00506\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00507\ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00508\ \}}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a4f0ad56f3fef237d69f3e73647991aa2}{mi\_heap\_reload}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{group__extended_ga99fe38650d0b02e0e0f89ee024db91d3}{mi\_arena\_id\_t}}\ arena\_id)\ \{}
+\DoxyCodeLine{00511\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap));}
+\DoxyCodeLine{00512\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00513\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a4eec2cb7a91ef34810687b013d1dab77}{exclusive\_arena}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00514\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}cannot\ reload\ heaps\ that\ were\ not\ associated\ with\ an\ exclusive\ arena\(\backslash\)n"{}});}
+\DoxyCodeLine{00515\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00516\ \ \ \}}
+\DoxyCodeLine{00517\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00518\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}cannot\ reload\ heaps\ that\ were\ not\ unloaded\ first\(\backslash\)n"{}});}
+\DoxyCodeLine{00519\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00520\ \ \ \}}
+\DoxyCodeLine{00521\ \ \ \mbox{\hyperlink{types_8h_a4187c38d7fe26f37558a31eb935dfe2d}{mi\_arena\_t}}*\ arena\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a3b9deaaeb6e6725448b686d3025260ef}{\_mi\_arena\_from\_id}}(arena\_id);}
+\DoxyCodeLine{00522\ \ \ \textcolor{keywordflow}{if}\ (heap-\/>\mbox{\hyperlink{structmi__heap__s_a4eec2cb7a91ef34810687b013d1dab77}{exclusive\_arena}}\ !=\ arena)\ \{}
+\DoxyCodeLine{00523\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac253cac2ca24fb63be7f4937ac620dc4}{\_mi\_warning\_message}}(\textcolor{stringliteral}{"{}trying\ to\ reload\ a\ heap\ at\ a\ different\ arena\ address:\ \%p\ vs\ \%p\(\backslash\)n"{}},\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a4eec2cb7a91ef34810687b013d1dab77}{exclusive\_arena}},\ arena);}
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00525\ \ \ \}}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a4d139f61ef10d6ef25a0d1f99fcdf18c}{page\_count}}==0);}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \ \ \textcolor{comment}{//\ re-\/associate\ with\ the\ current\ thread-\/local\ and\ static\ state}}
+\DoxyCodeLine{00530\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}\ =\ \mbox{\hyperlink{group__heap_ga14c667a6e2c5d28762d8cb7d4e057909}{mi\_heap\_get\_default}}()-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}};}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \ \ \textcolor{comment}{//\ reinit\ direct\ pages\ (as\ we\ may\ be\ in\ a\ different\ process)}}
+\DoxyCodeLine{00533\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(heap-\/>\mbox{\hyperlink{structmi__heap__s_a4d139f61ef10d6ef25a0d1f99fcdf18c}{page\_count}}\ ==\ 0);}
+\DoxyCodeLine{00534\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \mbox{\hyperlink{types_8h_a2b13309fa6e4af2213033754e0cfcddc}{MI\_PAGES\_DIRECT}};\ i++)\ \{}
+\DoxyCodeLine{00535\ \ \ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a7a6716ebf08933f56921f8e1a582c30e}{pages\_free\_direct}}[i]\ =\ (\mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*)\&\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a40799c89ba077392c3973651035476aa}{\_mi\_page\_empty}};}
+\DoxyCodeLine{00536\ \ \ \}}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \textcolor{comment}{//\ push\ on\ the\ thread\ local\ heaps\ list}}
+\DoxyCodeLine{00539\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a1ccd0d74420921e2aa92fa9c9474f497}{next}}\ =\ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}};}
+\DoxyCodeLine{00540\ \ \ heap-\/>\mbox{\hyperlink{structmi__heap__s_a2e524aeb1b30f344a4f0b70e6cf6cb3a}{tld}}-\/>\mbox{\hyperlink{structmi__tld__s_a5c40faac5f2f37cdfe93f42efa697481}{heaps}}\ =\ heap;}
+\DoxyCodeLine{00541\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00542\ \}}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00545\ \textcolor{comment}{\ \ Analysis}}
+\DoxyCodeLine{00546\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \textcolor{comment}{//\ static\ since\ it\ is\ not\ thread\ safe\ to\ access\ heaps\ from\ other\ threads.}}
+\DoxyCodeLine{00549\ \textcolor{keyword}{static}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{heap_8c_ad460ca1369ec8efad4820621f6aa0e12}{mi\_heap\_of\_block}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \{}
+\DoxyCodeLine{00550\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00551\ \ \ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_acd84a462a2045538d19ecc56e6cc29f6}{\_mi\_ptr\_page}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});\ \textcolor{comment}{//\ TODO:\ check\ pointer\ validity?}}
+\DoxyCodeLine{00552\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a35ba87308ac94f73791017e50d3ab4c7}{mi\_page\_heap}}(page);}
+\DoxyCodeLine{00553\ \}}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{group__analysis_gaa862aa8ed8d57d84cae41fc1022d71af}{mi\_heap\_contains\_block}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \{}
+\DoxyCodeLine{00556\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00557\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00558\ \ \ \textcolor{keywordflow}{return}\ (heap\ ==\ \mbox{\hyperlink{heap_8c_ad460ca1369ec8efad4820621f6aa0e12}{mi\_heap\_of\_block}}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}));}
+\DoxyCodeLine{00559\ \}}
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a67386fbab718c78fccb75da97f11b983}{mi\_heap\_page\_check\_owned}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{types_8h_a9646624e7de8587984ec8e8cd5c5d780}{mi\_page\_queue\_t}}*\ pq,\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{void}*\ vfound)\ \{}
+\DoxyCodeLine{00563\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(heap);}
+\DoxyCodeLine{00564\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(pq);}
+\DoxyCodeLine{00565\ \ \ \textcolor{keywordtype}{bool}*\ found\ =\ (\textcolor{keywordtype}{bool}*)vfound;}
+\DoxyCodeLine{00566\ \ \ \textcolor{keywordtype}{void}*\ start\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a95e8b035747d340ad060f5cf0811b7e9}{mi\_page\_start}}(page);}
+\DoxyCodeLine{00567\ \ \ \textcolor{keywordtype}{void}*\ end\ \ \ =\ (\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)start\ +\ (page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}}\ *\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a6134893990c1f09da2b40092ceecc780}{mi\_page\_block\_size}}(page));}
+\DoxyCodeLine{00568\ \ \ *found\ =\ (\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ >=\ start\ \&\&\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ <\ end);}
+\DoxyCodeLine{00569\ \ \ \textcolor{keywordflow}{return}\ (!*found);\ \textcolor{comment}{//\ continue\ if\ not\ found}}
+\DoxyCodeLine{00570\ \}}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{group__analysis_ga0d67c1789faaa15ff366c024fcaf6377}{mi\_heap\_check\_owned}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \{}
+\DoxyCodeLine{00573\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(heap\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00574\ \ \ \textcolor{keywordflow}{if}\ (heap==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}\ ||\ !\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a320c7d8a15c57974d3b105558a2a55e6}{mi\_heap\_is\_initialized}}(heap))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00575\ \ \ \textcolor{keywordflow}{if}\ (((uintptr\_t)\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ \&\ (\mbox{\hyperlink{bits_8h_af8a1f49c3ca95474d8fc5fdb53874026}{MI\_INTPTR\_SIZE}}\ -\/\ 1))\ !=\ 0)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};\ \ \textcolor{comment}{//\ only\ aligned\ pointers}}
+\DoxyCodeLine{00576\ \ \ \textcolor{keywordtype}{bool}\ found\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00577\ \ \ \mbox{\hyperlink{heap_8c_aaf0ac2b53e4e2e6abcbbcd10faf21b11}{mi\_heap\_visit\_pages}}(heap,\ \&\mbox{\hyperlink{heap_8c_a67386fbab718c78fccb75da97f11b983}{mi\_heap\_page\_check\_owned}},\ (\textcolor{keywordtype}{void}*)\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \&found);}
+\DoxyCodeLine{00578\ \ \ \textcolor{keywordflow}{return}\ found;}
+\DoxyCodeLine{00579\ \}}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{group__analysis_ga628c237489c2679af84a4d0d143b3dd5}{mi\_check\_owned}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \{}
+\DoxyCodeLine{00582\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{group__analysis_ga0d67c1789faaa15ff366c024fcaf6377}{mi\_heap\_check\_owned}}(\mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}(),\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}});}
+\DoxyCodeLine{00583\ \}}
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00586\ \textcolor{comment}{\ \ Visit\ all\ heap\ blocks\ and\ areas}}
+\DoxyCodeLine{00587\ \textcolor{comment}{\ \ Todo:\ enable\ visiting\ abandoned\ pages,\ and}}
+\DoxyCodeLine{00588\ \textcolor{comment}{\ \ \ \ \ \ \ \ enable\ visiting\ all\ blocks\ of\ all\ heaps\ across\ threads}}
+\DoxyCodeLine{00589\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00590\ }
+\DoxyCodeLine{00591\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a6576954720d94bcc7f2e4409fb05f28d}{\_mi\_heap\_area\_init}}(\mbox{\hyperlink{group__analysis_gaf02b9aae093aa115fe44e6ee130b09c7}{mi\_heap\_area\_t}}*\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page)\ \{}
+\DoxyCodeLine{00592\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ bsize\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a6134893990c1f09da2b40092ceecc780}{mi\_page\_block\_size}}(page);}
+\DoxyCodeLine{00593\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ ubsize\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a432abca03d059a7d40d8d39617afc8f7}{mi\_page\_usable\_block\_size}}(page);}
+\DoxyCodeLine{00594\ \ \ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}-\/>reserved\ =\ page-\/>\mbox{\hyperlink{structmi__page__s_acf15d96ab2462c10365859158a84bb72}{reserved}}\ *\ bsize;}
+\DoxyCodeLine{00595\ \ \ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}-\/>committed\ =\ page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}}\ *\ bsize;}
+\DoxyCodeLine{00596\ \ \ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}-\/>blocks\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a95e8b035747d340ad060f5cf0811b7e9}{mi\_page\_start}}(page);}
+\DoxyCodeLine{00597\ \ \ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}-\/>used\ =\ page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}};\ \ \ \textcolor{comment}{//\ number\ of\ blocks\ in\ use\ (\#553)}}
+\DoxyCodeLine{00598\ \ \ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}-\/>block\_size\ =\ ubsize;}
+\DoxyCodeLine{00599\ \ \ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}-\/>full\_block\_size\ =\ bsize;}
+\DoxyCodeLine{00600\ \ \ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}-\/>heap\_tag\ =\ page-\/>\mbox{\hyperlink{structmi__page__s_a7a497670246f95df7e1191b9dde1667c}{heap\_tag}};}
+\DoxyCodeLine{00601\ \}}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{heap_8c_a6c79df42fccc9f061eb687512ac98a48}{mi\_get\_fast\_divisor}}(\textcolor{keywordtype}{size\_t}\ divisor,\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}*\ magic,\ \textcolor{keywordtype}{size\_t}*\ shift)\ \{}
+\DoxyCodeLine{00605\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(divisor\ >\ 0\ \&\&\ divisor\ <=\ \mbox{\hyperlink{eabase_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\_MAX}});}
+\DoxyCodeLine{00606\ \ \ *shift\ =\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}\ -\/\ \mbox{\hyperlink{bits_8h_af432eec4ac40df0b60ba04ea09a103fb}{mi\_clz}}(divisor\ -\/\ 1);}
+\DoxyCodeLine{00607\ \ \ *magic\ =\ ((((\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})1\ <<\ 32)\ *\ (((\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})1\ <<\ *shift)\ -\/\ divisor))\ /\ divisor\ +\ 1);}
+\DoxyCodeLine{00608\ \}}
+\DoxyCodeLine{00609\ }
+\DoxyCodeLine{00610\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{heap_8c_a9ec632193e96f0bac83aa4d92aaede9a}{mi\_fast\_divide}}(\textcolor{keywordtype}{size\_t}\ n,\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ magic,\ \textcolor{keywordtype}{size\_t}\ shift)\ \{}
+\DoxyCodeLine{00611\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(n\ <=\ \mbox{\hyperlink{eabase_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\_MAX}});}
+\DoxyCodeLine{00612\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ hi\ =\ ((\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}})n\ *\ magic)\ >>\ 32;}
+\DoxyCodeLine{00613\ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{size\_t})((hi\ +\ n)\ >>\ shift);}
+\DoxyCodeLine{00614\ \}}
+\DoxyCodeLine{00615\ }
+\DoxyCodeLine{00616\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a24d0a918a8f67f649846aa540743d1f3}{\_mi\_heap\_area\_visit\_blocks}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__analysis_gaf02b9aae093aa115fe44e6ee130b09c7}{mi\_heap\_area\_t}}*\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page,\ \mbox{\hyperlink{group__analysis_ga8255dc9371e6b299d9802a610c4e34ec}{mi\_block\_visit\_fun}}*\ visitor,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00617\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(\mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00618\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}}==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00619\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(page\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00620\ \ \ \textcolor{keywordflow}{if}\ (page\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ae2b78e1e45e4ac3db8102e9d333d2972}{\_mi\_page\_free\_collect}}(page,\textcolor{keyword}{true});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ collect\ both\ thread\_delayed\ and\ local\_free}}
+\DoxyCodeLine{00623\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(page-\/>\mbox{\hyperlink{structmi__page__s_a9ed7774dcbd4de583d1594d698128830}{local\_free}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00624\ \ \ \textcolor{keywordflow}{if}\ (page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}}\ ==\ 0)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \ \ \textcolor{keywordtype}{size\_t}\ psize;}
+\DoxyCodeLine{00627\ \ \ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*\ \textcolor{keyword}{const}\ pstart\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab02bec7b56343136344cb9441cb889c7}{mi\_page\_area}}(page,\ \&psize);}
+\DoxyCodeLine{00628\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \textcolor{keyword}{const}\ heap\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a35ba87308ac94f73791017e50d3ab4c7}{mi\_page\_heap}}(page);}
+\DoxyCodeLine{00629\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ bsize\ \ \ \ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a6134893990c1f09da2b40092ceecc780}{mi\_page\_block\_size}}(page);}
+\DoxyCodeLine{00630\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ ubsize\ \ \ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a432abca03d059a7d40d8d39617afc8f7}{mi\_page\_usable\_block\_size}}(page);\ \textcolor{comment}{//\ without\ padding}}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \ \ \textcolor{comment}{//\ optimize\ page\ with\ one\ block}}
+\DoxyCodeLine{00633\ \ \ \textcolor{keywordflow}{if}\ (page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}}\ ==\ 1)\ \{}
+\DoxyCodeLine{00634\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}}\ ==\ 1\ \&\&\ page-\/>\mbox{\hyperlink{structmi__page__s_ae2d4b1c483d94e3624319bbca00d3da3}{free}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{keywordflow}{return}\ visitor(\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a35ba87308ac94f73791017e50d3ab4c7}{mi\_page\_heap}}(page),\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ pstart,\ ubsize,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00636\ \ \ \}}
+\DoxyCodeLine{00637\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_af04c7a87bc1c69ef3e763a580f47a418}{mi\_assert}}(bsize\ <=\ \mbox{\hyperlink{eabase_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\_MAX}});}
+\DoxyCodeLine{00638\ }
+\DoxyCodeLine{00639\ \ \ \textcolor{comment}{//\ optimize\ full\ pages}}
+\DoxyCodeLine{00640\ \ \ \textcolor{keywordflow}{if}\ (page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}}\ ==\ page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}})\ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ =\ pstart;}
+\DoxyCodeLine{00642\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}};\ i++)\ \{}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!visitor(heap,\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}},\ ubsize,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}}))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ +=\ bsize;}
+\DoxyCodeLine{00645\ \ \ \ \ \}}
+\DoxyCodeLine{00646\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00647\ \ \ \}}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \textcolor{comment}{//\ create\ a\ bitmap\ of\ free\ blocks.}}
+\DoxyCodeLine{00650\ \textcolor{preprocessor}{\ \ \#define\ MI\_MAX\_BLOCKS\ \ \ (MI\_SMALL\_PAGE\_SIZE\ /\ sizeof(void*))}}
+\DoxyCodeLine{00651\ \ \ uintptr\_t\ free\_map[\mbox{\hyperlink{heap_8c_a900323fd3cc98be7ac56c7ff5c55f257}{MI\_MAX\_BLOCKS}}\ /\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}}];}
+\DoxyCodeLine{00652\ \ \ \textcolor{keyword}{const}\ uintptr\_t\ bmapsize\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a693e5b64e9a4644c716974dda2395edc}{\_mi\_divide\_up}}(page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}},\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}});}
+\DoxyCodeLine{00653\ \ \ memset(free\_map,\ 0,\ bmapsize\ *\ \textcolor{keyword}{sizeof}(intptr\_t));}
+\DoxyCodeLine{00654\ \ \ \textcolor{keywordflow}{if}\ (page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}}\ \%\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}}\ !=\ 0)\ \{}
+\DoxyCodeLine{00655\ \ \ \ \ \textcolor{comment}{//\ mark\ left-\/over\ bits\ at\ the\ end\ as\ free}}
+\DoxyCodeLine{00656\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ shift\ \ \ =\ (page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}}\ \%\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}});}
+\DoxyCodeLine{00657\ \ \ \ \ uintptr\_t\ mask\ =\ (\mbox{\hyperlink{eabase_8h_ab2355300ea19395357e62d780f4dd073}{UINTPTR\_MAX}}\ <<\ shift);}
+\DoxyCodeLine{00658\ \ \ \ \ free\_map[bmapsize\ -\/\ 1]\ =\ mask;}
+\DoxyCodeLine{00659\ \ \ \}}
+\DoxyCodeLine{00660\ }
+\DoxyCodeLine{00661\ \ \ \textcolor{comment}{//\ fast\ repeated\ division\ by\ the\ block\ size}}
+\DoxyCodeLine{00662\ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ magic;}
+\DoxyCodeLine{00663\ \ \ \textcolor{keywordtype}{size\_t}\ \ \ shift;}
+\DoxyCodeLine{00664\ \ \ \mbox{\hyperlink{heap_8c_a6c79df42fccc9f061eb687512ac98a48}{mi\_get\_fast\_divisor}}(bsize,\ \&magic,\ \&shift);}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ \textcolor{preprocessor}{\ \ \#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00667\ \ \ \textcolor{keywordtype}{size\_t}\ free\_count\ =\ 0;}
+\DoxyCodeLine{00668\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00669\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{types_8h_a9a69f9a34bc130b6a51162b980e9c631}{mi\_block\_t}}*\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ =\ page-\/>\mbox{\hyperlink{structmi__page__s_ae2d4b1c483d94e3624319bbca00d3da3}{free}};\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ =\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_aaa5daf3a8b3db89666b6861cbb1e2f96}{mi\_block\_next}}(page,\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}))\ \{}
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\ \ \ \ \#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00671\ \ \ \ \ free\_count++;}
+\DoxyCodeLine{00672\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00673\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}((\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)\mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ >=\ pstart\ \&\&\ (\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)\mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ <\ (pstart\ +\ psize));}
+\DoxyCodeLine{00674\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ (\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)\mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ -\/\ pstart;}
+\DoxyCodeLine{00675\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ \%\ bsize\ ==\ 0);}
+\DoxyCodeLine{00676\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ <=\ \mbox{\hyperlink{eabase_8h_ab5eb23180f7cc12b7d6c04a8ec067fdd}{UINT32\_MAX}});}
+\DoxyCodeLine{00677\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ blockidx\ =\ \mbox{\hyperlink{heap_8c_a9ec632193e96f0bac83aa4d92aaede9a}{mi\_fast\_divide}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ magic,\ shift);}
+\DoxyCodeLine{00678\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(blockidx\ ==\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ /\ bsize);}
+\DoxyCodeLine{00679\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(blockidx\ <\ \mbox{\hyperlink{heap_8c_a900323fd3cc98be7ac56c7ff5c55f257}{MI\_MAX\_BLOCKS}});}
+\DoxyCodeLine{00680\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bitidx\ =\ (blockidx\ /\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}});}
+\DoxyCodeLine{00681\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bit\ =\ blockidx\ -\/\ (bitidx\ *\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}});}
+\DoxyCodeLine{00682\ \ \ \ \ free\_map[bitidx]\ |=\ ((uintptr\_t)1\ <<\ bit);}
+\DoxyCodeLine{00683\ \ \ \}}
+\DoxyCodeLine{00684\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(page-\/>\mbox{\hyperlink{structmi__page__s_a9ed1099a997d9c4e42b3bbe631705e41}{capacity}}\ ==\ (free\_count\ +\ page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}}));}
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00686\ \ \ \textcolor{comment}{//\ walk\ through\ all\ blocks\ skipping\ the\ free\ ones}}
+\DoxyCodeLine{00687\ \textcolor{preprocessor}{\ \ \#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00688\ \ \ \textcolor{keywordtype}{size\_t}\ used\_count\ =\ 0;}
+\DoxyCodeLine{00689\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00690\ \ \ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ =\ pstart;}
+\DoxyCodeLine{00691\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ bmapsize;\ i++)\ \{}
+\DoxyCodeLine{00692\ \ \ \ \ \textcolor{keywordflow}{if}\ (free\_map[i]\ ==\ 0)\ \{}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \textcolor{comment}{//\ every\ block\ is\ in\ use}}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ j\ =\ 0;\ j\ <\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}};\ j++)\ \{}
+\DoxyCodeLine{00695\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ used\_count++;}
+\DoxyCodeLine{00697\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!visitor(heap,\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}},\ ubsize,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}}))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ +=\ bsize;}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00701\ \ \ \ \ \}}
+\DoxyCodeLine{00702\ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00703\ \ \ \ \ \ \ \textcolor{comment}{//\ visit\ the\ used\ blocks\ in\ the\ mask}}
+\DoxyCodeLine{00704\ \ \ \ \ \ \ uintptr\_t\ m\ =\ \string~free\_map[i];}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (m\ !=\ 0)\ \{}
+\DoxyCodeLine{00706\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ MI\_DEBUG>1}}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ used\_count++;}
+\DoxyCodeLine{00708\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bitidx\ =\ \mbox{\hyperlink{bits_8h_a8eb514b948438b609030d3d13c0d1c6d}{mi\_ctz}}(m);}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!visitor(heap,\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ +\ (bitidx\ *\ bsize),\ ubsize,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}}))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \ \ m\ \&=\ m\ -\/\ 1;\ \ \textcolor{comment}{//\ clear\ least\ significant\ bit}}
+\DoxyCodeLine{00712\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00713\ \ \ \ \ \ \ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}\ +=\ bsize\ *\ \mbox{\hyperlink{bits_8h_a0ee4b2a3af1f3910771c059c1e661997}{MI\_INTPTR\_BITS}};}
+\DoxyCodeLine{00714\ \ \ \ \ \}}
+\DoxyCodeLine{00715\ \ \ \}}
+\DoxyCodeLine{00716\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(page-\/>\mbox{\hyperlink{structmi__page__s_ad1194a6cecba67ba2cf1952eb337968c}{used}}\ ==\ used\_count);}
+\DoxyCodeLine{00717\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00718\ \}}
+\DoxyCodeLine{00719\ }
+\DoxyCodeLine{00720\ }
+\DoxyCodeLine{00721\ }
+\DoxyCodeLine{00722\ \textcolor{comment}{//\ Separate\ struct\ to\ keep\ \`{}mi\_page\_t`\ out\ of\ the\ public\ interface}}
+\DoxyCodeLine{00723\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structmi__heap__area__ex__s}{mi\_heap\_area\_ex\_s}}\ \{}
+\DoxyCodeLine{00724\ \ \ \mbox{\hyperlink{group__analysis_gaf02b9aae093aa115fe44e6ee130b09c7}{mi\_heap\_area\_t}}\ \mbox{\hyperlink{structmi__heap__area__ex__s_a5f43be93375cb861d63d7cc18fdedc50}{area}};}
+\DoxyCodeLine{00725\ \ \ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ \mbox{\hyperlink{structmi__heap__area__ex__s_a272f6ee2f95a72065b6488d93ff9dc0f}{page}};}
+\DoxyCodeLine{00726\ \}\ \mbox{\hyperlink{heap_8c_a9ef25b5df77faa56405d4040e31bffc7}{mi\_heap\_area\_ex\_t}};}
+\DoxyCodeLine{00727\ }
+\DoxyCodeLine{00728\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{sugar_8h_abb452686968e48b67397da5f97445f5b}{bool}}\ (\mbox{\hyperlink{heap_8c_a4855d53270b62b6db0addee8d7b91f52}{mi\_heap\_area\_visit\_fun}})(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{heap_8c_a9ef25b5df77faa56405d4040e31bffc7}{mi\_heap\_area\_ex\_t}}*\ \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}},\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00729\ }
+\DoxyCodeLine{00730\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_ac4b05480a9141cb333105b8c1755a5a5}{mi\_heap\_visit\_areas\_page}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{types_8h_a9646624e7de8587984ec8e8cd5c5d780}{mi\_page\_queue\_t}}*\ pq,\ \mbox{\hyperlink{types_8h_a98e3d539b4113aac496ebe3d379ebe5b}{mi\_page\_t}}*\ page,\ \textcolor{keywordtype}{void}*\ vfun,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00731\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(heap);}
+\DoxyCodeLine{00732\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(pq);}
+\DoxyCodeLine{00733\ \ \ \mbox{\hyperlink{heap_8c_a4855d53270b62b6db0addee8d7b91f52}{mi\_heap\_area\_visit\_fun}}*\ fun\ =\ (\mbox{\hyperlink{heap_8c_a4855d53270b62b6db0addee8d7b91f52}{mi\_heap\_area\_visit\_fun}}*)vfun;}
+\DoxyCodeLine{00734\ \ \ \mbox{\hyperlink{heap_8c_a9ef25b5df77faa56405d4040e31bffc7}{mi\_heap\_area\_ex\_t}}\ xarea;}
+\DoxyCodeLine{00735\ \ \ xarea.\mbox{\hyperlink{structmi__heap__area__ex__s_a272f6ee2f95a72065b6488d93ff9dc0f}{page}}\ =\ page;}
+\DoxyCodeLine{00736\ \ \ \mbox{\hyperlink{heap_8c_a6576954720d94bcc7f2e4409fb05f28d}{\_mi\_heap\_area\_init}}(\&xarea.\mbox{\hyperlink{structmi__heap__area__ex__s_a5f43be93375cb861d63d7cc18fdedc50}{area}},\ page);}
+\DoxyCodeLine{00737\ \ \ \textcolor{keywordflow}{return}\ fun(heap,\ \&xarea,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});}
+\DoxyCodeLine{00738\ \}}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \textcolor{comment}{//\ Visit\ all\ heap\ pages\ as\ areas}}
+\DoxyCodeLine{00741\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a2a46266e4b06fa4e7fa8e8427767bd8f}{mi\_heap\_visit\_areas}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \mbox{\hyperlink{heap_8c_a4855d53270b62b6db0addee8d7b91f52}{mi\_heap\_area\_visit\_fun}}*\ visitor,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00742\ \ \ \textcolor{keywordflow}{if}\ (visitor\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00743\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{heap_8c_aaf0ac2b53e4e2e6abcbbcd10faf21b11}{mi\_heap\_visit\_pages}}((\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)heap,\ \&\mbox{\hyperlink{heap_8c_ac4b05480a9141cb333105b8c1755a5a5}{mi\_heap\_visit\_areas\_page}},\ (\textcolor{keywordtype}{void}*)(visitor),\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}});\ \textcolor{comment}{//\ note:\ function\ pointer\ to\ void*\ :-\/\{}}
+\DoxyCodeLine{00744\ \}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \textcolor{comment}{//\ Just\ to\ pass\ arguments}}
+\DoxyCodeLine{00747\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structmi__visit__blocks__args__s}{mi\_visit\_blocks\_args\_s}}\ \{}
+\DoxyCodeLine{00748\ \ \ \textcolor{keywordtype}{bool}\ \ \mbox{\hyperlink{structmi__visit__blocks__args__s_ac380f9c7e8cb08aaf1f87c6d3b411353}{visit\_blocks}};}
+\DoxyCodeLine{00749\ \ \ \mbox{\hyperlink{group__analysis_ga8255dc9371e6b299d9802a610c4e34ec}{mi\_block\_visit\_fun}}*\ \mbox{\hyperlink{structmi__visit__blocks__args__s_a7fed9d7de6a048112c76f9f35aa3691c}{visitor}};}
+\DoxyCodeLine{00750\ \ \ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{structmi__visit__blocks__args__s_a083efcb66f31acb8cdba7a5781d8ef17}{arg}};}
+\DoxyCodeLine{00751\ \}\ \mbox{\hyperlink{heap_8c_ab78cf1dbafd3134df5ed8f0953e555b3}{mi\_visit\_blocks\_args\_t}};}
+\DoxyCodeLine{00752\ }
+\DoxyCodeLine{00753\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{heap_8c_a7db34d22f30555e40a1cdb18229415f5}{mi\_heap\_area\_visitor}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{heap_8c_a9ef25b5df77faa56405d4040e31bffc7}{mi\_heap\_area\_ex\_t}}*\ xarea,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00754\ \ \ \mbox{\hyperlink{heap_8c_ab78cf1dbafd3134df5ed8f0953e555b3}{mi\_visit\_blocks\_args\_t}}*\ args\ =\ (\mbox{\hyperlink{heap_8c_ab78cf1dbafd3134df5ed8f0953e555b3}{mi\_visit\_blocks\_args\_t}}*)\mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}};}
+\DoxyCodeLine{00755\ \ \ \textcolor{keywordflow}{if}\ (!args-\/>\mbox{\hyperlink{structmi__visit__blocks__args__s_a7fed9d7de6a048112c76f9f35aa3691c}{visitor}}(heap,\ \&xarea-\/>\mbox{\hyperlink{structmi__heap__area__ex__s_a5f43be93375cb861d63d7cc18fdedc50}{area}},\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}},\ xarea-\/>\mbox{\hyperlink{structmi__heap__area__ex__s_a5f43be93375cb861d63d7cc18fdedc50}{area}}.\mbox{\hyperlink{structmi__heap__area__s_ae9dcab1d6df59a4e8759ca1d1bef2211}{block\_size}},\ args-\/>\mbox{\hyperlink{structmi__visit__blocks__args__s_a083efcb66f31acb8cdba7a5781d8ef17}{arg}}))\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00756\ \ \ \textcolor{keywordflow}{if}\ (args-\/>\mbox{\hyperlink{structmi__visit__blocks__args__s_ac380f9c7e8cb08aaf1f87c6d3b411353}{visit\_blocks}})\ \{}
+\DoxyCodeLine{00757\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{heap_8c_a24d0a918a8f67f649846aa540743d1f3}{\_mi\_heap\_area\_visit\_blocks}}(\&xarea-\/>\mbox{\hyperlink{structmi__heap__area__ex__s_a5f43be93375cb861d63d7cc18fdedc50}{area}},\ xarea-\/>\mbox{\hyperlink{structmi__heap__area__ex__s_a272f6ee2f95a72065b6488d93ff9dc0f}{page}},\ args-\/>\mbox{\hyperlink{structmi__visit__blocks__args__s_a7fed9d7de6a048112c76f9f35aa3691c}{visitor}},\ args-\/>\mbox{\hyperlink{structmi__visit__blocks__args__s_a083efcb66f31acb8cdba7a5781d8ef17}{arg}});}
+\DoxyCodeLine{00758\ \ \ \}}
+\DoxyCodeLine{00759\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00760\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00761\ \ \ \}}
+\DoxyCodeLine{00762\ \}}
+\DoxyCodeLine{00763\ }
+\DoxyCodeLine{00764\ \textcolor{comment}{//\ Visit\ all\ blocks\ in\ a\ heap}}
+\DoxyCodeLine{00765\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{group__analysis_ga70c46687dc6e9dc98b232b02646f8bed}{mi\_heap\_visit\_blocks}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap,\ \textcolor{keywordtype}{bool}\ visit\_blocks,\ \mbox{\hyperlink{group__analysis_ga8255dc9371e6b299d9802a610c4e34ec}{mi\_block\_visit\_fun}}*\ visitor,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}})\ \{}
+\DoxyCodeLine{00766\ \ \ \mbox{\hyperlink{heap_8c_ab78cf1dbafd3134df5ed8f0953e555b3}{mi\_visit\_blocks\_args\_t}}\ args\ =\ \{\ visit\_blocks,\ visitor,\ \mbox{\hyperlink{mimalloc_8h_ac9ca0390aa991912667416f6baf99e51}{arg}}\ \};}
+\DoxyCodeLine{00767\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{heap_8c_a2a46266e4b06fa4e7fa8e8427767bd8f}{mi\_heap\_visit\_areas}}(heap,\ \&\mbox{\hyperlink{heap_8c_a7db34d22f30555e40a1cdb18229415f5}{mi\_heap\_area\_visitor}},\ \&args);}
+\DoxyCodeLine{00768\ \}}
+
+\end{DoxyCode}

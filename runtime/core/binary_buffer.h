@@ -1,8 +1,8 @@
 #pragma once
 
-#include <luisa/core/stl/vector.h>
-#include <luisa/core/stl/memory.h>
-#include <luisa/core/intrin.h>
+#include <runtime/core/stl/vector.h>
+#include <runtime/core/stl/memory.h>
+#include <runtime/core/intrin.h>
 
 namespace luisa {
 

@@ -1,0 +1,4 @@
+var structdetail_1_1format__string__char_3_01_s_00_01void__t_3_01decltype_07sizeof_07detail_1_1to__saaac09946506e484c4774979edf8c4c6 =
+[
+    [ "type", "structdetail_1_1format__string__char_3_01_s_00_01void__t_3_01decltype_07sizeof_07detail_1_1to__saaac09946506e484c4774979edf8c4c6.html#abb79ea859e69cbbbd35af615029538ee", null ]
+];

@@ -1,5 +1,5 @@
-#include <luisa/core/logging.h>
-#include <luisa/dsl/local.h>
+#include <runtime/core/logging.h>
+#include <runtime/dsl/local.h>
 
 namespace luisa::compute::detail {
 

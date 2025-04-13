@@ -1,0 +1,25 @@
+var namespacerfl_1_1parsing_1_1schemaful =
+[
+    [ "MockMapReader", "structrfl_1_1parsing_1_1schemaful_1_1_mock_map_reader.html", "structrfl_1_1parsing_1_1schemaful_1_1_mock_map_reader" ],
+    [ "MockObjectReader", "structrfl_1_1parsing_1_1schemaful_1_1_mock_object_reader.html", "structrfl_1_1parsing_1_1schemaful_1_1_mock_object_reader" ],
+    [ "MockUnionReader", "structrfl_1_1parsing_1_1schemaful_1_1_mock_union_reader.html", "structrfl_1_1parsing_1_1schemaful_1_1_mock_union_reader" ],
+    [ "OptionalReader", "structrfl_1_1parsing_1_1schemaful_1_1_optional_reader.html", "structrfl_1_1parsing_1_1schemaful_1_1_optional_reader" ],
+    [ "SharedPtrReader", "structrfl_1_1parsing_1_1schemaful_1_1_shared_ptr_reader.html", "structrfl_1_1parsing_1_1schemaful_1_1_shared_ptr_reader" ],
+    [ "ToNamedTuple", "structrfl_1_1parsing_1_1schemaful_1_1_to_named_tuple.html", null ],
+    [ "ToNamedTuple< std::integer_sequence< int, _is... >, Ts... >", "structrfl_1_1parsing_1_1schemaful_1_1_to_named_tuple_3_01std_1_1integer__sequence_3_01int_00_01_94c0bab36014b65dd469ebb5c0d539a4.html", "structrfl_1_1parsing_1_1schemaful_1_1_to_named_tuple_3_01std_1_1integer__sequence_3_01int_00_01_94c0bab36014b65dd469ebb5c0d539a4" ],
+    [ "TupleToNamedTuple", "structrfl_1_1parsing_1_1schemaful_1_1_tuple_to_named_tuple.html", null ],
+    [ "TupleToNamedTuple< std::tuple< Ts... > >", "structrfl_1_1parsing_1_1schemaful_1_1_tuple_to_named_tuple_3_01std_1_1tuple_3_01_ts_8_8_8_01_4_01_4.html", "structrfl_1_1parsing_1_1schemaful_1_1_tuple_to_named_tuple_3_01std_1_1tuple_3_01_ts_8_8_8_01_4_01_4" ],
+    [ "TupleToNamedTuple< Tuple< Ts... > >", "structrfl_1_1parsing_1_1schemaful_1_1_tuple_to_named_tuple_3_01_tuple_3_01_ts_8_8_8_01_4_01_4.html", "structrfl_1_1parsing_1_1schemaful_1_1_tuple_to_named_tuple_3_01_tuple_3_01_ts_8_8_8_01_4_01_4" ],
+    [ "UniquePtrReader", "structrfl_1_1parsing_1_1schemaful_1_1_unique_ptr_reader.html", "structrfl_1_1parsing_1_1schemaful_1_1_unique_ptr_reader" ],
+    [ "VariantReader", "classrfl_1_1parsing_1_1schemaful_1_1_variant_reader.html", "classrfl_1_1parsing_1_1schemaful_1_1_variant_reader" ],
+    [ "IsSchemafulReader", "conceptrfl_1_1parsing_1_1schemaful_1_1_is_schemaful_reader.html", null ],
+    [ "IsSchemafulWriter", "conceptrfl_1_1parsing_1_1schemaful_1_1_is_schemaful_writer.html", null ],
+    [ "MockVariantType", "namespacerfl_1_1parsing_1_1schemaful.html#a91356ba50bbaa5881fd19f317527cd76", null ],
+    [ "tuple_to_named_tuple_t", "namespacerfl_1_1parsing_1_1schemaful.html#a97a5bad1d88c0ef91d490f62f6a45aa7", null ],
+    [ "to_field", "namespacerfl_1_1parsing_1_1schemaful.html#a4fa06ad5895ea1bb9988d44ed2d9e0c7", null ],
+    [ "to_field_name", "namespacerfl_1_1parsing_1_1schemaful.html#a637e665897ba12ed046a7c21720158f4", null ],
+    [ "to_field_name", "namespacerfl_1_1parsing_1_1schemaful.html#a54c51c3023afcc6ef7e3728ceca2e75f", null ],
+    [ "tuple_to_named_tuple", "namespacerfl_1_1parsing_1_1schemaful.html#a3207c5c3a01d9d7112dc0a95f968276b", null ],
+    [ "tuple_to_named_tuple", "namespacerfl_1_1parsing_1_1schemaful.html#aef4dd42cb68b4c59ce57ba218a103be4", null ],
+    [ "tuple_to_object", "namespacerfl_1_1parsing_1_1schemaful.html#a5b412f7002391ba449648c30b115d142", null ]
+];

@@ -1,0 +1,104 @@
+\doxysubsection{Assertions}
+\hypertarget{_topic_assertions}{}\label{_topic_assertions}\index{Assertions@{Assertions}}
+\textbackslash{}eigen\+Auto\+Toc\hypertarget{_topic_assertions_PlainAssert}{}\doxysubsubsection{\texorpdfstring{Assertions}{Assertions}}\label{_topic_assertions_PlainAssert}
+The macro eigen\+\_\+assert is defined to be {\ttfamily eigen\+\_\+plain\+\_\+assert} by default. We use eigen\+\_\+plain\+\_\+assert instead of {\ttfamily assert} to work around a known bug for GCC \texorpdfstring{$<$}{<}= 4.\+3. Basically, eigen\+\_\+plain\+\_\+assert {\itshape is} {\ttfamily assert}.\hypertarget{_topic_assertions_RedefineAssert}{}\doxysubsubsubsection{\texorpdfstring{Redefining assertions}{Redefining assertions}}\label{_topic_assertions_RedefineAssert}
+Both eigen\+\_\+assert and eigen\+\_\+plain\+\_\+assert are defined in Macros.\+h. Defining eigen\+\_\+assert indirectly gives you a chance to change its behavior. You can redefine this macro if you want to do something else such as throwing an exception, and fall back to its default behavior with eigen\+\_\+plain\+\_\+assert. The code below tells \doxylink{namespace_eigen}{Eigen} to throw an std\+::runtime\+\_\+error\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#undef\ eigen\_assert}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ eigen\_assert(x)\ \(\backslash\)}}
+\DoxyCodeLine{\textcolor{preprocessor}{\ \ if\ (!(x))\ \{\ throw\ (std::runtime\_error("{}Put\ your\ message\ here"{}));\ \}}}
+
+\end{DoxyCode}
+\hypertarget{_topic_assertions_DisableAssert}{}\doxysubsubsubsection{\texorpdfstring{Disabling assertions}{Disabling assertions}}\label{_topic_assertions_DisableAssert}
+Assertions cost run time and can be turned off. You can suppress eigen\+\_\+assert by defining {\ttfamily EIGEN\+\_\+\+NO\+\_\+\+DEBUG} {\bfseries{before}} including \doxylink{namespace_eigen}{Eigen} headers. {\ttfamily EIGEN\+\_\+\+NO\+\_\+\+DEBUG} is undefined by default unless {\ttfamily NDEBUG} is defined.\hypertarget{_topic_assertions_StaticAssert}{}\doxysubsubsection{\texorpdfstring{Static assertions}{Static assertions}}\label{_topic_assertions_StaticAssert}
+\doxylink{class_static}{Static} assertions are not standardized until C++11. However, in the \doxylink{namespace_eigen}{Eigen} library, there are many conditions can and should be detectedat compile time. For instance, we use static assertions to prevent the code below from compiling.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{Matrix3d()\ \ +\ Matrix4d();\ \ \ \textcolor{comment}{//\ adding\ matrices\ of\ different\ sizes}}
+\DoxyCodeLine{Matrix4cd()\ *\ Vector3cd();\ \ \textcolor{comment}{//\ invalid\ product\ known\ at\ compile\ time}}
+
+\end{DoxyCode}
+
+
+\doxylink{class_static}{Static} assertions are defined in Static\+Assert.\+h. If there is native static\+\_\+assert, we use it. Otherwise, we have implemented an assertion macro that can show a limited range of messages.
+
+One can easily come up with static assertions without messages, such as\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ STATIC\_ASSERT(x)\ \(\backslash\)}}
+\DoxyCodeLine{\textcolor{preprocessor}{\ \ switch(0)\ \{\ case\ 0:\ case\ x:;\ \}}}
+
+\end{DoxyCode}
+
+
+However, the example above obviously cannot tell why the assertion failed. Therefore, we define a {\ttfamily struct} in namespace \doxylink{namespace_eigen_1_1internal}{Eigen\+::internal} to handle available messages.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ condition>}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }static\_assertion\ \{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{template}<>}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }static\_assertion<\mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{\ \ \ \ YOU\_TRIED\_CALLING\_A\_VECTOR\_METHOD\_ON\_A\_MATRIX,}
+\DoxyCodeLine{\ \ \ \ YOU\_MIXED\_VECTORS\_OF\_DIFFERENT\_SIZES,}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ see\ StaticAssert.h\ for\ all\ enums.}}
+\DoxyCodeLine{\ \ \};}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+And then, we define \doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_ac95cf960f4a8395b28af90edfda755f0}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT(\+CONDITION,\+MSG)} to access Eigen\+::internal\+::static\+\_\+assertion$<$bool(\+CONDITION)$>$\+::\+MSG. If the condition evaluates into {\ttfamily false}, your compiler displays a lot of messages explaining there is no MSG in static\+\_\+assert$<$false$>$. Nevertheless, this is {\itshape not} in what we are interested. As you can see, all members of static\+\_\+assert$<$true$>$ are ALL\+\_\+\+CAPS\+\_\+\+AND\+\_\+\+THEY\+\_\+\+ARE\+\_\+\+SHOUTING.
+
+\begin{DoxyWarning}{警告}
+When using this macro, MSG should be a member of static\+\_\+assertion$<$true$>$, or the static assertion {\bfseries{always}} fails. Currently, it can only be used in function scope.
+\end{DoxyWarning}
+\hypertarget{_topic_assertions_DerivedStaticAssert}{}\doxysubsubsubsection{\texorpdfstring{Derived static assertions}{Derived static assertions}}\label{_topic_assertions_DerivedStaticAssert}
+There are other macros derived from EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT to enhance readability. Their names are self-\/explanatory.
+
+
+\begin{DoxyItemize}
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_a50d32252d6396ebfdb4f05802e5014f9}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+FIXED\+\_\+\+SIZE(\+TYPE)}}} -\/ passes if {\itshape TYPE} is fixed size.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_a66478b8cbea2f3b9fd459b9757144ff2}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+DYNAMIC\+\_\+\+SIZE(\+TYPE)}}} -\/ passes if {\itshape TYPE} is dynamic size.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_a035dfe5cbd4c226a3a96d8677a996fdf}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+LVALUE(\+Derived)}}} -\/ failes if {\itshape Derived} is read-\/only.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_a040c4f077ce245ab300bbc5e8f4905ae}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+ARRAYXPR(\+Derived)}}} -\/ passes if {\itshape Derived} is an array expression.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_a97ec8a24237169dbb3235fed95f9ff80}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+SAME\+\_\+\+XPR\+\_\+\+KIND(\+Derived1, Derived2)}}} -\/ failes if the two expressions are an array one and a matrix one.
+\end{DoxyItemize}
+
+Because \doxylink{namespace_eigen}{Eigen} handles both fixed-\/size and dynamic-\/size expressions, some conditions cannot be clearly determined at compile time. We classify them into strict assertions and permissive assertions.\hypertarget{_topic_assertions_StrictAssertions}{}\doxysubsubsubsubsection{\texorpdfstring{Strict assertions}{Strict assertions}}\label{_topic_assertions_StrictAssertions}
+These assertions fail if the condition {\bfseries{may not}} be met. For example, Matrix\+Xd may not be a vector, so it fails EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+VECTOR\+\_\+\+ONLY.
+
+
+\begin{DoxyItemize}
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_ac04a73705a0aa1d66c4b80f6338db904}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+VECTOR\+\_\+\+ONLY(\+TYPE)}}} -\/ passes if {\itshape TYPE} must be a vector type.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_abf22bd5abe14bc8ffe8ef673e6e9497d}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+VECTOR\+\_\+\+SPECIFIC\+\_\+\+SIZE(\+TYPE, SIZE)}}} -\/ passes if {\itshape TYPE} must be a vector of the given size.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_a60a9ff4c2bc47b84024a471210d292ba}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+MATRIX\+\_\+\+SPECIFIC\+\_\+\+SIZE(\+TYPE, ROWS, COLS)}}} -\/ passes if {\itshape TYPE} must be a matrix with given rows and columns.
+\end{DoxyItemize}\hypertarget{_topic_assertions_PermissiveAssertions}{}\doxysubsubsubsubsection{\texorpdfstring{Permissive assertions}{Permissive assertions}}\label{_topic_assertions_PermissiveAssertions}
+These assertions fail if the condition {\bfseries{cannot}} be met. For example, Matrix\+Xd and Matrix4d may have the same size, so they pass EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+SAME\+\_\+\+MATRIX\+\_\+\+SIZE.
+
+
+\begin{DoxyItemize}
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_a1b0fdf26cc91ef461d8eb245f7085a80}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+SAME\+\_\+\+VECTOR\+\_\+\+SIZE(\+TYPE0,\+TYPE1)}}} -\/ fails if the two vector expression types must have different sizes.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_ab247f0d0f9226fe72bb02adefde6361d}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+SAME\+\_\+\+MATRIX\+\_\+\+SIZE(\+TYPE0,\+TYPE1)}}} -\/ fails if the two matrix expression types must have different sizes.
+\item {\bfseries{\doxylink{external_2taskflow_23rd-party_2eigen-3_83_87_2_eigen_2src_2_core_2util_2_static_assert_8h_addb40726804f9537a9cc89904f96db98}{EIGEN\+\_\+\+STATIC\+\_\+\+ASSERT\+\_\+\+SIZE\+\_\+1x1(\+TYPE)}}} -\/ fails if {\itshape TYPE} cannot be an 1x1 expression.
+\end{DoxyItemize}
+
+See Static\+Assert.\+h for details such as what messages they throw.\hypertarget{_topic_assertions_DisableStaticAssert}{}\doxysubsubsubsection{\texorpdfstring{Disabling static assertions}{Disabling static assertions}}\label{_topic_assertions_DisableStaticAssert}
+If {\ttfamily EIGEN\+\_\+\+NO\+\_\+\+STATIC\+\_\+\+ASSERT} is defined, static assertions turn into {\ttfamily eigen\+\_\+assert}\textquotesingle{}s, working like\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#define\ EIGEN\_STATIC\_ASSERT(CONDITION,MSG)\ eigen\_assert((CONDITION)\ \&\&\ \#MSG);}}
+
+\end{DoxyCode}
+
+
+This saves compile time but consumes more run time. {\ttfamily EIGEN\+\_\+\+NO\+\_\+\+STATIC\+\_\+\+ASSERT} is undefined by default. 

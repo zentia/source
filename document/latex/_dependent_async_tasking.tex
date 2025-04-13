@@ -1,0 +1,149 @@
+\doxysection{Asynchronous Tasking with Dependencies}
+\hypertarget{_dependent_async_tasking}{}\label{_dependent_async_tasking}\index{Asynchronous Tasking with Dependencies@{Asynchronous Tasking with Dependencies}}
+This chapters discusses how to create a task graph dynamically using asynchronous tasks, which is extremely beneficial for workloads that want to (1) explore task graph parallelism out of dynamic control flow or (2) overlap task graph creation time with individual task execution time. We recommend that you first read \doxylink{AsyncTasking}{Asynchronous Tasking} before digesting this chapter.\hypertarget{_dependent_async_tasking_CreateADynamicTaskGraph}{}\doxysubsection{\texorpdfstring{Create a Dynamic Task Graph}{Create a Dynamic Task Graph}}\label{_dependent_async_tasking_CreateADynamicTaskGraph}
+When the construct-\/and-\/run model of a task graph is not possible in your application, you can use \doxylink{classtf_1_1_executor_aee02b63d3a91ad5ca5a1c0e71f3e128f}{tf\+::\+Executor\+::dependent\+\_\+async} and \doxylink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{tf\+::\+Executor\+::silent\+\_\+dependent\+\_\+async} to create a task graph dynamically. This type of parallelism is also known as {\itshape on-\/the-\/fly} task graph parallelism, which offers great flexibility for expressing dynamic task graph parallelism. The example below dynamically creates a task graph of four dependent-\/async tasks, {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}, {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}, {\ttfamily C}, and {\ttfamily D}, where {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} runs before {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and {\ttfamily C} and {\ttfamily D} runs after {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and {\ttfamily C\+:} 
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}A\(\backslash\)n"{}});\ \});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}B\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{tf::AsyncTask\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{silent\_dependent\_async}}([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}C\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ [\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}},\ fuD]\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_aee02b63d3a91ad5ca5a1c0e71f3e128f}{dependent\_async}}([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}D\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});}
+\DoxyCodeLine{fuD.get();\ \ \textcolor{comment}{//\ wait\ for\ D\ to\ finish,\ which\ in\ turn\ means\ A,\ B,\ C\ have\ finished}}
+
+\end{DoxyCode}
+
+
+Both \doxylink{classtf_1_1_executor_aee02b63d3a91ad5ca5a1c0e71f3e128f}{tf\+::\+Executor\+::dependent\+\_\+async} and \doxylink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{tf\+::\+Executor\+::silent\+\_\+dependent\+\_\+async} create a task of type \doxylink{classtf_1_1_async_task}{tf\+::\+Async\+Task} to run the given function asynchronously. Additionally, \doxylink{classtf_1_1_executor_aee02b63d3a91ad5ca5a1c0e71f3e128f}{tf\+::\+Executor\+::dependent\+\_\+async} returns a @std\+\_\+future that eventually holds the result of the execution. When returning from both calls, the executor has scheduled a worker to run the task whenever its dependencies are met. That is, task execution happens {\itshape simultaneously} with the creation of the task graph, which is different from constructing a Taskflow and running it from an executor, illustrated in the figure below\+:
+
+
+
+Since this model only allows relating a dependency from the current task to a previously created task, you need a correct topological order of graph expression. In our example, there are only two possible topological orderings, either {\ttfamily ABCD} or {\ttfamily ACBD}. The code below shows another feasible order of expressing this dynamic task graph parallelism\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}A\(\backslash\)n"{}});\ \});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}C\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{tf::AsyncTask\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{silent\_dependent\_async}}([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}B\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ [\mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}},\ fuD]\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_aee02b63d3a91ad5ca5a1c0e71f3e128f}{dependent\_async}}([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}D\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});}
+\DoxyCodeLine{fuD.get();\ \ \textcolor{comment}{//\ wait\ for\ D\ to\ finish,\ which\ in\ turn\ means\ A,\ B,\ C\ have\ finished}}
+
+\end{DoxyCode}
+
+
+In addition to using @std\+\_\+future to synchronize the execution, you can use \doxylink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{tf\+::\+Executor\+::wait\+\_\+for\+\_\+all} to wait for all scheduled tasks to finish\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}A\(\backslash\)n"{}});\ \});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}B\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{tf::AsyncTask\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{silent\_dependent\_async}}([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}C\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{tf::AsyncTask\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{silent\_dependent\_async}}([]()\{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}D\(\backslash\)n"{}});\ \},\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{wait\_for\_all}}();}
+
+\end{DoxyCode}
+\hypertarget{_dependent_async_tasking_SpecifyARagneOfDependentAsyncTasks}{}\doxysubsection{\texorpdfstring{Specify a Range of Dependent Async Tasks}{Specify a Range of Dependent Async Tasks}}\label{_dependent_async_tasking_SpecifyARagneOfDependentAsyncTasks}
+Both \doxylink{classtf_1_1_executor_aee02b63d3a91ad5ca5a1c0e71f3e128f}{tf\+::\+Executor\+::dependent\+\_\+async(\+F\&\& func, Tasks\&\&... tasks)} and \doxylink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{tf\+::\+Executor\+::silent\+\_\+dependent\+\_\+async(\+F\&\& func, Tasks\&\&... tasks)} accept an arbitrary number of tasks in the dependency list. If the number of task dependencies (i.\+e., predecessors) is unknown at programming time, such as those relying on runtime variables, you can use the following two overloads to specify predecessor tasks in an iterable range {\ttfamily \mbox{[}first, last)}\+:
+
+
+\begin{DoxyItemize}
+\item \doxylink{classtf_1_1_executor_a01e51e564f5def845506bcf6b4bb1664}{tf\+::\+Executor\+::dependent\+\_\+async(\+F\&\& func, I first, I last)}
+\item \doxylink{classtf_1_1_executor_aa9b08e47e68ae1e568f18aa7104cb9b1}{tf\+::\+Executor\+::silent\+\_\+dependent\+\_\+async(\+F\&\& func, I first, I last)}
+\end{DoxyItemize}
+
+The code below creates an asynchronous task that depends on {\ttfamily N} previously created asynchronous tasks stored in a vector, where {\ttfamily N} is a runtime variable\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{std::vector<tf::AsyncTask>\ predecessors;}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{\ \ \textcolor{comment}{//\ N\ is\ a\ runtime\ variable}}
+\DoxyCodeLine{\ \ predecessors.push\_back(\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\}));}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\},\ predecessors.begin(),\ predecessors.end());}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{wait\_for\_all}}();}
+
+\end{DoxyCode}
+\hypertarget{_dependent_async_tasking_UnderstandTheLifeTimeOfADependentAsyncTask}{}\doxysubsection{\texorpdfstring{Understand the Lifetime of a Dependent Async Task}{Understand the Lifetime of a Dependent Async Task}}\label{_dependent_async_tasking_UnderstandTheLifeTimeOfADependentAsyncTask}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} \doxylink{classtf_1_1_async_task}{tf\+::\+Async\+Task} is a lightweight handle that retains {\itshape shared} ownership of a dependent-\/async task created by an executor. This shared ownership ensures that the async task remains alive when adding it to the dependency list of another async task, thus avoiding the classical \href{https://en.wikipedia.org/wiki/ABA_problem}{\texttt{ ABA problem}}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ main\ thread\ retains\ shared\ ownership\ of\ async\ task\ A}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ task\ A\ remains\ alive\ (i.e.,\ at\ least\ one\ ref\ count\ by\ the\ main\ thread)\ }}
+\DoxyCodeLine{\textcolor{comment}{//\ when\ being\ added\ to\ the\ dependency\ list\ of\ async\ task\ B}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+
+\end{DoxyCode}
+
+
+Currently, \doxylink{classtf_1_1_async_task}{tf\+::\+Async\+Task} is implemented based on the logic of C++ smart pointer std\+::shared\+\_\+ptr and is considered cheap to copy or move as long as only a handful of objects own it. When a worker completes an async task, it will remove the task from the executor, decrementing the number of shared owners by one. If that counter reaches zero, the task is destroyed.\hypertarget{_dependent_async_tasking_CreateADynamicTaskGraphByMultipleThreads}{}\doxysubsection{\texorpdfstring{Create a Dynamic Task Graph by Multiple Threads}{Create a Dynamic Task Graph by Multiple Threads}}\label{_dependent_async_tasking_CreateADynamicTaskGraphByMultipleThreads}
+You can use multiple threads to create a dynamic task graph as long as the order of simultaneously creating tasks is topologically correct. The example below uses creates a dynamic task graph using three threads (including the main thread), where task {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}} runs before task {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and task {\ttfamily C\+:} 
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ main\ thread\ creates\ a\ dependent-\/async\ task\ A}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ spawn\ a\ new\ thread\ to\ create\ an\ async\ task\ B\ that\ runs\ after\ A}}
+\DoxyCodeLine{std::thread\ t1([\&]()\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_async_task}{tf::AsyncTask}}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.silent\_dependent\_async([]()\{\},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ spawn\ a\ new\ thread\ to\ create\ an\ async\ task\ C\ that\ runs\ after\ A}}
+\DoxyCodeLine{std::thread\ t2([\&]()\{}
+\DoxyCodeLine{\ \ tf::AsyncTask\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a0e2d792f28136b8227b413d0c27d5c7f}{silent\_dependent\_async}}([]()\{\},\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}});}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{wait\_for\_all}}();}
+\DoxyCodeLine{t1.join();}
+\DoxyCodeLine{t2.join();}
+
+\end{DoxyCode}
+
+
+Regardless of {\ttfamily t1} runs before or after {\ttfamily t2}, the resulting topological order is always correct with the graph definition, either {\ttfamily ABC} or {\ttfamily ACB}.\hypertarget{_dependent_async_tasking_QueryTheComppletionStatusOfDependentAsyncTasks}{}\doxysubsection{\texorpdfstring{Query the Completion Status of Dependent Async Tasks}{Query the Completion Status of Dependent Async Tasks}}\label{_dependent_async_tasking_QueryTheComppletionStatusOfDependentAsyncTasks}
+When you create a dependent-\/async task, you can query its completion status by \doxylink{classtf_1_1_async_task_aefeefa30d7cafdfbb7dc8def542e8e51}{tf\+::\+Async\+Task\+::is\+\_\+done}, which returns {\ttfamily true} upon completion or {\ttfamily false} otherwise. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} completed dependent-\/async task indicates that a worker has executed its associated callable.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ dependent-\/async\ task\ that\ returns\ 100}}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ [\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}},\ fu]\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.dependent\_async([]()\{\ \textcolor{keywordflow}{return}\ 100;\ \});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ loops\ until\ the\ dependent-\/async\ task\ completes}}
+\DoxyCodeLine{\textcolor{keywordflow}{while}(!\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}.is\_done());}
+\DoxyCodeLine{assert(fu.get()\ ==\ 100);}
+
+\end{DoxyCode}
+
+
+\doxylink{classtf_1_1_async_task_aefeefa30d7cafdfbb7dc8def542e8e51}{tf\+::\+Async\+Task\+::is\+\_\+done} is useful when you need to wait on the result of a dependent-\/async task before moving onto the next program instruction. Often, \doxylink{classtf_1_1_async_task}{tf\+::\+Async\+Task} is used together with \doxylink{classtf_1_1_executor_a0fc6eb19f168dc4a9cd0a7c6187c1d2d}{tf\+::\+Executor\+::corun\+\_\+until} to keep a worker awake in its work-\/stealing loop to avoid deadlock (see \doxysectlink{_execute_taskflow_ExecuteATaskflowFromAnInternalWorker}{Execute a Taskflow from an Internal Worker}{1} for more details). For instance, the code below implements the famous Fibonacci sequence using recursive asynchronous tasking\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{std::function<\mbox{\hyperlink{sugar_8h_ae4f82344f573c70aa1066a2394bba345}{int}}(\textcolor{keywordtype}{int})>\ \mbox{\hyperlink{test__dependent__asyncs_8cpp_a5c51181711204e158d6c437667b95c4b}{fibonacci}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ calculate\ the\ Fibonacci\ sequence:\ 0,\ 1,\ 1,\ 2,\ 3,\ 5,\ 8,\ 13,\ 21,\ 34,\ 55,\ 89}}
+\DoxyCodeLine{\mbox{\hyperlink{test__dependent__asyncs_8cpp_a5c51181711204e158d6c437667b95c4b}{fibonacci}}\ =\ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}\ <\ 2)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}};\ }
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ [t1,\ fu1]\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.dependent\_async(std::bind(\mbox{\hyperlink{test__dependent__asyncs_8cpp_a5c51181711204e158d6c437667b95c4b}{fibonacci}},\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}-\/1));}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ [t2,\ fu2]\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.dependent\_async(std::bind(\mbox{\hyperlink{test__dependent__asyncs_8cpp_a5c51181711204e158d6c437667b95c4b}{fibonacci}},\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}-\/2));}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.corun\_until([\&]()\{\ \textcolor{keywordflow}{return}\ t1.is\_done()\ \&\&\ t2.is\_done();\ \});}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ fu1.get()\ +\ fu2.get();}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ [\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}},\ fib11]\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_aee02b63d3a91ad5ca5a1c0e71f3e128f}{dependent\_async}}(std::bind(\mbox{\hyperlink{test__dependent__asyncs_8cpp_a5c51181711204e158d6c437667b95c4b}{fibonacci}},\ 11));}
+\DoxyCodeLine{assert(fib11\ ==\ 89);\ \ \textcolor{comment}{//\ the\ 11-\/th\ Fibonacci\ number\ is\ 89}}
+
+\end{DoxyCode}
+ 

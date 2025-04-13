@@ -1,9 +1,9 @@
-#include <luisa/core/logging.h>
-#include <luisa/ast/function_builder.h>
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/runtime/rhi/command_encoder.h>
-#include <luisa/runtime/raster/raster_scene.h>
-#include <luisa/backends/ext/raster_cmd.h>
+#include <runtime/core/logging.h>
+#include <runtime/ast/function_builder.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/runtime/rhi/command_encoder.h>
+#include <runtime/runtime/raster/raster_scene.h>
+#include <runtime/backends/ext/raster_cmd.h>
 #include <numeric>
 namespace luisa::compute {
 

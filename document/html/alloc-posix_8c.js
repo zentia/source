@@ -1,0 +1,23 @@
+var alloc_posix_8c =
+[
+    [ "EINVAL", "alloc-posix_8c.html#a2d1678d5a7cc8ce499643f3b8957def4", null ],
+    [ "ENOMEM", "alloc-posix_8c.html#a6a05c923dad0c1208043e9c20a58c8e5", null ],
+    [ "mi__expand", "group__posix.html#ga66bcfeb4faedbb42b796bc680821ef84", null ],
+    [ "mi_aligned_alloc", "group__posix.html#ga430ed1513f0571ff83be00ec58a98ee0", null ],
+    [ "mi_aligned_offset_recalloc", "group__posix.html#ga16570deddd559001b44953eedbad0084", null ],
+    [ "mi_aligned_recalloc", "group__posix.html#gaf82cbb4b4f24acf723348628451798d3", null ],
+    [ "mi_cfree", "group__posix.html#ga705dc7a64bffacfeeb0141501a5c35d7", null ],
+    [ "mi_dupenv_s", "group__posix.html#gab41369c1a1da7504013a7a0b1d4dd958", null ],
+    [ "mi_malloc_good_size", "group__posix.html#ga9d23ac7885fed7413c11d8e0ffa31071", null ],
+    [ "mi_malloc_size", "group__posix.html#ga4531c9e775bb3ae12db57c1ba8a5d7de", null ],
+    [ "mi_malloc_usable_size", "group__posix.html#ga06d07cf357bbac5c73ba5d0c0c421e17", null ],
+    [ "mi_mbsdup", "group__posix.html#ga7b82a44094fdec4d2084eb4288a979b0", null ],
+    [ "mi_memalign", "group__posix.html#ga726867f13fd29ca36064954c0285b1d8", null ],
+    [ "mi_posix_memalign", "group__posix.html#gacff84f226ba9feb2031b8992e5579447", null ],
+    [ "mi_pvalloc", "group__posix.html#ga644bebccdbb2821542dd8c7e7641f476", null ],
+    [ "mi_reallocarr", "group__posix.html#ga7e1934d60a3e697950eeb48e042bfad5", null ],
+    [ "mi_reallocarray", "group__posix.html#gadfeccb72748a2f6305474a37d9d57bce", null ],
+    [ "mi_valloc", "group__posix.html#ga50cafb9722020402f065de93799f64ca", null ],
+    [ "mi_wcsdup", "group__posix.html#gaa9fd7f25c9ac3a20e89b33bd6e383fcf", null ],
+    [ "mi_wdupenv_s", "group__posix.html#ga6ac6a6a8f3c96f1af24bb8d0439cbbd1", null ]
+];

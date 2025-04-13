@@ -27,15 +27,6 @@ namespace source_module::rhi
 		m_enable_debug_utils_label_ = false;
 		m_enable_debug_utils_label_ = false;
 #endif
-#ifdef _MSC_VER
-		char buffer[4096];
-		if (const DWORD result = GetEnvironmentVariable("VK_SDK_PATH", buffer, sizeof(buffer)); result > 0 && result < sizeof(buffer))
-		{
-			const std::filesystem::path path = buffer;
-			SetEnvironmentVariable("VK_LAYER_PATH", (path / "Bin").generic_string().c_str());
-		}
-		SetEnvironmentVariable("DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1", "1");
-#endif
 
 		create_instance();
 		initialize_debug_messenger();

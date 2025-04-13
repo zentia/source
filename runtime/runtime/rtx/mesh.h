@@ -1,10 +1,10 @@
 #pragma once
 
-#include <luisa/runtime/rtx/triangle.h>
-#include <luisa/runtime/rhi/resource.h>
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/buffer.h>
+#include <runtime/runtime/rtx/triangle.h>
+#include <runtime/runtime/rhi/resource.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/buffer.h>
 
 namespace luisa::compute {
 

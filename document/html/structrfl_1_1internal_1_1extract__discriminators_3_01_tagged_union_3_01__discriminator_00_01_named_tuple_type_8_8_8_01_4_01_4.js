@@ -1,0 +1,4 @@
+var structrfl_1_1internal_1_1extract__discriminators_3_01_tagged_union_3_01__discriminator_00_01_named_tuple_type_8_8_8_01_4_01_4 =
+[
+    [ "type", "structrfl_1_1internal_1_1extract__discriminators_3_01_tagged_union_3_01__discriminator_00_01_named_tuple_type_8_8_8_01_4_01_4.html#a0797bed229d847033a6829531d7730ca", null ]
+];

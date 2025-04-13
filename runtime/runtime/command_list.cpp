@@ -1,6 +1,6 @@
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/runtime/command_list.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/runtime/command_list.h>
+#include <runtime/core/logging.h>
 
 namespace luisa::compute {
 

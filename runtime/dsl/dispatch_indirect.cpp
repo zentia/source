@@ -1,5 +1,5 @@
-#include <luisa/dsl/stmt.h>
-#include <luisa/dsl/dispatch_indirect.h>
+#include <runtime/dsl/stmt.h>
+#include <runtime/dsl/dispatch_indirect.h>
 
 namespace luisa::compute {
 

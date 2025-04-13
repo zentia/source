@@ -1,9 +1,9 @@
 #pragma once
-#include <luisa/runtime/rhi/device_interface.h>
-#include <luisa/core/stl/functional.h>
-#include <luisa/core/stl/unordered_map.h>
-#include <luisa/core/spin_mutex.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/rhi/device_interface.h>
+#include <runtime/core/stl/functional.h>
+#include <runtime/core/stl/unordered_map.h>
+#include <runtime/core/spin_mutex.h>
+#include <runtime/core/logging.h>
 namespace luisa::compute {
 class LC_RUNTIME_API ServerInterface {
 public:

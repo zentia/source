@@ -1,0 +1,433 @@
+\doxysection{prim.\+h}
+\hypertarget{prim_8h_source}{}\label{prim_8h_source}\index{runtime/EASTL/packages/mimalloc/include/mimalloc/prim.h@{runtime/EASTL/packages/mimalloc/include/mimalloc/prim.h}}
+\mbox{\hyperlink{prim_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{Copyright\ (c)\ 2018-\/2024,\ Microsoft\ Research,\ Daan\ Leijen}}
+\DoxyCodeLine{00003\ \textcolor{comment}{This\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it\ under\ the}}
+\DoxyCodeLine{00004\ \textcolor{comment}{terms\ of\ the\ MIT\ license.\ A\ copy\ of\ the\ license\ can\ be\ found\ in\ the\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{"{}LICENSE"{}\ at\ the\ root\ of\ this\ distribution.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#ifndef\ MI\_PRIM\_H}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#define\ MI\_PRIM\_H}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ This\ file\ specifies\ the\ primitive\ portability\ API.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ Each\ OS/host\ needs\ to\ implement\ these\ primitives,\ see\ \`{}src/prim`}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ for\ implementations\ on\ Window,\ macOS,\ WASI,\ and\ Linux/Unix.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ note:\ on\ all\ primitive\ functions,\ we\ always\ have\ result\ parameters\ !=\ NULL,\ and:}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ addr\ !=\ NULL\ and\ page\ aligned}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ size\ >\ 0\ \ \ \ \ and\ page\ aligned}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ the\ return\ value\ is\ an\ error\ code\ as\ an\ \`{}int`\ where\ 0\ is\ success}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ OS\ memory\ configuration}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structmi__os__mem__config__s}{mi\_os\_mem\_config\_s}}\ \{}
+\DoxyCodeLine{00025\ \ \ \textcolor{keywordtype}{size\_t}\ \ \mbox{\hyperlink{structmi__os__mem__config__s_aafaac041180aa100b423bb76e7fe5735}{page\_size}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ default\ to\ 4KiB}}
+\DoxyCodeLine{00026\ \ \ \textcolor{keywordtype}{size\_t}\ \ \mbox{\hyperlink{structmi__os__mem__config__s_a01e20af43bfd37b904d5c4af705e74e7}{large\_page\_size}};\ \ \ \ \ \ \ \ \textcolor{comment}{//\ 0\ if\ not\ supported,\ usually\ 2MiB\ (4MiB\ on\ Windows)}}
+\DoxyCodeLine{00027\ \ \ \textcolor{keywordtype}{size\_t}\ \ \mbox{\hyperlink{structmi__os__mem__config__s_acfe90f9051568d5c8278f926152477ca}{alloc\_granularity}};\ \ \ \ \ \ \textcolor{comment}{//\ smallest\ allocation\ size\ (usually\ 4KiB,\ on\ Windows\ 64KiB)}}
+\DoxyCodeLine{00028\ \ \ \textcolor{keywordtype}{size\_t}\ \ \mbox{\hyperlink{structmi__os__mem__config__s_a973d009d82510a872df5bb623e26a2f7}{physical\_memory\_in\_kib}};\ \textcolor{comment}{//\ physical\ memory\ size\ in\ KiB}}
+\DoxyCodeLine{00029\ \ \ \textcolor{keywordtype}{size\_t}\ \ \mbox{\hyperlink{structmi__os__mem__config__s_a84bacf820b0c701ed9275b4445f3a28a}{virtual\_address\_bits}};\ \ \ \textcolor{comment}{//\ usually\ 48\ or\ 56\ bits\ on\ 64-\/bit\ systems.\ (used\ to\ determine\ secure\ randomization)}}
+\DoxyCodeLine{00030\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \mbox{\hyperlink{structmi__os__mem__config__s_a2a318ac7722f5c09a1ee295e369c2c6a}{has\_overcommit}};\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ can\ we\ reserve\ more\ memory\ than\ can\ be\ actually\ committed?}}
+\DoxyCodeLine{00031\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \mbox{\hyperlink{structmi__os__mem__config__s_a152a5a28172d7ada8902a030d0164331}{has\_partial\_free}};\ \ \ \ \ \ \ \textcolor{comment}{//\ can\ allocated\ blocks\ be\ freed\ partially?\ (true\ for\ mmap,\ false\ for\ VirtualAlloc)}}
+\DoxyCodeLine{00032\ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \mbox{\hyperlink{structmi__os__mem__config__s_a727caa055141f3bba998bcfd455f431a}{has\_virtual\_reserve}};\ \ \ \ \textcolor{comment}{//\ supports\ virtual\ address\ space\ reservation?\ (if\ true\ we\ can\ reserve\ virtual\ address\ space\ without\ using\ commit\ or\ physical\ memory)}}
+\DoxyCodeLine{00033\ \}\ \mbox{\hyperlink{prim_8h_a1eff7306f3d00df9d9b62d3d8a6a26f1}{mi\_os\_mem\_config\_t}};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Initialize}}
+\DoxyCodeLine{00036\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{prim_8h_a5f95deaa4c625e888392c68c62b5b8de}{\_mi\_prim\_mem\_init}}(\ \mbox{\hyperlink{prim_8h_a1eff7306f3d00df9d9b62d3d8a6a26f1}{mi\_os\_mem\_config\_t}}*\ config\ );}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Free\ OS\ memory}}
+\DoxyCodeLine{00039\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{prim_8h_a709e08e93548cbede90a196d306ab4f9}{\_mi\_prim\_free}}(\textcolor{keywordtype}{void}*\ addr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ );}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ Allocate\ OS\ memory.\ Return\ NULL\ on\ error.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ The\ \`{}try\_alignment`\ is\ just\ a\ hint\ and\ the\ returned\ pointer\ does\ not\ have\ to\ be\ aligned.}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ If\ \`{}commit`\ is\ false,\ the\ virtual\ memory\ range\ only\ needs\ to\ be\ reserved\ (with\ no\ access)}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ which\ will\ later\ be\ committed\ explicitly\ using\ \`{}\_mi\_prim\_commit`.}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \`{}is\_zero`\ is\ set\ to\ true\ if\ the\ memory\ was\ zero\ initialized\ (as\ on\ most\ OS's)}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ The\ \`{}hint\_addr`\ address\ is\ either\ \`{}NULL`\ or\ a\ preferred\ allocation\ address\ but\ can\ be\ ignored.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ pre:\ !commit\ =>\ !allow\_large}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ \ \ \ try\_alignment\ >=\ \_mi\_os\_page\_size()\ and\ a\ power\ of\ 2}}
+\DoxyCodeLine{00049\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{prim_8h_af6b664f566e88b730b416f6d7cc715ae}{\_mi\_prim\_alloc}}(\textcolor{keywordtype}{void}*\ hint\_addr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{size\_t}\ try\_alignment,\ \textcolor{keywordtype}{bool}\ commit,\ \textcolor{keywordtype}{bool}\ allow\_large,\ \textcolor{keywordtype}{bool}*\ is\_large,\ \textcolor{keywordtype}{bool}*\ is\_zero,\ \textcolor{keywordtype}{void}**\ addr);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{comment}{//\ Commit\ memory.\ Returns\ error\ code\ or\ 0\ on\ success.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ For\ example,\ on\ Linux\ this\ would\ make\ the\ memory\ PROT\_READ|PROT\_WRITE.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ \`{}is\_zero`\ is\ set\ to\ true\ if\ the\ memory\ was\ zero\ initialized\ (e.g.\ on\ Windows)}}
+\DoxyCodeLine{00054\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{prim_8h_a723c63d8d2b51281ab1ef2bf7e7395d0}{\_mi\_prim\_commit}}(\textcolor{keywordtype}{void}*\ addr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{bool}*\ is\_zero);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ Decommit\ memory.\ Returns\ error\ code\ or\ 0\ on\ success.\ The\ \`{}needs\_recommit`\ result\ is\ true}}
+\DoxyCodeLine{00057\ \textcolor{comment}{//\ if\ the\ memory\ would\ need\ to\ be\ re-\/committed.\ For\ example,\ on\ Windows\ this\ is\ always\ true,}}
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ but\ on\ Linux\ we\ could\ use\ MADV\_DONTNEED\ to\ decommit\ which\ does\ not\ need\ a\ recommit.}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ pre:\ needs\_recommit\ !=\ NULL}}
+\DoxyCodeLine{00060\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{prim_8h_a2acc81743909f52f06f690457ea3dfcb}{\_mi\_prim\_decommit}}(\textcolor{keywordtype}{void}*\ addr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{bool}*\ needs\_recommit);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ Reset\ memory.\ The\ range\ keeps\ being\ accessible\ but\ the\ content\ might\ be\ reset.}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ Returns\ error\ code\ or\ 0\ on\ success.}}
+\DoxyCodeLine{00064\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{prim_8h_abe3f45858d8d0aa2a4a7deb0c8a49c10}{\_mi\_prim\_reset}}(\textcolor{keywordtype}{void}*\ addr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}});}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ Protect\ memory.\ Returns\ error\ code\ or\ 0\ on\ success.}}
+\DoxyCodeLine{00067\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{prim_8h_a26d6836cdf59dd0534f1a348fb5bfeb0}{\_mi\_prim\_protect}}(\textcolor{keywordtype}{void}*\ addr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{bool}\ protect);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ Allocate\ huge\ (1GiB)\ pages\ possibly\ associated\ with\ a\ NUMA\ node.}}
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ \`{}is\_zero`\ is\ set\ to\ true\ if\ the\ memory\ was\ zero\ initialized\ (as\ on\ most\ OS's)}}
+\DoxyCodeLine{00071\ \textcolor{comment}{//\ pre:\ size\ >\ 0\ \ and\ a\ multiple\ of\ 1GiB.}}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ \ \ \ \ \ numa\_node\ is\ either\ negative\ (don't\ care),\ or\ a\ numa\ node\ number.}}
+\DoxyCodeLine{00073\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{prim_8h_a13fac5d38adde1e627f69b7ad9123d5e}{\_mi\_prim\_alloc\_huge\_os\_pages}}(\textcolor{keywordtype}{void}*\ hint\_addr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}},\ \textcolor{keywordtype}{int}\ numa\_node,\ \textcolor{keywordtype}{bool}*\ is\_zero,\ \textcolor{keywordtype}{void}**\ addr);}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ Return\ the\ current\ NUMA\ node}}
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{prim_8h_a933262d22f5d4ebb70599b45c3104236}{\_mi\_prim\_numa\_node}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{comment}{//\ Return\ the\ number\ of\ logical\ NUMA\ nodes}}
+\DoxyCodeLine{00079\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{prim_8h_a82cc1dc0b2e542453248153dfbff0ef1}{\_mi\_prim\_numa\_node\_count}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ Clock\ ticks}}
+\DoxyCodeLine{00082\ \mbox{\hyperlink{types_8h_af67e75b6480efa6e87b2a3a118e58031}{mi\_msecs\_t}}\ \mbox{\hyperlink{prim_8h_a9a1effe54aac3a8c248f0eceea1d5b63}{\_mi\_prim\_clock\_now}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ Return\ process\ information\ (only\ for\ statistics)}}
+\DoxyCodeLine{00085\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structmi__process__info__s}{mi\_process\_info\_s}}\ \{}
+\DoxyCodeLine{00086\ \ \ \mbox{\hyperlink{types_8h_af67e75b6480efa6e87b2a3a118e58031}{mi\_msecs\_t}}\ \ \mbox{\hyperlink{structmi__process__info__s_af21d653c3ae648614fb8c677c024e2a8}{elapsed}};}
+\DoxyCodeLine{00087\ \ \ \mbox{\hyperlink{types_8h_af67e75b6480efa6e87b2a3a118e58031}{mi\_msecs\_t}}\ \ \mbox{\hyperlink{structmi__process__info__s_a4abf4b4fb5a8261ce501f3966c349c84}{utime}};}
+\DoxyCodeLine{00088\ \ \ \mbox{\hyperlink{types_8h_af67e75b6480efa6e87b2a3a118e58031}{mi\_msecs\_t}}\ \ \mbox{\hyperlink{structmi__process__info__s_a6b808da77c194dc969013143f659d8ce}{stime}};}
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordtype}{size\_t}\ \ \ \ \ \ \mbox{\hyperlink{structmi__process__info__s_a13d6fa31fe7212a83c02323efcf21138}{current\_rss}};}
+\DoxyCodeLine{00090\ \ \ \textcolor{keywordtype}{size\_t}\ \ \ \ \ \ \mbox{\hyperlink{structmi__process__info__s_a075be43615ff32dae94c9fda7e0219a6}{peak\_rss}};}
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordtype}{size\_t}\ \ \ \ \ \ \mbox{\hyperlink{structmi__process__info__s_af1986dfcf0cdb39eea88ba3b3fd1c966}{current\_commit}};}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordtype}{size\_t}\ \ \ \ \ \ \mbox{\hyperlink{structmi__process__info__s_ace9eb4a312b20bd55ce0c199b1b480d8}{peak\_commit}};}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordtype}{size\_t}\ \ \ \ \ \ \mbox{\hyperlink{structmi__process__info__s_ab88976f8e5949694860a902f220c856f}{page\_faults}};}
+\DoxyCodeLine{00094\ \}\ \mbox{\hyperlink{prim_8h_acb020c93049ef91e7a72c527e0082f74}{mi\_process\_info\_t}};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{prim_8h_ad65bd45985b81b70a9c95edc22b81edc}{\_mi\_prim\_process\_info}}(\mbox{\hyperlink{prim_8h_acb020c93049ef91e7a72c527e0082f74}{mi\_process\_info\_t}}*\ pinfo);}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \textcolor{comment}{//\ Default\ stderr\ output.\ (only\ for\ warnings\ etc.\ with\ verbose\ enabled)}}
+\DoxyCodeLine{00099\ \textcolor{comment}{//\ msg\ !=\ NULL\ \&\&\ \_mi\_strlen(msg)\ >\ 0}}
+\DoxyCodeLine{00100\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{prim_8h_a93a12757acc4f401fd4619057fdd209f}{\_mi\_prim\_out\_stderr}}(\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg\ );}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{comment}{//\ Get\ an\ environment\ variable.\ (only\ for\ options)}}
+\DoxyCodeLine{00103\ \textcolor{comment}{//\ name\ !=\ NULL,\ result\ !=\ NULL,\ result\_size\ >=\ 64}}
+\DoxyCodeLine{00104\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{prim_8h_a83ac99612f318532560ffc033ee18d59}{\_mi\_prim\_getenv}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5c4947d4516dd7cfa3505ce3a648a4ef}{name}},\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}},\ \textcolor{keywordtype}{size\_t}\ result\_size);}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ Fill\ a\ buffer\ with\ strong\ randomness;\ return\ \`{}false`\ on\ error\ or\ if}}
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ there\ is\ no\ strong\ randomization\ available.}}
+\DoxyCodeLine{00109\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{prim_8h_a4d9172e2503d3616115ff0bc8a6a908d}{\_mi\_prim\_random\_buf}}(\textcolor{keywordtype}{void}*\ buf,\ \textcolor{keywordtype}{size\_t}\ buf\_len);}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{comment}{//\ Called\ on\ the\ first\ thread\ start,\ and\ should\ ensure\ \`{}\_mi\_thread\_done`\ is\ called\ on\ thread\ termination.}}
+\DoxyCodeLine{00112\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{prim_8h_a2017bda86f22f7ce43e72fed224bb030}{\_mi\_prim\_thread\_init\_auto\_done}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00114\ \textcolor{comment}{//\ Called\ on\ process\ exit\ and\ may\ take\ action\ to\ clean\ up\ resources\ associated\ with\ the\ thread\ auto\ done.}}
+\DoxyCodeLine{00115\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{prim_8h_a46efc702aefc032dfa0abf324d30cfd8}{\_mi\_prim\_thread\_done\_auto\_done}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{comment}{//\ Called\ when\ the\ default\ heap\ for\ a\ thread\ changes}}
+\DoxyCodeLine{00118\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{prim_8h_a14b6be498e17cdf74c6b5cb38c2ec306}{\_mi\_prim\_thread\_associate\_default\_heap}}(\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap);}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ Is\ this\ thread\ part\ of\ a\ thread\ pool?}}
+\DoxyCodeLine{00121\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{prim_8h_aeb1429fbac0d95c6d38a018007360ba4}{\_mi\_prim\_thread\_is\_in\_threadpool}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00126\ \textcolor{comment}{//\ Access\ to\ TLS\ (thread\ local\ storage)\ slots.}}
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ We\ need\ fast\ access\ to\ both\ a\ unique\ thread\ id\ (in\ \`{}free.c:mi\_free`)\ and}}
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ to\ a\ thread-\/local\ heap\ pointer\ (in\ \`{}alloc.c:mi\_malloc`).}}
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ To\ achieve\ this\ we\ use\ specialized\ code\ for\ various\ platforms.}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ On\ some\ libc\ +\ platform\ combinations\ we\ can\ directly\ access\ a\ thread-\/local\ storage\ (TLS)\ slot.}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//\ The\ TLS\ layout\ depends\ on\ both\ the\ OS\ and\ libc\ implementation\ so\ we\ use\ specific\ tests\ for\ each\ main\ platform.}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ If\ you\ test\ on\ another\ platform\ and\ it\ works\ please\ send\ a\ PR\ :-\/)}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ see\ also\ https://akkadia.org/drepper/tls.pdf\ for\ more\ info\ on\ the\ TLS\ register.}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//}}
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ Note:\ we\ would\ like\ to\ prefer\ \`{}\_\_builtin\_thread\_pointer()`\ nowadays\ instead\ of\ using\ assembly,}}
+\DoxyCodeLine{00138\ \textcolor{comment}{//\ but\ unfortunately\ we\ can\ not\ detect\ support\ reliably\ (see\ issue\ \#883)}}
+\DoxyCodeLine{00139\ \textcolor{comment}{//\ We\ also\ use\ it\ on\ Apple\ OS\ as\ we\ use\ a\ TLS\ slot\ for\ the\ default\ heap\ there.}}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)\ \&\&\ (\ \(\backslash\)}}
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ (defined(\_\_GLIBC\_\_)\ \ \ \&\&\ (defined(\_\_x86\_64\_\_)\ ||\ defined(\_\_i386\_\_)\ ||\ (defined(\_\_arm\_\_)\ \&\&\ \_\_ARM\_ARCH\ >=\ 7)\ ||\ defined(\_\_aarch64\_\_)))\ \(\backslash\)}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ||\ (defined(\_\_APPLE\_\_)\ \ \ \&\&\ (defined(\_\_x86\_64\_\_)\ ||\ defined(\_\_aarch64\_\_)\ ||\ defined(\_\_POWERPC\_\_)))\ \(\backslash\)}}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ||\ (defined(\_\_BIONIC\_\_)\ \ \&\&\ (defined(\_\_x86\_64\_\_)\ ||\ defined(\_\_i386\_\_)\ ||\ (defined(\_\_arm\_\_)\ \&\&\ \_\_ARM\_ARCH\ >=\ 7)\ ||\ defined(\_\_aarch64\_\_)))\ \(\backslash\)}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ||\ (defined(\_\_FreeBSD\_\_)\ \&\&\ (defined(\_\_x86\_64\_\_)\ ||\ defined(\_\_i386\_\_)\ ||\ defined(\_\_aarch64\_\_)))\ \(\backslash\)}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ||\ (defined(\_\_OpenBSD\_\_)\ \&\&\ (defined(\_\_x86\_64\_\_)\ ||\ defined(\_\_i386\_\_)\ ||\ defined(\_\_aarch64\_\_)))\ \(\backslash\)}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\ \ \ \ \ \ )}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\#define\ MI\_HAS\_TLS\_SLOT\ \ \ \ 1}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ mi\_prim\_tls\_slot(\textcolor{keywordtype}{size\_t}\ slot)\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00151\ \ \ \textcolor{keywordtype}{void}*\ res;}
+\DoxyCodeLine{00152\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ ofs\ =\ (slot*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_i386\_\_)}}
+\DoxyCodeLine{00154\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movl\ \%\%gs:\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (res)\ :\ \textcolor{stringliteral}{"{}m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ );\ \ \textcolor{comment}{//\ x86\ 32-\/bit\ always\ uses\ GS}}
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_APPLE\_\_)\ \&\&\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00156\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movq\ \%\%gs:\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (res)\ :\ \textcolor{stringliteral}{"{}m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ );\ \ \textcolor{comment}{//\ x86\_64\ macOSX\ uses\ GS}}
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_x86\_64\_\_)\ \&\&\ (MI\_INTPTR\_SIZE==4)}}
+\DoxyCodeLine{00158\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movl\ \%\%fs:\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (res)\ :\ \textcolor{stringliteral}{"{}m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ );\ \ \textcolor{comment}{//\ x32\ ABI}}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00160\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movq\ \%\%fs:\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (res)\ :\ \textcolor{stringliteral}{"{}m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ );\ \ \textcolor{comment}{//\ x86\_64\ Linux,\ BSD\ uses\ FS}}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_arm\_\_)}}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{void}**\ tcb;\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(ofs);}
+\DoxyCodeLine{00163\ \ \ \ \ \_\_asm\_\_\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}mrc\ p15,\ 0,\ \%0,\ c13,\ c0,\ 3\(\backslash\)nbic\ \%0,\ \%0,\ \#3"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (tcb));}
+\DoxyCodeLine{00164\ \ \ \ \ res\ =\ tcb[slot];}
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_aarch64\_\_)}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordtype}{void}**\ tcb;\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(ofs);}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_APPLE\_\_)\ }\textcolor{comment}{//\ M1,\ issue\ \#343}}
+\DoxyCodeLine{00168\ \ \ \ \ \_\_asm\_\_\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}mrs\ \%0,\ tpidrro\_el0\(\backslash\)nbic\ \%0,\ \%0,\ \#7"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (tcb));}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00170\ \ \ \ \ \_\_asm\_\_\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}mrs\ \%0,\ tpidr\_el0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (tcb));}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00172\ \ \ \ \ res\ =\ tcb[slot];}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_APPLE\_\_)\ \&\&\ defined(\_\_POWERPC\_\_)\ }\textcolor{comment}{//\ ppc,\ issue\ \#781}}
+\DoxyCodeLine{00174\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(ofs);}
+\DoxyCodeLine{00175\ \ \ \ \ res\ =\ pthread\_getspecific(slot);}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00177\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{comment}{//\ setting\ a\ tls\ slot\ is\ only\ used\ on\ macOS\ for\ now}}
+\DoxyCodeLine{00181\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ mi\_prim\_tls\_slot\_set(\textcolor{keywordtype}{size\_t}\ slot,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00182\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ ofs\ =\ (slot*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*));}
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_i386\_\_)}}
+\DoxyCodeLine{00184\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movl\ \%1,\%\%gs:\%0"{}}\ :\ \textcolor{stringliteral}{"{}=m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ \textcolor{stringliteral}{"{}rn"{}}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ :\ );\ \ \textcolor{comment}{//\ 32-\/bit\ always\ uses\ GS}}
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_APPLE\_\_)\ \&\&\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00186\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movq\ \%1,\%\%gs:\%0"{}}\ :\ \textcolor{stringliteral}{"{}=m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ \textcolor{stringliteral}{"{}rn"{}}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ :\ );\ \ \textcolor{comment}{//\ x86\_64\ macOS\ uses\ GS}}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_x86\_64\_\_)\ \&\&\ (MI\_INTPTR\_SIZE==4)}}
+\DoxyCodeLine{00188\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movl\ \%1,\%\%fs:\%0"{}}\ :\ \textcolor{stringliteral}{"{}=m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ \textcolor{stringliteral}{"{}rn"{}}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ :\ );\ \ \textcolor{comment}{//\ x32\ ABI}}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_x86\_64\_\_)}}
+\DoxyCodeLine{00190\ \ \ \ \ \_\_asm\_\_(\textcolor{stringliteral}{"{}movq\ \%1,\%\%fs:\%0"{}}\ :\ \textcolor{stringliteral}{"{}=m"{}}\ (*((\textcolor{keywordtype}{void}**)ofs))\ :\ \textcolor{stringliteral}{"{}rn"{}}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ :\ );\ \ \textcolor{comment}{//\ x86\_64\ Linux,\ BSD\ uses\ FS}}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_arm\_\_)}}
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keywordtype}{void}**\ tcb;\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(ofs);}
+\DoxyCodeLine{00193\ \ \ \ \ \_\_asm\_\_\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}mrc\ p15,\ 0,\ \%0,\ c13,\ c0,\ 3\(\backslash\)nbic\ \%0,\ \%0,\ \#3"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (tcb));}
+\DoxyCodeLine{00194\ \ \ \ \ tcb[slot]\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_aarch64\_\_)}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordtype}{void}**\ tcb;\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(ofs);}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_APPLE\_\_)\ }\textcolor{comment}{//\ M1,\ issue\ \#343}}
+\DoxyCodeLine{00198\ \ \ \ \ \_\_asm\_\_\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}mrs\ \%0,\ tpidrro\_el0\(\backslash\)nbic\ \%0,\ \%0,\ \#7"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (tcb));}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00200\ \ \ \ \ \_\_asm\_\_\ \textcolor{keyword}{volatile}\ (\textcolor{stringliteral}{"{}mrs\ \%0,\ tpidr\_el0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}\ (tcb));}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00202\ \ \ \ \ tcb[slot]\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_APPLE\_\_)\ \&\&\ defined(\_\_POWERPC\_\_)\ }\textcolor{comment}{//\ ppc,\ issue\ \#781}}
+\DoxyCodeLine{00204\ \ \ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ab7467946e27cd6bb4af911805cc5db26}{MI\_UNUSED}}(ofs);}
+\DoxyCodeLine{00205\ \ \ \ \ pthread\_setspecific(slot,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00207\ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{preprocessor}{\#elif\ \_WIN32\ \&\&\ MI\_WIN\_USE\_FIXED\_TLS\ \&\&\ !defined(MI\_WIN\_USE\_FLS)}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{comment}{//\ On\ windows\ we\ can\ store\ the\ thread-\/local\ heap\ at\ a\ fixed\ TLS\ slot\ to\ avoid}}
+\DoxyCodeLine{00212\ \textcolor{comment}{//\ thread-\/local\ initialization\ checks\ in\ the\ fast\ path.\ This\ uses\ a\ fixed\ location}}
+\DoxyCodeLine{00213\ \textcolor{comment}{//\ in\ the\ TCB\ though\ (last\ user-\/reserved\ slot\ by\ default)\ which\ may\ clash\ with\ other\ applications.}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \textcolor{preprocessor}{\#define\ MI\_HAS\_TLS\_SLOT\ \ \ \ \ \ 2\ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ 2\ =\ we\ can\ reliably\ initialize\ the\ slot\ (saving\ a\ test\ on\ each\ malloc)}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \textcolor{preprocessor}{\#if\ MI\_WIN\_USE\_FIXED\_TLS\ >\ 1}}
+\DoxyCodeLine{00218\ \textcolor{preprocessor}{\#define\ MI\_TLS\_SLOT\ \ \ \ \ (MI\_WIN\_USE\_FIXED\_TLS)}}
+\DoxyCodeLine{00219\ \textcolor{preprocessor}{\#elif\ MI\_SIZE\_SIZE\ ==\ 4}}
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\#define\ MI\_TLS\_SLOT\ \ \ \ \ (0x710)\ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ Last\ user-\/reserved\ slot\ <https://en.wikipedia.org/wiki/Win32\_Thread\_Information\_Block>}}
+\DoxyCodeLine{00221\ \textcolor{comment}{//\ \#define\ MI\_TLS\_SLOT\ \ (0xF0C)\ \ \ \ \ \ \ \ \ \ \ \ \ //\ Last\ TlsSlot\ (might\ clash\ with\ other\ app\ reserved\ slot)}}
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00223\ \textcolor{preprocessor}{\#define\ MI\_TLS\_SLOT\ \ \ \ \ (0x888)\ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ Last\ user-\/reserved\ slot\ <https://en.wikipedia.org/wiki/Win32\_Thread\_Information\_Block>}}
+\DoxyCodeLine{00224\ \textcolor{comment}{//\ \#define\ MI\_TLS\_SLOT\ \ (0x1678)\ \ \ \ \ \ \ \ \ \ \ \ //\ Last\ TlsSlot\ (might\ clash\ with\ other\ app\ reserved\ slot)}}
+\DoxyCodeLine{00225\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}*\ mi\_prim\_tls\_slot(\textcolor{keywordtype}{size\_t}\ slot)\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\ \ \#if\ (\_M\_X64\ ||\ \_M\_AMD64)\ \&\&\ !defined(\_M\_ARM64EC)}}
+\DoxyCodeLine{00229\ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{void}*)\_\_readgsqword((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})slot);\ \ \ \textcolor{comment}{//\ direct\ load\ at\ offset\ from\ gs}}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\ \ \#elif\ \_M\_IX86\ \&\&\ !defined(\_M\_ARM64EC)}}
+\DoxyCodeLine{00231\ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{void}*)\_\_readfsdword((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long})slot);\ \ \ \textcolor{comment}{//\ direct\ load\ at\ offset\ from\ fs}}
+\DoxyCodeLine{00232\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00233\ \ \ \textcolor{keywordflow}{return}\ ((\textcolor{keywordtype}{void}**)NtCurrentTeb())[slot\ /\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*)];}
+\DoxyCodeLine{00234\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00235\ \}}
+\DoxyCodeLine{00236\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ mi\_prim\_tls\_slot\_set(\textcolor{keywordtype}{size\_t}\ slot,\ \textcolor{keywordtype}{void}*\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00237\ \ \ ((\textcolor{keywordtype}{void}**)NtCurrentTeb())[slot\ /\ \textcolor{keyword}{sizeof}(\textcolor{keywordtype}{void}*)]\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00238\ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00245\ \textcolor{comment}{//\ Get\ a\ fast\ unique\ thread\ id.}}
+\DoxyCodeLine{00246\ \textcolor{comment}{//}}
+\DoxyCodeLine{00247\ \textcolor{comment}{//\ Getting\ the\ thread\ id\ should\ be\ performant\ as\ it\ is\ called\ in\ the}}
+\DoxyCodeLine{00248\ \textcolor{comment}{//\ fast\ path\ of\ \`{}\_mi\_free`\ and\ we\ specialize\ for\ various\ platforms\ as}}
+\DoxyCodeLine{00249\ \textcolor{comment}{//\ inlined\ definitions.\ Regular\ code\ should\ call\ \`{}init.c:\_mi\_thread\_id()`.}}
+\DoxyCodeLine{00250\ \textcolor{comment}{//\ We\ only\ require\ \_mi\_prim\_thread\_id()\ to\ return\ a\ unique\ id}}
+\DoxyCodeLine{00251\ \textcolor{comment}{//\ for\ each\ thread\ (unequal\ to\ zero).}}
+\DoxyCodeLine{00252\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \textcolor{comment}{//\ Do\ we\ have\ \_\_builtin\_thread\_pointer?\ This\ would\ be\ the\ preferred\ way\ to\ get\ a\ unique\ thread\ id}}
+\DoxyCodeLine{00256\ \textcolor{comment}{//\ but\ unfortunately,\ it\ seems\ we\ cannot\ test\ for\ this\ reliably\ at\ this\ time\ (see\ issue\ \#883)}}
+\DoxyCodeLine{00257\ \textcolor{comment}{//\ Nevertheless,\ it\ seems\ needed\ on\ older\ graviton\ platforms\ (see\ issue\ \#851).}}
+\DoxyCodeLine{00258\ \textcolor{comment}{//\ For\ now,\ we\ only\ enable\ this\ for\ specific\ platforms.}}
+\DoxyCodeLine{00259\ \textcolor{preprocessor}{\#if\ !defined(\_\_APPLE\_\_)\ \ }\textcolor{comment}{/*\ on\ apple\ (M1)\ the\ wrong\ register\ is\ read\ (tpidr\_el0\ instead\ of\ tpidrro\_el0)\ so\ fall\ back\ to\ TLS\ slot\ assembly\ (<https://github.com/microsoft/mimalloc/issues/343\#issuecomment-\/763272369>)*/}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\ \ \ \ \&\&\ !defined(\_\_CYGWIN\_\_)\ \(\backslash\)}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\ \ \ \ \&\&\ !defined(MI\_LIBC\_MUSL)\ \(\backslash\)}}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\ \ \ \ \&\&\ (!defined(\_\_clang\_major\_\_)\ ||\ \_\_clang\_major\_\_\ >=\ 14)\ \ }\textcolor{comment}{/*\ older\ clang\ versions\ emit\ bad\ code;\ fall\ back\ to\ using\ the\ TLS\ slot\ (<https://lore.kernel.org/linux-\/arm-\/kernel/202110280952.352F66D8@keescook/T/>)\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00263\ \textcolor{preprocessor}{\ \ \#if\ \ \ \ (defined(\_\_GNUC\_\_)\ \&\&\ (\_\_GNUC\_\_\ >=\ 7)\ \ \&\&\ defined(\_\_aarch64\_\_))\ }\textcolor{comment}{/*\ aarch64\ for\ older\ gcc\ versions\ (issue\ \#851)\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00264\ \textcolor{preprocessor}{\ \ \ \ \ \ ||\ (defined(\_\_GNUC\_\_)\ \&\&\ (\_\_GNUC\_\_\ >=\ 11)\ \&\&\ defined(\_\_x86\_64\_\_))\ \(\backslash\)}}
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\ \ \ \ \ \ ||\ (defined(\_\_clang\_major\_\_)\ \&\&\ (\_\_clang\_major\_\_\ >=\ 14)\ \&\&\ (defined(\_\_aarch64\_\_)\ ||\ defined(\_\_x86\_64\_\_)))}}
+\DoxyCodeLine{00266\ \textcolor{preprocessor}{\ \ \ \ \#define\ MI\_USE\_BUILTIN\_THREAD\_POINTER\ \ 1}}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \textcolor{comment}{//\ defined\ in\ \`{}init.c`;\ do\ not\ use\ these\ directly}}
+\DoxyCodeLine{00273\ \textcolor{keyword}{extern}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1b89d14d2148d8a303630e83964a197b}{mi\_decl\_hidden}}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ad9650742916e5f301f6f645faf4d9f32}{mi\_decl\_thread}}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{prim_8h_aab79557ea136f3acf905c3f7c8eeebb3}{\_mi\_heap\_default}};\ \ \textcolor{comment}{//\ default\ heap\ to\ allocate\ from}}
+\DoxyCodeLine{00274\ \textcolor{keyword}{extern}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1b89d14d2148d8a303630e83964a197b}{mi\_decl\_hidden}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{prim_8h_ab5af7a82b82b0b434e115f6c57289ddb}{\_mi\_process\_is\_initialized}};\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ has\ mi\_process\_init\ been\ called?}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ \mbox{\hyperlink{prim_8h_a42ea20cb0253ec21dff5f6770927df20}{\_\_mi\_prim\_thread\_id}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}};}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ \mbox{\hyperlink{prim_8h_a3875c92cbb791d0a7c69bc1fd2df6804}{\_mi\_prim\_thread\_id}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00279\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ tid\ =\ \mbox{\hyperlink{prim_8h_a42ea20cb0253ec21dff5f6770927df20}{\_\_mi\_prim\_thread\_id}}();}
+\DoxyCodeLine{00280\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}(tid\ >\ 1);}
+\DoxyCodeLine{00281\ \ \ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_ac4a5dfa05acddb18f9bcc3d1505a5906}{mi\_assert\_internal}}((tid\ \&\ \mbox{\hyperlink{types_8h_ad7f6838e0ce408430e539ac2986175b8}{MI\_PAGE\_FLAG\_MASK}})\ ==\ 0);\ \ \textcolor{comment}{//\ bottom\ 2\ bits\ are\ clear?}}
+\DoxyCodeLine{00282\ \ \ \textcolor{keywordflow}{return}\ tid;}
+\DoxyCodeLine{00283\ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ Get\ a\ unique\ id\ for\ the\ current\ thread.}}
+\DoxyCodeLine{00286\ \textcolor{preprocessor}{\#if\ defined(MI\_PRIM\_THREAD\_ID)}}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ \mbox{\hyperlink{prim_8h_a42ea20cb0253ec21dff5f6770927df20}{\_\_mi\_prim\_thread\_id}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00289\ \ \ \textcolor{keywordflow}{return}\ MI\_PRIM\_THREAD\_ID();\ \ \textcolor{comment}{//\ used\ for\ example\ by\ CPython\ for\ a\ free\ threaded\ build\ (see\ python/cpython\#115488)}}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{preprocessor}{\#elif\ defined(\_WIN32)}}
+\DoxyCodeLine{00293\ }
+\DoxyCodeLine{00294\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ \mbox{\hyperlink{prim_8h_a42ea20cb0253ec21dff5f6770927df20}{\_\_mi\_prim\_thread\_id}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00295\ \ \ \textcolor{comment}{//\ Windows:\ works\ on\ Intel\ and\ ARM\ in\ both\ 32-\/\ and\ 64-\/bit}}
+\DoxyCodeLine{00296\ \ \ \textcolor{keywordflow}{return}\ (uintptr\_t)NtCurrentTeb();}
+\DoxyCodeLine{00297\ \}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\#elif\ MI\_USE\_BUILTIN\_THREAD\_POINTER}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ \mbox{\hyperlink{prim_8h_a42ea20cb0253ec21dff5f6770927df20}{\_\_mi\_prim\_thread\_id}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00302\ \ \ \textcolor{comment}{//\ Works\ on\ most\ Unix\ based\ platforms\ with\ recent\ compilers}}
+\DoxyCodeLine{00303\ \ \ \textcolor{keywordflow}{return}\ (uintptr\_t)\_\_builtin\_thread\_pointer();}
+\DoxyCodeLine{00304\ \}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\#elif\ MI\_HAS\_TLS\_SLOT}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ \mbox{\hyperlink{prim_8h_a42ea20cb0253ec21dff5f6770927df20}{\_\_mi\_prim\_thread\_id}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00309\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_BIONIC\_\_)}}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{comment}{//\ issue\ \#384,\ \#495:\ on\ the\ Bionic\ libc\ (Android),\ slot\ 1\ is\ the\ thread\ id}}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{comment}{//\ see:\ https://github.com/aosp-\/mirror/platform\_bionic/blob/c44b1d0676ded732df4b3b21c5f798eacae93228/libc/platform/bionic/tls\_defines.h\#L86}}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keywordflow}{return}\ (uintptr\_t)mi\_prim\_tls\_slot(1);}
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{comment}{//\ in\ all\ our\ other\ targets,\ slot\ 0\ is\ the\ thread\ id}}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{comment}{//\ glibc:\ https://sourceware.org/git/?p=glibc.git;a=blob\_plain;f=sysdeps/x86\_64/nptl/tls.h}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{//\ apple:\ https://github.com/apple/darwin-\/xnu/blob/main/libsyscall/os/tsd.h\#L36}}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{return}\ (uintptr\_t)mi\_prim\_tls\_slot(0);}
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00319\ \}}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \textcolor{comment}{//\ otherwise\ use\ portable\ C,\ taking\ the\ address\ of\ a\ thread\ local\ variable\ (this\ is\ still\ very\ fast\ on\ most\ platforms).}}
+\DoxyCodeLine{00324\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{types_8h_ae3342b51ed88dd82fa3903ca1727e8a8}{mi\_threadid\_t}}\ \mbox{\hyperlink{prim_8h_a42ea20cb0253ec21dff5f6770927df20}{\_\_mi\_prim\_thread\_id}}(\textcolor{keywordtype}{void})\ \mbox{\hyperlink{mimalloc_8h_a2d1ca113437044da99abaaedd0b36ed8}{mi\_attr\_noexcept}}\ \{}
+\DoxyCodeLine{00325\ \ \ \textcolor{keywordflow}{return}\ (uintptr\_t)\&\mbox{\hyperlink{prim_8h_aab79557ea136f3acf905c3f7c8eeebb3}{\_mi\_heap\_default}};}
+\DoxyCodeLine{00326\ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00333\ \textcolor{comment}{Get\ the\ thread\ local\ default\ heap:\ \`{}\_mi\_prim\_get\_default\_heap()`}}
+\DoxyCodeLine{00334\ \textcolor{comment}{}}
+\DoxyCodeLine{00335\ \textcolor{comment}{This\ is\ inlined\ here\ as\ it\ is\ on\ the\ fast\ path\ for\ allocation\ functions.}}
+\DoxyCodeLine{00336\ \textcolor{comment}{}}
+\DoxyCodeLine{00337\ \textcolor{comment}{On\ most\ platforms\ (Windows,\ Linux,\ FreeBSD,\ NetBSD,\ etc),\ this\ just\ returns\ a}}
+\DoxyCodeLine{00338\ \textcolor{comment}{\_\_thread\ local\ variable\ (`\_mi\_heap\_default`).\ With\ the\ initial-\/exec\ TLS\ model\ this\ ensures}}
+\DoxyCodeLine{00339\ \textcolor{comment}{that\ the\ storage\ will\ always\ be\ available\ (allocated\ on\ the\ thread\ stacks).}}
+\DoxyCodeLine{00340\ \textcolor{comment}{}}
+\DoxyCodeLine{00341\ \textcolor{comment}{On\ some\ platforms\ though\ we\ cannot\ use\ that\ when\ overriding\ \`{}malloc`\ since\ the\ underlying}}
+\DoxyCodeLine{00342\ \textcolor{comment}{TLS\ implementation\ (or\ the\ loader)\ will\ call\ itself\ \`{}malloc`\ on\ a\ first\ access\ and\ recurse.}}
+\DoxyCodeLine{00343\ \textcolor{comment}{We\ try\ to\ circumvent\ this\ in\ an\ efficient\ way:}}
+\DoxyCodeLine{00344\ \textcolor{comment}{-\/\ macOSX\ :\ we\ use\ an\ unused\ TLS\ slot\ from\ the\ OS\ allocated\ slots\ (MI\_TLS\_SLOT).\ On\ OSX,\ the}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ \ \ loader\ itself\ calls\ \`{}malloc`\ even\ before\ the\ modules\ are\ initialized.}}
+\DoxyCodeLine{00346\ \textcolor{comment}{-\/\ OpenBSD:\ we\ use\ an\ unused\ slot\ from\ the\ pthread\ block\ (MI\_TLS\_PTHREAD\_SLOT\_OFS).}}
+\DoxyCodeLine{00347\ \textcolor{comment}{-\/\ DragonFly:\ defaults\ are\ working\ but\ seem\ slow\ compared\ to\ freeBSD\ (see\ PR\ \#323)}}
+\DoxyCodeLine{00348\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}(\textcolor{keywordtype}{void});}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#if\ defined(MI\_MALLOC\_OVERRIDE)}}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\#if\ defined(\_\_APPLE\_\_)\ }\textcolor{comment}{//\ macOS}}
+\DoxyCodeLine{00354\ \textcolor{preprocessor}{\ \ \#define\ MI\_TLS\_SLOT\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 89\ \ }\textcolor{comment}{//\ seems\ unused?}}
+\DoxyCodeLine{00355\ \ \ \textcolor{comment}{//\ other\ possible\ unused\ ones\ are\ 9,\ 29,\ \_\_PTK\_FRAMEWORK\_JAVASCRIPTCORE\_KEY4\ (94),\ \_\_PTK\_FRAMEWORK\_GC\_KEY9\ (112)\ and\ \_\_PTK\_FRAMEWORK\_OLDGC\_KEY9\ (89)}}
+\DoxyCodeLine{00356\ \ \ \textcolor{comment}{//\ see\ <https://github.com/rweichler/substrate/blob/master/include/pthread\_machdep.h>}}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\#elif\ defined(\_\_OpenBSD\_\_)}}
+\DoxyCodeLine{00358\ \ \ \textcolor{comment}{//\ use\ end\ bytes\ of\ a\ name;\ goes\ wrong\ if\ anyone\ uses\ names\ >\ 23\ characters\ (ptrhread\ specifies\ 16)}}
+\DoxyCodeLine{00359\ \ \ \textcolor{comment}{//\ see\ <https://github.com/openbsd/src/blob/master/lib/libc/include/thread\_private.h\#L371>}}
+\DoxyCodeLine{00360\ \textcolor{preprocessor}{\ \ \#define\ MI\_TLS\_PTHREAD\_SLOT\_OFS\ \ \ (6*sizeof(int)\ +\ 4*sizeof(void*)\ +\ 24)}}
+\DoxyCodeLine{00361\ \ \ \textcolor{comment}{//\ \#elif\ defined(\_\_DragonFly\_\_)}}
+\DoxyCodeLine{00362\ \ \ \textcolor{comment}{//\ \#warning\ "{}mimalloc\ is\ not\ working\ correctly\ on\ DragonFly\ yet."{}}}
+\DoxyCodeLine{00363\ \ \ \textcolor{comment}{//\ \#define\ MI\_TLS\_PTHREAD\_SLOT\_OFS\ \ \ (4\ +\ 1*sizeof(void*))\ \ //\ offset\ \`{}uniqueid`\ (also\ used\ by\ gdb?)\ <https://github.com/DragonFlyBSD/DragonFlyBSD/blob/master/lib/libthread\_xu/thread/thr\_private.h\#L458>}}
+\DoxyCodeLine{00364\ \textcolor{preprocessor}{\#elif\ defined(\_\_ANDROID\_\_)}}
+\DoxyCodeLine{00365\ \ \ \textcolor{comment}{//\ See\ issue\ \#381}}
+\DoxyCodeLine{00366\ \textcolor{preprocessor}{\ \ \#define\ MI\_TLS\_PTHREAD}}
+\DoxyCodeLine{00367\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\#if\ MI\_TLS\_SLOT}}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\#\ if\ !defined(MI\_HAS\_TLS\_SLOT)}}
+\DoxyCodeLine{00373\ \textcolor{preprocessor}{\#\ \ error\ "{}trying\ to\ use\ a\ TLS\ slot\ for\ the\ default\ heap,\ but\ the\ mi\_prim\_tls\_slot\ primitives\ are\ not\ defined"{}}}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\#\ endif}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00377\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap\ =\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)mi\_prim\_tls\_slot(MI\_TLS\_SLOT);}
+\DoxyCodeLine{00378\ \textcolor{preprocessor}{\ \ \#if\ MI\_HAS\_TLS\_SLOT\ ==\ 1\ \ \ }\textcolor{comment}{//\ check\ if\ the\ TLS\ slot\ is\ initialized}}
+\DoxyCodeLine{00379\ \ \ \textcolor{keywordflow}{if}\ \mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(heap\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \{}
+\DoxyCodeLine{00380\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_GNUC\_\_}}
+\DoxyCodeLine{00381\ \ \ \ \ \_\_asm(\textcolor{stringliteral}{"{}"{}});\ \textcolor{comment}{//\ prevent\ conditional\ load\ of\ the\ address\ of\ \_mi\_heap\_empty}}
+\DoxyCodeLine{00382\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00383\ \ \ \ \ heap\ =\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)\&\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_afa9be93ae7d17a355ce9f4d178257643}{\_mi\_heap\_empty}};}
+\DoxyCodeLine{00384\ \ \ \}}
+\DoxyCodeLine{00385\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00386\ \ \ \textcolor{keywordflow}{return}\ heap;}
+\DoxyCodeLine{00387\ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \textcolor{preprocessor}{\#elif\ defined(MI\_TLS\_PTHREAD\_SLOT\_OFS)}}
+\DoxyCodeLine{00390\ }
+\DoxyCodeLine{00391\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}**\ mi\_prim\_tls\_pthread\_heap\_slot(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00392\ \ \ pthread\_t\ self\ =\ pthread\_self();}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_DragonFly\_\_)}}
+\DoxyCodeLine{00394\ \ \ \textcolor{keywordflow}{if}\ (self==\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00396\ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}**)((\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}*)self\ +\ MI\_TLS\_PTHREAD\_SLOT\_OFS);}
+\DoxyCodeLine{00397\ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00400\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}**\ pheap\ =\ mi\_prim\_tls\_pthread\_heap\_slot();}
+\DoxyCodeLine{00401\ \ \ \textcolor{keywordflow}{if}\ \mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(pheap\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1feeb4148fb048caf23361152895a55c}{\_mi\_heap\_main\_get}}();}
+\DoxyCodeLine{00402\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap\ =\ *pheap;}
+\DoxyCodeLine{00403\ \ \ \textcolor{keywordflow}{if}\ \mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(heap\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)\&\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_afa9be93ae7d17a355ce9f4d178257643}{\_mi\_heap\_empty}};}
+\DoxyCodeLine{00404\ \ \ \textcolor{keywordflow}{return}\ heap;}
+\DoxyCodeLine{00405\ \}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \textcolor{preprocessor}{\#elif\ defined(MI\_TLS\_PTHREAD)}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \textcolor{keyword}{extern}\ pthread\_key\_t\ \_mi\_heap\_default\_key;}
+\DoxyCodeLine{00410\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00411\ \ \ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ heap\ =\ (\mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(\_mi\_heap\_default\_key\ ==\ (pthread\_key\_t)(-\/1))\ ?\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1feeb4148fb048caf23361152895a55c}{\_mi\_heap\_main\_get}}()\ :\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)pthread\_getspecific(\_mi\_heap\_default\_key));}
+\DoxyCodeLine{00412\ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(heap\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}})\ ?\ (\mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*)\&\mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_afa9be93ae7d17a355ce9f4d178257643}{\_mi\_heap\_empty}}\ :\ heap);}
+\DoxyCodeLine{00413\ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \textcolor{preprocessor}{\#else\ }\textcolor{comment}{//\ default\ using\ a\ thread\ local\ variable;\ used\ on\ most\ platforms.}}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{group__heap_ga34a47cde5a5b38c29f1aa3c5e76943c2}{mi\_heap\_t}}*\ \mbox{\hyperlink{prim_8h_a986e62564728229db3ccecbd6e97fd98}{mi\_prim\_get\_default\_heap}}(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00418\ \textcolor{preprocessor}{\ \ \#if\ defined(MI\_TLS\_RECURSE\_GUARD)}}
+\DoxyCodeLine{00419\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(!\mbox{\hyperlink{prim_8h_ab5af7a82b82b0b434e115f6c57289ddb}{\_mi\_process\_is\_initialized}}))\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{_e_a_s_t_l_2packages_2mimalloc_2include_2mimalloc_2internal_8h_a1feeb4148fb048caf23361152895a55c}{\_mi\_heap\_main\_get}}();}
+\DoxyCodeLine{00420\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00421\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{prim_8h_aab79557ea136f3acf905c3f7c8eeebb3}{\_mi\_heap\_default}};}
+\DoxyCodeLine{00422\ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ mi\_prim\_get\_default\_heap()}}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ MI\_PRIM\_H}}
+
+\end{DoxyCode}

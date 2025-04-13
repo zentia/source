@@ -1,5 +1,5 @@
-#include <luisa/runtime/remote/server_interface.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/remote/server_interface.h>
+#include <runtime/core/logging.h>
 #include "device_func.h"
 #include "serde.hpp"
 namespace luisa::compute {

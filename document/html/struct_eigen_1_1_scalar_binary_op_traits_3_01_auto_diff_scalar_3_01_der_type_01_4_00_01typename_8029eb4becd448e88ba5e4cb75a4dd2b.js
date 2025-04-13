@@ -1,0 +1,4 @@
+var struct_eigen_1_1_scalar_binary_op_traits_3_01_auto_diff_scalar_3_01_der_type_01_4_00_01typename_8029eb4becd448e88ba5e4cb75a4dd2b =
+[
+    [ "ReturnType", "struct_eigen_1_1_scalar_binary_op_traits_3_01_auto_diff_scalar_3_01_der_type_01_4_00_01typename_8029eb4becd448e88ba5e4cb75a4dd2b.html#a5e8f04ebd3db02f2d308cc1690052840", null ]
+];

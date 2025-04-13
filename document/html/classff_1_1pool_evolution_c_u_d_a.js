@@ -1,0 +1,28 @@
+var classff_1_1pool_evolution_c_u_d_a =
+[
+    [ "cudaEvolTask", "structff_1_1pool_evolution_c_u_d_a_1_1cuda_evol_task.html", "structff_1_1pool_evolution_c_u_d_a_1_1cuda_evol_task" ],
+    [ "const_iter_t", "classff_1_1pool_evolution_c_u_d_a.html#aa0f3444a68617b5d8daf958f0787c19b", null ],
+    [ "iter_t", "classff_1_1pool_evolution_c_u_d_a.html#a21f4aa2d5a61c4e6fd1879a50a53fd52", null ],
+    [ "poolEvolutionCUDA", "classff_1_1pool_evolution_c_u_d_a.html#a73cfad5f97d8791ecccd8df2a4c08844", null ],
+    [ "poolEvolutionCUDA", "classff_1_1pool_evolution_c_u_d_a.html#af67cda342c353ac8d6dc82a2997ad6b0", null ],
+    [ "~poolEvolutionCUDA", "classff_1_1pool_evolution_c_u_d_a.html#a3a6f2a3762200da5a20b95152a094008", null ],
+    [ "get_result", "classff_1_1pool_evolution_c_u_d_a.html#ab7f6eb9d3a62a9e6e5e319f951090e9b", null ],
+    [ "run_and_wait_end", "classff_1_1pool_evolution_c_u_d_a.html#ac30e423d75a143a3e8792234bc7bb556", null ],
+    [ "setParEvolution", "classff_1_1pool_evolution_c_u_d_a.html#a8315f57f43e42cb3dcef905214c28cf4", null ],
+    [ "setParFilter", "classff_1_1pool_evolution_c_u_d_a.html#a9cf206a3f2ea9eb24abba4f04ca92740", null ],
+    [ "setParSelection", "classff_1_1pool_evolution_c_u_d_a.html#a438f830846e6e3e015b88c4874ed6563", null ],
+    [ "setParTermination", "classff_1_1pool_evolution_c_u_d_a.html#a6e9f9111661eba6142f446f4c3c46d65", null ],
+    [ "svc", "classff_1_1pool_evolution_c_u_d_a.html#a94a76b41497a2fb959650f6b0705d849", null ],
+    [ "buffer", "classff_1_1pool_evolution_c_u_d_a.html#aa7dca922151c1702e2a74e423a524a4f", null ],
+    [ "bufferPool", "classff_1_1pool_evolution_c_u_d_a.html#afa4ec53bc91425b397ddda42764557c4", null ],
+    [ "filter", "classff_1_1pool_evolution_c_u_d_a.html#a1ad84be1f41d9469bd6c442d3b0be96b", null ],
+    [ "input", "classff_1_1pool_evolution_c_u_d_a.html#a2d164e774df199a70c16b90a0e8202cb", null ],
+    [ "mapEvol", "classff_1_1pool_evolution_c_u_d_a.html#a2e65270212dcfd221083bf888e5224c1", null ],
+    [ "pE", "classff_1_1pool_evolution_c_u_d_a.html#a927cd2eeb274f7b06d6bb603aede7964", null ],
+    [ "pF", "classff_1_1pool_evolution_c_u_d_a.html#a50f2226d7a3b34cf3c2576910607e31d", null ],
+    [ "pipeevol", "classff_1_1pool_evolution_c_u_d_a.html#a5ed793c45c590993a40adc99dfef6d9b", null ],
+    [ "pS", "classff_1_1pool_evolution_c_u_d_a.html#a3d7ab5977ecfc5810f4005ab33e56ae2", null ],
+    [ "pT", "classff_1_1pool_evolution_c_u_d_a.html#ad66784f8f2afc05be50ee7968910b9a2", null ],
+    [ "selection", "classff_1_1pool_evolution_c_u_d_a.html#a117642e8e8cda191c24179bd97dc757c", null ],
+    [ "termination", "classff_1_1pool_evolution_c_u_d_a.html#ae3c5eae77d77e4365504c34a214ee796", null ]
+];

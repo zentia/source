@@ -114,13 +114,13 @@ public:
 
 [[nodiscard]] constexpr auto max_mip_levels(uint3 size, uint requested_levels) noexcept {
     if (luisa::any(size == 0u)) { error_image_size_contains_zero(size); }
-    auto max_size = std::max({size.x, size.y, size.z});
+    auto max_size = (std::max)({size.x, size.y, size.z});
     auto max_levels = 0u;
     while (max_size != 0u) {
         max_size >>= 1u;
         max_levels++;
     }
-    return requested_levels == 0u ? max_levels : std::min(requested_levels, max_levels);
+    return requested_levels == 0u ? max_levels : (std::min)(requested_levels, max_levels);
 }
 
 }// namespace detail

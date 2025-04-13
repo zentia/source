@@ -1,0 +1,373 @@
+\doxysection{bits.\+h}
+\hypertarget{bits_8h_source}{}\label{bits_8h_source}\index{runtime/EASTL/packages/mimalloc/include/mimalloc/bits.h@{runtime/EASTL/packages/mimalloc/include/mimalloc/bits.h}}
+\mbox{\hyperlink{bits_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00002\ \textcolor{comment}{Copyright\ (c)\ 2019-\/2024\ Microsoft\ Research,\ Daan\ Leijen}}
+\DoxyCodeLine{00003\ \textcolor{comment}{This\ is\ free\ software;\ you\ can\ redistribute\ it\ and/or\ modify\ it\ under\ the}}
+\DoxyCodeLine{00004\ \textcolor{comment}{terms\ of\ the\ MIT\ license.\ A\ copy\ of\ the\ license\ can\ be\ found\ in\ the\ file}}
+\DoxyCodeLine{00005\ \textcolor{comment}{"{}LICENSE"{}\ at\ the\ root\ of\ this\ distribution.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/*/}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ \ Bit\ operation,\ and\ platform\ dependent\ definition\ (MI\_INTPTR\_SIZE\ etc)}}
+\DoxyCodeLine{00010\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#ifndef\ MI\_BITS\_H}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#define\ MI\_BITS\_H}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ Size\ of\ a\ pointer.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ We\ assume\ that\ \`{}sizeof(void*)==sizeof(intptr\_t)`}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ and\ it\ holds\ for\ all\ platforms\ we\ know\ of.}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ However,\ the\ C\ standard\ only\ requires\ that:}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ p\ ==\ (void*)((intptr\_t)p))}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ but\ we\ also\ need:}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ i\ ==\ (intptr\_t)((void*)i)}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ or\ otherwise\ one\ might\ define\ an\ intptr\_t\ type\ that\ is\ larger\ than\ a\ pointer...}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#if\ INTPTR\_MAX\ >\ INT64\_MAX}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#\ define\ MI\_INTPTR\_SHIFT\ (4)\ \ }\textcolor{comment}{//\ assume\ 128-\/bit\ \ (as\ on\ arm\ CHERI\ for\ example)}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#elif\ INTPTR\_MAX\ ==\ INT64\_MAX}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#\ define\ MI\_INTPTR\_SHIFT\ (3)}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#elif\ INTPTR\_MAX\ ==\ INT32\_MAX}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#\ define\ MI\_INTPTR\_SHIFT\ (2)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#error\ platform\ pointers\ must\ be\ 32,\ 64,\ or\ 128\ bits}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#if\ (INTPTR\_MAX)\ >\ LONG\_MAX}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#\ define\ MI\_PU(x)\ \ x\#\#ULL}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#\ define\ MI\_PU(x)\ \ x\#\#UL}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#if\ SIZE\_MAX\ ==\ UINT64\_MAX}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#\ define\ MI\_SIZE\_SHIFT\ (3)}}
+\DoxyCodeLine{00047\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{eabase_8h_adec1df1b8b51cb32b77e5b86fff46471}{int64\_t}}\ \ \mbox{\hyperlink{bits_8h_a027bd83e124148e3cdd141473e4853e3}{mi\_ssize\_t}};}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#elif\ SIZE\_MAX\ ==\ UINT32\_MAX}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#\ define\ MI\_SIZE\_SHIFT\ (2)}}
+\DoxyCodeLine{00050\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{eabase_8h_ab1967d8591af1a4e48c37fd2b0f184d0}{int32\_t}}\ \ \mbox{\hyperlink{bits_8h_a027bd83e124148e3cdd141473e4853e3}{mi\_ssize\_t}};}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#error\ platform\ objects\ must\ be\ 32\ or\ 64\ bits\ in\ size}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#if\ (SIZE\_MAX/2)\ >\ LONG\_MAX}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#\ define\ MI\_ZU(x)\ \ x\#\#ULL}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#\ define\ MI\_ZU(x)\ \ x\#\#UL}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#define\ MI\_INTPTR\_SIZE\ \ (1<<MI\_INTPTR\_SHIFT)}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#define\ MI\_INTPTR\_BITS\ \ (MI\_INTPTR\_SIZE*8)}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#define\ MI\_SIZE\_SIZE\ \ (1<<MI\_SIZE\_SHIFT)}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#define\ MI\_SIZE\_BITS\ \ (MI\_SIZE\_SIZE*8)}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#define\ MI\_KiB\ \ \ \ \ (MI\_ZU(1024))}}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#define\ MI\_MiB\ \ \ \ \ (MI\_KiB*MI\_KiB)}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#define\ MI\_GiB\ \ \ \ \ (MI\_MiB*MI\_KiB)}}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ Architecture}}
+\DoxyCodeLine{00074\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#if\ defined(\_\_aarch64\_\_)\ ||\ defined(\_M\_ARM64)\ ||\ defined(\_M\_HYBRID\_X86\_ARM64)\ ||\ defined(\_M\_ARM64EC)\ \ }\textcolor{comment}{//\ consider\ arm64ec\ as\ arm64}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#define\ MI\_ARCH\_ARM64\ \ \ \ \ 1}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#elif\ defined(\_\_amd64\_\_)\ ||\ defined(\_\_amd64)\ ||\ defined(\_\_x86\_64\_\_)\ ||\ defined(\_\_x86\_64)\ ||\ defined(\_M\_X64)\ ||\ defined(\_M\_AMD64)}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#define\ MI\_ARCH\_X64\ \ \ \ \ \ \ 1}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#elif\ defined(\_\_i386\_\_)\ ||\ defined(\_\_i386)\ ||\ defined(\_M\_IX86)\ ||\ defined(\_X86\_)\ ||\ defined(\_\_X86\_\_)}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\#define\ MI\_ARCH\_X86\ \ \ \ \ \ \ 1}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#elif\ defined(\_\_arm\_\_)\ ||\ defined(\_ARM)\ ||\ defined(\_M\_ARM)\ \ ||\ defined(\_M\_ARMT)\ ||\ defined(\_\_arm)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#define\ MI\_ARCH\_ARM32\ \ \ \ \ 1}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#elif\ defined(\_\_riscv)\ ||\ defined(\_M\_RISCV)}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#define\ MI\_ARCH\_RISCV\ \ \ \ \ 1}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#if\ (LONG\_MAX\ ==\ INT32\_MAX)}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#define\ MI\_ARCH\_RISCV32\ \ \ 1}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#define\ MI\_ARCH\_RISCV64\ \ \ 1}}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#if\ (MI\_ARCH\_X86\ ||\ MI\_ARCH\_X64)}}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#include\ <immintrin.h>}}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#elif\ MI\_ARCH\_ARM64\ \&\&\ MI\_OPT\_SIMD}}
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#include\ <arm\_neon.h>}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM64\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{intrin_8h}{intrin.h}}>}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#if\ MI\_ARCH\_X64\ \&\&\ defined(\_\_AVX2\_\_)\ \&\&\ !defined(\_\_BMI2\_\_)\ }\textcolor{comment}{//\ msvc}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\#define\ \_\_BMI2\_\_\ \ 1}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#if\ MI\_ARCH\_X64\ \&\&\ (defined(\_\_AVX2\_\_)\ ||\ defined(\_\_BMI2\_\_))\ \&\&\ !defined(\_\_BMI1\_\_)\ }\textcolor{comment}{//\ msvc}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#define\ \_\_BMI1\_\_\ \ 1}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ Define\ big\ endian\ if\ needed}}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ \#define\ MI\_BIG\_ENDIAN\ \ 1}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ maximum\ virtual\ address\ bits\ in\ a\ user-\/space\ pointer}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#if\ MI\_DEFAULT\_VIRTUAL\_ADDRESS\_BITS\ >\ 0\ }}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#define\ MI\_MAX\_VABITS\ \ \ \ \ MI\_DEFAULT\_VIRTUAL\_ADDRESS\_BITS}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#elif\ \ \ MI\_ARCH\_X64}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\#define\ MI\_MAX\_VABITS\ \ \ \ \ (47)}}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\#elif\ MI\_INTPTR\_SIZE\ >\ 4}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\#define\ MI\_MAX\_VABITS\ \ \ \ \ (48)}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\#define\ MI\_MAX\_VABITS\ \ \ \ \ (32)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ use\ a\ flat\ page-\/map\ (or\ a\ 2-\/level\ one)}}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#ifndef\ MI\_PAGE\_MAP\_FLAT}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#if\ MI\_MAX\_VABITS\ <=\ 40\ \&\&\ !defined(\_\_APPLE\_\_)\ }}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#define\ MI\_PAGE\_MAP\_FLAT\ \ 1}}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\#define\ MI\_PAGE\_MAP\_FLAT\ \ 0}}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00130\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ Builtin's}}
+\DoxyCodeLine{00135\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)\ ||\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#define\ mi\_unlikely(x)\ \ \ \ \ (\_\_builtin\_expect(!!(x),false))}}
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\#define\ mi\_likely(x)\ \ \ \ \ \ \ (\_\_builtin\_expect(!!(x),true))}}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\#elif\ (defined(\_\_cplusplus)\ \&\&\ (\_\_cplusplus\ >=\ 202002L))\ ||\ (defined(\_MSVC\_LANG)\ \&\&\ \_MSVC\_LANG\ >=\ 202002L)}}
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\#define\ mi\_unlikely(x)\ \ \ \ \ (x)\ [[unlikely]]}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\#define\ mi\_likely(x)\ \ \ \ \ \ \ (x)\ [[likely]]}}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\#define\ mi\_unlikely(x)\ \ \ \ \ (x)}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#define\ mi\_likely(x)\ \ \ \ \ \ \ (x)}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\#ifndef\ \_\_has\_builtin}}
+\DoxyCodeLine{00150\ \textcolor{preprocessor}{\#define\ \_\_has\_builtin(x)\ \ 0}}
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#define\ mi\_builtin(name)\ \ \ \ \ \ \ \ \_\_builtin\_\#\#name}}
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#define\ mi\_has\_builtin(name)\ \ \ \ \_\_has\_builtin(\_\_builtin\_\#\#name)}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \textcolor{preprocessor}{\#if\ (LONG\_MAX\ ==\ INT32\_MAX)}}
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#define\ mi\_builtin32(name)\ \ \ \ \ \ \ mi\_builtin(name\#\#l)}}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\#define\ mi\_has\_builtin32(name)\ \ \ mi\_has\_builtin(name\#\#l)}}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#define\ mi\_builtin32(name)\ \ \ \ \ \ \ mi\_builtin(name)}}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#define\ mi\_has\_builtin32(name)\ \ \ mi\_has\_builtin(name)}}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#if\ (LONG\_MAX\ ==\ INT64\_MAX)}}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\#define\ mi\_builtin64(name)\ \ \ \ \ \ \ mi\_builtin(name\#\#l)}}
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#define\ mi\_has\_builtin64(name)\ \ \ mi\_has\_builtin(name\#\#l)}}
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#define\ mi\_builtin64(name)\ \ \ \ \ \ \ mi\_builtin(name\#\#ll)}}
+\DoxyCodeLine{00168\ \textcolor{preprocessor}{\#define\ mi\_has\_builtin64(name)\ \ \ mi\_has\_builtin(name\#\#ll)}}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#if\ (MI\_SIZE\_BITS\ ==\ 32)}}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\#define\ mi\_builtinz(name)\ \ \ \ \ \ \ \ mi\_builtin32(name)}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#define\ mi\_has\_builtinz(name)\ \ \ \ mi\_has\_builtin32(name)}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#define\ mi\_msc\_builtinz(name)\ \ \ \ name}}
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\#elif\ (MI\_SIZE\_BITS\ ==\ 64)}}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\#define\ mi\_builtinz(name)\ \ \ \ \ \ \ \ mi\_builtin64(name)}}
+\DoxyCodeLine{00177\ \textcolor{preprocessor}{\#define\ mi\_has\_builtinz(name)\ \ \ \ mi\_has\_builtin64(name)}}
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\#define\ mi\_msc\_builtinz(name)\ \ \ \ name\#\#64}}
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00182\ \textcolor{comment}{\ \ Popcount\ and\ count\ trailing/leading\ zero's}}
+\DoxyCodeLine{00183\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_a6f64ff0f6f0407181dbf7d2c3a64e521}{\_mi\_popcount\_generic}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00186\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{bits_8h_af1672b8b0d690021311e16035a0a562b}{\_mi\_cpu\_has\_popcnt}};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_ac2a9854186003f70eb01135c9aca3529}{mi\_popcount}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ \{}
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_GNUC\_\_)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86)}}
+\DoxyCodeLine{00190\ \textcolor{preprocessor}{\ \ \ \ \#if\ !defined(\_\_BMI1\_\_)}}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{if}\ \mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(!\mbox{\hyperlink{bits_8h_af1672b8b0d690021311e16035a0a562b}{\_mi\_cpu\_has\_popcnt}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a6f64ff0f6f0407181dbf7d2c3a64e521}{\_mi\_popcount\_generic}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});\ \}}
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00194\ \ \ \ \ \_\_asm\ (\textcolor{stringliteral}{"{}popcnt\(\backslash\)t\%1,\%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ :\ \textcolor{stringliteral}{"{}r"{}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86)}}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\ \ \ \ \#if\ !defined(\_\_BMI1\_\_)}}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keywordflow}{if}\ \mbox{\hyperlink{bits_8h_a13767b1803a4c31c40d896e9c08bc8a3}{mi\_unlikely}}(!\mbox{\hyperlink{bits_8h_af1672b8b0d690021311e16035a0a562b}{\_mi\_cpu\_has\_popcnt}})\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a6f64ff0f6f0407181dbf7d2c3a64e521}{\_mi\_popcount\_generic}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});\ \}}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{size\_t})\mbox{\hyperlink{bits_8h_a86beab56d7a862d3c10d8772e6ba321c}{mi\_msc\_builtinz}}(\_\_popcnt)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ MI\_ARCH\_ARM64}}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{size\_t})\mbox{\hyperlink{bits_8h_a86beab56d7a862d3c10d8772e6ba321c}{mi\_msc\_builtinz}}(\_\_popcnt)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\ \ \#elif\ mi\_has\_builtinz(popcount)}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a5d04e744dd55bf205494ad597533973b}{mi\_builtinz}}(popcount)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\ \ \ \ \#define\ MI\_HAS\_FAST\_POPCOUNT\ \ 0}}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}<=1\ ?\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ :\ \mbox{\hyperlink{bits_8h_a6f64ff0f6f0407181dbf7d2c3a64e521}{\_mi\_popcount\_generic}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}));}
+\DoxyCodeLine{00208\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00209\ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\#ifndef\ MI\_HAS\_FAST\_POPCOUNT}}
+\DoxyCodeLine{00212\ \textcolor{preprocessor}{\#define\ MI\_HAS\_FAST\_POPCOUNT\ 1}}
+\DoxyCodeLine{00213\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_a1bc7ba0ba86e936bbfd596d1285cf9e0}{\_mi\_clz\_generic}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00218\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_aaf9cb98b0eccdf3c2bcfb027728ee7b0}{\_mi\_ctz\_generic}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_a8eb514b948438b609030d3d13c0d1c6d}{mi\_ctz}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ \{}
+\DoxyCodeLine{00221\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_GNUC\_\_)\ \&\&\ MI\_ARCH\_X64\ \&\&\ defined(\_\_BMI1\_\_)\ \ }}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00223\ \ \ \ \ \_\_asm\ (\textcolor{stringliteral}{"{}tzcnt\(\backslash\)t\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ :\ \textcolor{stringliteral}{"{}r"{}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00225\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_GNUC\_\_)\ \&\&\ MI\_ARCH\_X64}}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{comment}{//\ tzcnt\ is\ interpreted\ as\ bsf\ if\ BMI1\ is\ not\ supported\ (pre-\/haswell)}}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{//\ if\ the\ argument\ is\ zero:}}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ -\/\ tzcnt:\ sets\ carry-\/flag,\ and\ returns\ MI\_SIZE\_BITS}}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ -\/\ bsf\ \ :\ sets\ zero-\/flag,\ and\ leaves\ the\ destination\ \_unmodified\_\ (on\ both\ AMD\ and\ Intel\ now,\ see\ <https://github.com/llvm/llvm-\/project/pull/102885>)}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ so\ we\ always\ initialize\ r\ to\ MI\_SIZE\_BITS\ to\ work\ correctly\ on\ all\ cpu's\ without\ branching}}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}};}
+\DoxyCodeLine{00232\ \ \ \ \ \_\_asm\ (\textcolor{stringliteral}{"{}tzcnt\(\backslash\)t\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}+r"{}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ :\ \textcolor{stringliteral}{"{}r"{}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \textcolor{stringliteral}{"{}cc"{}});\ \ \textcolor{comment}{//\ use\ '+r'\ to\ keep\ the\ assignment\ to\ r\ in\ case\ this\ becomes\ bsf\ on\ older\ cpu's}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00234\ \textcolor{preprocessor}{\ \ \#elif\ mi\_has\_builtinz(ctz)}}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ (\textcolor{keywordtype}{size\_t})\mbox{\hyperlink{bits_8h_a5d04e744dd55bf205494ad597533973b}{mi\_builtinz}}(ctz)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ MI\_ARCH\_X64\ \&\&\ defined(\_\_BMI1\_\_)}}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ \_tzcnt\_u64(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});\ \ \textcolor{comment}{//\ ensure\ it\ still\ works\ on\ non-\/BMI1\ cpu's\ as\ well}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM64\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ idx;}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{bits_8h_a86beab56d7a862d3c10d8772e6ba321c}{mi\_msc\_builtinz}}(\_BitScanForward)(\&idx,\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ ?\ (\textcolor{keywordtype}{size\_t})idx\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});}
+\DoxyCodeLine{00241\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_GNUC\_\_)\ \&\&\ MI\_ARCH\_X86}}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}};}
+\DoxyCodeLine{00243\ \ \ \ \ \_\_asm\ (\textcolor{stringliteral}{"{}bsf\(\backslash\)t\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}+r"{}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ :\ \textcolor{stringliteral}{"{}r"{}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\ \ \#elif\ MI\_HAS\_FAST\_POPCOUNT}}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ (\mbox{\hyperlink{bits_8h_ac2a9854186003f70eb01135c9aca3529}{mi\_popcount}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\string^(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}-\/1))-\/1)\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});}
+\DoxyCodeLine{00247\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00248\ \textcolor{preprocessor}{\ \ \ \ \#define\ MI\_HAS\_FAST\_BITSCAN\ \ 0}}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ \mbox{\hyperlink{bits_8h_aaf9cb98b0eccdf3c2bcfb027728ee7b0}{\_mi\_ctz\_generic}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});}
+\DoxyCodeLine{00250\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00251\ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_af432eec4ac40df0b60ba04ea09a103fb}{mi\_clz}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ \{}
+\DoxyCodeLine{00254\ \ \ \textcolor{comment}{//\ we\ don't\ optimize\ anymore\ to\ lzcnt\ as\ there\ are\ still\ non\ BMI1\ cpu's\ around\ (like\ Intel\ Celeron,\ see\ issue\ \#1016)}}
+\DoxyCodeLine{00255\ \ \ \textcolor{comment}{//\ on\ pre-\/haswell\ cpu's\ lzcnt\ gets\ executed\ as\ bsr\ which\ is\ not\ equivalent\ (at\ it\ returns\ the\ bit\ position)}}
+\DoxyCodeLine{00256\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_GNUC\_\_)\ \&\&\ MI\_ARCH\_X64\ \&\&\ defined(\_\_BMI1\_\_)\ }\textcolor{comment}{//\ on\ x64\ lzcnt\ is\ defined\ for\ 0}}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00258\ \ \ \ \ \_\_asm\ (\textcolor{stringliteral}{"{}lzcnt\(\backslash\)t\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ :\ \textcolor{stringliteral}{"{}r"{}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\ \ \#elif\ mi\_has\_builtinz(clz)}}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ (\textcolor{keywordtype}{size\_t})\mbox{\hyperlink{bits_8h_a5d04e744dd55bf205494ad597533973b}{mi\_builtinz}}(clz)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM64\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ idx;}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{bits_8h_a86beab56d7a862d3c10d8772e6ba321c}{mi\_msc\_builtinz}}(\_BitScanReverse)(\&idx,\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ ?\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}\ -\/\ 1\ -\/\ (\textcolor{keywordtype}{size\_t})idx\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});}
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_GNUC\_\_)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86)}}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}==0)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}};}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}};}
+\DoxyCodeLine{00268\ \ \ \ \ \_\_asm\ (\textcolor{stringliteral}{"{}bsr\(\backslash\)t\%1,\ \%0"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ :\ \textcolor{stringliteral}{"{}r"{}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \textcolor{stringliteral}{"{}cc"{}});}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}\ -\/\ 1\ -\/\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00270\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00271\ \textcolor{preprocessor}{\ \ \ \ \#define\ MI\_HAS\_FAST\_BITSCAN\ \ 0}}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ \mbox{\hyperlink{bits_8h_a1bc7ba0ba86e936bbfd596d1285cf9e0}{\_mi\_clz\_generic}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}});}
+\DoxyCodeLine{00273\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00274\ \}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \textcolor{preprocessor}{\#ifndef\ MI\_HAS\_FAST\_BITSCAN}}
+\DoxyCodeLine{00277\ \textcolor{preprocessor}{\#define\ MI\_HAS\_FAST\_BITSCAN\ 1}}
+\DoxyCodeLine{00278\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00281\ \textcolor{comment}{\ \ find\ trailing/leading\ zero\ \ (bit\ scan\ forward/reverse)}}
+\DoxyCodeLine{00282\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \textcolor{comment}{//\ Bit\ scan\ forward:\ find\ the\ least\ significant\ bit\ that\ is\ set\ (i.e.\ count\ trailing\ zero's)}}
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ return\ false\ if\ \`{}x==0`\ (with\ \`{}*idx`\ undefined)\ and\ true\ otherwise,}}
+\DoxyCodeLine{00286\ \textcolor{comment}{//\ with\ the\ \`{}idx`\ is\ set\ to\ the\ bit\ index\ (`0\ <=\ *idx\ <\ MI\_BFIELD\_BITS`).}}
+\DoxyCodeLine{00287\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{bits_8h_a9a725eee7a716d863140f201d6a970f5}{mi\_bsf}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \textcolor{keywordtype}{size\_t}*\ idx)\ \{}
+\DoxyCodeLine{00288\ \ \ \textcolor{comment}{//\ we\ don't\ optimize\ anymore\ to\ lzcnt\ so\ we\ run\ correctly\ on\ older\ cpu's\ as\ well}}
+\DoxyCodeLine{00289\ \textcolor{preprocessor}{\ \ \#if\ defined(\_\_GNUC\_\_)\ \&\&\ MI\_ARCH\_X64\ \&\&\ defined(\_\_BMI1\_\_)\ \&\&\ (!defined(\_\_clang\_major\_\_)\ ||\ \_\_clang\_major\_\_\ >=\ 9)}}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{comment}{//\ on\ x64\ the\ carry\ flag\ is\ set\ on\ zero\ which\ gives\ better\ codegen}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordtype}{bool}\ is\_zero;}
+\DoxyCodeLine{00292\ \ \ \ \ \_\_asm\ (\ \textcolor{stringliteral}{"{}tzcnt\(\backslash\)t\%2,\ \%1"{}}\ :\ \textcolor{stringliteral}{"{}=@ccc"{}}(is\_zero),\ \textcolor{stringliteral}{"{}=r"{}}(*idx)\ :\ \textcolor{stringliteral}{"{}r"{}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ :\ \textcolor{stringliteral}{"{}cc"{}}\ );}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{return}\ !is\_zero;}
+\DoxyCodeLine{00294\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM64\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ i;}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{bits_8h_a86beab56d7a862d3c10d8772e6ba321c}{mi\_msc\_builtinz}}(\_BitScanForward)(\&i,\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ ?\ (*idx\ =\ (\textcolor{keywordtype}{size\_t})i,\ \textcolor{keyword}{true})\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00297\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ (*idx\ =\ \mbox{\hyperlink{bits_8h_a8eb514b948438b609030d3d13c0d1c6d}{mi\_ctz}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}),\ \textcolor{keyword}{true})\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00300\ \}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \textcolor{comment}{//\ Bit\ scan\ reverse:\ find\ the\ most\ significant\ bit\ that\ is\ set}}
+\DoxyCodeLine{00303\ \textcolor{comment}{//\ return\ false\ if\ \`{}x==0`\ (with\ \`{}*idx`\ undefined)\ and\ true\ otherwise,}}
+\DoxyCodeLine{00304\ \textcolor{comment}{//\ with\ the\ \`{}idx`\ is\ set\ to\ the\ bit\ index\ (`0\ <=\ *idx\ <\ MI\_BFIELD\_BITS`).}}
+\DoxyCodeLine{00305\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{bits_8h_ae1a375404b8024ab419cfc537db20741}{mi\_bsr}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \textcolor{keywordtype}{size\_t}*\ idx)\ \{}
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\ \ \#if\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM64\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ i;}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{bits_8h_a86beab56d7a862d3c10d8772e6ba321c}{mi\_msc\_builtinz}}(\_BitScanReverse)(\&i,\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ ?\ (*idx\ =\ (\textcolor{keywordtype}{size\_t})i,\ \textcolor{keyword}{true})\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00309\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}!=0\ ?\ (*idx\ =\ \mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}\ -\/\ 1\ -\/\ \mbox{\hyperlink{bits_8h_af432eec4ac40df0b60ba04ea09a103fb}{mi\_clz}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}),\ \textcolor{keyword}{true})\ :\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00311\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00312\ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00316\ \textcolor{comment}{\ \ rotate}}
+\DoxyCodeLine{00317\ \textcolor{comment}{-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_a18a6c32c1a63cfbc4e0e8423afe06f89}{mi\_rotr}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ \{}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\ \ \#if\ (mi\_has\_builtin(rotateright64)\ \&\&\ MI\_SIZE\_BITS==64)}}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a9c669bcfb80e1d14acd6086fc5600bcc}{mi\_builtin}}(rotateright64)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00322\ \textcolor{preprocessor}{\ \ \#elif\ (mi\_has\_builtin(rotateright32)\ \&\&\ MI\_SIZE\_BITS==32)}}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a9c669bcfb80e1d14acd6086fc5600bcc}{mi\_builtin}}(rotateright32)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_ARM64)}}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keywordflow}{return}\ \_rotr64(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ (\textcolor{keywordtype}{int})\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00326\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{keywordflow}{return}\ \_lrotr(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},(\textcolor{keywordtype}{int})\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00328\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{comment}{//\ The\ term\ \`{}(-\/rshift)\&(BITS-\/1)`\ is\ written\ instead\ of\ \`{}BITS\ -\/\ rshift`\ to}}
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{//\ avoid\ UB\ when\ \`{}rshift==0`.\ See\ <https://blog.regehr.org/archives/1063>}}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ rshift\ =\ (\textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}})(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ \&\ (\mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}-\/1);}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ rshift)\ |\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ <<\ ((-\/rshift)\ \&\ (\mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}-\/1))));}
+\DoxyCodeLine{00333\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00334\ \}}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{bits_8h_acf2fcb7e521269e6334d0dba4804892c}{mi\_rotl}}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ \{}
+\DoxyCodeLine{00337\ \textcolor{preprocessor}{\ \ \#if\ (mi\_has\_builtin(rotateleft64)\ \&\&\ MI\_SIZE\_BITS==64)}}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a9c669bcfb80e1d14acd6086fc5600bcc}{mi\_builtin}}(rotateleft64)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00339\ \textcolor{preprocessor}{\ \ \#elif\ (mi\_has\_builtin(rotateleft32)\ \&\&\ MI\_SIZE\_BITS==32)}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a9c669bcfb80e1d14acd6086fc5600bcc}{mi\_builtin}}(rotateleft32)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_ARM64)}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordflow}{return}\ \_rotl64(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ (\textcolor{keywordtype}{int})\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00343\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keywordflow}{return}\ \_lrotl(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ (\textcolor{keywordtype}{int})\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00345\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{comment}{//\ The\ term\ \`{}(-\/rshift)\&(BITS-\/1)`\ is\ written\ instead\ of\ \`{}BITS\ -\/\ rshift`\ to}}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{//\ avoid\ UB\ when\ \`{}rshift==0`.\ See\ <https://blog.regehr.org/archives/1063>}}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ rshift\ =\ (\textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}})(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ \&\ (\mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}-\/1);}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ <<\ rshift)\ |\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ ((-\/rshift)\ \&\ (\mbox{\hyperlink{bits_8h_a23f1b7ccb5e7a348f2bd0abaf2664d0d}{MI\_SIZE\_BITS}}-\/1))));}
+\DoxyCodeLine{00350\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00351\ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{bits_8h_a54b39737c07063eda533e284d0300d1b}{mi\_rotl32}}(\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ \{}
+\DoxyCodeLine{00354\ \textcolor{preprocessor}{\ \ \#if\ mi\_has\_builtin(rotateleft32)}}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bits_8h_a9c669bcfb80e1d14acd6086fc5600bcc}{mi\_builtin}}(rotateleft32)(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_MSC\_VER)\ \&\&\ (MI\_ARCH\_X64\ ||\ MI\_ARCH\_X86\ ||\ MI\_ARCH\_ARM64\ ||\ MI\_ARCH\_ARM32)}}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keywordflow}{return}\ \_lrotl(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ (\textcolor{keywordtype}{int})\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{comment}{//\ The\ term\ \`{}(-\/rshift)\&(BITS-\/1)`\ is\ written\ instead\ of\ \`{}BITS\ -\/\ rshift`\ to}}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{comment}{//\ avoid\ UB\ when\ \`{}rshift==0`.\ See\ <https://blog.regehr.org/archives/1063>}}
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ rshift\ =\ (\textcolor{keywordtype}{unsigned}\ \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}})(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}})\ \&\ 31;}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{keywordflow}{return}\ ((\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ <<\ rshift)\ |\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ ((-\/rshift)\ \&\ 31)));}
+\DoxyCodeLine{00363\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00364\ \}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ MI\_BITS\_H}}
+
+\end{DoxyCode}

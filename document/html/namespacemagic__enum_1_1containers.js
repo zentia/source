@@ -1,0 +1,27 @@
+var namespacemagic__enum_1_1containers =
+[
+    [ "detail", "namespacemagic__enum_1_1containers_1_1detail.html", "namespacemagic__enum_1_1containers_1_1detail" ],
+    [ "array", "structmagic__enum_1_1containers_1_1array.html", "structmagic__enum_1_1containers_1_1array" ],
+    [ "bitset", "classmagic__enum_1_1containers_1_1bitset.html", "classmagic__enum_1_1containers_1_1bitset" ],
+    [ "set", "classmagic__enum_1_1containers_1_1set.html", "classmagic__enum_1_1containers_1_1set" ],
+    [ "comparator_indexing", "namespacemagic__enum_1_1containers.html#af5e626cbc0f2938233c649467595b2cf", null ],
+    [ "default_indexing", "namespacemagic__enum_1_1containers.html#a64791e7fc862a1c0a5f9a4101000bc6f", null ],
+    [ "name_greater", "namespacemagic__enum_1_1containers.html#a0186319ac531f077fcb8548542bf1240", null ],
+    [ "name_greater_case_insensitive", "namespacemagic__enum_1_1containers.html#a43ce21b5b9f3b0f09d1111e28f0e386c", null ],
+    [ "name_less", "namespacemagic__enum_1_1containers.html#a5e602439fcb9ee3f50a85f42f65be47e", null ],
+    [ "name_less_case_insensitive", "namespacemagic__enum_1_1containers.html#a4dd2eb480a703f357646a800a1db2fba", null ],
+    [ "bitset", "namespacemagic__enum_1_1containers.html#a5a6d8f4238d0e879d942d737f6f5b47d", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#ad7f411ec68cfab3ab0e52c71e19d4cc5", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#a5771bfe5a21dfabd362fd0350852c604", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#a6e4a78a9e88c85f6bb755ffc79572ed4", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#a9b78b2171a87841e98a7311192a5170d", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#a8a363c69a683a4d2d8e153b15d4472a6", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#aa9c3ea3c1cd5de95b0197a5044a3c713", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#abb32d8a5e18cc0e46805ac49cd45bf1a", null ],
+    [ "get", "namespacemagic__enum_1_1containers.html#a6e59d7ac2627f22bd80cda9c2556ceb3", null ],
+    [ "make_array", "namespacemagic__enum_1_1containers.html#a34c6203aea2d8470abbec591f9c7fa65", null ],
+    [ "set", "namespacemagic__enum_1_1containers.html#abbbd9b5377423b32e4eb43d73b8ecae9", null ],
+    [ "to_array", "namespacemagic__enum_1_1containers.html#ae9ab05b45151b2bc6d1832f28628e5a4", null ],
+    [ "to_array", "namespacemagic__enum_1_1containers.html#ae6b07e32fc01a08e606595e325c07db6", null ],
+    [ "raw_access", "namespacemagic__enum_1_1containers.html#a98203deb5ba5bafe9d5a2c10be64a4ed", null ]
+];

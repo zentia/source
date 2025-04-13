@@ -1,0 +1,28 @@
+var class_x86___timer =
+[
+    [ "X86_Timer", "class_x86___timer.html#ad50284e2d66d28003bfa82a105d64d71", null ],
+    [ "add_get_click", "class_x86___timer.html#a3863c016a3154c33caaadf7886e53079", null ],
+    [ "clear", "class_x86___timer.html#ab5e6034aa0fdeee8f9073f24193d9ff5", null ],
+    [ "dump_history", "class_x86___timer.html#a284acddc2cc02912231a29632457313a", null ],
+    [ "dump_statistics", "class_x86___timer.html#a6c602580635e29c5dca9a67272901193", null ],
+    [ "fill_history_clicks", "class_x86___timer.html#ae0bdf9ea9f1bd65b1e5d6fb4ad0c4e31", null ],
+    [ "find_frequency", "class_x86___timer.html#a1beddd8cb10ed89d3dd06d3b233b63e1", null ],
+    [ "frequency", "class_x86___timer.html#ab46d07feea13b7846a4b1f5a92dbf1f7", null ],
+    [ "get_click", "class_x86___timer.html#a3f6ad78024b1403e4ce0a6dec2164963", null ],
+    [ "get_elapsed_time_in_second", "class_x86___timer.html#a69dd9817f6f3e2cc165d981bc778ce33", null ],
+    [ "get_mean_clicks", "class_x86___timer.html#af538c36f392114bd1e6030280302a1ff", null ],
+    [ "get_most_occured_clicks", "class_x86___timer.html#aaf06db4cf233ad033b106bd6d68d3d10", null ],
+    [ "get_shortest_clicks", "class_x86___timer.html#a6631a74c2fe9fd5f58ddc2bf1d924c51", null ],
+    [ "start", "class_x86___timer.html#a90050edc326c78c5e1322a17d2602af9", null ],
+    [ "stop", "class_x86___timer.html#ab1b153b8e942f23d6ff809ed30d348cc", null ],
+    [ "_click_start", "class_x86___timer.html#ae5850053bb7c6328cbd8f6f45f9bb608", null ],
+    [ "_click_stop", "class_x86___timer.html#ade477e9e234ebe8531edc4d5e894adb9", null ],
+    [ "_counted_clicks", "class_x86___timer.html#aec494eee7e4ba0d8f67f9f0651f07692", null ],
+    [ "_frequency", "class_x86___timer.html#a14d7669d27f2302c136c3b7337c23ea8", null ],
+    [ "_history_mean_clicks", "class_x86___timer.html#af85042b5e8ff189930c21c1fcc6a918d", null ],
+    [ "_history_most_occured_clicks", "class_x86___timer.html#ae4266e6780d9e5b51bf78ad7934fb091", null ],
+    [ "_history_shortest_clicks", "class_x86___timer.html#a1f5847f35a6b15000ce10803ef0469f2", null ],
+    [ "_nb_sample", "class_x86___timer.html#a1bbe353883a14384e8475118b612c383", null ],
+    [ "n32", "class_x86___timer.html#a42a0c06a65f4a77092eb97fa2f56221b", null ],
+    [ "n64", "class_x86___timer.html#a327d93a033b4b101d05528b0c22fd56b", null ]
+];

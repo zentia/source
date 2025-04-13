@@ -1,0 +1,194 @@
+\doxysection{LMqrsolv.\+h}
+\hypertarget{_l_mqrsolv_8h_source}{}\label{_l_mqrsolv_8h_source}\index{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/src/LevenbergMarquardt/LMqrsolv.h@{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/src/LevenbergMarquardt/LMqrsolv.h}}
+\mbox{\hyperlink{_l_mqrsolv_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Thomas\ Capricelli\ <orzel@freehackers.org>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Desire\ Nuentsa\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ code\ initially\ comes\ from\ MINPACK\ whose\ original\ authors\ are:}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Copyright\ Jorge\ More\ -\/\ Argonne\ National\ Laboratory}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Copyright\ Burt\ Garbow\ -\/\ Argonne\ National\ Laboratory}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Copyright\ Ken\ Hillstrom\ -\/\ Argonne\ National\ Laboratory}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Minpack\ license}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ (a\ BSD-\/like\ license)\ described\ in\ the\ campaigned\ CopyrightMINPACK.txt\ file.}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_LMQRSOLV\_H}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#define\ EIGEN\_LMQRSOLV\_H}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keyword}{typename}\ PermIndex>}
+\DoxyCodeLine{00023\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab6f7b3c81c7f67d6d9e6f01a51c70da9}{lmqrsolv}}(}
+\DoxyCodeLine{00024\ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Rows,Cols>}}\ \&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},}
+\DoxyCodeLine{00025\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_permutation_matrix}{PermutationMatrix<Dynamic,Dynamic,PermIndex>}}\ \&iPerm,}
+\DoxyCodeLine{00026\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&diag,}
+\DoxyCodeLine{00027\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&qtb,}
+\DoxyCodeLine{00028\ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},}
+\DoxyCodeLine{00029\ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&sdiag)}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{comment}{/*\ Local\ variables\ */}}
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}},\ k;}
+\DoxyCodeLine{00033\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\ temp;}
+\DoxyCodeLine{00034\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ =\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.cols();}
+\DoxyCodeLine{00035\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \ wa(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}});}
+\DoxyCodeLine{00036\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_jacobi_rotation}{JacobiRotation<Scalar>}}\ givens;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{comment}{/*\ Function\ Body\ */}}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{comment}{//\ the\ following\ will\ only\ change\ the\ lower\ triangular\ part\ of\ s,\ including}}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{comment}{//\ the\ diagonal,\ though\ the\ diagonal\ is\ restored\ afterward}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ copy\ r\ and\ (q\ transpose)*b\ to\ preserve\ input\ and\ initialize\ s.\ */}}
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ in\ particular,\ save\ the\ diagonal\ elements\ of\ r\ in\ x.\ */}}
+\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.diagonal();}
+\DoxyCodeLine{00045\ \ \ \ \ wa\ =\ qtb;}
+\DoxyCodeLine{00046\ \ \ \ \ }
+\DoxyCodeLine{00047\ \ \ \ }
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.topLeftCorner(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}).template\ triangularView<StrictlyLower>()\ =\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.topLeftCorner(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}},\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}).transpose();}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ eliminate\ the\ diagonal\ matrix\ d\ using\ a\ givens\ rotation.\ */}}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})\ \{}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ prepare\ the\ row\ of\ d\ to\ be\ eliminated,\ locating\ the\ */}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ diagonal\ element\ using\ p\ from\ the\ qr\ factorization.\ */}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ PermIndex\ l\ =\ iPerm.\mbox{\hyperlink{class_eigen_1_1_permutation_matrix_a9a2ae1608cc19e77e77863fce02f9066}{indices}}()(\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}});}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (diag[l]\ ==\ 0.)}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ sdiag.tail(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}).\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ sdiag[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ =\ diag[l];}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ the\ transformations\ to\ eliminate\ the\ row\ of\ d\ */}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ modify\ only\ a\ single\ element\ of\ (q\ transpose)*b\ */}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ beyond\ the\ first\ n,\ which\ is\ initially\ zero.\ */}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\ qtbpj\ =\ 0.;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (k\ =\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};\ k\ <\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};\ ++k)\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ determine\ a\ givens\ rotation\ which\ eliminates\ the\ */}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ appropriate\ element\ in\ the\ current\ row\ of\ d.\ */}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_adb5bcb0d28a95e39ca31c2c17e866092}{makeGivens}}(-\/\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}(k,k),\ sdiag[k]);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ compute\ the\ modified\ diagonal\ element\ of\ r\ and\ */}}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ the\ modified\ element\ of\ ((q\ transpose)*b,0).\ */}}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}(k,k)\ =\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}(k,k)\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ sdiag[k];}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ temp\ =\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ wa[k]\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ qtbpj;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ qtbpj\ =\ -\/givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ wa[k]\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ qtbpj;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ wa[k]\ =\ temp;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ \ \ \ \ \ \ accumulate\ the\ tranformation\ in\ the\ row\ of\ s.\ */}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ k+1;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ temp\ =\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},k)\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ sdiag[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sdiag[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ -\/givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},k)\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ sdiag[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}];}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},k)\ =\ temp;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \}}
+\DoxyCodeLine{00084\ \ \ }
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ solve\ the\ triangular\ system\ for\ z.\ if\ the\ system\ is\ */}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ singular,\ then\ obtain\ a\ least\ squares\ solution.\ */}}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ nsing;}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{for}(nsing=0;\ nsing<\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ \&\&\ sdiag[nsing]!=0;\ nsing++)\ \{\}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ \ \ wa.tail(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/nsing).\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00091\ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.topLeftCorner(nsing,\ nsing).transpose().template\ triangularView<Upper>().solveInPlace(wa.head(nsing));}
+\DoxyCodeLine{00092\ \ \ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ restore}}
+\DoxyCodeLine{00094\ \ \ \ \ sdiag\ =\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.diagonal();}
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.diagonal()\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{/*\ permute\ the\ components\ of\ z\ back\ to\ components\ of\ x.\ */}}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ iPerm\ *\ wa;\ }
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00102\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespace_eigen_1_1internal_ab6f7b3c81c7f67d6d9e6f01a51c70da9}{lmqrsolv}}(}
+\DoxyCodeLine{00103\ \ \ \mbox{\hyperlink{class_eigen_1_1_sparse_matrix}{SparseMatrix<Scalar,\_Options,Index>}}\ \&\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}},}
+\DoxyCodeLine{00104\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_permutation_matrix}{PermutationMatrix<Dynamic,Dynamic>}}\ \&iPerm,}
+\DoxyCodeLine{00105\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&diag,}
+\DoxyCodeLine{00106\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&qtb,}
+\DoxyCodeLine{00107\ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},}
+\DoxyCodeLine{00108\ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \&sdiag)}
+\DoxyCodeLine{00109\ \{}
+\DoxyCodeLine{00110\ \ \ \textcolor{comment}{/*\ Local\ variables\ */}}
+\DoxyCodeLine{00111\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1_sparse_matrix}{SparseMatrix<Scalar,RowMajor,Index>}}\ FactorType;}
+\DoxyCodeLine{00112\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}},\ k,\ l;}
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\ temp;}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ =\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}}.cols();}
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<Scalar,Dynamic,1>}}\ \ wa(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}});}
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_jacobi_rotation}{JacobiRotation<Scalar>}}\ givens;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{comment}{/*\ Function\ Body\ */}}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ the\ following\ will\ only\ change\ the\ lower\ triangular\ part\ of\ s,\ including}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ the\ diagonal,\ though\ the\ diagonal\ is\ restored\ afterward}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ copy\ r\ and\ (q\ transpose)*b\ to\ preserve\ input\ and\ initialize\ R.\ */}}
+\DoxyCodeLine{00123\ \ \ \ \ wa\ =\ qtb;}
+\DoxyCodeLine{00124\ \ \ \ \ FactorType\ \mbox{\hyperlink{test__broadcast__node_8cpp_a554e63228b946db0d44c4f398b18e212}{R}}(\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}});}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{comment}{//\ Eliminate\ the\ diagonal\ matrix\ d\ using\ a\ givens\ rotation}}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})}
+\DoxyCodeLine{00127\ \ \ \ \ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \textcolor{comment}{//\ Prepare\ the\ row\ of\ d\ to\ be\ eliminated,\ locating\ the\ }}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{comment}{//\ diagonal\ element\ using\ p\ from\ the\ qr\ factorization}}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ l\ =\ iPerm.\mbox{\hyperlink{class_eigen_1_1_permutation_matrix_a9a2ae1608cc19e77e77863fce02f9066}{indices}}()(\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}});}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (diag(l)\ ==\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(0))\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ sdiag.tail(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}).\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ sdiag[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ =\ diag[l];}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{comment}{//\ the\ transformations\ to\ eliminate\ the\ row\ of\ d}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{comment}{//\ modify\ only\ a\ single\ element\ of\ (q\ transpose)*b}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{comment}{//\ beyond\ the\ first\ n,\ which\ is\ initially\ zero.\ }}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ }
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Scalar}}\ qtbpj\ =\ 0;\ }
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{comment}{//\ Browse\ the\ nonzero\ elements\ of\ row\ j\ of\ the\ upper\ triangular\ s}}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (k\ =\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};\ k\ <\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}};\ ++k)}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ FactorType::InnerIterator\ itk(\mbox{\hyperlink{test__broadcast__node_8cpp_a554e63228b946db0d44c4f398b18e212}{R}},k);}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ itk;\ ++itk)\{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (itk.index()\ <\ k)\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{comment}{//At\ this\ point,\ we\ have\ the\ diagonal\ element\ R(k,k)}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Determine\ a\ givens\ rotation\ which\ eliminates\ }}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ appropriate\ element\ in\ the\ current\ row\ of\ d}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_adb5bcb0d28a95e39ca31c2c17e866092}{makeGivens}}(-\/itk.value(),\ sdiag(k));}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Compute\ the\ modified\ diagonal\ element\ of\ r\ and\ }}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ modified\ element\ of\ ((q\ transpose)*b,0).}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ itk.valueRef()\ =\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ itk.value()\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ sdiag(k);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ temp\ =\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ wa(k)\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ qtbpj;\ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ qtbpj\ =\ -\/givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ wa(k)\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ qtbpj;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ wa(k)\ =\ temp;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accumulate\ the\ transformation\ in\ the\ remaining\ k\ row/column\ of\ R}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (++itk;\ itk;\ ++itk)}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ itk.index();}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ temp\ =\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ \ itk.value()\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ sdiag(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ sdiag(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ =\ -\/givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a4d6694475f3ee8f34795c4a8042d987f}{s}}()\ *\ itk.value()\ +\ givens.\mbox{\hyperlink{class_eigen_1_1_jacobi_rotation_a80c1093ffb0f0d595796c8dcb1c2176e}{c}}()\ *\ sdiag(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ itk.valueRef()\ =\ temp;}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ \}}
+\DoxyCodeLine{00170\ \ \ \ \ }
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ Solve\ the\ triangular\ system\ for\ z.\ If\ the\ system\ is\ }}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//\ singular,\ then\ obtain\ a\ least\ squares\ solution}}
+\DoxyCodeLine{00173\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ nsing;}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{for}(nsing\ =\ 0;\ nsing<\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ \&\&\ sdiag(nsing)\ !=0;\ nsing++)\ \{\}}
+\DoxyCodeLine{00175\ \ \ \ \ }
+\DoxyCodeLine{00176\ \ \ \ \ wa.tail(\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}-\/nsing).\mbox{\hyperlink{class_eigen_1_1_plain_object_base_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00177\ \textcolor{comment}{//\ \ \ \ \ x\ =\ wa;\ }}
+\DoxyCodeLine{00178\ \ \ \ \ wa.head(nsing)\ =\ \mbox{\hyperlink{test__broadcast__node_8cpp_a554e63228b946db0d44c4f398b18e212}{R}}.topLeftCorner(nsing,nsing).template\ triangularView<Upper>().solve\textcolor{comment}{/*InPlace*/}(wa.head(nsing));}
+\DoxyCodeLine{00179\ \ \ \ \ }
+\DoxyCodeLine{00180\ \ \ \ \ sdiag\ =\ \mbox{\hyperlink{test__broadcast__node_8cpp_a554e63228b946db0d44c4f398b18e212}{R}}.diagonal();}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{comment}{//\ Permute\ the\ components\ of\ z\ back\ to\ components\ of\ x}}
+\DoxyCodeLine{00182\ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ iPerm\ *\ wa;\ }
+\DoxyCodeLine{00183\ \}}
+\DoxyCodeLine{00184\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_LMQRSOLV\_H}}
+
+\end{DoxyCode}

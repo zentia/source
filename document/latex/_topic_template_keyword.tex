@@ -1,0 +1,115 @@
+\doxysubsection{The template and typename keywords in C++}
+\hypertarget{_topic_template_keyword}{}\label{_topic_template_keyword}\index{The template and typename keywords in C++@{The template and typename keywords in C++}}
+There are two uses for the {\ttfamily template} and {\ttfamily typename} keywords in C++. One of them is fairly well known amongst programmers\+: to define templates. The other use is more obscure\+: to specify that an expression refers to a template function or a type. This regularly trips up programmers that use the Eigen library, often leading to error messages from the compiler that are difficult to understand, such as "{}expected expression"{} or "{}no match for operator$<$"{}.
+
+\textbackslash{}eigen\+Auto\+Toc\hypertarget{_topic_template_keyword_TopicTemplateKeywordToDefineTemplates}{}\doxysubsubsection{\texorpdfstring{Using the template and typename keywords to define templates}{Using the template and typename keywords to define templates}}\label{_topic_template_keyword_TopicTemplateKeywordToDefineTemplates}
+The {\ttfamily template} and {\ttfamily typename} keywords are routinely used to define templates. This is not the topic of this page as we assume that the reader is aware of this (otherwise consult a C++ book). The following example should illustrate this use of the {\ttfamily template} keyword.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\textcolor{keywordtype}{bool}\ isPositive(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ >\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+We could just as well have written {\ttfamily template \texorpdfstring{$<$}{<}class T\texorpdfstring{$>$}{>}}; the keywords {\ttfamily typename} and {\ttfamily class} have the same meaning in this context.\hypertarget{_topic_template_keyword_TopicTemplateKeywordExample}{}\doxysubsubsection{\texorpdfstring{An example showing the second use of the template keyword}{An example showing the second use of the template keyword}}\label{_topic_template_keyword_TopicTemplateKeywordExample}
+Let us illustrate the second use of the {\ttfamily template} keyword with an example. Suppose we want to write a function which copies all entries in the upper triangular part of a matrix into another matrix, while keeping the lower triangular part unchanged. \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} straightforward implementation would be as follows\+:
+
+\tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endhead
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+  &
+\begin{DoxyVerbInclude}
+\end{DoxyVerbInclude}
+ \\\cline{1-2}
+\end{longtabu}
+
+
+That works fine, but it is not very flexible. First, it only works with dynamic-\/size matrices of single-\/precision floats; the function {\ttfamily \doxylink{_template_keyword__flexible_8cpp_a8338f814c8f5ed448ea1bbec9a18ca14}{copy\+Upper\+Triangular\+Part()}} does not accept static-\/size matrices or matrices with double-\/precision numbers. Second, if you use an expression such as {\ttfamily mat.\+top\+Left\+Corner(3,3)} as the parameter {\ttfamily src}, then this is copied into a temporary variable of type Matrix\+Xf; this copy can be avoided.
+
+As explained in \doxylink{TopicFunctionTakingEigenTypes}{Writing Functions Taking Eigen Types as Parameters}, both issues can be resolved by making {\ttfamily \doxylink{_template_keyword__flexible_8cpp_a8338f814c8f5ed448ea1bbec9a18ca14}{copy\+Upper\+Triangular\+Part()}} accept any object of type \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base}. This leads to the following code\+:
+
+\tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\cellcolor{\tableheadbgcolor}\textbf{ Example\+:}&\cellcolor{\tableheadbgcolor}\textbf{ Output\+: }\\\cline{1-2}
+\endhead
+
+\begin{DoxyCodeInclude}{0}
+
+\end{DoxyCodeInclude}
+  &
+\begin{DoxyVerbInclude}
+\end{DoxyVerbInclude}
+ \\\cline{1-2}
+\end{longtabu}
+
+
+The one line in the body of the function {\ttfamily \doxylink{_template_keyword__flexible_8cpp_a8338f814c8f5ed448ea1bbec9a18ca14}{copy\+Upper\+Triangular\+Part()}} shows the second, more obscure use of the {\ttfamily template} keyword in C++. Even though it may look strange, the {\ttfamily template} keywords are necessary according to the standard. Without it, the compiler may reject the code with an error message like "{}no match for operator$<$"{}.\hypertarget{_topic_template_keyword_TopicTemplateKeywordExplanation}{}\doxysubsubsection{\texorpdfstring{Explanation}{Explanation}}\label{_topic_template_keyword_TopicTemplateKeywordExplanation}
+The reason that the {\ttfamily template} keyword is necessary in the last example has to do with the rules for how templates are supposed to be compiled in C++. The compiler has to check the code for correct syntax at the point where the template is defined, without knowing the actual value of the template arguments ({\ttfamily Derived1} and {\ttfamily Derived2} in the example). That means that the compiler cannot know that {\ttfamily dst.\+triangular\+View} is a member template and that the following \texorpdfstring{$<$}{<} symbol is part of the delimiter for the template parameter. Another possibility would be that {\ttfamily dst.\+triangular\+View} is a member variable with the \texorpdfstring{$<$}{<} symbol refering to the {\ttfamily operator\texorpdfstring{$<$}{<}()} function. In fact, the compiler should choose the second possibility, according to the standard. If {\ttfamily dst.\+triangular\+View} is a member template (as in our case), the programmer should specify this explicitly with the {\ttfamily template} keyword and write {\ttfamily dst.\+template triangular\+View}.
+
+The precise rules are rather complicated, but ignoring some subtleties we can summarize them as follows\+:
+\begin{DoxyItemize}
+\item \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} {\itshape dependent name} is name that depends (directly or indirectly) on a template parameter. In the example, {\ttfamily dst} is a dependent name because it is of type {\ttfamily \doxylink{class_eigen_1_1_matrix_base}{Matrix\+Base}\texorpdfstring{$<$}{<}Derived1\texorpdfstring{$>$}{>}} which depends on the template parameter {\ttfamily Derived1}.
+\item If the code contains either one of the constructs {\ttfamily xxx.\+yyy} or {\ttfamily xxx-\/\texorpdfstring{$>$}{>}yyy} and {\ttfamily xxx} is a dependent name and {\ttfamily yyy} refers to a member template, then the {\ttfamily template} keyword must be used before {\ttfamily yyy}, leading to {\ttfamily xxx.\+template yyy} or {\ttfamily xxx-\/\texorpdfstring{$>$}{>}template yyy}.
+\item If the code contains the construct {\ttfamily xxx\+::yyy} and {\ttfamily xxx} is a dependent name and {\ttfamily yyy} refers to a member typedef, then the {\ttfamily typename} keyword must be used before the whole construct, leading to {\ttfamily typename xxx\+::yyy}.
+\end{DoxyItemize}
+
+As an example where the {\ttfamily typename} keyword is required, consider the following code in \doxylink{group___tutorial_sparse}{Tutorial\+Sparse} for iterating over the non-\/zero entries of a sparse matrix type\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{SparseMatrixType\ \mbox{\hyperlink{_tutorial___advanced_initialization___comma_temporary_8cpp_a5d2ded7a4c8830608d7b218f5f27c0a0}{mat}}(\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a061459acc9e078fa4699e0e349887215}{rows}},\mbox{\hyperlink{_tutorial__commainit__02_8cpp_a4407a60bc4387adae24cee658711f2d9}{cols}});}
+\DoxyCodeLine{\textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k=0;\ k<\mbox{\hyperlink{_tutorial___advanced_initialization___comma_temporary_8cpp_a5d2ded7a4c8830608d7b218f5f27c0a0}{mat}}.outerSize();\ ++k)}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (SparseMatrixType::InnerIterator\ it(\mbox{\hyperlink{_tutorial___advanced_initialization___comma_temporary_8cpp_a5d2ded7a4c8830608d7b218f5f27c0a0}{mat}},k);\ it;\ ++it)}
+\DoxyCodeLine{\ \ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{/*\ ...\ */}}
+\DoxyCodeLine{\ \ \}}
+
+\end{DoxyCode}
+
+
+If {\ttfamily Sparse\+Matrix\+Type} depends on a template parameter, then the {\ttfamily typename} keyword is required\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ iterateOverSparseMatrix(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_sparse_matrix}{SparseMatrix<T>}}\&\ \mbox{\hyperlink{_tutorial___advanced_initialization___comma_temporary_8cpp_a5d2ded7a4c8830608d7b218f5f27c0a0}{mat}};}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k=0;\ k<\mbox{\hyperlink{_i_o_format_8cpp_ade6f22163da3c189aade978b48a8bb74}{m1}}.outerSize();\ ++k)}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ \mbox{\hyperlink{class_eigen_1_1_sparse_matrix_a1168c7b63fd56e170ad40ddec972cb42}{SparseMatrix<T>::InnerIterator}}\ it(\mbox{\hyperlink{_tutorial___advanced_initialization___comma_temporary_8cpp_a5d2ded7a4c8830608d7b218f5f27c0a0}{mat}},k);\ it;\ ++it)}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{/*\ ...\ */}}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\hypertarget{_topic_template_keyword_TopicTemplateKeywordResources}{}\doxysubsubsection{\texorpdfstring{Resources for further reading}{Resources for further reading}}\label{_topic_template_keyword_TopicTemplateKeywordResources}
+For more information and a fuller explanation of this topic, the reader may consult the following sources\+:
+\begin{DoxyItemize}
+\item The book "{}\+C++ Template Metaprogramming"{} by David Abrahams and Aleksey Gurtovoy contains a very good explanation in Appendix \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B} ("{}\+The typename and template Keywords"{}) which formed the basis for this page.
+\item \href{http://pages.cs.wisc.edu/~driscoll/typename.html}{\texttt{ http\+://pages.\+cs.\+wisc.\+edu/\texorpdfstring{$\sim$}{\string~}driscoll/typename.\+html}}
+\item \href{http://www.parashift.com/c++-faq-lite/templates.html\#faq-35.18}{\texttt{ http\+://www.\+parashift.\+com/c++-\/faq-\/lite/templates.\+html\#faq-\/35.\+18}}
+\item \href{http://www.comeaucomputing.com/techtalk/templates/\#templateprefix}{\texttt{ http\+://www.\+comeaucomputing.\+com/techtalk/templates/\#templateprefix}}
+\item \href{http://www.comeaucomputing.com/techtalk/templates/\#typename}{\texttt{ http\+://www.\+comeaucomputing.\+com/techtalk/templates/\#typename}} 
+\end{DoxyItemize}

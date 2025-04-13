@@ -1,7 +1,7 @@
-#include <luisa/runtime/swapchain.h>
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/stream.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/swapchain.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/stream.h>
+#include <runtime/core/logging.h>
 
 namespace luisa::compute {
 

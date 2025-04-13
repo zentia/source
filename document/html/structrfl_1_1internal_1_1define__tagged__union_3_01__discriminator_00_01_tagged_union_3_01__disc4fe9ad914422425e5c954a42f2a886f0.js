@@ -1,0 +1,4 @@
+var structrfl_1_1internal_1_1define__tagged__union_3_01__discriminator_00_01_tagged_union_3_01__disc4fe9ad914422425e5c954a42f2a886f0 =
+[
+    [ "type", "structrfl_1_1internal_1_1define__tagged__union_3_01__discriminator_00_01_tagged_union_3_01__disc4fe9ad914422425e5c954a42f2a886f0.html#a10b3acdba58abf0807e40aa4917514af", null ]
+];

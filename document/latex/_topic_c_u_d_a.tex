@@ -1,0 +1,24 @@
+\doxysubsection{Using Eigen in CUDA kernels}
+\hypertarget{_topic_c_u_d_a}{}\label{_topic_c_u_d_a}\index{Using Eigen in CUDA kernels@{Using Eigen in CUDA kernels}}
+{\bfseries{Disclaimer\+:}} this page is about an {\bfseries{experimental}} feature in Eigen.
+
+Staring from CUDA 5.\+0, the CUDA compiler, {\ttfamily nvcc}, is able to properly parse Eigen\textquotesingle{}s code (almost). \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} few adaptations of the Eigen\textquotesingle{}s code already allows to use some parts of Eigen in your own CUDA kernels. To this end you need the devel branch of Eigen, CUDA 5.\+0 or greater with GCC.
+
+Known issues\+:
+
+
+\begin{DoxyItemize}
+\item {\ttfamily nvcc} with MS Visual Studio does not work (patch welcome)
+\item {\ttfamily nvcc} with {\ttfamily clang} does not work (patch welcome)
+\item {\ttfamily nvcc} 5.\+5 with gcc-\/4.\+7 (or greater) has issues with the standard {\ttfamily \texorpdfstring{$<$}{<}limits\texorpdfstring{$>$}{>}} header file. To workaround this, you can add the following before including any other files\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ workaround\ issue\ between\ gcc\ >=\ 4.7\ and\ cuda\ 5.5}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#if\ (defined\ \_\_GNUC\_\_)\ \&\&\ (\_\_GNUC\_\_>4\ ||\ \_\_GNUC\_MINOR\_\_>=7)}}
+\DoxyCodeLine{\textcolor{preprocessor}{\ \ \#undef\ \_GLIBCXX\_ATOMIC\_BUILTINS}}
+\DoxyCodeLine{\textcolor{preprocessor}{\ \ \#undef\ \_GLIBCXX\_USE\_INT128}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}
+
+\item On 64bits system \doxylink{namespace_eigen}{Eigen} uses {\ttfamily long} {\ttfamily int} as the default type for indexes and sizes. On CUDA device, it would make sense to default to 32 bits {\ttfamily int}. However, to keep host and CUDA code compatible, this cannot be done automatically by Eigen, and the user is thus required to define {\ttfamily EIGEN\+\_\+\+DEFAULT\+\_\+\+DENSE\+\_\+\+INDEX\+\_\+\+TYPE} to {\ttfamily int} throughout his code (or only for CUDA code if there is no interaction between host and CUDA code through Eigen\textquotesingle{}s object). 
+\end{DoxyItemize}

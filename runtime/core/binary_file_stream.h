@@ -1,6 +1,6 @@
 #pragma once
 
-#include <luisa/core/binary_io.h>
+#include <runtime/core/binary_io.h>
 
 namespace luisa {
 
@@ -8,7 +8,7 @@ namespace detail {
 [[nodiscard]] LC_CORE_API size_t get_c_file_length(::FILE *file) noexcept;
 }// namespace detail
 
-class LC_CORE_API BinaryFileStream : public BinaryStream {
+class BinaryFileStream : public BinaryStream {
 
 private:
     ::FILE *_file{nullptr};

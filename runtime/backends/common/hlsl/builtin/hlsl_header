@@ -1,0 +1,100 @@
+#define _INF_f (1.#INF)
+SamplerState samplers[16]:register(s0,space1);
+template<typename T>
+T _acosh(T v){return log(v+sqrt(v*v-1.0));}
+template<typename T>
+T _asinh(T v){return log(v+sqrt(v*v+1.0));}
+template<typename T>
+T _atanh(T v){return 0.5*log((1.0+v)/(1.0-v));}
+template<typename T>
+T _exp10(T v){return pow(10,v);};
+template<typename T>
+float _length_sqr(T x){return dot(x,x);}
+template<typename T>
+T _fma(T a,T b,T c){return a*b+c;}
+float2x2 _float2x2(float3x4 v){return float2x2(v[0].xy,v[1].xy);}
+float2x2 _float2x2(float4x4 v){return float2x2(v[0].xy,v[1].xy);}
+float3x4 _float3x3(float2x2 v){return float3x4(v[0],0,0,v[1],0,0,0,0,0,0);}
+float3x4 _float3x3(float4x4 v){return float3x4(v[0].xyz,0,v[1].xyz,0,v[2].xyz,0);}
+float4x4 _float4x4(float2x2 v){return float4x4(v[0],0,0,v[1].xy,0,0,0,0,0,0,0,0,0,0);};
+float4x4 _float4x4(float3x4 v){return float4x4(v[0].xyz,0,v[1].xyz,0,v[2].xyz,0,0,0,0,0);}
+float2x2 _float2x2(float m00,float m01,float m10,float m11){return float2x2(m00,m01,m10,m11);}
+float3x4 _float3x3(float m00,float m01,float m02,float m10,float m11,float m12,float m20,float m21,float m22){return float3x4(m00,m01,m02,0,m10,m11,m12,0,m20,m21,m22,0);}
+float4x4 _float4x4(float m00,float m01,float m02,float m03,float m10,float m11,float m12,float m13,float m20,float m21,float m22,float m23,float m30,float m31,float m32,float m33){return float4x4(m00,m01,m02,m03,m10,m11,m12,m13,m20,m21,m22,m23,m30,m31,m32,m33);}
+float2x2 _float2x2(float2 c0,float2 c1){return float2x2(c0,c1);}
+float3x4 _float3x3(float3 c0,float3 c1,float3 c2){return float3x4(float4(c0,0),float4(c1,0),float4(c2,0));}
+float4x4 _float4x4(float4 c0,float4 c1,float4 c2,float4 c3){return float4x4(c0,c1,c2,c3);}
+float2x2 _transpose(float2x2 m){return transpose(m);}
+float3x4 _transpose(float3x4 m){
+float4x3 mm=transpose(m);
+return _float3x3(mm[0],mm[1],mm[2]);
+}
+float4x4 _transpose(float4x4 m){return transpose(m);}
+float4x4 _Mul(float4x4 a,float4x4 b){return mul(a,b);}
+float3x4 _Mul(float3x4 a,float3x4 b){return mul(a,float4x4(b,0,0,0,0));}
+float2x2 _Mul(float2x2 a,float2x2 b){return mul(a,b);}
+float4 _Mul(float4x4 b,float4 a){return mul(a,b);}
+float3 _Mul(float3x4 b,float3 a){return mul(a,b).xyz;}
+float2 _Mul(float2x2 b,float2 a){return mul(a,b);}
+float16_t4 _Mul(float16_t4x4 b,float16_t4 a){return mul(a,b);}
+float16_t3 _Mul(float16_t3x4 b,float16_t3 a){return mul(a,b).xyz;}
+float16_t2 _Mul(float16_t2x2 b,float16_t2 a){return mul(a,b);}
+struct _wbool3 {bool3 v; bool a;};
+struct _wfloat3 {float3 v; float a;};
+struct _wfloat16_t3 {float16_t3 v; float16_t a;};
+struct _wuint3 {uint3 v; uint a;};
+struct _wuint16_t3 {uint16_t3 v; uint16_t a;};
+struct _wuint64_t3 {uint64_t3 v; uint64_t a;};
+struct _wint3 {int3 v; int a;};
+struct _wint16_t3 {int16_t3 v; int16_t a;};
+struct _wint64_t3 {int64_t3 v; int64_t a;};
+struct _WrappedFloat2x2 {row_major float2x2 m;};
+struct _WrappedFloat3x3 {
+row_major float3x4 m;
+};
+struct _WrappedFloat4x4 {
+row_major float4x4 m;
+};
+#define _bfread(bf,idx) bf[idx]
+#define _bfreadVec3(bf,idx) bf[idx].xyz
+#define _bfreadMat(bf,idx) bf[idx].m
+#define _bfwrite(bf,idx,value) bf[idx]=value
+#define _bfwriteVec3(bf,idx,value,type) bf[idx]=type##4(value,0)
+#define _bfwriteMat(bf,idx,value) bf[idx].m=value
+#define _bytebfread(bf,type,idx) bf.template Load<type>(idx)
+#define _bytebfreadVec3(bf,type,idx) bf.template Load<type##4>(idx).xyz
+#define _bytebfreadMat(bf,type,idx) bf.template Load<type>(idx).m
+#define _bytebfwrite(bf,idx,value) bf.Store(idx,value)
+#define _bytebfwriteVec3(bf,type,idx,value) bf.template Store<type##4>(idx,type##4(value,0))
+#define _bytebfwriteMat(bf,type,idx,value) {type _tempm;_tempm.m=value;bf.template Store<type>(idx,_tempm);}
+#define _Readtx(tex,uv) tex[uv]
+#define _Writetx(tex,uv,value) tex[uv]=value
+#define _Smptx(tex,uv,filter,address) (tex.SampleLevel(samplers[(address)*4+(filter)],(uv),0))
+#define _SmptxPixel(tex,uv,filter,address) (tex.Sample(samplers[(address)*4+(filter)],(uv)))
+#define _SmptxLevel(tex,uv,level,filter,address) (tex.SampleLevel(samplers[(address)*4+(filter)],uv,level))
+#define _SmptxGrad(tex,uv,dx,dy,filter,address) (tex.SampleLevel(samplers[(address)*4+(filter)],uv,dx,dy))
+#define _SmptxGrad2DLevel(tex,uv,dx,dy,minMip,filter,address) (tex.SampleLevel(samplers[(address)*4+(filter)],uv,dx,dy,int2(0),minMip))
+#define _SmptxGrad3DLevel(tex,uv,dx,dy,minMip,filter,address) (tex.SampleLevel(samplers[(address)*4+(filter)],uv,dx,dy,int3(0),minMip))
+template<typename T>
+T _fract(T x){return x-floor(x);}
+struct _Hit0{uint v0;uint v1;float2 v2;uint v3;float v4;};
+struct _Hit1{uint v0;uint v1;float2 v2;float v3;uint _a0;};
+struct _Hit2{uint v0;uint v1;};
+struct _MeshInst {
+float4 p0;
+float4 p1;
+float4 p2;
+uint InstanceID:24;
+uint InstanceMask:8;
+uint InstanceContributionToHitGroupIndex:24;
+uint Flags:8;
+uint2 accelStructPtr;
+};
+float2x2 _outer_product(float2 a,float2 b){return float2x2(a*b.x,a*b.y);}
+float3x4 _outer_product(float3 a,float3 b){return float3x4(float4(a*b.x,0),float4(a*b.y,0),float4(a*b.z,0));}
+float4x4 _outer_product(float4 a,float4 b){return float4x4(a*b.x,a*b.y,a*b.z,a*b.w);}
+float2x2 _mat_comp_mul(float2x2 a,float2x2 b){return float2x2(a[0]*b[0],a[1]*b[1]);}
+float3x4 _mat_comp_mul(float3x4 a,float3x4 b){return float3x4(float4(a[0].xyz*b[0].xyz,0),float4(a[1].xyz*b[1].xyz,0),float4(a[2].xyz*b[2].xyz,0));}
+float4x4 _mat_comp_mul(float4x4 a,float4x4 b){return float4x4(a[0]*b[0],a[1]*b[1],a[2]*b[2],a[3]*b[3]);}
+#define _zero(type) ((type)0)
+#define _one(type) ((type)1)

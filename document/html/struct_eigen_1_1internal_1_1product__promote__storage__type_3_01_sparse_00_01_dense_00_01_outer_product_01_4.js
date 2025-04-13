@@ -1,0 +1,4 @@
+var struct_eigen_1_1internal_1_1product__promote__storage__type_3_01_sparse_00_01_dense_00_01_outer_product_01_4 =
+[
+    [ "ret", "struct_eigen_1_1internal_1_1product__promote__storage__type_3_01_sparse_00_01_dense_00_01_outer_product_01_4.html#a6875ca9f7b5e55de729c2c6bc662704c", null ]
+];

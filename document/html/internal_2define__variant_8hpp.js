@@ -1,0 +1,7 @@
+var internal_2define__variant_8hpp =
+[
+    [ "rfl::internal::define_variant< std::variant< Vars1... >, std::variant< Vars2... >, Tail... >", "structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars1_8_8_8_01_4_00_01std_1_1va2ab37d0cb320a8ff40bfb3239c81ca46.html", "structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars1_8_8_8_01_4_00_01std_1_1va2ab37d0cb320a8ff40bfb3239c81ca46" ],
+    [ "rfl::internal::define_variant< std::variant< Vars... >, Head, Tail... >", "structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars_8_8_8_01_4_00_01_head_00_01_tail_8_8_8_01_4.html", "structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars_8_8_8_01_4_00_01_head_00_01_tail_8_8_8_01_4" ],
+    [ "rfl::internal::define_variant< Head, Tail... >", "structrfl_1_1internal_1_1define__variant_3_01_head_00_01_tail_8_8_8_01_4.html", "structrfl_1_1internal_1_1define__variant_3_01_head_00_01_tail_8_8_8_01_4" ],
+    [ "rfl::internal::define_variant< std::variant< Vars... > >", "structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars_8_8_8_01_4_01_4.html", "structrfl_1_1internal_1_1define__variant_3_01std_1_1variant_3_01_vars_8_8_8_01_4_01_4" ]
+];

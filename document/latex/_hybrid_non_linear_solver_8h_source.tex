@@ -1,0 +1,596 @@
+\doxysection{Hybrid\+Non\+Linear\+Solver.\+h}
+\hypertarget{_hybrid_non_linear_solver_8h_source}{}\label{_hybrid_non_linear_solver_8h_source}\index{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/src/NonLinearOptimization/HybridNonLinearSolver.h@{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/src/NonLinearOptimization/HybridNonLinearSolver.h}}
+\mbox{\hyperlink{_hybrid_non_linear_solver_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ -\/*-\/\ coding:\ utf-\/8}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ vim:\ set\ fileencoding=utf-\/8}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Thomas\ Capricelli\ <orzel@freehackers.org>}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_HYBRIDNONLINEARSOLVER\_H}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#define\ EIGEN\_HYBRIDNONLINEARSOLVER\_H}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space}{HybridNonLinearSolverSpace}}\ \{\ }
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{Status}}\ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a5b3625d5ffa63ea0d5e4db4cab42e02b}{Running}}\ =\ -\/1,}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{ImproperInputParameters}}\ =\ 0,}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689ad5adf33a2f4813fe8a1aa1e9f70e9961}{RelativeErrorTooSmall}}\ =\ 1,}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a82b971eb0bd71b87dacdf4cd3de8672d}{TooManyFunctionEvaluation}}\ =\ 2,}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a4ea5d3da0d16abee53bc5ddafdcc65e6}{TolTooSmall}}\ =\ 3,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a9dbd584a67d1457dfe95311188ac631e}{NotMakingProgressJacobian}}\ =\ 4,}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a679e6f6be41d7a9b12d61e9ec6c5ecf0}{NotMakingProgressIterations}}\ =\ 5,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a54bd7f9ebd8df668ef1b37476827d3a9}{UserAsked}}\ =\ 6}
+\DoxyCodeLine{00028\ \ \ \ \ \};}
+\DoxyCodeLine{00029\ \}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar=\textcolor{keywordtype}{double}>}
+\DoxyCodeLine{00043\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aaf90e23a6bad869ca1a9cadf62af0dd4}{HybridNonLinearSolver}}}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespace_eigen_aa06499c94936a19673e53deb516a1b76}{DenseIndex}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aaf90e23a6bad869ca1a9cadf62af0dd4}{HybridNonLinearSolver}}(FunctorType\ \&\_functor)}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}}(\_functor)\ \{\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}=\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ac1026391306e8a8038cd40d8763d9e9e}{njev}}=\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}}\ =\ 0;\ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}}=\ 0.;\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}}=\textcolor{keyword}{false};\}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a2b18156c78dcdc6e89817a574ff8308d}{Parameters}}\ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a2b18156c78dcdc6e89817a574ff8308d}{Parameters}}()}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a69b495ac20715f7ebaf2022a0cd3d6b5}{factor}}(\mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}(100.))}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_ad20b6a0b854b93f339d77bc08fc2990b}{maxfev}}(1000)}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a9e94c8adcbe77b10f60d75e9e2520460}{xtol}}(\mbox{\hyperlink{namespacestd}{std}}::\mbox{\hyperlink{_array_cwise_unary_ops_8h_a656b9217a2fcb6de59dc8d1eb3079cc7}{sqrt}}(\mbox{\hyperlink{struct_eigen_1_1_num_traits}{NumTraits}}<\mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}>::epsilon()))}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a125218e654873bda27e0106ab309df56}{nb\_of\_subdiagonals}}(-\/1)}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a1dcb3e0d548b1be7c6a14decbde75d35}{nb\_of\_superdiagonals}}(-\/1)}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ ,\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a978be043045e930edc9bfb6b86696d7e}{epsfcn}}(\mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}(0.))\ \{\}}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a69b495ac20715f7ebaf2022a0cd3d6b5}{factor}};}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_ad20b6a0b854b93f339d77bc08fc2990b}{maxfev}};\ \ \ \textcolor{comment}{//\ maximum\ number\ of\ function\ evaluation}}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a9e94c8adcbe77b10f60d75e9e2520460}{xtol}};}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a125218e654873bda27e0106ab309df56}{nb\_of\_subdiagonals}};}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a1dcb3e0d548b1be7c6a14decbde75d35}{nb\_of\_superdiagonals}};}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters_a978be043045e930edc9bfb6b86696d7e}{epsfcn}};}
+\DoxyCodeLine{00065\ \ \ \ \ \};}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<\ Scalar,\ Dynamic,\ 1\ >}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}};}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<\ Scalar,\ Dynamic,\ Dynamic\ >}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a55713d5bb80e014eb649b7d621ab3562}{JacobianType}};}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{comment}{/*\ TODO:\ if\ eigen\ provides\ a\ triangular\ storage,\ use\ it\ here\ */}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{class_eigen_1_1_matrix}{Matrix<\ Scalar,\ Dynamic,\ Dynamic\ >}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afd427708a3c3b71bfbeda613ed68febb}{UpperTriangularType}};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1b5eddcc7f215e790b740ad94f0e4389}{hybrj1}}(}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ tol\ =\ std::sqrt(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_aadcf7fa75b2bc9a0e461a3b851d836a7}{NumTraits<Scalar>::epsilon}}())}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a197044e0f63c1077846a0279e47e934f}{solveInit}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a64c9d49fa4645ad58a45dedcb1491252}{solveOneStep}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a4e1cfd23e2ee4c7e16ed0fd353b3807e}{solve}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ac901db3e3eacb7f17537d40e6703d1e4}{hybrd1}}(}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ tol\ =\ std::sqrt(\mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_aadcf7fa75b2bc9a0e461a3b851d836a7}{NumTraits<Scalar>::epsilon}}())}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a03e013471915c4395578affbd2e29e26}{solveNumericalDiffInit}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00086\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a73ce76462a048e23cdfcd18c18bd187b}{solveNumericalDiffOneStep}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a019c209d3c67020247583dce00a5e760}{solveNumericalDiff}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a08b1a535646ff113b502b495594782bc}{resetParameters}}(\textcolor{keywordtype}{void})\ \{\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}\ =\ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters}{Parameters}}();\ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1_hybrid_non_linear_solver_1_1_parameters}{Parameters}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}};}
+\DoxyCodeLine{00091\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}};}
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a55713d5bb80e014eb649b7d621ab3562}{JacobianType}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}};}
+\DoxyCodeLine{00093\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afd427708a3c3b71bfbeda613ed68febb}{UpperTriangularType}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}};}
+\DoxyCodeLine{00094\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}};}
+\DoxyCodeLine{00095\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ac1026391306e8a8038cd40d8763d9e9e}{njev}};}
+\DoxyCodeLine{00096\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}};}
+\DoxyCodeLine{00097\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}};}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}};\ }
+\DoxyCodeLine{00099\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00100\ \ \ \ \ FunctorType\ \&\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}};}
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}};}
+\DoxyCodeLine{00102\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a4b1631b31b908e0d5e84b5443402ecc7}{sum}};}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93de5d5d5133da1ca229fbc188f4f2d1}{sing}};}
+\DoxyCodeLine{00104\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7c609b0f2955abbc9f7315365990d3fa}{temp}};}
+\DoxyCodeLine{00105\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}};}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aa01cfd3df047d4bfbc6a42e12c7720c5}{jeval}};}
+\DoxyCodeLine{00107\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}};}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}};}
+\DoxyCodeLine{00109\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}};}
+\DoxyCodeLine{00110\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}};}
+\DoxyCodeLine{00111\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}};}
+\DoxyCodeLine{00112\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}};}
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aaf90e23a6bad869ca1a9cadf62af0dd4}{HybridNonLinearSolver}}\&\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a75c443eb5685a4625e9d6a232d01486b}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aaf90e23a6bad869ca1a9cadf62af0dd4}{HybridNonLinearSolver}}\&);}
+\DoxyCodeLine{00116\ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00121\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00122\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1b5eddcc7f215e790b740ad94f0e4389}{HybridNonLinearSolver<FunctorType,Scalar>::hybrj1}}(}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ tol}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00126\ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.size();}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \textcolor{comment}{/*\ check\ the\ input\ parameters\ for\ errors.\ */}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ <=\ 0\ ||\ tol\ <\ 0.)}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a08b1a535646ff113b502b495594782bc}{resetParameters}}();}
+\DoxyCodeLine{00134\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.maxfev\ =\ 100*(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}+1);}
+\DoxyCodeLine{00135\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.xtol\ =\ tol;}
+\DoxyCodeLine{00136\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.setConstant(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ 1.);}
+\DoxyCodeLine{00137\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{sudoku_8cpp_a970d2c74caf59ac29774bbbca9baa75c}{solve}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00139\ \}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00142\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00143\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a197044e0f63c1077846a0279e47e934f}{HybridNonLinearSolver<FunctorType,Scalar>::solveInit}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})}
+\DoxyCodeLine{00144\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.size();}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00148\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00149\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00150\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}}\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.size()==\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}})\ \&\&\ \textcolor{stringliteral}{"{}When\ useExternalScaling\ is\ set,\ the\ caller\ must\ provide\ a\ valid\ 'diag'"{}});}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{/*\ Function\ Body\ */}}
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}\ =\ 0;}
+\DoxyCodeLine{00157\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ac1026391306e8a8038cd40d8763d9e9e}{njev}}\ =\ 0;}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ check\ the\ input\ parameters\ for\ errors.\ */}}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ <=\ 0\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.xtol\ <\ 0.\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.maxfev\ <=\ 0\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.factor\ <=\ 0.\ )}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}};}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}};\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ <=\ 0.)}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}};}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ evaluate\ the\ function\ at\ the\ starting\ point\ */}}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ and\ calculate\ its\ norm.\ */}}
+\DoxyCodeLine{00169\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}\ =\ 1;}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}})\ <\ 0)}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a54bd7f9ebd8df668ef1b37476827d3a9}{HybridNonLinearSolverSpace::UserAsked}};}
+\DoxyCodeLine{00172\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}}.stableNorm();}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ initialize\ iteration\ counter\ and\ monitors.\ */}}
+\DoxyCodeLine{00175\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}}\ =\ 1;}
+\DoxyCodeLine{00176\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}}\ =\ 0;}
+\DoxyCodeLine{00177\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}}\ =\ 0;}
+\DoxyCodeLine{00178\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}}\ =\ 0;}
+\DoxyCodeLine{00179\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}}\ =\ 0;}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a5b3625d5ffa63ea0d5e4db4cab42e02b}{HybridNonLinearSolverSpace::Running}};}
+\DoxyCodeLine{00182\ \}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00185\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00186\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a64c9d49fa4645ad58a45dedcb1491252}{HybridNonLinearSolver<FunctorType,Scalar>::solveOneStep}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})}
+\DoxyCodeLine{00187\ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00189\ \ \ \ \ }
+\DoxyCodeLine{00190\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.size()==\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \textcolor{comment}{//\ check\ the\ caller\ is\ not\ cheating\ us}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};}
+\DoxyCodeLine{00193\ \ \ \ \ std::vector<JacobiRotation<Scalar>\ >\ v\_givens(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}),\ w\_givens(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aa01cfd3df047d4bfbc6a42e12c7720c5}{jeval}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{comment}{/*\ calculate\ the\ jacobian\ matrix.\ */}}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}}.df(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}})\ <\ 0)}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a54bd7f9ebd8df668ef1b37476827d3a9}{HybridNonLinearSolverSpace::UserAsked}};}
+\DoxyCodeLine{00200\ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ac1026391306e8a8038cd40d8763d9e9e}{njev}};}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.colwise().blueNorm();}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{comment}{/*\ on\ the\ first\ iteration\ and\ if\ external\ scaling\ is\ not\ used,\ scale\ according\ */}}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{comment}{/*\ to\ the\ norms\ of\ the\ columns\ of\ the\ initial\ jacobian.\ */}}
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}}\ ==\ 1)\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}};\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ =\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]==0.)\ ?\ 1.\ :\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}];}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ on\ the\ first\ iteration,\ calculate\ the\ norm\ of\ the\ scaled\ x\ */}}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ and\ initialize\ the\ step\ bound\ delta.\ */}}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}).stableNorm();}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.factor\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}};}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ ==\ 0.)}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.factor;}
+\DoxyCodeLine{00217\ \ \ \ \ \}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ qr\ factorization\ of\ the\ jacobian.\ */}}
+\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_householder_q_r}{HouseholderQR<JacobianType>}}\ qrfac(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}});\ \textcolor{comment}{//\ no\ pivoting:}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{/*\ copy\ the\ triangular\ factor\ of\ the\ qr\ factorization\ into\ r.\ */}}
+\DoxyCodeLine{00223\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}}\ =\ qrfac.\mbox{\hyperlink{class_eigen_1_1_householder_q_r_a42552dd4708954432161da95af4442ba}{matrixQR}}();}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{comment}{/*\ accumulate\ the\ orthogonal\ factor\ in\ fjac.\ */}}
+\DoxyCodeLine{00226\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}\ =\ qrfac.\mbox{\hyperlink{class_eigen_1_1_householder_q_r_affd506c10ef2d25f56e7b1f9f25ff885}{householderQ}}();}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{/*\ form\ (q\ transpose)*fvec\ and\ store\ in\ qtf.\ */}}
+\DoxyCodeLine{00229\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.transpose()\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}};}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{/*\ rescale\ if\ necessary.\ */}}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseMax(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}});}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ determine\ the\ direction\ p.\ */}}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a973ab8305717418988ccac60a1bf85e1}{internal::dogleg<Scalar>}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}});}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ store\ the\ direction\ p\ and\ x\ +\ p.\ calculate\ the\ norm\ of\ p.\ */}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}\ =\ -\/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}};}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ +\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}};}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}).stableNorm();}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ on\ the\ first\ iteration,\ adjust\ the\ initial\ step\ bound.\ */}}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}}\ ==\ 1)}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}});}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ evaluate\ the\ function\ at\ x\ +\ p\ and\ calculate\ its\ norm.\ */}}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}})\ <\ 0)}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a54bd7f9ebd8df668ef1b37476827d3a9}{HybridNonLinearSolverSpace::UserAsked}};}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}};}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}}.stableNorm();}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ scaled\ actual\ reduction.\ */}}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ =\ -\/1.;}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}})\ \textcolor{comment}{/*\ Computing\ 2nd\ power\ */}}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ =\ 1.\ -\/\ numext::abs2(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}}\ /\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}});}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ scaled\ predicted\ reduction.\ */}}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}}.template\ triangularView<Upper>()*\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}\ +\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}};}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7c609b0f2955abbc9f7315365990d3fa}{temp}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}}.stableNorm();}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}}\ =\ 0.;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7c609b0f2955abbc9f7315365990d3fa}{temp}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}})\ \textcolor{comment}{/*\ Computing\ 2nd\ power\ */}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}}\ =\ 1.\ -\/\ numext::abs2(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7c609b0f2955abbc9f7315365990d3fa}{temp}}\ /\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}});}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ ratio\ of\ the\ actual\ to\ the\ predicted\ reduction.\ */}}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ =\ 0.;}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}}\ >\ 0.)}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ /\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}};}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ update\ the\ step\ bound.\ */}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ <\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1))\ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}}\ =\ 0;}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}};}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5)\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}};}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}}\ =\ 0;}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}};}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5)\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}}\ >\ 1)}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ (std::max)(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ /\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5));}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{datatypes_8h_a3aa069ac3980707dae1e0530f50d59e4}{abs}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ -\/\ 1.)\ <=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1))\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ /\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5);}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ test\ for\ successful\ iteration.\ */}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(1\mbox{\hyperlink{_cwise__array__power__array_8cpp_a9cb86ff854760bf91a154f2724a9101d}{e}}-\/4))\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ successful\ iteration.\ update\ x,\ fvec,\ and\ their\ norms.\ */}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}};}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}};}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}.stableNorm();}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}};}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}};}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ determine\ the\ progress\ of\ the\ iteration.\ */}}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}};}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.001))}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}}\ =\ 0;}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aa01cfd3df047d4bfbc6a42e12c7720c5}{jeval}})}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}};}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1))}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}}\ =\ 0;}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ test\ for\ convergence.\ */}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ <=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.xtol\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}}\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}}\ ==\ 0.)}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689ad5adf33a2f4813fe8a1aa1e9f70e9961}{HybridNonLinearSolverSpace::RelativeErrorTooSmall}};}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ tests\ for\ termination\ and\ stringent\ tolerances.\ */}}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}\ >=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.maxfev)}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a82b971eb0bd71b87dacdf4cd3de8672d}{HybridNonLinearSolverSpace::TooManyFunctionEvaluation}};}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1)\ *\ (std::max)(\mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1)\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}})\ <=\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_aadcf7fa75b2bc9a0e461a3b851d836a7}{NumTraits<Scalar>::epsilon}}()\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}})}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a4ea5d3da0d16abee53bc5ddafdcc65e6}{HybridNonLinearSolverSpace::TolTooSmall}};}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}}\ ==\ 5)}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a9dbd584a67d1457dfe95311188ac631e}{HybridNonLinearSolverSpace::NotMakingProgressJacobian}};}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}}\ ==\ 10)}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a679e6f6be41d7a9b12d61e9ec6c5ecf0}{HybridNonLinearSolverSpace::NotMakingProgressIterations}};}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ criterion\ for\ recalculating\ jacobian.\ */}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}}\ ==\ 2)}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ leave\ inner\ loop\ and\ go\ for\ the\ next\ outer\ loop\ iteration}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ calculate\ the\ rank\ one\ modification\ to\ the\ jacobian\ */}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ and\ update\ qtf\ if\ necessary.\ */}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}})/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ );}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.transpose()\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}};}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(1\mbox{\hyperlink{_cwise__array__power__array_8cpp_a9cb86ff854760bf91a154f2724a9101d}{e}}-\/4))}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}};}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}-\/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}})/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}};}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ qr\ factorization\ of\ the\ updated\ jacobian.\ */}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a7722c6b755413d56daaac51b9b4877ae}{internal::r1updt<Scalar>}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}},\ v\_givens,\ w\_givens,\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}},\ \&\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93de5d5d5133da1ca229fbc188f4f2d1}{sing}});}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a333108054c8603fcec84abf1f637daf3}{internal::r1mpyq<Scalar>}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.data(),\ v\_givens,\ w\_givens);}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a333108054c8603fcec84abf1f637daf3}{internal::r1mpyq<Scalar>}}(1,\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}.data(),\ v\_givens,\ w\_givens);}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aa01cfd3df047d4bfbc6a42e12c7720c5}{jeval}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00338\ \ \ \ \ \}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a5b3625d5ffa63ea0d5e4db4cab42e02b}{HybridNonLinearSolverSpace::Running}};}
+\DoxyCodeLine{00340\ \}}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00343\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00344\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a4e1cfd23e2ee4c7e16ed0fd353b3807e}{HybridNonLinearSolver<FunctorType,Scalar>::solve}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})}
+\DoxyCodeLine{00345\ \{}
+\DoxyCodeLine{00346\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ status\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a197044e0f63c1077846a0279e47e934f}{solveInit}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keywordflow}{if}\ (status==\mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}})}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ status;}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordflow}{while}\ (status==\mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a5b3625d5ffa63ea0d5e4db4cab42e02b}{HybridNonLinearSolverSpace::Running}})}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ status\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a64c9d49fa4645ad58a45dedcb1491252}{solveOneStep}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keywordflow}{return}\ status;}
+\DoxyCodeLine{00352\ \}}
+\DoxyCodeLine{00353\ }
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00357\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00358\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ac901db3e3eacb7f17537d40e6703d1e4}{HybridNonLinearSolver<FunctorType,Scalar>::hybrd1}}(}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{class_eigen_1_1_product}{Scalar}}\ tol}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{00362\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.size();}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{comment}{/*\ check\ the\ input\ parameters\ for\ errors.\ */}}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ <=\ 0\ ||\ tol\ <\ 0.)}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}};}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a08b1a535646ff113b502b495594782bc}{resetParameters}}();}
+\DoxyCodeLine{00370\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.maxfev\ =\ 200*(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}+1);}
+\DoxyCodeLine{00371\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.xtol\ =\ tol;}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.setConstant(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ 1.);}
+\DoxyCodeLine{00374\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a019c209d3c67020247583dce00a5e760}{solveNumericalDiff}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00376\ \}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00379\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00380\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a03e013471915c4395578affbd2e29e26}{HybridNonLinearSolver<FunctorType,Scalar>::solveNumericalDiffInit}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})}
+\DoxyCodeLine{00381\ \{}
+\DoxyCodeLine{00382\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.size();}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_subdiagonals<0)\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_subdiagonals=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}-\/1;}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_superdiagonals<0)\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_superdiagonals=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}-\/1;}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00388\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00389\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00390\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.resize(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00393\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}}\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.size()==\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}})\ \&\&\ \textcolor{stringliteral}{"{}When\ useExternalScaling\ is\ set,\ the\ caller\ must\ provide\ a\ valid\ 'diag'"{}});}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{comment}{/*\ Function\ Body\ */}}
+\DoxyCodeLine{00396\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}\ =\ 0;}
+\DoxyCodeLine{00397\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ac1026391306e8a8038cd40d8763d9e9e}{njev}}\ =\ 0;}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ check\ the\ input\ parameters\ for\ errors.\ */}}
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}\ <=\ 0\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.xtol\ <\ 0.\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.maxfev\ <=\ 0\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_subdiagonals<\ 0\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_superdiagonals<\ 0\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.factor\ <=\ 0.\ )}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}};}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}};\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ <=\ 0.)}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}};}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ evaluate\ the\ function\ at\ the\ starting\ point\ */}}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ and\ calculate\ its\ norm.\ */}}
+\DoxyCodeLine{00409\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}\ =\ 1;}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}})\ <\ 0)}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a54bd7f9ebd8df668ef1b37476827d3a9}{HybridNonLinearSolverSpace::UserAsked}};}
+\DoxyCodeLine{00412\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}}.stableNorm();}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{comment}{/*\ \ \ \ \ initialize\ iteration\ counter\ and\ monitors.\ */}}
+\DoxyCodeLine{00415\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}}\ =\ 1;}
+\DoxyCodeLine{00416\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}}\ =\ 0;}
+\DoxyCodeLine{00417\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}}\ =\ 0;}
+\DoxyCodeLine{00418\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}}\ =\ 0;}
+\DoxyCodeLine{00419\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}}\ =\ 0;}
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a5b3625d5ffa63ea0d5e4db4cab42e02b}{HybridNonLinearSolverSpace::Running}};}
+\DoxyCodeLine{00422\ \}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00425\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00426\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a73ce76462a048e23cdfcd18c18bd187b}{HybridNonLinearSolver<FunctorType,Scalar>::solveNumericalDiffOneStep}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})}
+\DoxyCodeLine{00427\ \{}
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00430\ \ \ \ \ }
+\DoxyCodeLine{00431\ \ \ \ \ assert(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}.size()==\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});\ \textcolor{comment}{//\ check\ the\ caller\ is\ not\ cheating\ us}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7d18b9b4dfd016ba552961903afd40e2}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};}
+\DoxyCodeLine{00434\ \ \ \ \ std::vector<JacobiRotation<Scalar>\ >\ v\_givens(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}),\ w\_givens(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aa01cfd3df047d4bfbc6a42e12c7720c5}{jeval}}\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_subdiagonals<0)\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_subdiagonals=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}-\/1;}
+\DoxyCodeLine{00438\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_superdiagonals<0)\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_superdiagonals=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}}-\/1;}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ \ \textcolor{comment}{/*\ calculate\ the\ jacobian\ matrix.\ */}}
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{namespace_eigen_1_1internal_a905c2bc7dcf22a3b089d7ab903d514e6}{internal::fdjac1}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}},\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_subdiagonals,\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_superdiagonals,\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.epsfcn)\ <0)}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a54bd7f9ebd8df668ef1b37476827d3a9}{HybridNonLinearSolverSpace::UserAsked}};}
+\DoxyCodeLine{00443\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}\ +=\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_subdiagonals+\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.nb\_of\_superdiagonals+\ 1,\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}});}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.colwise().blueNorm();}
+\DoxyCodeLine{00446\ }
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{comment}{/*\ on\ the\ first\ iteration\ and\ if\ external\ scaling\ is\ not\ used,\ scale\ according\ */}}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{comment}{/*\ to\ the\ norms\ of\ the\ columns\ of\ the\ initial\ jacobian.\ */}}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}}\ ==\ 1)\ \{}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}};\ ++\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}})}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]\ =\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]==0.)\ ?\ 1.\ :\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}[\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}];}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ on\ the\ first\ iteration,\ calculate\ the\ norm\ of\ the\ scaled\ x\ */}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ and\ initialize\ the\ step\ bound\ delta.\ */}}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}).stableNorm();}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.factor\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}};}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ ==\ 0.)}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.factor;}
+\DoxyCodeLine{00460\ \ \ \ \ \}}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ qr\ factorization\ of\ the\ jacobian.\ */}}
+\DoxyCodeLine{00463\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_householder_q_r}{HouseholderQR<JacobianType>}}\ qrfac(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}});\ \textcolor{comment}{//\ no\ pivoting:}}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{comment}{/*\ copy\ the\ triangular\ factor\ of\ the\ qr\ factorization\ into\ r.\ */}}
+\DoxyCodeLine{00466\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}}\ =\ qrfac.\mbox{\hyperlink{class_eigen_1_1_householder_q_r_a42552dd4708954432161da95af4442ba}{matrixQR}}();}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \ \ \ \ \textcolor{comment}{/*\ accumulate\ the\ orthogonal\ factor\ in\ fjac.\ */}}
+\DoxyCodeLine{00469\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}\ =\ qrfac.\mbox{\hyperlink{class_eigen_1_1_householder_q_r_affd506c10ef2d25f56e7b1f9f25ff885}{householderQ}}();}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{comment}{/*\ form\ (q\ transpose)*fvec\ and\ store\ in\ qtf.\ */}}
+\DoxyCodeLine{00472\ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.transpose()\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}};}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{comment}{/*\ rescale\ if\ necessary.\ */}}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a29cf13648a7d6accc89fd1dc621eb92b}{useExternalScaling}})}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseMax(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}});}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ determine\ the\ direction\ p.\ */}}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a973ab8305717418988ccac60a1bf85e1}{internal::dogleg<Scalar>}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}});}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ store\ the\ direction\ p\ and\ x\ +\ p.\ calculate\ the\ norm\ of\ p.\ */}}
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}\ =\ -\/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}};}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ +\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}};}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}).stableNorm();}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ on\ the\ first\ iteration,\ adjust\ the\ initial\ step\ bound.\ */}}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}}\ ==\ 1)}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ (\mbox{\hyperlink{namespacestd_ac7b9885417769949d76890454b6d072e}{std::min}})(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}});}
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ evaluate\ the\ function\ at\ x\ +\ p\ and\ calculate\ its\ norm.\ */}}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_ae4e7de0657ae5d3986bfb60011731aef}{functor}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}})\ <\ 0)}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a54bd7f9ebd8df668ef1b37476827d3a9}{HybridNonLinearSolverSpace::UserAsked}};}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}};}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}}.stableNorm();}
+\DoxyCodeLine{00496\ }
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ scaled\ actual\ reduction.\ */}}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ =\ -\/1.;}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}})\ \textcolor{comment}{/*\ Computing\ 2nd\ power\ */}}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ =\ 1.\ -\/\ numext::abs2(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}}\ /\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}});}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ scaled\ predicted\ reduction.\ */}}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}}.template\ triangularView<Upper>()*\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}\ +\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}};}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7c609b0f2955abbc9f7315365990d3fa}{temp}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}}.stableNorm();}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}}\ =\ 0.;}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7c609b0f2955abbc9f7315365990d3fa}{temp}}\ <\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}})\ \textcolor{comment}{/*\ Computing\ 2nd\ power\ */}}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}}\ =\ 1.\ -\/\ numext::abs2(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7c609b0f2955abbc9f7315365990d3fa}{temp}}\ /\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}});}
+\DoxyCodeLine{00508\ }
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ ratio\ of\ the\ actual\ to\ the\ predicted\ reduction.\ */}}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ =\ 0.;}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}}\ >\ 0.)}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ /\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a60ac7d810154d5d0e64367d75a441844}{prered}};}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ update\ the\ step\ bound.\ */}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ <\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1))\ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}}\ =\ 0;}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}};}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5)\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}};}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}}\ =\ 0;}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}};}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5)\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a308cb2d869b3259ebb32c682f69ee0eb}{ncsuc}}\ >\ 1)}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ (std::max)(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ /\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5));}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{datatypes_8h_a3aa069ac3980707dae1e0530f50d59e4}{abs}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ -\/\ 1.)\ <=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1))\ \{}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ /\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.5);}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ test\ for\ successful\ iteration.\ */}}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(1\mbox{\hyperlink{_cwise__array__power__array_8cpp_a9cb86ff854760bf91a154f2724a9101d}{e}}-\/4))\ \{}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ successful\ iteration.\ update\ x,\ fvec,\ and\ their\ norms.\ */}}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}};}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a093a1b90bca17c7c35b1715ad5b881a6}{fvec}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}};}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}.stableNorm();}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a21a67c1abb318a66c25b30855d2bd451}{fnorm1}};}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1fb82aaeaf6aa1ae3ab3f7d0b33b4e3f}{iter}};}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ determine\ the\ progress\ of\ the\ iteration.\ */}}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}};}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.001))}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}}\ =\ 0;}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aa01cfd3df047d4bfbc6a42e12c7720c5}{jeval}})}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ ++\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}};}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abd8f468a063ae0e7b117a69c220230bd}{actred}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1))}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}}\ =\ 0;}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ test\ for\ convergence.\ */}}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}}\ <=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.xtol\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}}\ ||\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a7472a71945ab2be2a7813c84f63ab871}{fnorm}}\ ==\ 0.)}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689ad5adf33a2f4813fe8a1aa1e9f70e9961}{HybridNonLinearSolverSpace::RelativeErrorTooSmall}};}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ tests\ for\ termination\ and\ stringent\ tolerances.\ */}}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a68ef73496f04e7a832cda7cdd21dc807}{nfev}}\ >=\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5abdf349cd4c8c144d4e13168d0780c1}{parameters}}.maxfev)}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a82b971eb0bd71b87dacdf4cd3de8672d}{HybridNonLinearSolverSpace::TooManyFunctionEvaluation}};}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1)\ *\ (std::max)(\mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(.1)\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0edd5aacdc856c204a5ec8ce2fd3ef7f}{delta}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}})\ <=\ \mbox{\hyperlink{struct_eigen_1_1_generic_num_traits_aadcf7fa75b2bc9a0e461a3b851d836a7}{NumTraits<Scalar>::epsilon}}()\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a1f6a49e24f85db4b65e95485dcbb30e6}{xnorm}})}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a4ea5d3da0d16abee53bc5ddafdcc65e6}{HybridNonLinearSolverSpace::TolTooSmall}};}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a743dae42e589ece6f1d2737aa4ef077f}{nslow2}}\ ==\ 5)}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a9dbd584a67d1457dfe95311188ac631e}{HybridNonLinearSolverSpace::NotMakingProgressJacobian}};}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3bdcadb7604197ae03bdbba49b92a1c0}{nslow1}}\ ==\ 10)}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a679e6f6be41d7a9b12d61e9ec6c5ecf0}{HybridNonLinearSolverSpace::NotMakingProgressIterations}};}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ criterion\ for\ recalculating\ jacobian.\ */}}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a9601ae7140110654a25602f078a3be73}{ncfail}}\ ==\ 2)}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ \textcolor{comment}{//\ leave\ inner\ loop\ and\ go\ for\ the\ next\ outer\ loop\ iteration}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ calculate\ the\ rank\ one\ modification\ to\ the\ jacobian\ */}}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ and\ update\ qtf\ if\ necessary.\ */}}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aedd9dc3b8e06fa994d94d5a1c4b9786d}{diag}}.cwiseProduct(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}})/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}}\ );}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.transpose()\ *\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a5cc8564debaf353f1a6cea08b2d017b5}{wa4}};}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a90b9a436df8a063ab0c9d917902dca20}{ratio}}\ >=\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}}(1\mbox{\hyperlink{_cwise__array__power__array_8cpp_a9cb86ff854760bf91a154f2724a9101d}{e}}-\/4))}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}};}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}\ =\ (\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}}-\/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}})/\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_afee4b3b621ca5cc2facaa016c213a9f3}{pnorm}};}
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ qr\ factorization\ of\ the\ updated\ jacobian.\ */}}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a7722c6b755413d56daaac51b9b4877ae}{internal::r1updt<Scalar>}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a3772d7513630aaa22785129e69505fcd}{R}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a771cee28ad3cdc393a22040723bb69d6}{wa1}},\ v\_givens,\ w\_givens,\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a0d66b26d517055a2eb842f57941ecdf4}{wa2}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93956bfb49a6e39a00204baf13a7e165}{wa3}},\ \&\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a93de5d5d5133da1ca229fbc188f4f2d1}{sing}});}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a333108054c8603fcec84abf1f637daf3}{internal::r1mpyq<Scalar>}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aba1f6608e9ad2daabfdf9acec571860a}{fjac}}.data(),\ v\_givens,\ w\_givens);}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1internal_a333108054c8603fcec84abf1f637daf3}{internal::r1mpyq<Scalar>}}(1,\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a87a4b1e59d20625cb69bcb36960e85a1}{n}},\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_abf7599fb5cced060cc4d5b7ca7f0da59}{qtf}}.data(),\ v\_givens,\ w\_givens);}
+\DoxyCodeLine{00579\ }
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_aa01cfd3df047d4bfbc6a42e12c7720c5}{jeval}}\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00581\ \ \ \ \ \}}
+\DoxyCodeLine{00582\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a5b3625d5ffa63ea0d5e4db4cab42e02b}{HybridNonLinearSolverSpace::Running}};}
+\DoxyCodeLine{00583\ \}}
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FunctorType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00586\ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}}
+\DoxyCodeLine{00587\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a019c209d3c67020247583dce00a5e760}{HybridNonLinearSolver<FunctorType,Scalar>::solveNumericalDiff}}(\mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a6b474d4da7339c9aa89cf223796e3a69}{FVectorType}}\ \ \&\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}})}
+\DoxyCodeLine{00588\ \{}
+\DoxyCodeLine{00589\ \ \ \ \ \mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689}{HybridNonLinearSolverSpace::Status}}\ status\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a03e013471915c4395578affbd2e29e26}{solveNumericalDiffInit}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keywordflow}{if}\ (status==\mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a1790497cbbfea43da7617bcf010280d5}{HybridNonLinearSolverSpace::ImproperInputParameters}})}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ status;}
+\DoxyCodeLine{00592\ \ \ \ \ \textcolor{keywordflow}{while}\ (status==\mbox{\hyperlink{namespace_eigen_1_1_hybrid_non_linear_solver_space_aaf2facedf2b80e1d4381bc5979e88689a5b3625d5ffa63ea0d5e4db4cab42e02b}{HybridNonLinearSolverSpace::Running}})}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ status\ =\ \mbox{\hyperlink{class_eigen_1_1_hybrid_non_linear_solver_a73ce76462a048e23cdfcd18c18bd187b}{solveNumericalDiffOneStep}}(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});}
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keywordflow}{return}\ status;}
+\DoxyCodeLine{00595\ \}}
+\DoxyCodeLine{00596\ }
+\DoxyCodeLine{00597\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00598\ }
+\DoxyCodeLine{00599\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_HYBRIDNONLINEARSOLVER\_H}}
+\DoxyCodeLine{00600\ }
+\DoxyCodeLine{00601\ \textcolor{comment}{//vim:\ ai\ ts=4\ sts=4\ et\ sw=4}}
+
+\end{DoxyCode}

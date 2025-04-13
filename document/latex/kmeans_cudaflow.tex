@@ -1,0 +1,217 @@
+\doxysection{k-\/means Clustering (cuda\+Flow)}
+\hypertarget{kmeans_cudaflow}{}\label{kmeans_cudaflow}\index{k-\/means Clustering (cudaFlow)@{k-\/means Clustering (cudaFlow)}}
+Following up on \doxylink{kmeans}{k-\/means Clustering}, this page studies how to accelerate a k-\/means workload on a GPU using \doxylink{classtf_1_1cuda_flow}{tf\+::cuda\+Flow}.\hypertarget{kmeans_cudaflow_DefineTheKMeansKernels}{}\doxysubsection{\texorpdfstring{Define the k-\/means Kernels}{Define the k-\/means Kernels}}\label{kmeans_cudaflow_DefineTheKMeansKernels}
+Recall that the k-\/means algorithm has the following steps\+:
+
+
+\begin{DoxyItemize}
+\item Step 1\+: initialize k random centroids 
+\item Step 2\+: for every data point, find the nearest centroid (L2 distance or other measurements) and assign the point to it 
+\item Step 3\+: for every centroid, move the centroid to the average of the points assigned to that centroid 
+\item Step 4\+: go to Step 2 until converged (no more changes in the last few iterations) or maximum iterations reached 
+\end{DoxyItemize}
+
+We observe Step 2 and Step 3 of the algorithm are parallelizable across individual points for use to harness the power of GPU\+:
+
+
+\begin{DoxyEnumerate}
+\item for every data point, find the nearest centroid (L2 distance or other measurements) and assign the point to it 
+\item for every centroid, move the centroid to the average of the points assigned to that centroid. 
+\end{DoxyEnumerate}
+
+At a fine-\/grained level, we request one GPU thread to work on one point for Step 2 and one GPU thread to work on one centroid for Step 3.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ px/py:\ 2D\ points}}
+\DoxyCodeLine{\textcolor{comment}{//\ N:\ number\ of\ points}}
+\DoxyCodeLine{\textcolor{comment}{//\ mx/my:\ centroids}}
+\DoxyCodeLine{\textcolor{comment}{//\ K:\ number\ of\ clusters}}
+\DoxyCodeLine{\textcolor{comment}{//\ sx/sy/c:\ storage\ to\ compute\ the\ average}}
+\DoxyCodeLine{\_\_global\_\_\ \textcolor{keywordtype}{void}\ assign\_clusters(}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}*\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}},\ \textcolor{keywordtype}{float}*\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}},\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ }
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}*\ mx,\ \textcolor{keywordtype}{float}*\ my,\ \textcolor{keywordtype}{float}*\ sx,\ \textcolor{keywordtype}{float}*\ sy,\ \textcolor{keywordtype}{int}\ K,\ \textcolor{keywordtype}{int}*\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}}
+\DoxyCodeLine{)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ >=\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}})\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ Make\ global\ loads\ once.}}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}}[\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}];}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}}\ =\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}[\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}];}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ best\_dance\ =\ FLT\_MAX;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ best\_k\ =\ 0;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ K;\ ++k)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordtype}{float}\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ =\ L2(\mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}},\ mx[k],\ my[k]);}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}}\ <\ best\_d)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ best\_d\ =\ \mbox{\hyperlink{ittnotify__static_8h_a5f135fd1e66a03efd5275434478e0d97}{d}};}
+\DoxyCodeLine{\ \ \ \ \ \ best\_k\ =\ k;}
+\DoxyCodeLine{\ \ \ \ \}\ \ \ }
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ atomicAdd(\&sx[best\_k],\ \mbox{\hyperlink{offscreen_8c_a5fd331c99e778f04762be6d8173eb4d2}{x}});\ }
+\DoxyCodeLine{\ \ atomicAdd(\&sy[best\_k],\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}});\ }
+\DoxyCodeLine{\ \ atomicAdd(\&\mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}\ [best\_k],\ 1);\ }
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ mx/my:\ centroids,\ sx/sy/c:\ storage\ to\ compute\ the\ average}}
+\DoxyCodeLine{\_\_global\_\_\ \textcolor{keywordtype}{void}\ compute\_new\_means(}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}*\ mx,\ \textcolor{keywordtype}{float}*\ my,\ \textcolor{keywordtype}{float}*\ sx,\ \textcolor{keywordtype}{float}*\ sy,\ \textcolor{keywordtype}{int}*\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}}
+\DoxyCodeLine{)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ k\ =\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}}\ =\ \mbox{\hyperlink{datatypes_8h_affe776513b24d84b39af8ab0930fef7f}{max}}(1,\ \mbox{\hyperlink{bench_vec_add_8cpp_a41689956983587b085f9da3e48f31d99}{c}}[k]);\ \ \textcolor{comment}{//\ turn\ 0/0\ to\ 0/1}}
+\DoxyCodeLine{\ \ mx[k]\ =\ sx[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\ \ my[k]\ =\ sy[k]\ /\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a78e23769680a273f948d4bd3e946fcae}{count}};}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+When we recompute the cluster centroids to be the mean of all points assigned to a particular centroid, multiple GPU threads may access the sum arrays, {\ttfamily sx} and {\ttfamily sy}, and the count array, {\ttfamily c}. To avoid data race, we use a simple {\ttfamily atomic\+Add} method.\hypertarget{kmeans_cudaflow_DefineTheKMeanscudaFlow}{}\doxysubsection{\texorpdfstring{Define the k-\/means cuda\+Flow}{Define the k-\/means cuda\+Flow}}\label{kmeans_cudaflow_DefineTheKMeanscudaFlow}
+Based on the two kernels, we can define the cuda\+Flow for the k-\/means workload below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ N:\ number\ of\ points}}
+\DoxyCodeLine{\textcolor{comment}{//\ K:\ number\ of\ clusters}}
+\DoxyCodeLine{\textcolor{comment}{//\ M:\ number\ of\ iterations}}
+\DoxyCodeLine{\textcolor{comment}{//\ px/py:\ 2D\ point\ vector\ }}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ kmeans\_gpu(}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ \textcolor{keywordtype}{int}\ K,\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}},\ cconst\ std::vector<float>\&\ \mbox{\hyperlink{level1__cplx__impl_8h_aa422b67a42f6a655b79abc04b8c0ad49}{px}},\ \textcolor{keyword}{const}\ std::vector<float>\&\ \mbox{\hyperlink{level1__cplx__impl_8h_abecb3a9c27c34b3023649d5e329c235b}{py}}}
+\DoxyCodeLine{)\ \{}
+\DoxyCodeLine{\ \ std::vector<float>\ h\_mx,\ h\_my;}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{float}\ *d\_px,\ *d\_py,\ *d\_mx,\ *d\_my,\ *d\_sx,\ *d\_sy,\ *d\_c;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<K;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ h\_mx.push\_back(h\_px[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]);}
+\DoxyCodeLine{\ \ \ \ h\_my.push\_back(h\_py[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ a\ taskflow\ graph}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}K-\/Means"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ allocate\_px\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{cuda__error_8hpp_a75e23f7c3ff7a29d92f78b7b6ac0eafc}{TF\_CHECK\_CUDA}}(cudaMalloc(\&d\_px,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float})),\ \textcolor{stringliteral}{"{}failed\ to\ allocate\ d\_px"{}});}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_px"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ allocate\_py\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{cuda__error_8hpp_a75e23f7c3ff7a29d92f78b7b6ac0eafc}{TF\_CHECK\_CUDA}}(cudaMalloc(\&d\_py,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float})),\ \textcolor{stringliteral}{"{}failed\ to\ allocate\ d\_py"{}});}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_py"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ allocate\_mx\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{cuda__error_8hpp_a75e23f7c3ff7a29d92f78b7b6ac0eafc}{TF\_CHECK\_CUDA}}(cudaMalloc(\&d\_mx,\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float})),\ \textcolor{stringliteral}{"{}failed\ to\ allocate\ d\_mx"{}});}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_mx"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ allocate\_my\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{cuda__error_8hpp_a75e23f7c3ff7a29d92f78b7b6ac0eafc}{TF\_CHECK\_CUDA}}(cudaMalloc(\&d\_my,\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float})),\ \textcolor{stringliteral}{"{}failed\ to\ allocate\ d\_my"{}});}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_my"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ allocate\_sx\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{cuda__error_8hpp_a75e23f7c3ff7a29d92f78b7b6ac0eafc}{TF\_CHECK\_CUDA}}(cudaMalloc(\&d\_sx,\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float})),\ \textcolor{stringliteral}{"{}failed\ to\ allocate\ d\_sx"{}});}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_sx"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ allocate\_sy\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{cuda__error_8hpp_a75e23f7c3ff7a29d92f78b7b6ac0eafc}{TF\_CHECK\_CUDA}}(cudaMalloc(\&d\_sy,\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float})),\ \textcolor{stringliteral}{"{}failed\ to\ allocate\ d\_sy"{}});}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_sy"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ allocate\_c\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{cuda__error_8hpp_a75e23f7c3ff7a29d92f78b7b6ac0eafc}{TF\_CHECK\_CUDA}}(cudaMalloc(\&d\_c,\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float})),\ \textcolor{stringliteral}{"{}failed\ to\ allocate\ dc"{}});}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}allocate\_c"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ h2d\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ cudaMemcpy(d\_px,\ h\_px.data(),\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}),\ cudaMemcpyDefault);}
+\DoxyCodeLine{\ \ \ \ cudaMemcpy(d\_py,\ h\_py.data(),\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}),\ cudaMemcpyDefault);}
+\DoxyCodeLine{\ \ \ \ cudaMemcpy(d\_mx,\ h\_mx.data(),\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}),\ cudaMemcpyDefault);}
+\DoxyCodeLine{\ \ \ \ cudaMemcpy(d\_my,\ h\_my.data(),\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}),\ cudaMemcpyDefault);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}h2d"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ kmeans\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ tf::cudaFlow\ cf;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ zero\_c\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_ab45bc592a33380adf74d6f1e7690bd4c}{zero}}(d\_c,\ K).name(\textcolor{stringliteral}{"{}zero\_c"{}});}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ zero\_sx\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_ab45bc592a33380adf74d6f1e7690bd4c}{zero}}(d\_sx,\ K).name(\textcolor{stringliteral}{"{}zero\_sx"{}});}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ zero\_sy\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_ab45bc592a33380adf74d6f1e7690bd4c}{zero}}(d\_sy,\ K).name(\textcolor{stringliteral}{"{}zero\_sy"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ cluster\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a1473a15a6023fbc25e1f029f2ff84aec}{kernel}}(}
+\DoxyCodeLine{\ \ \ \ \ \ (\mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}}+512-\/1)\ /\ 512,\ 512,\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ assign\_clusters,\ d\_px,\ d\_py,\ \mbox{\hyperlink{main-override-static_8c_a0240ac851181b84ac374872dc5434ee4}{N}},\ d\_mx,\ d\_my,\ d\_sx,\ d\_sy,\ K,\ d\_c}
+\DoxyCodeLine{\ \ \ \ ).name(\textcolor{stringliteral}{"{}cluster"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keyword}{auto}\ new\_centroid\ =\ cf.\mbox{\hyperlink{classtf_1_1cuda_graph_base_a1473a15a6023fbc25e1f029f2ff84aec}{kernel}}(}
+\DoxyCodeLine{\ \ \ \ \ \ 1,\ K,\ 0,}
+\DoxyCodeLine{\ \ \ \ \ \ compute\_new\_means,\ d\_mx,\ d\_my,\ d\_sx,\ d\_sy,\ d\_c}
+\DoxyCodeLine{\ \ \ \ ).name(\textcolor{stringliteral}{"{}new\_centroid"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ cluster.\mbox{\hyperlink{classtf_1_1cuda_task_abdd68287ec4dff4216af34d1db44d1b4}{precede}}(new\_centroid)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classtf_1_1cuda_task_a4a9ca1a34bac47e4c9b04eb4fb2f7775}{succeed}}(zero\_c,\ zero\_sx,\ zero\_sy);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Repeat\ the\ execution\ for\ M\ times}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespacetf_af19c9b301dc0b0fe2a51a960fa427e83}{tf::cudaStream}}\ stream;}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<\mbox{\hyperlink{test__overwrite__node_8cpp_a52037c938e3c1b126c6277da5ca689d0}{M}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ cf.run(stream);}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ stream.\mbox{\hyperlink{classtf_1_1cuda_stream_base_a08857ff2874cd5378e578822e2e96dd0}{synchronize}}();}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}update\_means"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ stop\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ cudaMemcpy(h\_mx.data(),\ d\_mx,\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}),\ cudaMemcpyDefault);}
+\DoxyCodeLine{\ \ \ \ cudaMemcpy(h\_my.data(),\ d\_my,\ K*\textcolor{keyword}{sizeof}(\textcolor{keywordtype}{float}),\ cudaMemcpyDefault);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}d2h"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{mimalloc-override_8h_a9d4b5df3530d1bc733070a4669ba6ebc}{free}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \ \ cudaFree(d\_px);}
+\DoxyCodeLine{\ \ \ \ cudaFree(d\_py);}
+\DoxyCodeLine{\ \ \ \ cudaFree(d\_mx);}
+\DoxyCodeLine{\ \ \ \ cudaFree(d\_my);}
+\DoxyCodeLine{\ \ \ \ cudaFree(d\_sx);}
+\DoxyCodeLine{\ \ \ \ cudaFree(d\_sy);}
+\DoxyCodeLine{\ \ \ \ cudaFree(d\_c);}
+\DoxyCodeLine{\ \ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}free"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ build\ up\ the\ dependency}}
+\DoxyCodeLine{\ \ h2d.succeed(allocate\_px,\ allocate\_py,\ allocate\_mx,\ allocate\_my);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ kmeans.succeed(allocate\_sx,\ allocate\_sy,\ allocate\_c,\ h2d)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ .precede(stop);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ stop.precede(\mbox{\hyperlink{mimalloc-override_8h_a9d4b5df3530d1bc733070a4669ba6ebc}{free}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ run\ the\ taskflow}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//std::cout\ <<\ "{}dumping\ kmeans\ graph\ ...\(\backslash\)n"{};}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \{h\_mx,\ h\_my\};}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The first dump before executing the taskflow produces the following diagram. The condition tasks introduces a cycle between itself and {\ttfamily update\+\_\+means}. Each time it goes back to {\ttfamily update\+\_\+means}, the cuda\+Flow is reconstructed with captured parameters in the closure and offloaded to the GPU.
+
+The main cuda\+Flow task, {\ttfamily update\+\_\+means}, must not run before all required data has settled down. It precedes a condition task that circles back to itself until we reach {\ttfamily M} iterations. When iteration completes, the condition task directs the execution path to the cuda\+Flow, {\ttfamily h2d}, to copy the results of clusters to {\ttfamily h\+\_\+mx} and {\ttfamily h\+\_\+my} and then deallocate all GPU memory.\hypertarget{kmeans_cudaflow_KMeanscudaFlowBenchmarking}{}\doxysubsection{\texorpdfstring{Benchmarking}{Benchmarking}}\label{kmeans_cudaflow_KMeanscudaFlowBenchmarking}
+We run three versions of k-\/means, sequential CPU, parallel CPUs, and one GPU, on a machine of 12 Intel i7-\/8700 CPUs at 3.\+20 GHz and a Nvidia RTX 2080 GPU using various numbers of 2D point counts and iterations.
+
+ \tabulinesep=1mm
+\begin{longtabu}spread 0pt [c]{*{6}{|X[-1]}|}
+\hline
+\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ N   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ K   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ M   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Sequential   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Parallel   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ GPU    }\\\cline{1-6}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ N   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ K   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ M   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Sequential   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ CPU Parallel   }&\PBS\centering \cellcolor{\tableheadbgcolor}\textbf{ GPU    }\\\cline{1-6}
+\endhead
+\PBS\centering 10   &\PBS\centering 5   &\PBS\centering 10   &\PBS\centering 0.\+14 ms   &\PBS\centering 77 ms   &\PBS\centering 1 ms    \\\cline{1-6}
+\PBS\centering 100   &\PBS\centering 10   &\PBS\centering 100   &\PBS\centering 0.\+56 ms   &\PBS\centering 86 ms   &\PBS\centering 7 ms    \\\cline{1-6}
+\PBS\centering 1000   &\PBS\centering 10   &\PBS\centering 1000   &\PBS\centering 10 ms   &\PBS\centering 98 ms   &\PBS\centering 55 ms    \\\cline{1-6}
+\PBS\centering 10000   &\PBS\centering 10   &\PBS\centering 10000   &\PBS\centering 1006 ms   &\PBS\centering 713 ms   &\PBS\centering 458 ms    \\\cline{1-6}
+\PBS\centering 100000   &\PBS\centering 10   &\PBS\centering 100000   &\PBS\centering 102483 ms   &\PBS\centering 49966 ms   &\PBS\centering 7952 ms   \\\cline{1-6}
+\end{longtabu}
+
+
+When the number of points is larger than 10K, both parallel CPU and GPU implementations start to pick up the speed over than the sequential version. We can see that using the built-\/in predicate, tf\+::cuda\+Flow\+::offload\+\_\+n, can avoid repetitively creating the graph over and over, resulting in two times faster than conditional tasking. 

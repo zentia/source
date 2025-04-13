@@ -1,5 +1,5 @@
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/event.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/event.h>
 
 namespace luisa::compute {
 

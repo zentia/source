@@ -1,0 +1,51 @@
+\doxysection{Wavefront Parallelism}
+\hypertarget{wavefront}{}\label{wavefront}\index{Wavefront Parallelism@{Wavefront Parallelism}}
+We study the wavefront parallelism, which is a common pattern in dynamic programming to sweep elements in a diagonal direction.\hypertarget{wavefront_WavefrontComputingFormulation}{}\doxysubsection{\texorpdfstring{Problem Formulation}{Problem Formulation}}\label{wavefront_WavefrontComputingFormulation}
+The computation starts at a singular point at a corner of a data plan (e.\+g., grid) and propagates its effect diagonally to other elements. This sweep of computation is known as {\itshape wavefront}. Each point in the wavefront can be computed in parallel. The following example shows a wavefront parallelism in a 2D matrix.
+
+
+
+We partition the 9x9 grid into a 3x3 block and assign a task to one block. The wavefront propagates task dependencies from the top-\/left block all the way to the bottom-\/right block. Each task precedes two tasks, one to the right and another below.\hypertarget{wavefront_WavefrontTaskGraph}{}\doxysubsection{\texorpdfstring{Wavefront Task Graph}{Wavefront Task Graph}}\label{wavefront_WavefrontTaskGraph}
+We can describe the wavefront parallelism in a simple two-\/level loop. Since we need to address the two tasks upper and left to a task when creating its dependencies, we use a 2D vector to pre-\/allocate all tasks via \doxylink{classtf_1_1_flow_builder_acab0b4ac82260f47fdb36a3244ee3aaf}{tf\+::\+Taskflow\+::placeholder}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_8hpp}{taskflow/taskflow.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ num\_blocks\ =\ 3;}
+\DoxyCodeLine{\ \ std::vector<std::vector<tf::Task>>\ node(num\_blocks);}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ num\_blocks*num\_blocks\ placeholder\ tasks}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \&\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}\ :\ node)\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<num\_blocks;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}.emplace\_back(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.placeholder());}
+\DoxyCodeLine{\ \ \ \ \}\ \ \ }
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ scan\ each\ block\ and\ create\ dependencies}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=num\_blocks;\ -\/-\/\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}>=0;\ )\ \{\ }
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{for}(\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}=num\_blocks;\ -\/-\/\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}>=0;\ )\ \{\ }
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ deferred\ task\ assignment}}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{namespacecds_1_1intrusive_1_1msqueue_ab58d6c7c728a671b5b418888d3f055c8}{node}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}][\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}].work([=]()\ \{\ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}compute\ block\ (\%d,\ \%d)"{}},\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}});\ \});\ \ }
+\DoxyCodeLine{\ \ \ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{comment}{//\ wavefront\ dependency}}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}+1\ <\ num\_blocks)\ \mbox{\hyperlink{namespacecds_1_1intrusive_1_1msqueue_ab58d6c7c728a671b5b418888d3f055c8}{node}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}][\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}].precede(node[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}][\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}+1]);}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1\ <\ num\_blocks)\ \mbox{\hyperlink{namespacecds_1_1intrusive_1_1msqueue_ab58d6c7c728a671b5b418888d3f055c8}{node}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}][\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}].precede(node[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+1][\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}]);}
+\DoxyCodeLine{\ \ \ \ \}\ \ \ }
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ dump\ the\ taskflow}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The figure below shows the wavefront parallelism in a 3x3 grid\+:
+
+Wavefront parallelism has many variations in different applications, for instance, Smith-\/\+Waterman sequencing, video encoding algorithms, image analysis, and pipeline parallelism. The parallel pattern exhibits in a diagonal direction. 

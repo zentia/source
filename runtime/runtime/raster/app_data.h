@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <luisa/core/basic_types.h>
+#include <runtime/core/basic_types.h>
 
 namespace luisa::compute {
 

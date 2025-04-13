@@ -1,0 +1,4 @@
+var structmove__only__function__detail_1_1__drop__first__arg__to__invoke_3_01_r_07_5_08_07_g_00_01_a1870ae003f64047394858a7ff60442cc =
+[
+    [ "type", "structmove__only__function__detail_1_1__drop__first__arg__to__invoke_3_01_r_07_5_08_07_g_00_01_a1870ae003f64047394858a7ff60442cc.html#abb8f77ac8701e31339d7fa9dba40b9e2", null ]
+];

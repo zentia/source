@@ -1,0 +1,5 @@
+var structset_1_1set__type_3_01tag___feldman_hash_set_00_01_key_00_01_val_01_4_1_1hash__type_3_01std_1_1hash_3_01_t_h_01_4_01_4 =
+[
+    [ "hasher", "structset_1_1set__type_3_01tag___feldman_hash_set_00_01_key_00_01_val_01_4_1_1hash__type_3_01std_1_1hash_3_01_t_h_01_4_01_4.html#aa8a633a604a563fd0ca3ed6ff7bcb36d", null ],
+    [ "type", "structset_1_1set__type_3_01tag___feldman_hash_set_00_01_key_00_01_val_01_4_1_1hash__type_3_01std_1_1hash_3_01_t_h_01_4_01_4.html#a7519a63940b702508921cfaf23f8ea40", null ]
+];

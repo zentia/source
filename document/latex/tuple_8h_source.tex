@@ -1,0 +1,998 @@
+\doxysection{tuple.\+h}
+\hypertarget{tuple_8h_source}{}\label{tuple_8h_source}\index{runtime/EASTL/include/EASTL/tuple.h@{runtime/EASTL/include/EASTL/tuple.h}}
+\mbox{\hyperlink{tuple_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (c)\ Electronic\ Arts\ Inc.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#ifndef\ EASTL\_TUPLE\_H}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#define\ EASTL\_TUPLE\_H}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{config_8h}{EASTL/internal/config.h}}>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{compare_8h}{EASTL/compare.h}}>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2functional_8h}{EASTL/functional.h}}>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2type__traits_8h}{EASTL/type\_traits.h}}>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2utility_8h}{EASTL/utility.h}}>}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{tuple__fwd__decls_8h}{EASTL/internal/tuple\_fwd\_decls.h}}>}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \mbox{\hyperlink{eacompilertraits_8h_a93bc985cb0019c53eb5787b92820db7c}{EA\_DISABLE\_VC\_WARNING}}(4623)\ \textcolor{comment}{//\ warning\ C4623:\ default\ constructor\ was\ implicitly\ defined\ as\ deleted}}
+\DoxyCodeLine{00017\ \mbox{\hyperlink{eacompilertraits_8h_a93bc985cb0019c53eb5787b92820db7c}{EA\_DISABLE\_VC\_WARNING}}(4625)\ \textcolor{comment}{//\ warning\ C4625:\ copy\ constructor\ was\ implicitly\ defined\ as\ deleted}}
+\DoxyCodeLine{00018\ \mbox{\hyperlink{eacompilertraits_8h_a93bc985cb0019c53eb5787b92820db7c}{EA\_DISABLE\_VC\_WARNING}}(4510)\ \textcolor{comment}{//\ warning\ C4510:\ default\ constructor\ could\ not\ be\ generated}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#if\ EASTL\_TUPLE\_ENABLED}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl}{eastl}}}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ non-\/recursive\ tuple\ implementation\ based\ on\ libc++\ tuple\ implementation\ and\ description\ at}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ http://mitchnull.blogspot.ca/2012/06/c11-\/tuple-\/implementation-\/details-\/part-\/1.html}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ TupleTypes\ helper}}
+\DoxyCodeLine{00028\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>\ \textcolor{keyword}{struct\ }TupleTypes\ \{\};}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ tuple\_size\ helper}}
+\DoxyCodeLine{00031\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }tuple\_size\ \{\};}
+\DoxyCodeLine{00032\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }tuple\_size<const\ T>\ \ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ tuple\_size<T>\ \{\};}
+\DoxyCodeLine{00033\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }tuple\_size<volatile\ T>\ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ tuple\_size<T>\ \{\};}
+\DoxyCodeLine{00034\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }tuple\_size<const\ volatile\ T>\ :\ \textcolor{keyword}{public}\ tuple\_size<T>\ \{\};}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>\ \textcolor{keyword}{struct\ }tuple\_size<TupleTypes<Ts...>>\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structeastl_1_1integral__constant}{integral\_constant}}<size\_t,\ sizeof...(Ts)>\ \{\};}
+\DoxyCodeLine{00037\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>\ \textcolor{keyword}{struct\ }tuple\_size<tuple<Ts...>>\ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structeastl_1_1integral__constant}{integral\_constant}}<size\_t,\ sizeof...(Ts)>\ \{\};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TupleIndices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{struct\ }TupleImpl;}
+\DoxyCodeLine{00043\ \}\ \textcolor{comment}{//\ namespace\ Internal}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00046\ \textcolor{keyword}{struct\ }tuple\_size<\mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}::TupleImpl<Indices,\ Ts...>>\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structeastl_1_1integral__constant}{integral\_constant}}<size\_t,\ sizeof...(Ts)>}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ tuple\_element\ helper\ to\ be\ able\ to\ isolate\ a\ type\ given\ an\ index}}
+\DoxyCodeLine{00051\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00052\ \textcolor{keyword}{struct\ }tuple\_element}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \};}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I>}
+\DoxyCodeLine{00057\ \textcolor{keyword}{struct\ }tuple\_element<I,\ TupleTypes<>>}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{static\_assert}(I\ !=\ I,\ \textcolor{stringliteral}{"{}tuple\_element\ index\ out\ of\ range"{}});}
+\DoxyCodeLine{00061\ \};}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ H,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00064\ \textcolor{keyword}{struct\ }tuple\_element<0,\ TupleTypes<H,\ Ts...>>}
+\DoxyCodeLine{00065\ \{}
+\DoxyCodeLine{00066\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{typedef}\ H\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00068\ \};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ H,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00071\ \textcolor{keyword}{struct\ }tuple\_element<I,\ TupleTypes<H,\ Ts...>>}
+\DoxyCodeLine{00072\ \{}
+\DoxyCodeLine{00073\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_element\_t<I\ -\/\ 1,\ TupleTypes<Ts...>>\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00075\ \};}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{comment}{//\ specialization\ for\ tuple}}
+\DoxyCodeLine{00078\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00079\ \textcolor{keyword}{struct\ }tuple\_element<I,\ tuple<Ts...>>}
+\DoxyCodeLine{00080\ \{}
+\DoxyCodeLine{00081\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_element\_t<I,\ TupleTypes<Ts...>>\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00083\ \};}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00086\ \textcolor{keyword}{struct\ }tuple\_element<I,\ const\ tuple<Ts...>>}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ add\_const<tuple\_element\_t<I,\ TupleTypes<Ts...>>>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00090\ \};}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00093\ \textcolor{keyword}{struct\ }tuple\_element<I,\ volatile\ tuple<Ts...>>}
+\DoxyCodeLine{00094\ \{}
+\DoxyCodeLine{00095\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ add\_volatile<tuple\_element\_t<I,\ TupleTypes<Ts...>>>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00097\ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00100\ \textcolor{keyword}{struct\ }tuple\_element<I,\ const\ volatile\ tuple<Ts...>>}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ add\_cv<tuple\_element\_t<I,\ TupleTypes<Ts...>>>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00104\ \};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{comment}{//\ specialization\ for\ TupleImpl}}
+\DoxyCodeLine{00107\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00108\ \textcolor{keyword}{struct\ }tuple\_element<I,\ \mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}::TupleImpl<Indices,\ Ts...>>\ :\ \textcolor{keyword}{public}\ tuple\_element<I,\ tuple<Ts...>>}
+\DoxyCodeLine{00109\ \{}
+\DoxyCodeLine{00110\ \};}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00113\ \textcolor{keyword}{struct\ }tuple\_element<I,\ const\ \mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}::TupleImpl<Indices,\ Ts...>>\ :\ \textcolor{keyword}{public}\ tuple\_element<I,\ const\ tuple<Ts...>>}
+\DoxyCodeLine{00114\ \{}
+\DoxyCodeLine{00115\ \};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00118\ \textcolor{keyword}{struct\ }tuple\_element<I,\ volatile\ \mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}::TupleImpl<Indices,\ Ts...>>\ :\ \textcolor{keyword}{public}\ tuple\_element<I,\ volatile\ tuple<Ts...>>}
+\DoxyCodeLine{00119\ \{}
+\DoxyCodeLine{00120\ \};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00123\ \textcolor{keyword}{struct\ }tuple\_element<I,\ const\ volatile\ \mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}::TupleImpl<Indices,\ Ts...>>\ :\ \textcolor{keyword}{public}\ tuple\_element<}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ I,\ const\ volatile\ tuple<Ts...>>}
+\DoxyCodeLine{00125\ \{}
+\DoxyCodeLine{00126\ \};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ attempt\ to\ isolate\ index\ given\ a\ type}}
+\DoxyCodeLine{00129\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Tuple>}
+\DoxyCodeLine{00130\ \textcolor{keyword}{struct\ }tuple\_index}
+\DoxyCodeLine{00131\ \{}
+\DoxyCodeLine{00132\ \};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00135\ \textcolor{keyword}{struct\ }tuple\_index<T,\ TupleTypes<>>}
+\DoxyCodeLine{00136\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ DuplicateTypeCheck;}
+\DoxyCodeLine{00138\ \ \ \ \ tuple\_index()\ =\ \textcolor{keyword}{delete};\ \textcolor{comment}{//\ tuple\_index\ should\ only\ be\ used\ for\ compile-\/time\ assistance,\ and\ never\ be\ instantiated}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ =\ 0;}
+\DoxyCodeLine{00140\ \};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}...\ TsRest>}
+\DoxyCodeLine{00143\ \textcolor{keyword}{struct\ }tuple\_index<T,\ TupleTypes<T,\ TsRest...>>}
+\DoxyCodeLine{00144\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{int}\ DuplicateTypeCheck;}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{//\ after\ finding\ type\ T\ in\ the\ list\ of\ types,\ try\ to\ find\ type\ T\ in\ TsRest.}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{comment}{//\ If\ we\ stumble\ back\ into\ this\ version\ of\ tuple\_index,\ i.e.\ type\ T\ appears\ twice\ in\ the\ list\ of\ types,\ then\ DuplicateTypeCheck\ will\ be\ of\ type\ int,\ and\ the\ static\_assert\ will\ fail.}}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{comment}{//\ If\ we\ don't,\ then\ we'll\ go\ through\ the\ version\ of\ tuple\_index\ above,\ where\ all\ of\ the\ types\ have\ been\ exhausted,\ and\ DuplicateTypeCheck\ will\ be\ void.}}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{static\_assert}(is\_void<\textcolor{keyword}{typename}\ tuple\_index<T,\ TupleTypes<TsRest...>>::DuplicateTypeCheck>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},\ \textcolor{stringliteral}{"{}duplicate\ type\ T\ in\ tuple\_vector::get<T>();\ unique\ types\ must\ be\ provided\ in\ declaration,\ or\ only\ use\ get<size\_t>()"{}});}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ =\ 0;}
+\DoxyCodeLine{00152\ \};}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ TsHead,\ \textcolor{keyword}{typename}...\ TsRest>}
+\DoxyCodeLine{00155\ \textcolor{keyword}{struct\ }tuple\_index<T,\ TupleTypes<TsHead,\ TsRest...>>}
+\DoxyCodeLine{00156\ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ tuple\_index<T,\ TupleTypes<TsRest...>>::DuplicateTypeCheck\ DuplicateTypeCheck;}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ =\ tuple\_index<T,\ TupleTypes<TsRest...>>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{::index}}\ +\ 1;}
+\DoxyCodeLine{00159\ \};}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00162\ \textcolor{keyword}{struct\ }tuple\_index<T,\ \mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}::TupleImpl<Indices,\ Ts...>>\ :\ \textcolor{keyword}{public}\ tuple\_index<T,\ TupleTypes<Ts...>>}
+\DoxyCodeLine{00163\ \{}
+\DoxyCodeLine{00164\ \};}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}}
+\DoxyCodeLine{00168\ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{comment}{//\ swallow}}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{comment}{//\ Provides\ a\ vessel\ to\ expand\ variadic\ packs.}}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_1_1_tuple_vec_internal_a409490ea519a2dcb90622c501135b40a}{swallow}}(Ts\&\&...)\ \{\}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{comment}{//\ TupleLeaf}}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ ValueType,\ \textcolor{keywordtype}{bool}\ IsEmpty\ =\ is\_empty\_v<ValueType>>}
+\DoxyCodeLine{00180\ \ \ \ \ \textcolor{keyword}{class\ }TupleLeaf;}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ ValueType,\ \textcolor{keywordtype}{bool}\ IsEmpty>}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(TupleLeaf<I,\ ValueType,\ IsEmpty>\&\ a,\ TupleLeaf<I,\ ValueType,\ IsEmpty>\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00184\ \ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{eastl::swap}}(a.getInternal(),\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.getInternal());}
+\DoxyCodeLine{00186\ \ \ \ \ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ ValueType,\ \textcolor{keywordtype}{bool}\ IsEmpty>}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keyword}{class\ }TupleLeaf}
+\DoxyCodeLine{00190\ \ \ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ TupleLeaf()\ :\ mValue()\ \{\}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ TupleLeaf\&\ operator=(\textcolor{keyword}{const}\ TupleLeaf\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ shouldn't\ need\ this\ explicit\ constructor\ as\ it\ should\ be\ handled\ by\ the\ template\ below\ but\ OSX\ clang}}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ is\_constructible\ type\ trait\ incorrectly\ gives\ false\ for\ is\_constructible<T\&\&,\ T\&\&>::value}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ TupleLeaf(ValueType\&\&\ v)\ :\ mValue(eastl::\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{forward}}<ValueType>(v))\ \{\}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ template\ <typename\ T,\ typename\ =\ typename\ enable\_if<is\_constructible<ValueType,\ T\&\&>::value>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}>}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ TupleLeaf(T\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ :\ mValue(eastl::\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{forward}}<T>(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}))}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ TupleLeaf(\textcolor{keyword}{const}\ TupleLeaf\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ :\ mValue(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.getInternal())}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ TupleLeaf\&\ operator=(T\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ mValue\ =\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<T>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(TupleLeaf\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ eastl::Internal::swap(*\textcolor{keyword}{this},\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ ValueType\&\ getInternal()\ \{\ \textcolor{keywordflow}{return}\ mValue;\ \}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ValueType\&\ getInternal()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ mValue;\ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ ValueType\ mValue;\ \ }
+\DoxyCodeLine{00229\ \ \ \ \ \};}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{comment}{//\ TupleLeaf:\ partial\ specialization\ for\ when\ we\ can\ use\ the\ Empty\ Base\ Class\ Optimization}}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{class\ }TupleLeaf<I,\ ValueType,\ true>\ :\ \textcolor{keyword}{private}\ ValueType}
+\DoxyCodeLine{00234\ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ TupleLeaf()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ TupleLeaf\&\ operator=(\textcolor{keyword}{const}\ TupleLeaf\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ shouldn't\ need\ this\ explicit\ constructor\ as\ it\ should\ be\ handled\ by\ the\ template\ below\ but\ OSX\ clang}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ is\_constructible\ type\ trait\ incorrectly\ gives\ false\ for\ is\_constructible<T\&\&,\ T\&\&>::value}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ TupleLeaf(ValueType\&\&\ v)\ :\ ValueType(eastl::\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{forward}}<ValueType>(v))\ \{\}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ template\ <typename\ T,\ typename\ =\ typename\ enable\_if<is\_constructible<ValueType,\ T\&\&>::value>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}>}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ TupleLeaf(T\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ :\ ValueType(eastl::\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{forward}}<T>(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}))}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ TupleLeaf(\textcolor{keyword}{const}\ TupleLeaf\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ :\ ValueType(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.getInternal())}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ TupleLeaf\&\ operator=(T\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ ValueType::operator=(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<T>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}));}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(TupleLeaf\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ eastl::Internal::swap(*\textcolor{keyword}{this},\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ ValueType\&\ getInternal()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}ValueType\&\textcolor{keyword}{>}(*this);\ \}}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ValueType\&\ getInternal()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }ValueType\&\textcolor{keyword}{>}(*this);\ \}}
+\DoxyCodeLine{00270\ \ \ \ \ \};}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{comment}{//\ MakeTupleTypes}}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TupleTypes,\ \textcolor{keyword}{typename}\ Tuple,\ \textcolor{keywordtype}{size\_t}\ Start,\ \textcolor{keywordtype}{size\_t}\ End>}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keyword}{struct\ }MakeTupleTypesImpl;}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Types,\ \textcolor{keyword}{typename}\ Tuple,\ \textcolor{keywordtype}{size\_t}\ Start,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespace_im_gui_a5479d93794a004c67ceb6d13f37c8254}{End}}>}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keyword}{struct\ }MakeTupleTypesImpl<TupleTypes<Types...>,\ Tuple,\ Start,\ \mbox{\hyperlink{namespace_im_gui_a5479d93794a004c67ceb6d13f37c8254}{End}}>}
+\DoxyCodeLine{00282\ \ \ \ \ \{}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ remove\_reference<Tuple>::type\ TupleType;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MakeTupleTypesImpl<}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ TupleTypes<Types...,\ \textcolor{keyword}{typename}\ conditional<is\_lvalue\_reference<Tuple>::value,}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ append\ ref\ if\ Tuple\ is\ ref}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tuple\_element\_t<Start,\ TupleType>\&,}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ append\ non-\/ref\ otherwise}}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tuple\_element\_t<Start,\ TupleType>>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}>,}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \ \ Tuple,\ Start\ +\ 1,\ \mbox{\hyperlink{namespace_im_gui_a5479d93794a004c67ceb6d13f37c8254}{End}}>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00291\ \ \ \ \ \};}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Types,\ \textcolor{keyword}{typename}\ Tuple,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{namespace_im_gui_a5479d93794a004c67ceb6d13f37c8254}{End}}>}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keyword}{struct\ }MakeTupleTypesImpl<TupleTypes<Types...>,\ Tuple,\ \mbox{\hyperlink{namespace_im_gui_a5479d93794a004c67ceb6d13f37c8254}{End}},\ \mbox{\hyperlink{namespace_im_gui_a5479d93794a004c67ceb6d13f37c8254}{End}}>}
+\DoxyCodeLine{00295\ \ \ \ \ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ TupleTypes<Types...>\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};}
+\DoxyCodeLine{00297\ \ \ \ \ \};}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple>}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{using\ }MakeTupleTypes\_t\ =\ \textcolor{keyword}{typename}\ MakeTupleTypesImpl<TupleTypes<>,\ Tuple,\ 0,}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tuple\_size<typename\ remove\_reference<Tuple>::type>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}}>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}};}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{comment}{//\ TupleImpl}}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00307\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00308\ \ \ \ \ tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00311\ \ \ \ \ const\_tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00314\ \ \ \ \ tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00317\ \ \ \ \ T\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00323\ \ \ \ \ T\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}...\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keyword}{struct\ }TupleImpl<integer\_sequence<size\_t,\ Indices...>,\ Ts...>\ :\ \textcolor{keyword}{public}\ TupleLeaf<Indices,\ Ts>...}
+\DoxyCodeLine{00327\ \ \ \ \ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ TupleImpl()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ index\_sequence\ changed\ to\ integer\_sequence\ due\ to\ issues\ described\ below\ in\ VS2015\ CTP\ 6.\ }}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ https://connect.microsoft.com/VisualStudio/feedback/details/1126958/error-\/in-\/template-\/parameter-\/pack-\/expansion-\/of-\/std-\/index-\/sequence}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Us,\ \textcolor{keyword}{typename}...\ ValueTypes>}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ TupleImpl(integer\_sequence<size\_t,\ Indices...>,\ TupleTypes<Us...>,\ ValueTypes\&\&...\ values)}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ :\ TupleLeaf<Indices,\ Ts>(eastl::\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{forward}}<ValueTypes>(values))...}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ OtherTuple>}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ TupleImpl(OtherTuple\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \ \ :\ TupleLeaf<Indices,\ Ts>(eastl::\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{forward}}<tuple\_element\_t<Indices,\ MakeTupleTypes\_t<OtherTuple>>>(\mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}<Indices>(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})))...}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ OtherTuple>}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ TupleImpl\&\ operator=(OtherTuple\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_1_1_tuple_vec_internal_a409490ea519a2dcb90622c501135b40a}{swallow}}(TupleLeaf<Indices,\ Ts>::operator=(}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward}}<tuple\_element\_t<Indices,\ MakeTupleTypes\_t<OtherTuple>>>(get<Indices>(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})))...);}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ TupleImpl\&\ operator=(\textcolor{keyword}{const}\ TupleImpl\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_1_1_tuple_vec_internal_a409490ea519a2dcb90622c501135b40a}{swallow}}(TupleLeaf<Indices,\ Ts>::operator=(\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }TupleLeaf<Indices,\ Ts>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}).getInternal())...);}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(TupleImpl\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})\ \{\ \mbox{\hyperlink{namespaceeastl_1_1_tuple_vec_internal_a409490ea519a2dcb90622c501135b40a}{swallow}}(TupleLeaf<Indices,\ Ts>::swap(\textcolor{keyword}{static\_cast<}TupleLeaf<Indices,\ Ts>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}))...);\ \}}
+\DoxyCodeLine{00360\ \ \ \ \ \};}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keyword}{inline}\ tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00364\ \ \ \ \ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\ \mbox{\hyperlink{ir__common_8h_a1ac75f8fee198af783521627f1fecfbc}{Type}};}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Internal::TupleLeaf<I,\ Type>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}).getInternal();}
+\DoxyCodeLine{00367\ \ \ \ \ \}}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keyword}{inline}\ const\_tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00371\ \ \ \ \ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\ \mbox{\hyperlink{ir__common_8h_a1ac75f8fee198af783521627f1fecfbc}{Type}};}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }Internal::TupleLeaf<I,\ Type>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}).getInternal();}
+\DoxyCodeLine{00374\ \ \ \ \ \}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keyword}{inline}\ tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00378\ \ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_element\_t<I,\ TupleImpl<Indices,\ Ts...>>\ \mbox{\hyperlink{ir__common_8h_a1ac75f8fee198af783521627f1fecfbc}{Type}};}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{ir__common_8h_a1ac75f8fee198af783521627f1fecfbc}{Type}}\&\&\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}Internal::TupleLeaf<I,\ Type>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}).getInternal());}
+\DoxyCodeLine{00381\ \ \ \ \ \}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keyword}{inline}\ T\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00385\ \ \ \ \ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_index<T,\ TupleImpl<Indices,\ Ts...>>\ Index;}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Internal::TupleLeaf<Index::index,\ T>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}).getInternal();}
+\DoxyCodeLine{00388\ \ \ \ \ \}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00391\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ TupleImpl<Indices,\ Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00392\ \ \ \ \ \{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_index<T,\ TupleImpl<Indices,\ Ts...>>\ Index;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }Internal::TupleLeaf<Index::index,\ T>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}).getInternal();}
+\DoxyCodeLine{00395\ \ \ \ \ \}}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Indices,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keyword}{inline}\ T\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(TupleImpl<Indices,\ Ts...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00399\ \ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ tuple\_index<T,\ TupleImpl<Indices,\ Ts...>>\ Index;}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}T\&\&\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}Internal::TupleLeaf<Index::index,\ T>\&\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}).getInternal());}
+\DoxyCodeLine{00402\ \ \ \ \ \}}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{comment}{//\ TupleLike}}
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{comment}{//\ type-\/trait\ that\ determines\ if\ a\ type\ is\ an\ eastl::tuple\ or\ an\ eastl::pair.}}
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }TupleLike\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a0f2dd73bc5174fd0651e788528eec6f7}{false\_type}}\ \{\};}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }TupleLike<const\ T>\ \ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ TupleLike<T>\ \{\};}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }TupleLike<volatile\ T>\ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ TupleLike<T>\ \{\};}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }TupleLike<const\ volatile\ T>\ :\ \textcolor{keyword}{public}\ TupleLike<T>\ \{\};}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keyword}{struct\ }TupleLike<tuple<Ts...>>\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a4a9c1a9513be5713caa098c5c870b79d}{true\_type}}\ \{\};}
+\DoxyCodeLine{00416\ }
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ First,\ \textcolor{keyword}{typename}\ Second>}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keyword}{struct\ }TupleLike<eastl::pair<First,\ Second>>\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a4a9c1a9513be5713caa098c5c870b79d}{true\_type}}\ \{\};}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ }
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{comment}{//\ TupleConvertible}}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00423\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ IsSameSize,\ \textcolor{keyword}{typename}\ From,\ \textcolor{keyword}{typename}\ To>}
+\DoxyCodeLine{00426\ \ \ \ \ \textcolor{keyword}{struct\ }TupleConvertibleImpl\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a0f2dd73bc5174fd0651e788528eec6f7}{false\_type}}}
+\DoxyCodeLine{00427\ \ \ \ \ \{}
+\DoxyCodeLine{00428\ \ \ \ \ \};}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ FromTypes,\ \textcolor{keyword}{typename}...\ ToTypes>}
+\DoxyCodeLine{00431\ \ \ \ \ \textcolor{keyword}{struct\ }TupleConvertibleImpl<true,\ TupleTypes<FromTypes...>,\ TupleTypes<ToTypes...>>}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ integral\_constant<bool,\ conjunction<is\_convertible<FromTypes,\ ToTypes>...>::value>}
+\DoxyCodeLine{00433\ \ \ \ \ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \};}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ From,\ \textcolor{keyword}{typename}\ To,}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ =\ TupleLike<typename\ remove\_reference<From>::type>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ =\ TupleLike<typename\ remove\_reference<To>::type>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}}>}
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keyword}{struct\ }TupleConvertible\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a0f2dd73bc5174fd0651e788528eec6f7}{false\_type}}}
+\DoxyCodeLine{00440\ \ \ \ \ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \};}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ From,\ \textcolor{keyword}{typename}\ To>}
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keyword}{struct\ }TupleConvertible<From,\ To,\ true,\ true>}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ TupleConvertibleImpl<tuple\_size<typename\ remove\_reference<From>::type>::value\ ==}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tuple\_size<typename\ remove\_reference<To>::type>::value,}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MakeTupleTypes\_t<From>,\ MakeTupleTypes\_t<To>>}
+\DoxyCodeLine{00448\ \ \ \ \ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \};}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ \textcolor{comment}{//\ TupleAssignable}}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ IsSameSize,\ \textcolor{keyword}{typename}\ Target,\ \textcolor{keyword}{typename}\ From>}
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{keyword}{struct\ }TupleAssignableImpl\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a0f2dd73bc5174fd0651e788528eec6f7}{false\_type}}}
+\DoxyCodeLine{00458\ \ \ \ \ \{}
+\DoxyCodeLine{00459\ \ \ \ \ \};}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ TargetTypes,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00462\ \ \ \ \ \textcolor{keyword}{struct\ }TupleAssignableImpl<true,\ TupleTypes<TargetTypes...>,\ TupleTypes<FromTypes...>>}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a04fa12a74504ec0c5e9e99a7302da83e}{bool\_constant}}<conjunction<is\_assignable<TargetTypes,\ FromTypes>...>::value>}
+\DoxyCodeLine{00464\ \ \ \ \ \{}
+\DoxyCodeLine{00465\ \ \ \ \ \};}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Target,\ \textcolor{keyword}{typename}\ From,}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ =\ TupleLike<typename\ remove\_reference<Target>::type>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},}
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ =\ TupleLike<typename\ remove\_reference<From>::type>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}}>}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keyword}{struct\ }TupleAssignable\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a0f2dd73bc5174fd0651e788528eec6f7}{false\_type}}}
+\DoxyCodeLine{00471\ \ \ \ \ \{}
+\DoxyCodeLine{00472\ \ \ \ \ \};}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Target,\ \textcolor{keyword}{typename}\ From>}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keyword}{struct\ }TupleAssignable<Target,\ From,\ true,\ true>}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ TupleAssignableImpl<}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ tuple\_size<typename\ remove\_reference<Target>::type>::value\ ==}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ tuple\_size<typename\ remove\_reference<From>::type>::value,}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ MakeTupleTypes\_t<Target>,\ MakeTupleTypes\_t<From>>}
+\DoxyCodeLine{00480\ \ \ \ \ \{}
+\DoxyCodeLine{00481\ \ \ \ \ \};}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{comment}{//\ TupleImplicitlyConvertible\ and\ TupleExplicitlyConvertible\ }}
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{comment}{//\ helpers\ for\ constraining\ conditionally-\/explicit\ ctors}}
+\DoxyCodeLine{00487\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00488\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ IsSameSize,\ \textcolor{keyword}{typename}\ TargetType,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00489\ \ \ \ \ \textcolor{keyword}{struct\ }TupleImplicitlyConvertibleImpl\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a0f2dd73bc5174fd0651e788528eec6f7}{false\_type}}}
+\DoxyCodeLine{00490\ \ \ \ \ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \};}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ TargetTypes,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00495\ \ \ \ \ \textcolor{keyword}{struct\ }TupleImplicitlyConvertibleImpl<true,\ TupleTypes<TargetTypes...>,\ FromTypes...>}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ conjunction<}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ is\_constructible<TargetTypes,\ FromTypes>...,}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ is\_convertible<FromTypes,\ TargetTypes>...>}
+\DoxyCodeLine{00499\ \ \ \ \ \{}
+\DoxyCodeLine{00500\ \ \ \ \ \};}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TargetTupleType,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00503\ \ \ \ \ \textcolor{keyword}{struct\ }TupleImplicitlyConvertible}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ TupleImplicitlyConvertibleImpl<}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ tuple\_size<TargetTupleType>::value\ ==\ sizeof...(FromTypes),}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ MakeTupleTypes\_t<TargetTupleType>,\ FromTypes...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}}
+\DoxyCodeLine{00507\ \ \ \ \ \{}
+\DoxyCodeLine{00508\ \ \ \ \ \};}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ TargetTupleType,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00511\ \ \ \ \ \textcolor{keyword}{using\ }TupleImplicitlyConvertible\_t\ =\ \mbox{\hyperlink{base_8h_a012819c9e8b5e04872a271f50f8b8196}{enable\_if\_t}}<TupleImplicitlyConvertible<TargetTupleType,\ FromTypes...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},\ \textcolor{keywordtype}{bool}>;}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ IsSameSize,\ \textcolor{keyword}{typename}\ TargetType,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00514\ \ \ \ \ \textcolor{keyword}{struct\ }TupleExplicitlyConvertibleImpl\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{namespaceeastl_a0f2dd73bc5174fd0651e788528eec6f7}{false\_type}}}
+\DoxyCodeLine{00515\ \ \ \ \ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \};}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ TargetTypes,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00519\ \ \ \ \ \textcolor{keyword}{struct\ }TupleExplicitlyConvertibleImpl<true,\ TupleTypes<TargetTypes...>,\ FromTypes...>}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ conjunction<}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ is\_constructible<TargetTypes,\ FromTypes>...,}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ negation<conjunction<is\_convertible<FromTypes,\ TargetTypes>...>>>}
+\DoxyCodeLine{00523\ \ \ \ \ \{}
+\DoxyCodeLine{00524\ \ \ \ \ \};}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TargetTupleType,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{keyword}{struct\ }TupleExplicitlyConvertible}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ :\ \textcolor{keyword}{public}\ TupleExplicitlyConvertibleImpl<}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ tuple\_size<TargetTupleType>::value\ ==\ sizeof...(FromTypes),}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ MakeTupleTypes\_t<TargetTupleType>,\ FromTypes...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}}
+\DoxyCodeLine{00531\ \ \ \ \ \{}
+\DoxyCodeLine{00532\ \ \ \ \ \};}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ TargetTupleType,\ \textcolor{keyword}{typename}...\ FromTypes>}
+\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keyword}{using\ }TupleExplicitlyConvertible\_t\ =\ \mbox{\hyperlink{base_8h_a012819c9e8b5e04872a271f50f8b8196}{enable\_if\_t}}<TupleExplicitlyConvertible<TargetTupleType,\ FromTypes...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}},\ \textcolor{keywordtype}{bool}>;}
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \ \ \textcolor{comment}{//\ TupleEqual}}
+\DoxyCodeLine{00539\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00540\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00541\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00542\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I>}
+\DoxyCodeLine{00543\ \ \ \ \ \textcolor{keyword}{struct\ }TupleEqual}
+\DoxyCodeLine{00544\ \ \ \ \ \{}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{const}\ Tuple1\&\ t1,\ \textcolor{keyword}{const}\ Tuple2\&\ t2)}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(tuple\_size<Tuple1>::value\ ==\ tuple\_size<Tuple2>::value,\ \textcolor{stringliteral}{"{}comparing\ tuples\ of\ different\ sizes."{}});}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TupleEqual<I\ -\/\ 1>()(t1,\ t2)\ \&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}<I\ -\/\ 1>(t1)\ ==\ get<I\ -\/\ 1>(t2);}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00551\ \ \ \ \ \};}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \ \ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00554\ \ \ \ \ \textcolor{keyword}{struct\ }TupleEqual<0>}
+\DoxyCodeLine{00555\ \ \ \ \ \{}
+\DoxyCodeLine{00556\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{const}\ Tuple1\&,\ \textcolor{keyword}{const}\ Tuple2\&)}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00561\ \ \ \ \ \};}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \ \ \ \ \textcolor{comment}{//\ TupleLess}}
+\DoxyCodeLine{00564\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00567\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I>}
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{keyword}{struct\ }TupleLess}
+\DoxyCodeLine{00569\ \ \ \ \ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{const}\ Tuple1\&\ t1,\ \textcolor{keyword}{const}\ Tuple2\&\ t2)}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(tuple\_size<Tuple1>::value\ ==\ tuple\_size<Tuple2>::value,\ \textcolor{stringliteral}{"{}comparing\ tuples\ of\ different\ sizes."{}});}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TupleLess<I\ -\/\ 1>()(t1,\ t2)\ ||\ (!TupleLess<I\ -\/\ 1>()(t2,\ t1)\ \&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}<I\ -\/\ 1>(t1)\ <\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}<I\ -\/\ 1>(t2));}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00576\ \ \ \ \ \};}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{keyword}{struct\ }TupleLess<0>}
+\DoxyCodeLine{00580\ \ \ \ \ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{const}\ Tuple1\&,\ \textcolor{keyword}{const}\ Tuple2\&)}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00586\ \ \ \ \ \};}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{comment}{//\ MakeTupleReturnImpl}}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00591\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00592\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }MakeTupleReturnImpl\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ T\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};\ \};}
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }MakeTupleReturnImpl<reference\_wrapper<T>>\ \{\ \textcolor{keyword}{typedef}\ T\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}};\ \};}
+\DoxyCodeLine{00595\ }
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00597\ \ \ \ \ \textcolor{keyword}{using\ }MakeTupleReturn\_t\ =\ \textcolor{keyword}{typename}\ MakeTupleReturnImpl<decay\_t<T>>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}};}
+\DoxyCodeLine{00598\ }
+\DoxyCodeLine{00599\ \textcolor{preprocessor}{\#if\ defined(EA\_COMPILER\_HAS\_THREE\_WAY\_COMPARISON)}}
+\DoxyCodeLine{00600\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s,\ \textcolor{keywordtype}{size\_t}...\ Is>}
+\DoxyCodeLine{00601\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ TupleThreeWay(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2,\ index\_sequence<Is...>\ \mbox{\hyperlink{namespaceeastl_af57bce51a6bb1f3a2c790eb60d64d2a3}{is}})}
+\DoxyCodeLine{00602\ \ \ \ \ \{}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ std::common\_comparison\_category\_t<synth\_three\_way\_result<T1s,\ T2s>...>\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ std::strong\_ordering::equal;}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ ((\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ synth\_three\_way\{\}(\mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<Is>}}(t1),\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<Is>}}(t2)),\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ !=\ 0)\ ||\ ...);}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}};}
+\DoxyCodeLine{00606\ \ \ \ \ \}}
+\DoxyCodeLine{00607\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00608\ \}\ \ \textcolor{comment}{//\ namespace\ Internal}}
+\DoxyCodeLine{00609\ }
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ \textcolor{comment}{//\ tuple}}
+\DoxyCodeLine{00613\ \textcolor{comment}{//}}
+\DoxyCodeLine{00614\ \textcolor{comment}{//\ eastl::tuple\ is\ a\ fixed-\/size\ container\ of\ heterogeneous\ values.\ It\ is\ a}}
+\DoxyCodeLine{00615\ \textcolor{comment}{//\ generalization\ of\ eastl::pair\ which\ hold\ only\ two\ heterogeneous\ values.}}
+\DoxyCodeLine{00616\ \textcolor{comment}{//}}
+\DoxyCodeLine{00617\ \textcolor{comment}{//\ https://en.cppreference.com/w/cpp/utility/tuple}}
+\DoxyCodeLine{00618\ \textcolor{comment}{//}}
+\DoxyCodeLine{00619\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00620\ \textcolor{keyword}{class\ }tuple;}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00623\ \textcolor{keyword}{class\ }tuple<T,\ Ts...>}
+\DoxyCodeLine{00624\ \{}
+\DoxyCodeLine{00625\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00626\ \ \ \ \ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00627\ \ \ \ \ }
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T2\ =\ T,\ }
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ Internal::TupleImplicitlyConvertible\_t<tuple,\ \textcolor{keyword}{const}\ T2\&,\ \textcolor{keyword}{const}\ Ts\&...>\ =\ 0>}
+\DoxyCodeLine{00630\ \ \ \ \ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple(\textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \textcolor{keyword}{const}\ Ts\&...\ ts)}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ :\ mImpl(\mbox{\hyperlink{namespacedetail_a030b306641c6a638c81056a354c0631b}{make\_index\_sequence}}<sizeof...(Ts)\ +\ 1>\{\},\ Internal::MakeTupleTypes\_t<tuple>\{\},\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ ts...)}
+\DoxyCodeLine{00632\ \ \ \ \ \{}
+\DoxyCodeLine{00633\ \ \ \ \ \}}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T2\ =\ T,\ }
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ Internal::TupleExplicitlyConvertible\_t<tuple,\ \textcolor{keyword}{const}\ T2\&,\ \textcolor{keyword}{const}\ Ts\&...>\ =\ 0>}
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple(\textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ \textcolor{keyword}{const}\ Ts\&...\ ts)}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ :\ mImpl(\mbox{\hyperlink{namespacedetail_a030b306641c6a638c81056a354c0631b}{make\_index\_sequence}}<sizeof...(Ts)\ +\ 1>\{\},\ Internal::MakeTupleTypes\_t<tuple>\{\},\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ ts...)}
+\DoxyCodeLine{00639\ \ \ \ \ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \}}
+\DoxyCodeLine{00641\ }
+\DoxyCodeLine{00642\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}...\ Us,}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ Internal::TupleImplicitlyConvertible\_t<tuple,\ U,\ Us...>\ =\ 0>}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple(U\&\&\ u,\ Us\&\&...\ us)}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ :\ mImpl(\mbox{\hyperlink{namespacedetail_a030b306641c6a638c81056a354c0631b}{make\_index\_sequence}}<sizeof...(Us)\ +\ 1>\{\},\ Internal::MakeTupleTypes\_t<tuple>\{\},\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<U>}}(u),}
+\DoxyCodeLine{00646\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Us>}}(us)...)}
+\DoxyCodeLine{00647\ \ \ \ \ \{}
+\DoxyCodeLine{00648\ \ \ \ \ \}}
+\DoxyCodeLine{00649\ }
+\DoxyCodeLine{00650\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ U,\ \textcolor{keyword}{typename}...\ Us,}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ Internal::TupleExplicitlyConvertible\_t<tuple,\ U,\ Us...>\ =\ 0>}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple(U\&\&\ u,\ Us\&\&...\ us)}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ :\ mImpl(\mbox{\hyperlink{namespacedetail_a030b306641c6a638c81056a354c0631b}{make\_index\_sequence}}<sizeof...(Us)\ +\ 1>\{\},\ Internal::MakeTupleTypes\_t<tuple>\{\},\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<U>}}(u),}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Us>}}(us)...)}
+\DoxyCodeLine{00655\ \ \ \ \ \{}
+\DoxyCodeLine{00656\ \ \ \ \ \}}
+\DoxyCodeLine{00657\ }
+\DoxyCodeLine{00658\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ OtherTuple,}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ enable\_if<Internal::TupleConvertible<OtherTuple,\ tuple>::value,\ \textcolor{keywordtype}{bool}>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}\ =\ \textcolor{keyword}{false}>}
+\DoxyCodeLine{00660\ \ \ \ \ tuple(OtherTuple\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ :\ mImpl(eastl::\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{forward}}<OtherTuple>(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}))}
+\DoxyCodeLine{00662\ \ \ \ \ \{}
+\DoxyCodeLine{00663\ \ \ \ \ \}}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ OtherTuple,}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ enable\_if<Internal::TupleAssignable<tuple,\ OtherTuple>::value,\ \textcolor{keywordtype}{bool}>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{::type}}\ =\ \textcolor{keyword}{false}>}
+\DoxyCodeLine{00667\ \ \ \ \ tuple\&\ operator=(OtherTuple\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00668\ \ \ \ \ \{}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ mImpl.operator=(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<OtherTuple>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}));}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00671\ \ \ \ \ \}}
+\DoxyCodeLine{00672\ }
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(tuple\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})\ \{\ mImpl.swap(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.mImpl);\ \}}
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00676\ \ \ \ \ \textcolor{keyword}{typedef}\ Internal::TupleImpl<\mbox{\hyperlink{namespacedetail_a030b306641c6a638c81056a354c0631b}{make\_index\_sequence}}<\textcolor{keyword}{sizeof}...(Ts)\ +\ 1>,\ T,\ Ts...>\ Impl;}
+\DoxyCodeLine{00677\ \ \ \ \ Impl\ mImpl;}
+\DoxyCodeLine{00678\ }
+\DoxyCodeLine{00679\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts\_>}
+\DoxyCodeLine{00680\ \ \ \ \ \textcolor{keyword}{friend}\ tuple\_element\_t<I,\ tuple<Ts\_...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<Ts\_...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00681\ }
+\DoxyCodeLine{00682\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts\_>}
+\DoxyCodeLine{00683\ \ \ \ \ \textcolor{keyword}{friend}\ const\_tuple\_element\_t<I,\ tuple<Ts\_...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ tuple<Ts\_...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00684\ }
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts\_>}
+\DoxyCodeLine{00686\ \ \ \ \ \textcolor{keyword}{friend}\ tuple\_element\_t<I,\ tuple<Ts\_...>>\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<Ts\_...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T\_,\ \textcolor{keyword}{typename}...\ ts\_>}
+\DoxyCodeLine{00689\ \ \ \ \ \textcolor{keyword}{friend}\ T\_\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<ts\_...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T\_,\ \textcolor{keyword}{typename}...\ ts\_>}
+\DoxyCodeLine{00692\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{const}\ T\_\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ tuple<ts\_...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T\_,\ \textcolor{keyword}{typename}...\ ts\_>}
+\DoxyCodeLine{00695\ \ \ \ \ \textcolor{keyword}{friend}\ T\_\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<ts\_...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00696\ \};}
+\DoxyCodeLine{00697\ }
+\DoxyCodeLine{00698\ \textcolor{comment}{//\ template\ specialization\ for\ an\ empty\ tuple}}
+\DoxyCodeLine{00699\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00700\ \textcolor{keyword}{class\ }tuple<>}
+\DoxyCodeLine{00701\ \{}
+\DoxyCodeLine{00702\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00703\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(tuple\&)\ \{\}}
+\DoxyCodeLine{00704\ \};}
+\DoxyCodeLine{00705\ }
+\DoxyCodeLine{00706\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00707\ \textcolor{keyword}{inline}\ tuple\_element\_t<I,\ tuple<Ts...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00708\ \{}
+\DoxyCodeLine{00709\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<I>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.mImpl);}
+\DoxyCodeLine{00710\ \}}
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00713\ \textcolor{keyword}{inline}\ const\_tuple\_element\_t<I,\ tuple<Ts...>>\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ tuple<Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00714\ \{}
+\DoxyCodeLine{00715\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<I>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.mImpl);}
+\DoxyCodeLine{00716\ \}}
+\DoxyCodeLine{00717\ }
+\DoxyCodeLine{00718\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00719\ \textcolor{keyword}{inline}\ tuple\_element\_t<I,\ tuple<Ts...>>\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<Ts...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00720\ \{}
+\DoxyCodeLine{00721\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<I>}}(\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.mImpl));}
+\DoxyCodeLine{00722\ \}}
+\DoxyCodeLine{00723\ }
+\DoxyCodeLine{00724\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00725\ \textcolor{keyword}{inline}\ T\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00726\ \{}
+\DoxyCodeLine{00727\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<T>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.mImpl);}
+\DoxyCodeLine{00728\ \}}
+\DoxyCodeLine{00729\ }
+\DoxyCodeLine{00730\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00731\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(\textcolor{keyword}{const}\ tuple<Ts...>\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00732\ \{}
+\DoxyCodeLine{00733\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<T>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.mImpl);}
+\DoxyCodeLine{00734\ \}}
+\DoxyCodeLine{00735\ }
+\DoxyCodeLine{00736\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00737\ \textcolor{keyword}{inline}\ T\&\&\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get}}(tuple<Ts...>\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00738\ \{}
+\DoxyCodeLine{00739\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<T>}}(\mbox{\hyperlink{namespaceeastl_a58ada88d74ffe16bba892a0ccccc8aba}{eastl::move}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}.mImpl));}
+\DoxyCodeLine{00740\ \}}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00743\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(tuple<Ts...>\&\ a,\ tuple<Ts...>\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00744\ \{}
+\DoxyCodeLine{00745\ \ \ \ \ a.swap(\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00746\ \}}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00748\ }
+\DoxyCodeLine{00749\ \textcolor{comment}{//\ tuple\ operators}}
+\DoxyCodeLine{00750\ \textcolor{comment}{//}}
+\DoxyCodeLine{00751\ \textcolor{comment}{//}}
+\DoxyCodeLine{00752\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>}
+\DoxyCodeLine{00753\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a927b4cbb10494e27e349b89c6fcde665}{operator==}}(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2)}
+\DoxyCodeLine{00754\ \{}
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{keywordflow}{return}\ Internal::TupleEqual<\textcolor{keyword}{sizeof}...(T1s)>()(t1,\ t2);}
+\DoxyCodeLine{00756\ \}}
+\DoxyCodeLine{00757\ }
+\DoxyCodeLine{00758\ \textcolor{preprocessor}{\#if\ defined(EA\_COMPILER\_HAS\_THREE\_WAY\_COMPARISON)}}
+\DoxyCodeLine{00759\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>}
+\DoxyCodeLine{00760\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ std::common\_comparison\_category\_t<synth\_three\_way\_result<T1s,\ T2s>...>\ operator<=>(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2)}
+\DoxyCodeLine{00761\ \{}
+\DoxyCodeLine{00762\ \ \ \ \ \textcolor{keywordflow}{return}\ Internal::TupleThreeWay(t1,\ t2,\ make\_index\_sequence<\textcolor{keyword}{sizeof}...(T1s)>\{\});}
+\DoxyCodeLine{00763\ \}}
+\DoxyCodeLine{00764\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00765\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>}
+\DoxyCodeLine{00766\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a289733486746877431e53fcf9adbf633}{operator<}}(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2)}
+\DoxyCodeLine{00767\ \{}
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{keywordflow}{return}\ Internal::TupleLess<\textcolor{keyword}{sizeof}...(T1s)>()(t1,\ t2);}
+\DoxyCodeLine{00769\ \}}
+\DoxyCodeLine{00770\ }
+\DoxyCodeLine{00771\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a89ff22bd2be381c89895174f2aacd819}{operator!=}}(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2)\ \{\ \textcolor{keywordflow}{return}\ !(t1\ ==\ t2);\ \}}
+\DoxyCodeLine{00772\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a26383d9098fb1b90256105f8990bb0c6}{operator>\ }}(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2)\ \{\ \textcolor{keywordflow}{return}\ t2\ <\ t1;\ \}}
+\DoxyCodeLine{00773\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a2b38d59a0faf07bfa368e2c20dd5caae}{operator<=}}(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2)\ \{\ \textcolor{keywordflow}{return}\ !(t2\ <\ t1);\ \}}
+\DoxyCodeLine{00774\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_ad7c33d73b84e2428c6927a335dbc1778}{operator>=}}(\textcolor{keyword}{const}\ tuple<T1s...>\&\ t1,\ \textcolor{keyword}{const}\ tuple<T2s...>\&\ t2)\ \{\ \textcolor{keywordflow}{return}\ !(t1\ <\ t2);\ \}}
+\DoxyCodeLine{00775\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00776\ }
+\DoxyCodeLine{00777\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}}
+\DoxyCodeLine{00778\ \{}
+\DoxyCodeLine{00779\ \ \ \ \ \textcolor{comment}{//\ tuple\_cat\ helpers}}
+\DoxyCodeLine{00780\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00781\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00783\ }
+\DoxyCodeLine{00784\ \ \ \ \ \textcolor{comment}{//\ TupleCat2Impl}}
+\DoxyCodeLine{00785\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Is1,\ \textcolor{keyword}{typename}\ Tuple2,\ \textcolor{keyword}{typename}\ Is2>}
+\DoxyCodeLine{00786\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat2Impl;}
+\DoxyCodeLine{00787\ }
+\DoxyCodeLine{00788\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keywordtype}{size\_t}...\ I1s,\ \textcolor{keyword}{typename}...\ T2s,\ \textcolor{keywordtype}{size\_t}...\ I2s>}
+\DoxyCodeLine{00789\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat2Impl<tuple<T1s...>,\ \mbox{\hyperlink{namespacedetail_a1b1fe960e08e9f9baa570dba9d74c378}{index\_sequence}}<I1s...>,\ tuple<T2s...>,\ \mbox{\hyperlink{namespacedetail_a1b1fe960e08e9f9baa570dba9d74c378}{index\_sequence}}<I2s...>>}
+\DoxyCodeLine{00790\ \ \ \ \ \{}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultType\ =\ tuple<T1s...,\ T2s...>;}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ ResultType\ DoCat2(Tuple1\&\&\ t1,\ Tuple2\&\&\ t2)}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ResultType(get<I1s>(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Tuple1>}}(t1))...,\ get<I2s>(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Tuple2>}}(t2))...);}
+\DoxyCodeLine{00797\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00798\ \ \ \ \ \};}
+\DoxyCodeLine{00799\ }
+\DoxyCodeLine{00800\ \ \ \ \ \textcolor{comment}{//\ TupleCat2}}
+\DoxyCodeLine{00801\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00802\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat2;}
+\DoxyCodeLine{00803\ }
+\DoxyCodeLine{00804\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ T1s,\ \textcolor{keyword}{typename}...\ T2s>}
+\DoxyCodeLine{00805\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat2<tuple<T1s...>,\ tuple<T2s...>>}
+\DoxyCodeLine{00806\ \ \ \ \ \{}
+\DoxyCodeLine{00807\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Is1\ \ \ \ \ \ \ \ =\ \mbox{\hyperlink{namespacedetail_a030b306641c6a638c81056a354c0631b}{make\_index\_sequence}}<\textcolor{keyword}{sizeof}...(T1s)>;}
+\DoxyCodeLine{00808\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }Is2\ \ \ \ \ \ \ \ =\ \mbox{\hyperlink{namespacedetail_a030b306641c6a638c81056a354c0631b}{make\_index\_sequence}}<\textcolor{keyword}{sizeof}...(T2s)>;}
+\DoxyCodeLine{00809\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }TCI\ \ \ \ \ \ \ \ =\ TupleCat2Impl<tuple<T1s...>,\ Is1,\ tuple<T2s...>,\ Is2>;}
+\DoxyCodeLine{00810\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultType\ =\ \textcolor{keyword}{typename}\ TCI::ResultType;}
+\DoxyCodeLine{00811\ }
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ ResultType\ DoCat2(Tuple1\&\&\ t1,\ Tuple2\&\&\ t2)}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TCI::DoCat2(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Tuple1>}}(t1),\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Tuple2>}}(t2));}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00817\ \ \ \ \ \};}
+\DoxyCodeLine{00818\ }
+\DoxyCodeLine{00819\ \ \ \ \ \textcolor{comment}{//\ TupleCat}}
+\DoxyCodeLine{00820\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Tuples>}
+\DoxyCodeLine{00821\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat;}
+\DoxyCodeLine{00822\ }
+\DoxyCodeLine{00823\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2,\ \textcolor{keyword}{typename}...\ TuplesRest>}
+\DoxyCodeLine{00824\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat<Tuple1,\ Tuple2,\ TuplesRest...>}
+\DoxyCodeLine{00825\ \ \ \ \ \{}
+\DoxyCodeLine{00826\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }TC2\ \ \ \ \ \ \ \ \ \ \ \ \ =\ TupleCat2<Tuple1,\ Tuple2>;}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }FirstResultType\ =\ \textcolor{keyword}{typename}\ TupleCat2<Tuple1,\ Tuple2>::ResultType;}
+\DoxyCodeLine{00828\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultType\ \ \ \ \ \ =\ \textcolor{keyword}{typename}\ TupleCat<FirstResultType,\ TuplesRest...>::ResultType;}
+\DoxyCodeLine{00829\ }
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TupleArg1,\ \textcolor{keyword}{typename}\ TupleArg2,\ \textcolor{keyword}{typename}...\ TupleArgsRest>}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ ResultType\ DoCat(TupleArg1\&\&\ t1,\ TupleArg2\&\&\ t2,\ TupleArgsRest\&\&...\ ts)}
+\DoxyCodeLine{00832\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00833\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TupleCat<FirstResultType,\ TuplesRest...>::DoCat(}
+\DoxyCodeLine{00834\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ TC2::DoCat2(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<TupleArg1>}}(t1),\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<TupleArg2>}}(t2)),}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<TupleArgsRest>}}(ts)...);}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00837\ \ \ \ \ \};}
+\DoxyCodeLine{00838\ }
+\DoxyCodeLine{00839\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Tuple1,\ \textcolor{keyword}{typename}\ Tuple2>}
+\DoxyCodeLine{00840\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat<Tuple1,\ Tuple2>}
+\DoxyCodeLine{00841\ \ \ \ \ \{}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }TC2\ =\ TupleCat2<Tuple1,\ Tuple2>;}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultType\ =\ \textcolor{keyword}{typename}\ TC2::ResultType;}
+\DoxyCodeLine{00844\ }
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TupleArg1,\ \textcolor{keyword}{typename}\ TupleArg2>}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ ResultType\ DoCat(TupleArg1\&\&\ t1,\ TupleArg2\&\&\ t2)}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TC2::DoCat2(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<TupleArg1>}}(t1),\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<TupleArg2>}}(t2));}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00850\ \ \ \ \ \};}
+\DoxyCodeLine{00851\ }
+\DoxyCodeLine{00852\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00853\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat<tuple<Ts...>>}
+\DoxyCodeLine{00854\ \ \ \ \ \{}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultType\ =\ tuple<Ts...>;}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ TupleArg>}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ tuple<Ts...>\ DoCat(TupleArg\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<TupleArg>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00862\ \ \ \ \ \};}
+\DoxyCodeLine{00863\ }
+\DoxyCodeLine{00864\ \ \ \ \ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00865\ \ \ \ \ \textcolor{keyword}{struct\ }TupleCat<>}
+\DoxyCodeLine{00866\ \ \ \ \ \{}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }ResultType\ =\ tuple<>;}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ tuple<>\ DoCat()}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\};}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00873\ \ \ \ \ \};}
+\DoxyCodeLine{00874\ \}}
+\DoxyCodeLine{00875\ \ \ \ \ }
+\DoxyCodeLine{00876\ \textcolor{comment}{//\ tuple\_cat\ }}
+\DoxyCodeLine{00877\ \textcolor{comment}{//}}
+\DoxyCodeLine{00878\ \textcolor{comment}{//}}
+\DoxyCodeLine{00879\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Tuples>}
+\DoxyCodeLine{00880\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ Internal::TupleCat<eastl::remove\_cvref\_t<Tuples>...>::ResultType\ tuple\_cat(Tuples\&\&...\ ts)}
+\DoxyCodeLine{00881\ \{}
+\DoxyCodeLine{00882\ \ \ \ \ \textcolor{keywordflow}{return}\ Internal::TupleCat<eastl::remove\_cvref\_t<Tuples>...>::DoCat(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Tuples>}}(ts)...);}
+\DoxyCodeLine{00883\ \}}
+\DoxyCodeLine{00884\ }
+\DoxyCodeLine{00885\ }
+\DoxyCodeLine{00886\ \textcolor{comment}{//\ make\_tuple\ }}
+\DoxyCodeLine{00887\ \textcolor{comment}{//}}
+\DoxyCodeLine{00888\ \textcolor{comment}{//}}
+\DoxyCodeLine{00889\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00890\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple<Internal::MakeTupleReturn\_t<Ts>...>\ make\_tuple(Ts\&\&...\ values)}
+\DoxyCodeLine{00891\ \{}
+\DoxyCodeLine{00892\ \ \ \ \ \textcolor{keywordflow}{return}\ tuple<Internal::MakeTupleReturn\_t<Ts>...>(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Ts>}}(values)...);}
+\DoxyCodeLine{00893\ \}}
+\DoxyCodeLine{00894\ }
+\DoxyCodeLine{00895\ }
+\DoxyCodeLine{00896\ \textcolor{comment}{//\ forward\_as\_tuple\ }}
+\DoxyCodeLine{00897\ \textcolor{comment}{//}}
+\DoxyCodeLine{00898\ \textcolor{comment}{//}}
+\DoxyCodeLine{00899\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00900\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple<Ts\&\&...>\ forward\_as\_tuple(Ts\&\&...\ ts)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}}
+\DoxyCodeLine{00901\ \{}
+\DoxyCodeLine{00902\ \ \ \ \ \textcolor{keywordflow}{return}\ tuple<Ts\&\&...>(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Ts\&\&>}}(ts)...);}
+\DoxyCodeLine{00903\ \}}
+\DoxyCodeLine{00904\ }
+\DoxyCodeLine{00905\ }
+\DoxyCodeLine{00906\ \textcolor{comment}{//\ ignore\ }}
+\DoxyCodeLine{00907\ \textcolor{comment}{//}}
+\DoxyCodeLine{00908\ \textcolor{comment}{//\ An\ object\ of\ unspecified\ type\ such\ that\ any\ value\ can\ be\ assigned\ to\ it\ with\ no\ effect.}}
+\DoxyCodeLine{00909\ \textcolor{comment}{//}}
+\DoxyCodeLine{00910\ \textcolor{comment}{//\ https://en.cppreference.com/w/cpp/utility/tuple/ignore}}
+\DoxyCodeLine{00911\ \textcolor{comment}{//}}
+\DoxyCodeLine{00912\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl_1_1_internal}{Internal}}\ }
+\DoxyCodeLine{00913\ \{}
+\DoxyCodeLine{00914\ \ \ \ \ \textcolor{keyword}{struct\ }ignore\_t}
+\DoxyCodeLine{00915\ \ \ \ \ \{}
+\DoxyCodeLine{00916\ \ \ \ \ \ \ \ \ ignore\_t()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00917\ }
+\DoxyCodeLine{00918\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ ignore\_t\&\ operator=(\textcolor{keyword}{const}\ T\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00920\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00923\ \ \ \ \ \};}
+\DoxyCodeLine{00924\ \}\textcolor{comment}{//\ namespace\ Internal}}
+\DoxyCodeLine{00925\ }
+\DoxyCodeLine{00926\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ Internal::ignore\_t\ ignore;}
+\DoxyCodeLine{00927\ }
+\DoxyCodeLine{00928\ }
+\DoxyCodeLine{00929\ \textcolor{comment}{//\ tie\ }}
+\DoxyCodeLine{00930\ \textcolor{comment}{//}}
+\DoxyCodeLine{00931\ \textcolor{comment}{//\ Creates\ a\ tuple\ of\ lvalue\ references\ to\ its\ arguments\ or\ instances\ of\ eastl::ignore.}}
+\DoxyCodeLine{00932\ \textcolor{comment}{//}}
+\DoxyCodeLine{00933\ \textcolor{comment}{//\ https://en.cppreference.com/w/cpp/utility/tuple/tie}}
+\DoxyCodeLine{00934\ \textcolor{comment}{//}}
+\DoxyCodeLine{00935\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ Ts>}
+\DoxyCodeLine{00936\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ tuple<Ts\&...>\ tie(Ts\&...\ ts)\ \mbox{\hyperlink{config_8h_a9f2560a8b4ca5ee60cc60934601d3bef}{EA\_NOEXCEPT}}}
+\DoxyCodeLine{00937\ \{}
+\DoxyCodeLine{00938\ \ \ \ \ \textcolor{keywordflow}{return}\ tuple<Ts\&...>(ts...);}
+\DoxyCodeLine{00939\ \}}
+\DoxyCodeLine{00940\ }
+\DoxyCodeLine{00941\ }
+\DoxyCodeLine{00942\ \textcolor{comment}{//\ apply}}
+\DoxyCodeLine{00943\ \textcolor{comment}{//}}
+\DoxyCodeLine{00944\ \textcolor{comment}{//\ Invoke\ a\ callable\ object\ using\ a\ tuple\ to\ supply\ the\ arguments.\ }}
+\DoxyCodeLine{00945\ \textcolor{comment}{//}}
+\DoxyCodeLine{00946\ \textcolor{comment}{//\ http://en.cppreference.com/w/cpp/utility/apply}}
+\DoxyCodeLine{00947\ \textcolor{comment}{//}}
+\DoxyCodeLine{00948\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl_1_1detail}{detail}}}
+\DoxyCodeLine{00949\ \{}
+\DoxyCodeLine{00950\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class\ }F,\ \textcolor{keyword}{class\ }Tuple,\ \textcolor{keywordtype}{size\_t}...\ I>}
+\DoxyCodeLine{00951\ \ \ \ \ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ \textcolor{keyword}{decltype}(\textcolor{keyword}{auto})\ apply\_impl(F\&\&\ f,\ Tuple\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}},\ index\_sequence<I...>)}
+\DoxyCodeLine{00952\ \ \ \ \ \{}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_afecc703e5abfd2fcd6f342e3e345249e}{eastl::invoke}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<F>}}(f),\ \mbox{\hyperlink{namespaceeastl_ac97dedae1570e2a239ff86cafda745bb}{get<I>}}(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Tuple>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}))...);}
+\DoxyCodeLine{00954\ \ \ \ \ \}}
+\DoxyCodeLine{00955\ \}\ \textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{00956\ }
+\DoxyCodeLine{00957\ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ F,\ \textcolor{keyword}{class}\ Tuple>}
+\DoxyCodeLine{00958\ \mbox{\hyperlink{numeric__limits_8h_a97cb0a58418b7c284741490f5651605c}{EA\_CONSTEXPR}}\ \textcolor{keyword}{decltype}(\textcolor{keyword}{auto})\ apply(F\&\&\ f,\ Tuple\&\&\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}})}
+\DoxyCodeLine{00959\ \{}
+\DoxyCodeLine{00960\ \ \ \ \ \textcolor{keywordflow}{return}\ detail::apply\_impl(\mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<F>}}(f),\ \mbox{\hyperlink{namespaceeastl_a36662e86289d74a927ced4b51496fce5}{eastl::forward<Tuple>}}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}),}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ make\_index\_sequence<tuple\_size\_v<\mbox{\hyperlink{base_8h_a3a08cea569e6926ac8d7d74dd7178b5f}{remove\_reference\_t<Tuple>}}>>\{\});}
+\DoxyCodeLine{00962\ \}}
+\DoxyCodeLine{00963\ }
+\DoxyCodeLine{00964\ \}\ \ \textcolor{comment}{//\ namespace\ eastl}}
+\DoxyCodeLine{00965\ }
+\DoxyCodeLine{00966\ }
+\DoxyCodeLine{00968\ \textcolor{comment}{//\ C++17\ structured\ bindings\ support\ for\ eastl::tuple}}
+\DoxyCodeLine{00969\ \textcolor{comment}{//}}
+\DoxyCodeLine{00970\ \textcolor{preprocessor}{\#ifndef\ EA\_COMPILER\_NO\_STRUCTURED\_BINDING}}
+\DoxyCodeLine{00971\ \textcolor{comment}{//\ we\ can't\ forward\ declare\ tuple\_size\ and\ tuple\_element\ because\ some\ std\ implementations}}
+\DoxyCodeLine{00972\ \textcolor{comment}{//\ don't\ declare\ it\ in\ the\ std\ namespace,\ but\ instead\ alias\ it.}}
+\DoxyCodeLine{00973\ \textcolor{preprocessor}{\#include\ <tuple>}}
+\DoxyCodeLine{00974\ }
+\DoxyCodeLine{00975\ \ \ \ \ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacestd}{std}}}
+\DoxyCodeLine{00976\ \ \ \ \ \{}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}...\ Ts>}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }tuple\_size<::eastl::tuple<Ts...>>\ :\ \textcolor{keyword}{public}\ ::eastl::integral\_constant<size\_t,\ sizeof...(Ts)>}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00980\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00981\ }
+\DoxyCodeLine{00982\ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ I,\ \textcolor{keyword}{class}...\ Ts>}
+\DoxyCodeLine{00983\ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }tuple\_element<I,\ ::eastl::tuple<Ts...>>\ :\ \textcolor{keyword}{public}\ ::eastl::tuple\_element<I,\ ::eastl::tuple<Ts...>>}
+\DoxyCodeLine{00984\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00986\ \ \ \ \ \}}
+\DoxyCodeLine{00987\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00988\ }
+\DoxyCodeLine{00989\ }
+\DoxyCodeLine{00990\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ EASTL\_TUPLE\_ENABLED}}
+\DoxyCodeLine{00991\ \mbox{\hyperlink{eacompilertraits_8h_a9f98f49996ee1b56692751ab788ae0f9}{EA\_RESTORE\_VC\_WARNING}}()}
+\DoxyCodeLine{00992\ \mbox{\hyperlink{eacompilertraits_8h_a9f98f49996ee1b56692751ab788ae0f9}{EA\_RESTORE\_VC\_WARNING}}()}
+\DoxyCodeLine{00993\ \mbox{\hyperlink{eacompilertraits_8h_a9f98f49996ee1b56692751ab788ae0f9}{EA\_RESTORE\_VC\_WARNING}}()}
+\DoxyCodeLine{00994\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ EASTL\_TUPLE\_H}}
+
+\end{DoxyCode}

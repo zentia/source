@@ -1,0 +1,521 @@
+\doxysection{runtime/glfw/examples/boing.c 文件参考}
+\hypertarget{boing_8c}{}\label{boing_8c}\index{runtime/glfw/examples/boing.c@{runtime/glfw/examples/boing.c}}
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$glad/gl.\+h$>$}\newline
+{\ttfamily \#include $<$GLFW/glfw3.\+h$>$}\newline
+{\ttfamily \#include $<$linmath.\+h$>$}\newline
+boing.\+c 的引用(Include)关系图\+:
+% FIG 0
+\doxysubsubsection*{类}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{宏定义}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{boing_8c_a09f9c3bf094ecaf707c673924ffd615a}{GLAD\+\_\+\+GL\+\_\+\+IMPLEMENTATION}}
+\item 
+\#define \mbox{\hyperlink{boing_8c_a088324ad8995e3eb76024e3e79083d48}{GLFW\+\_\+\+INCLUDE\+\_\+\+NONE}}
+\item 
+\#define \mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}}~70.f
+\item 
+\#define \mbox{\hyperlink{boing_8c_a89edea273a0da4bec03abfdd5d46a1df}{STEP\+\_\+\+LONGITUDE}}~22.\+5f                   /\texorpdfstring{$\ast$}{*} 22.\+5 makes 8 bands like original Boing \texorpdfstring{$\ast$}{*}/
+\item 
+\#define \mbox{\hyperlink{boing_8c_ac875967450c7a0306cf05f8e3e455e6c}{STEP\+\_\+\+LATITUDE}}~22.\+5f
+\item 
+\#define \mbox{\hyperlink{boing_8c_abc4d2bb2a15f35c55d9b456b452eaa7c}{DIST\+\_\+\+BALL}}~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 2.f + \mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 0.\+1f)
+\item 
+\#define \mbox{\hyperlink{boing_8c_a7a2f17659bb77c24edb2bea7a08a19a3}{VIEW\+\_\+\+SCENE\+\_\+\+DIST}}~(\mbox{\hyperlink{boing_8c_abc4d2bb2a15f35c55d9b456b452eaa7c}{DIST\+\_\+\+BALL}} \texorpdfstring{$\ast$}{*} 3.f + 200.f)/\texorpdfstring{$\ast$}{*} distance from viewer to middle of boing \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}} \texorpdfstring{$\ast$}{*}/
+\item 
+\#define \mbox{\hyperlink{boing_8c_a08246606c233e7785a497c09672f366f}{GRID\+\_\+\+SIZE}}~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 4.\+5f)          /\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a011fc24f10426c01349e94a4edd4b0d5}{length}} (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}) of grid \texorpdfstring{$\ast$}{*}/
+\item 
+\#define \mbox{\hyperlink{boing_8c_a9088188b19f0545a1d84e381da09fef0}{BOUNCE\+\_\+\+HEIGHT}}~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 2.\+1f)
+\item 
+\#define \mbox{\hyperlink{boing_8c_adefcd41ddcb236a9bcf6189b5009e59e}{BOUNCE\+\_\+\+WIDTH}}~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 2.\+1f)
+\item 
+\#define \mbox{\hyperlink{boing_8c_adfabb671d0b80adb599e07a018f049d4}{SHADOW\+\_\+\+OFFSET\+\_\+X}}~-\/20.f
+\item 
+\#define \mbox{\hyperlink{boing_8c_aee80e1c2e5aa7831fbe28b95948f5dc0}{SHADOW\+\_\+\+OFFSET\+\_\+Y}}~10.f
+\item 
+\#define \mbox{\hyperlink{boing_8c_a79814e92ed56516db4e8564c2928f86e}{SHADOW\+\_\+\+OFFSET\+\_\+Z}}~0.f
+\item 
+\#define \mbox{\hyperlink{boing_8c_a2ec75166930a7702729980492d09d431}{WALL\+\_\+\+L\+\_\+\+OFFSET}}~0.f
+\item 
+\#define \mbox{\hyperlink{boing_8c_ae377291d60b194d9d3195822af2cfeff}{WALL\+\_\+\+R\+\_\+\+OFFSET}}~5.f
+\item 
+\#define \mbox{\hyperlink{boing_8c_aaa69f89df4c8e47abeb574bfdd11d9f4}{ANIMATION\+\_\+\+SPEED}}~50.f
+\item 
+\#define \mbox{\hyperlink{boing_8c_a82c13b07387b0fa3ab346ad38894e2a7}{MAX\+\_\+\+DELTA\+\_\+T}}~0.\+02f
+\item 
+\#define \mbox{\hyperlink{boing_8c_a690f251553b39fd4f31894826141b61a}{RAND\+\_\+\+MAX}}~4095
+\item 
+\#define \mbox{\hyperlink{boing_8c_a35261c4af778a5d29263db16687a816b}{BOING\+\_\+\+DEBUG}}~0
+\end{DoxyCompactItemize}
+\doxysubsubsection*{枚举}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{boing_8c_aaff0749849eeb426c1fff01f93f8aa38}{DRAW\+\_\+\+BALL\+\_\+\+ENUM}} \{ \mbox{\hyperlink{boing_8c_aaff0749849eeb426c1fff01f93f8aa38a6dd224315fa345b43c69670bdd98bde6}{DRAW\+\_\+\+BALL}}
+, \mbox{\hyperlink{boing_8c_aaff0749849eeb426c1fff01f93f8aa38a3248eb4cd526dece69034b8913503983}{DRAW\+\_\+\+BALL\+\_\+\+SHADOW}}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{函数}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}})
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a4ea013001a5fb47853d0fab8f8de35cd}{display}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}})
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a5272e39ef9d8944cb3f99d656f9f555a}{reshape}} (\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{joysticks_8c_a80de27bd7dc4e2b2ad3d5895b97a70f0}{window}}, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} w, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} h)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a286930f4e8ede059b83ff6eafa2ff718}{key\+\_\+callback}} (\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{joysticks_8c_a80de27bd7dc4e2b2ad3d5895b97a70f0}{window}}, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} scancode, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} action, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} mods)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a5515d805e76ce6728de3c0dc5e187c86}{mouse\+\_\+button\+\_\+callback}} (\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{joysticks_8c_a80de27bd7dc4e2b2ad3d5895b97a70f0}{window}}, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} button, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} action, \mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} mods)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_ab5fb5502317b46f9cecd6379f2ecd210}{cursor\+\_\+position\+\_\+callback}} (\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}\mbox{\hyperlink{joysticks_8c_a80de27bd7dc4e2b2ad3d5895b97a70f0}{window}}, double \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}, double \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}})
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_aaf4ab2b37a65ad090f79313713f18731}{Draw\+Boing\+Ball}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}})
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a5a5cbb3e7786a248a2dcf02777a98df5}{Bounce\+Ball}} (double \mbox{\hyperlink{boing_8c_a03e28be41881b703c836edbfe9b51b17}{dt}})
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_ad80d1d92135216bb8c1242fcce45545c}{Draw\+Boing\+Ball\+Band}} (\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} long\+\_\+lo, \mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} long\+\_\+hi)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a8e38342e6a8bfcbc67503d2c6383d8e8}{Draw\+Grid}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}})
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_a080dc55aae439523561bda8b86575b7f}{Truncate\+Deg}} (\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} deg)
+\item 
+double \mbox{\hyperlink{boing_8c_a8012f8bd66798ffbdd27462c9f593a54}{deg2rad}} (double deg)
+\item 
+double \mbox{\hyperlink{boing_8c_a5b090656aa7eb0a7d1bd2d0f0e7712e2}{sin\+\_\+deg}} (double deg)
+\item 
+double \mbox{\hyperlink{boing_8c_ae4cbb93841df91680846fe983a6f1835}{cos\+\_\+deg}} (double deg)
+\item 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_ab3fa148322b2d4aaa2ffe1e0008d5e55}{Cross\+Product}} (\mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}} a, \mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}} \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}, \mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}} c, \mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}} \texorpdfstring{$\ast$}{*}n)
+\item 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} \mbox{\hyperlink{boing_8c_a6f309a461624865bd1bb295abe41ea02}{set\+\_\+ball\+\_\+pos}} (\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}, \mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a5e247fc24ceb70d83f6ad59149b8910a}{y}})
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_a840291bc02cba5474a4cb46a9b9566fe}{main}} (\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}})
+\end{DoxyCompactItemize}
+\doxysubsubsection*{变量}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_a6511876508d2f65ea8ace8f25d0e4c78}{windowed\+\_\+xpos}}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_adfcf830546ec1f6a64866d3b652a22fd}{windowed\+\_\+ypos}}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_a5371aa3f8486fe48d4878950ee8bd9a3}{windowed\+\_\+width}}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_aa3257f2fd88b76fd6585ba6e679253e0}{windowed\+\_\+height}}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_a2474a5474cbff19523a51eb1de01cda4}{width}}
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_ad12fc34ce789bce6c8a05d8a17138534}{height}}
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_ae721211dff5c00a883879373efad1187}{deg\+\_\+rot\+\_\+y}} = 0.f
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_abd3eb9bcb0582eaed1be1c789fa9664a}{deg\+\_\+rot\+\_\+y\+\_\+inc}} = 2.f
+\item 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{boing_8c_a5457032292643cc186a49f3163020555}{override\+\_\+pos}} = \mbox{\hyperlink{group__init_gac877fe3b627d21ef3a0a23e0a73ba8c5}{GLFW\+\_\+\+FALSE}}
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_ad4356335fdb6fdaa6d4b759ac447a41d}{cursor\+\_\+x}} = 0.f
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_a4f59f7e6e37a64caf5bb5b228bce9afd}{cursor\+\_\+y}} = 0.f
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_a66dbc10af7d1d045794549a09999d468}{ball\+\_\+x}} = -\/\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}}
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_a13df79b6b7f26cc1fc5279a1f12a9d98}{ball\+\_\+y}} = -\/\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}}
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_a00cc50b4eae810b91ef59463d55cb097}{ball\+\_\+x\+\_\+inc}} = 1.f
+\item 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} \mbox{\hyperlink{boing_8c_adf5ece0dd3b5effeac97071b87e106bd}{ball\+\_\+y\+\_\+inc}} = 2.f
+\item 
+\mbox{\hyperlink{boing_8c_aaff0749849eeb426c1fff01f93f8aa38}{DRAW\+\_\+\+BALL\+\_\+\+ENUM}} \mbox{\hyperlink{boing_8c_ac1b93fa15ef429f4d5e3a0a9990304cf}{draw\+Ball\+How}}
+\item 
+double \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}
+\item 
+double \mbox{\hyperlink{boing_8c_a720c9aaf75c956f8d87132112332da97}{t\+\_\+old}} = 0.f
+\item 
+double \mbox{\hyperlink{boing_8c_a03e28be41881b703c836edbfe9b51b17}{dt}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{宏定义说明}
+\Hypertarget{boing_8c_aaa69f89df4c8e47abeb574bfdd11d9f4}\index{boing.c@{boing.c}!ANIMATION\_SPEED@{ANIMATION\_SPEED}}
+\index{ANIMATION\_SPEED@{ANIMATION\_SPEED}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{ANIMATION\_SPEED}{ANIMATION\_SPEED}}
+{\footnotesize\ttfamily \label{boing_8c_aaa69f89df4c8e47abeb574bfdd11d9f4} 
+\#define ANIMATION\+\_\+\+SPEED~50.f}
+
+\Hypertarget{boing_8c_a35261c4af778a5d29263db16687a816b}\index{boing.c@{boing.c}!BOING\_DEBUG@{BOING\_DEBUG}}
+\index{BOING\_DEBUG@{BOING\_DEBUG}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{BOING\_DEBUG}{BOING\_DEBUG}}
+{\footnotesize\ttfamily \label{boing_8c_a35261c4af778a5d29263db16687a816b} 
+\#define BOING\+\_\+\+DEBUG~0}
+
+\Hypertarget{boing_8c_a9088188b19f0545a1d84e381da09fef0}\index{boing.c@{boing.c}!BOUNCE\_HEIGHT@{BOUNCE\_HEIGHT}}
+\index{BOUNCE\_HEIGHT@{BOUNCE\_HEIGHT}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{BOUNCE\_HEIGHT}{BOUNCE\_HEIGHT}}
+{\footnotesize\ttfamily \label{boing_8c_a9088188b19f0545a1d84e381da09fef0} 
+\#define BOUNCE\+\_\+\+HEIGHT~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 2.\+1f)}
+
+\Hypertarget{boing_8c_adefcd41ddcb236a9bcf6189b5009e59e}\index{boing.c@{boing.c}!BOUNCE\_WIDTH@{BOUNCE\_WIDTH}}
+\index{BOUNCE\_WIDTH@{BOUNCE\_WIDTH}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{BOUNCE\_WIDTH}{BOUNCE\_WIDTH}}
+{\footnotesize\ttfamily \label{boing_8c_adefcd41ddcb236a9bcf6189b5009e59e} 
+\#define BOUNCE\+\_\+\+WIDTH~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 2.\+1f)}
+
+\Hypertarget{boing_8c_abc4d2bb2a15f35c55d9b456b452eaa7c}\index{boing.c@{boing.c}!DIST\_BALL@{DIST\_BALL}}
+\index{DIST\_BALL@{DIST\_BALL}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{DIST\_BALL}{DIST\_BALL}}
+{\footnotesize\ttfamily \label{boing_8c_abc4d2bb2a15f35c55d9b456b452eaa7c} 
+\#define DIST\+\_\+\+BALL~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 2.f + \mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 0.\+1f)}
+
+\Hypertarget{boing_8c_a09f9c3bf094ecaf707c673924ffd615a}\index{boing.c@{boing.c}!GLAD\_GL\_IMPLEMENTATION@{GLAD\_GL\_IMPLEMENTATION}}
+\index{GLAD\_GL\_IMPLEMENTATION@{GLAD\_GL\_IMPLEMENTATION}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{GLAD\_GL\_IMPLEMENTATION}{GLAD\_GL\_IMPLEMENTATION}}
+{\footnotesize\ttfamily \label{boing_8c_a09f9c3bf094ecaf707c673924ffd615a} 
+\#define GLAD\+\_\+\+GL\+\_\+\+IMPLEMENTATION}
+
+\Hypertarget{boing_8c_a088324ad8995e3eb76024e3e79083d48}\index{boing.c@{boing.c}!GLFW\_INCLUDE\_NONE@{GLFW\_INCLUDE\_NONE}}
+\index{GLFW\_INCLUDE\_NONE@{GLFW\_INCLUDE\_NONE}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{GLFW\_INCLUDE\_NONE}{GLFW\_INCLUDE\_NONE}}
+{\footnotesize\ttfamily \label{boing_8c_a088324ad8995e3eb76024e3e79083d48} 
+\#define GLFW\+\_\+\+INCLUDE\+\_\+\+NONE}
+
+\Hypertarget{boing_8c_a08246606c233e7785a497c09672f366f}\index{boing.c@{boing.c}!GRID\_SIZE@{GRID\_SIZE}}
+\index{GRID\_SIZE@{GRID\_SIZE}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{GRID\_SIZE}{GRID\_SIZE}}
+{\footnotesize\ttfamily \label{boing_8c_a08246606c233e7785a497c09672f366f} 
+\#define GRID\+\_\+\+SIZE~(\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}} \texorpdfstring{$\ast$}{*} 4.\+5f)          /\texorpdfstring{$\ast$}{*} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a011fc24f10426c01349e94a4edd4b0d5}{length}} (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}) of grid \texorpdfstring{$\ast$}{*}/}
+
+\Hypertarget{boing_8c_a82c13b07387b0fa3ab346ad38894e2a7}\index{boing.c@{boing.c}!MAX\_DELTA\_T@{MAX\_DELTA\_T}}
+\index{MAX\_DELTA\_T@{MAX\_DELTA\_T}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{MAX\_DELTA\_T}{MAX\_DELTA\_T}}
+{\footnotesize\ttfamily \label{boing_8c_a82c13b07387b0fa3ab346ad38894e2a7} 
+\#define MAX\+\_\+\+DELTA\+\_\+T~0.\+02f}
+
+\Hypertarget{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}\index{boing.c@{boing.c}!RADIUS@{RADIUS}}
+\index{RADIUS@{RADIUS}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{RADIUS}{RADIUS}}
+{\footnotesize\ttfamily \label{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956} 
+\#define RADIUS~70.f}
+
+\Hypertarget{boing_8c_a690f251553b39fd4f31894826141b61a}\index{boing.c@{boing.c}!RAND\_MAX@{RAND\_MAX}}
+\index{RAND\_MAX@{RAND\_MAX}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{RAND\_MAX}{RAND\_MAX}}
+{\footnotesize\ttfamily \label{boing_8c_a690f251553b39fd4f31894826141b61a} 
+\#define RAND\+\_\+\+MAX~4095}
+
+\Hypertarget{boing_8c_adfabb671d0b80adb599e07a018f049d4}\index{boing.c@{boing.c}!SHADOW\_OFFSET\_X@{SHADOW\_OFFSET\_X}}
+\index{SHADOW\_OFFSET\_X@{SHADOW\_OFFSET\_X}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{SHADOW\_OFFSET\_X}{SHADOW\_OFFSET\_X}}
+{\footnotesize\ttfamily \label{boing_8c_adfabb671d0b80adb599e07a018f049d4} 
+\#define SHADOW\+\_\+\+OFFSET\+\_\+X~-\/20.f}
+
+\Hypertarget{boing_8c_aee80e1c2e5aa7831fbe28b95948f5dc0}\index{boing.c@{boing.c}!SHADOW\_OFFSET\_Y@{SHADOW\_OFFSET\_Y}}
+\index{SHADOW\_OFFSET\_Y@{SHADOW\_OFFSET\_Y}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{SHADOW\_OFFSET\_Y}{SHADOW\_OFFSET\_Y}}
+{\footnotesize\ttfamily \label{boing_8c_aee80e1c2e5aa7831fbe28b95948f5dc0} 
+\#define SHADOW\+\_\+\+OFFSET\+\_\+Y~10.f}
+
+\Hypertarget{boing_8c_a79814e92ed56516db4e8564c2928f86e}\index{boing.c@{boing.c}!SHADOW\_OFFSET\_Z@{SHADOW\_OFFSET\_Z}}
+\index{SHADOW\_OFFSET\_Z@{SHADOW\_OFFSET\_Z}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{SHADOW\_OFFSET\_Z}{SHADOW\_OFFSET\_Z}}
+{\footnotesize\ttfamily \label{boing_8c_a79814e92ed56516db4e8564c2928f86e} 
+\#define SHADOW\+\_\+\+OFFSET\+\_\+Z~0.f}
+
+\Hypertarget{boing_8c_ac875967450c7a0306cf05f8e3e455e6c}\index{boing.c@{boing.c}!STEP\_LATITUDE@{STEP\_LATITUDE}}
+\index{STEP\_LATITUDE@{STEP\_LATITUDE}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{STEP\_LATITUDE}{STEP\_LATITUDE}}
+{\footnotesize\ttfamily \label{boing_8c_ac875967450c7a0306cf05f8e3e455e6c} 
+\#define STEP\+\_\+\+LATITUDE~22.\+5f}
+
+\Hypertarget{boing_8c_a89edea273a0da4bec03abfdd5d46a1df}\index{boing.c@{boing.c}!STEP\_LONGITUDE@{STEP\_LONGITUDE}}
+\index{STEP\_LONGITUDE@{STEP\_LONGITUDE}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{STEP\_LONGITUDE}{STEP\_LONGITUDE}}
+{\footnotesize\ttfamily \label{boing_8c_a89edea273a0da4bec03abfdd5d46a1df} 
+\#define STEP\+\_\+\+LONGITUDE~22.\+5f                   /\texorpdfstring{$\ast$}{*} 22.\+5 makes 8 bands like original Boing \texorpdfstring{$\ast$}{*}/}
+
+\Hypertarget{boing_8c_a7a2f17659bb77c24edb2bea7a08a19a3}\index{boing.c@{boing.c}!VIEW\_SCENE\_DIST@{VIEW\_SCENE\_DIST}}
+\index{VIEW\_SCENE\_DIST@{VIEW\_SCENE\_DIST}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{VIEW\_SCENE\_DIST}{VIEW\_SCENE\_DIST}}
+{\footnotesize\ttfamily \label{boing_8c_a7a2f17659bb77c24edb2bea7a08a19a3} 
+\#define VIEW\+\_\+\+SCENE\+\_\+\+DIST~(\mbox{\hyperlink{boing_8c_abc4d2bb2a15f35c55d9b456b452eaa7c}{DIST\+\_\+\+BALL}} \texorpdfstring{$\ast$}{*} 3.f + 200.f)/\texorpdfstring{$\ast$}{*} distance from viewer to middle of boing \mbox{\hyperlink{mimalloc_8h_adf0fdf81d937dd5a837e95aff8fc0a49}{area}} \texorpdfstring{$\ast$}{*}/}
+
+\Hypertarget{boing_8c_a2ec75166930a7702729980492d09d431}\index{boing.c@{boing.c}!WALL\_L\_OFFSET@{WALL\_L\_OFFSET}}
+\index{WALL\_L\_OFFSET@{WALL\_L\_OFFSET}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{WALL\_L\_OFFSET}{WALL\_L\_OFFSET}}
+{\footnotesize\ttfamily \label{boing_8c_a2ec75166930a7702729980492d09d431} 
+\#define WALL\+\_\+\+L\+\_\+\+OFFSET~0.f}
+
+\Hypertarget{boing_8c_ae377291d60b194d9d3195822af2cfeff}\index{boing.c@{boing.c}!WALL\_R\_OFFSET@{WALL\_R\_OFFSET}}
+\index{WALL\_R\_OFFSET@{WALL\_R\_OFFSET}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{WALL\_R\_OFFSET}{WALL\_R\_OFFSET}}
+{\footnotesize\ttfamily \label{boing_8c_ae377291d60b194d9d3195822af2cfeff} 
+\#define WALL\+\_\+\+R\+\_\+\+OFFSET~5.f}
+
+
+
+\doxysubsection{枚举类型说明}
+\Hypertarget{boing_8c_aaff0749849eeb426c1fff01f93f8aa38}\index{boing.c@{boing.c}!DRAW\_BALL\_ENUM@{DRAW\_BALL\_ENUM}}
+\index{DRAW\_BALL\_ENUM@{DRAW\_BALL\_ENUM}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{DRAW\_BALL\_ENUM}{DRAW\_BALL\_ENUM}}
+{\footnotesize\ttfamily \label{boing_8c_aaff0749849eeb426c1fff01f93f8aa38} 
+enum \mbox{\hyperlink{boing_8c_aaff0749849eeb426c1fff01f93f8aa38}{DRAW\+\_\+\+BALL\+\_\+\+ENUM}}}
+
+\begin{DoxyEnumFields}[2]{枚举值}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DRAW\_BALL@{DRAW\_BALL}!boing.c@{boing.c}}\index{boing.c@{boing.c}!DRAW\_BALL@{DRAW\_BALL}}}\Hypertarget{boing_8c_aaff0749849eeb426c1fff01f93f8aa38a6dd224315fa345b43c69670bdd98bde6}\label{boing_8c_aaff0749849eeb426c1fff01f93f8aa38a6dd224315fa345b43c69670bdd98bde6} 
+DRAW\+\_\+\+BALL&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{DRAW\_BALL\_SHADOW@{DRAW\_BALL\_SHADOW}!boing.c@{boing.c}}\index{boing.c@{boing.c}!DRAW\_BALL\_SHADOW@{DRAW\_BALL\_SHADOW}}}\Hypertarget{boing_8c_aaff0749849eeb426c1fff01f93f8aa38a3248eb4cd526dece69034b8913503983}\label{boing_8c_aaff0749849eeb426c1fff01f93f8aa38a3248eb4cd526dece69034b8913503983} 
+DRAW\+\_\+\+BALL\+\_\+\+SHADOW&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsection{函数说明}
+\Hypertarget{boing_8c_a5a5cbb3e7786a248a2dcf02777a98df5}\index{boing.c@{boing.c}!BounceBall@{BounceBall}}
+\index{BounceBall@{BounceBall}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{BounceBall()}{BounceBall()}}
+{\footnotesize\ttfamily \label{boing_8c_a5a5cbb3e7786a248a2dcf02777a98df5} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} Bounce\+Ball (\begin{DoxyParamCaption}\item[{double}]{dt}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 1
+\Hypertarget{boing_8c_ae4cbb93841df91680846fe983a6f1835}\index{boing.c@{boing.c}!cos\_deg@{cos\_deg}}
+\index{cos\_deg@{cos\_deg}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{cos\_deg()}{cos\_deg()}}
+{\footnotesize\ttfamily \label{boing_8c_ae4cbb93841df91680846fe983a6f1835} 
+double cos\+\_\+deg (\begin{DoxyParamCaption}\item[{double}]{deg}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 2
+\Hypertarget{boing_8c_ab3fa148322b2d4aaa2ffe1e0008d5e55}\index{boing.c@{boing.c}!CrossProduct@{CrossProduct}}
+\index{CrossProduct@{CrossProduct}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{CrossProduct()}{CrossProduct()}}
+{\footnotesize\ttfamily \label{boing_8c_ab3fa148322b2d4aaa2ffe1e0008d5e55} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} Cross\+Product (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}}}]{a}{, }\item[{\mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}}}]{b}{, }\item[{\mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}}}]{c}{, }\item[{\mbox{\hyperlink{structvertex__t}{vertex\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{n}{}\end{DoxyParamCaption})}
+
+\Hypertarget{boing_8c_ab5fb5502317b46f9cecd6379f2ecd210}\index{boing.c@{boing.c}!cursor\_position\_callback@{cursor\_position\_callback}}
+\index{cursor\_position\_callback@{cursor\_position\_callback}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{cursor\_position\_callback()}{cursor\_position\_callback()}}
+{\footnotesize\ttfamily \label{boing_8c_ab5fb5502317b46f9cecd6379f2ecd210} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} cursor\+\_\+position\+\_\+callback (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}}]{window}{, }\item[{double}]{x}{, }\item[{double}]{y}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 3
+\Hypertarget{boing_8c_a8012f8bd66798ffbdd27462c9f593a54}\index{boing.c@{boing.c}!deg2rad@{deg2rad}}
+\index{deg2rad@{deg2rad}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{deg2rad()}{deg2rad()}}
+{\footnotesize\ttfamily \label{boing_8c_a8012f8bd66798ffbdd27462c9f593a54} 
+double deg2rad (\begin{DoxyParamCaption}\item[{double}]{deg}{}\end{DoxyParamCaption})}
+
+\Hypertarget{boing_8c_a4ea013001a5fb47853d0fab8f8de35cd}\index{boing.c@{boing.c}!display@{display}}
+\index{display@{display}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{display()}{display()}}
+{\footnotesize\ttfamily \label{boing_8c_a4ea013001a5fb47853d0fab8f8de35cd} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} display (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}}}]{}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 4
+\Hypertarget{boing_8c_aaf4ab2b37a65ad090f79313713f18731}\index{boing.c@{boing.c}!DrawBoingBall@{DrawBoingBall}}
+\index{DrawBoingBall@{DrawBoingBall}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{DrawBoingBall()}{DrawBoingBall()}}
+{\footnotesize\ttfamily \label{boing_8c_aaf4ab2b37a65ad090f79313713f18731} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} Draw\+Boing\+Ball (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}}}]{}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 5
+\Hypertarget{boing_8c_ad80d1d92135216bb8c1242fcce45545c}\index{boing.c@{boing.c}!DrawBoingBallBand@{DrawBoingBallBand}}
+\index{DrawBoingBallBand@{DrawBoingBallBand}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{DrawBoingBallBand()}{DrawBoingBallBand()}}
+{\footnotesize\ttfamily \label{boing_8c_ad80d1d92135216bb8c1242fcce45545c} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} Draw\+Boing\+Ball\+Band (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}}}]{long\+\_\+lo}{, }\item[{\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}}}]{long\+\_\+hi}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 6
+\Hypertarget{boing_8c_a8e38342e6a8bfcbc67503d2c6383d8e8}\index{boing.c@{boing.c}!DrawGrid@{DrawGrid}}
+\index{DrawGrid@{DrawGrid}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{DrawGrid()}{DrawGrid()}}
+{\footnotesize\ttfamily \label{boing_8c_a8e38342e6a8bfcbc67503d2c6383d8e8} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} Draw\+Grid (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}}}]{}{}\end{DoxyParamCaption})}
+
+\Hypertarget{boing_8c_a2858154e2009b0e6e616f313177762bc}\index{boing.c@{boing.c}!init@{init}}
+\index{init@{init}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{init()}{init()}}
+{\footnotesize\ttfamily \label{boing_8c_a2858154e2009b0e6e616f313177762bc} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} init (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}}}]{}{}\end{DoxyParamCaption})}
+
+\Hypertarget{boing_8c_a286930f4e8ede059b83ff6eafa2ff718}\index{boing.c@{boing.c}!key\_callback@{key\_callback}}
+\index{key\_callback@{key\_callback}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{key\_callback()}{key\_callback()}}
+{\footnotesize\ttfamily \label{boing_8c_a286930f4e8ede059b83ff6eafa2ff718} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} key\+\_\+callback (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}}]{window}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{key}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{scancode}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{action}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{mods}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 7
+\Hypertarget{boing_8c_a840291bc02cba5474a4cb46a9b9566fe}\index{boing.c@{boing.c}!main@{main}}
+\index{main@{main}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily \label{boing_8c_a840291bc02cba5474a4cb46a9b9566fe} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} main (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}}}]{}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 8
+\Hypertarget{boing_8c_a5515d805e76ce6728de3c0dc5e187c86}\index{boing.c@{boing.c}!mouse\_button\_callback@{mouse\_button\_callback}}
+\index{mouse\_button\_callback@{mouse\_button\_callback}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{mouse\_button\_callback()}{mouse\_button\_callback()}}
+{\footnotesize\ttfamily \label{boing_8c_a5515d805e76ce6728de3c0dc5e187c86} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} mouse\+\_\+button\+\_\+callback (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}}]{window}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{button}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{action}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{mods}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 9
+\Hypertarget{boing_8c_a5272e39ef9d8944cb3f99d656f9f555a}\index{boing.c@{boing.c}!reshape@{reshape}}
+\index{reshape@{reshape}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{reshape()}{reshape()}}
+{\footnotesize\ttfamily \label{boing_8c_a5272e39ef9d8944cb3f99d656f9f555a} 
+\mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} reshape (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__window_ga3c96d80d363e67d13a41b5d1821f3242}{GLFWwindow}} \texorpdfstring{$\ast$}{*}}]{window}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{w}{, }\item[{\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}}}]{h}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 10
+\Hypertarget{boing_8c_a6f309a461624865bd1bb295abe41ea02}\index{boing.c@{boing.c}!set\_ball\_pos@{set\_ball\_pos}}
+\index{set\_ball\_pos@{set\_ball\_pos}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{set\_ball\_pos()}{set\_ball\_pos()}}
+{\footnotesize\ttfamily \label{boing_8c_a6f309a461624865bd1bb295abe41ea02} 
+static \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}} set\+\_\+ball\+\_\+pos (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}}}]{x}{, }\item[{\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}}}]{y}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{boing_8c_a5b090656aa7eb0a7d1bd2d0f0e7712e2}\index{boing.c@{boing.c}!sin\_deg@{sin\_deg}}
+\index{sin\_deg@{sin\_deg}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{sin\_deg()}{sin\_deg()}}
+{\footnotesize\ttfamily \label{boing_8c_a5b090656aa7eb0a7d1bd2d0f0e7712e2} 
+double sin\+\_\+deg (\begin{DoxyParamCaption}\item[{double}]{deg}{}\end{DoxyParamCaption})}
+
+函数调用图\+:
+% FIG 11
+\Hypertarget{boing_8c_a080dc55aae439523561bda8b86575b7f}\index{boing.c@{boing.c}!TruncateDeg@{TruncateDeg}}
+\index{TruncateDeg@{TruncateDeg}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{TruncateDeg()}{TruncateDeg()}}
+{\footnotesize\ttfamily \label{boing_8c_a080dc55aae439523561bda8b86575b7f} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} Truncate\+Deg (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}}}]{deg}{}\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{变量说明}
+\Hypertarget{boing_8c_a66dbc10af7d1d045794549a09999d468}\index{boing.c@{boing.c}!ball\_x@{ball\_x}}
+\index{ball\_x@{ball\_x}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{ball\_x}{ball\_x}}
+{\footnotesize\ttfamily \label{boing_8c_a66dbc10af7d1d045794549a09999d468} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} ball\+\_\+x = -\/\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}}}
+
+\Hypertarget{boing_8c_a00cc50b4eae810b91ef59463d55cb097}\index{boing.c@{boing.c}!ball\_x\_inc@{ball\_x\_inc}}
+\index{ball\_x\_inc@{ball\_x\_inc}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{ball\_x\_inc}{ball\_x\_inc}}
+{\footnotesize\ttfamily \label{boing_8c_a00cc50b4eae810b91ef59463d55cb097} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} ball\+\_\+x\+\_\+inc = 1.f}
+
+\Hypertarget{boing_8c_a13df79b6b7f26cc1fc5279a1f12a9d98}\index{boing.c@{boing.c}!ball\_y@{ball\_y}}
+\index{ball\_y@{ball\_y}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{ball\_y}{ball\_y}}
+{\footnotesize\ttfamily \label{boing_8c_a13df79b6b7f26cc1fc5279a1f12a9d98} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} ball\+\_\+y = -\/\mbox{\hyperlink{boing_8c_aa4f8ea40228c3c3a9a7143b1d1ad8956}{RADIUS}}}
+
+\Hypertarget{boing_8c_adf5ece0dd3b5effeac97071b87e106bd}\index{boing.c@{boing.c}!ball\_y\_inc@{ball\_y\_inc}}
+\index{ball\_y\_inc@{ball\_y\_inc}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{ball\_y\_inc}{ball\_y\_inc}}
+{\footnotesize\ttfamily \label{boing_8c_adf5ece0dd3b5effeac97071b87e106bd} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} ball\+\_\+y\+\_\+inc = 2.f}
+
+\Hypertarget{boing_8c_ad4356335fdb6fdaa6d4b759ac447a41d}\index{boing.c@{boing.c}!cursor\_x@{cursor\_x}}
+\index{cursor\_x@{cursor\_x}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{cursor\_x}{cursor\_x}}
+{\footnotesize\ttfamily \label{boing_8c_ad4356335fdb6fdaa6d4b759ac447a41d} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} cursor\+\_\+x = 0.f}
+
+\Hypertarget{boing_8c_a4f59f7e6e37a64caf5bb5b228bce9afd}\index{boing.c@{boing.c}!cursor\_y@{cursor\_y}}
+\index{cursor\_y@{cursor\_y}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{cursor\_y}{cursor\_y}}
+{\footnotesize\ttfamily \label{boing_8c_a4f59f7e6e37a64caf5bb5b228bce9afd} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} cursor\+\_\+y = 0.f}
+
+\Hypertarget{boing_8c_ae721211dff5c00a883879373efad1187}\index{boing.c@{boing.c}!deg\_rot\_y@{deg\_rot\_y}}
+\index{deg\_rot\_y@{deg\_rot\_y}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{deg\_rot\_y}{deg\_rot\_y}}
+{\footnotesize\ttfamily \label{boing_8c_ae721211dff5c00a883879373efad1187} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} deg\+\_\+rot\+\_\+y = 0.f}
+
+\Hypertarget{boing_8c_abd3eb9bcb0582eaed1be1c789fa9664a}\index{boing.c@{boing.c}!deg\_rot\_y\_inc@{deg\_rot\_y\_inc}}
+\index{deg\_rot\_y\_inc@{deg\_rot\_y\_inc}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{deg\_rot\_y\_inc}{deg\_rot\_y\_inc}}
+{\footnotesize\ttfamily \label{boing_8c_abd3eb9bcb0582eaed1be1c789fa9664a} 
+\mbox{\hyperlink{gl_8h_a836cf6377099e88abf24c255b5b0ac52}{GLfloat}} deg\+\_\+rot\+\_\+y\+\_\+inc = 2.f}
+
+\Hypertarget{boing_8c_ac1b93fa15ef429f4d5e3a0a9990304cf}\index{boing.c@{boing.c}!drawBallHow@{drawBallHow}}
+\index{drawBallHow@{drawBallHow}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{drawBallHow}{drawBallHow}}
+{\footnotesize\ttfamily \label{boing_8c_ac1b93fa15ef429f4d5e3a0a9990304cf} 
+\mbox{\hyperlink{boing_8c_aaff0749849eeb426c1fff01f93f8aa38}{DRAW\+\_\+\+BALL\+\_\+\+ENUM}} draw\+Ball\+How}
+
+\Hypertarget{boing_8c_a03e28be41881b703c836edbfe9b51b17}\index{boing.c@{boing.c}!dt@{dt}}
+\index{dt@{dt}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{dt}{dt}}
+{\footnotesize\ttfamily \label{boing_8c_a03e28be41881b703c836edbfe9b51b17} 
+double dt}
+
+\Hypertarget{boing_8c_ad12fc34ce789bce6c8a05d8a17138534}\index{boing.c@{boing.c}!height@{height}}
+\index{height@{height}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{height}{height}}
+{\footnotesize\ttfamily \label{boing_8c_ad12fc34ce789bce6c8a05d8a17138534} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a31d490b16f4b63c2afa4c7198ef2c31e}{height}}}
+
+\Hypertarget{boing_8c_a5457032292643cc186a49f3163020555}\index{boing.c@{boing.c}!override\_pos@{override\_pos}}
+\index{override\_pos@{override\_pos}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{override\_pos}{override\_pos}}
+{\footnotesize\ttfamily \label{boing_8c_a5457032292643cc186a49f3163020555} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} override\+\_\+pos = \mbox{\hyperlink{group__init_gac877fe3b627d21ef3a0a23e0a73ba8c5}{GLFW\+\_\+\+FALSE}}}
+
+\Hypertarget{boing_8c_a87accd1af8e0aff4b818d891374f7cec}\index{boing.c@{boing.c}!t@{t}}
+\index{t@{t}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{t}{t}}
+{\footnotesize\ttfamily \label{boing_8c_a87accd1af8e0aff4b818d891374f7cec} 
+double t}
+
+\Hypertarget{boing_8c_a720c9aaf75c956f8d87132112332da97}\index{boing.c@{boing.c}!t\_old@{t\_old}}
+\index{t\_old@{t\_old}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{t\_old}{t\_old}}
+{\footnotesize\ttfamily \label{boing_8c_a720c9aaf75c956f8d87132112332da97} 
+double t\+\_\+old = 0.f}
+
+\Hypertarget{boing_8c_a2474a5474cbff19523a51eb1de01cda4}\index{boing.c@{boing.c}!width@{width}}
+\index{width@{width}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{width}{width}}
+{\footnotesize\ttfamily \label{boing_8c_a2474a5474cbff19523a51eb1de01cda4} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a4c3bd78046e1e69b575cace337a4a9a3}{width}}}
+
+\Hypertarget{boing_8c_aa3257f2fd88b76fd6585ba6e679253e0}\index{boing.c@{boing.c}!windowed\_height@{windowed\_height}}
+\index{windowed\_height@{windowed\_height}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{windowed\_height}{windowed\_height}}
+{\footnotesize\ttfamily \label{boing_8c_aa3257f2fd88b76fd6585ba6e679253e0} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} windowed\+\_\+height}
+
+\Hypertarget{boing_8c_a5371aa3f8486fe48d4878950ee8bd9a3}\index{boing.c@{boing.c}!windowed\_width@{windowed\_width}}
+\index{windowed\_width@{windowed\_width}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{windowed\_width}{windowed\_width}}
+{\footnotesize\ttfamily \label{boing_8c_a5371aa3f8486fe48d4878950ee8bd9a3} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} windowed\+\_\+width}
+
+\Hypertarget{boing_8c_a6511876508d2f65ea8ace8f25d0e4c78}\index{boing.c@{boing.c}!windowed\_xpos@{windowed\_xpos}}
+\index{windowed\_xpos@{windowed\_xpos}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{windowed\_xpos}{windowed\_xpos}}
+{\footnotesize\ttfamily \label{boing_8c_a6511876508d2f65ea8ace8f25d0e4c78} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} windowed\+\_\+xpos}
+
+\Hypertarget{boing_8c_adfcf830546ec1f6a64866d3b652a22fd}\index{boing.c@{boing.c}!windowed\_ypos@{windowed\_ypos}}
+\index{windowed\_ypos@{windowed\_ypos}!boing.c@{boing.c}}
+\doxysubsubsection{\texorpdfstring{windowed\_ypos}{windowed\_ypos}}
+{\footnotesize\ttfamily \label{boing_8c_adfcf830546ec1f6a64866d3b652a22fd} 
+\mbox{\hyperlink{sugar_8h_ae88a82478e3818cade3f598c25437904}{int}} windowed\+\_\+ypos}
+

@@ -1,5 +1,5 @@
 #pragma once
-#include <luisa/dsl/func.h>
+#include <runtime/dsl/func.h>
 namespace luisa::compute {
 /// RasterStageKernel class. RasterStageKernel<T> is not allowed, unless T is a function type.
 template<typename T>

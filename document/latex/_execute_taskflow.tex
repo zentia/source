@@ -1,0 +1,484 @@
+\doxysection{Executor}
+\hypertarget{_execute_taskflow}{}\label{_execute_taskflow}\index{\%Executor@{\%Executor}}
+After you create a task dependency graph, you need to submit it to threads for execution. In this chapter, we will show you how to execute a task dependency graph.\hypertarget{_execute_taskflow_CreateAnExecutor}{}\doxysubsection{\texorpdfstring{Create an Executor}{Create an Executor}}\label{_execute_taskflow_CreateAnExecutor}
+To execute a taskflow, you need to create an {\itshape executor} of type \doxylink{classtf_1_1_executor}{tf\+::\+Executor}. An executor is a {\itshape thread-\/safe} object that manages a set of worker threads and executes tasks through an efficient {\itshape work-\/stealing} algorithm. Issuing a call to run a taskflow creates a {\itshape topology}, a data structure to keep track of the execution status of a running graph. \doxylink{classtf_1_1_executor}{tf\+::\+Executor} takes an unsigned integer to construct with {\ttfamily N} worker threads. The default value is std\+::thread\+::hardware\+\_\+concurrency.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ executor1;\ \ \ \ \ \textcolor{comment}{//\ create\ an\ executor\ with\ the\ number\ of\ workers}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ equal\ to\ std::thread::hardware\_concurrency}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ executor2(4);\ \ \textcolor{comment}{//\ create\ an\ executor\ of\ 4\ worker\ threads}}
+
+\end{DoxyCode}
+
+
+An executor can be reused to execute multiple taskflows. In most workloads, you may need only one executor to run multiple taskflows where each taskflow represents a part of a parallel decomposition.\hypertarget{_execute_taskflow_ExecuteATaskflow}{}\doxysubsection{\texorpdfstring{Execute a Taskflow}{Execute a Taskflow}}\label{_execute_taskflow_ExecuteATaskflow}
+\doxylink{classtf_1_1_executor}{tf\+::\+Executor} provides a set of {\ttfamily run\+\_\+\texorpdfstring{$\ast$}{*}} methods, \doxylink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{tf\+::\+Executor\+::run}, \doxylink{classtf_1_1_executor_a6d0617eebc9421f1ba1f82ce6dd02c00}{tf\+::\+Executor\+::run\+\_\+n}, and \doxylink{classtf_1_1_executor_a0f52e9dd64b65aba32ca0e13c1ed300a}{tf\+::\+Executor\+::run\+\_\+until} to run a taskflow for one time, multiple times, or until a given predicate evaluates to true. All methods accept an optional callback to invoke after the execution completes, and return a \doxylink{classtf_1_1_future}{tf\+::\+Future} for users to access the execution status. The code below shows several ways to run a taskflow.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \textcolor{comment}{//\ Declare\ an\ executor\ and\ a\ taskflow}}
+\DoxyCodeLine{\ 2:\ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ 3:\ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ 4:}
+\DoxyCodeLine{\ 5:\ \textcolor{comment}{//\ Add\ three\ tasks\ into\ the\ taskflow}}
+\DoxyCodeLine{\ 6:\ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}This\ is\ TaskA\(\backslash\)n"{}};\ \});}
+\DoxyCodeLine{\ 7:\ \mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}This\ is\ TaskB\(\backslash\)n"{}};\ \});}
+\DoxyCodeLine{\ 8:\ tf::Task\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}This\ is\ TaskC\(\backslash\)n"{}};\ \});}
+\DoxyCodeLine{\ 9:\ }
+\DoxyCodeLine{10:\ \textcolor{comment}{//\ Build\ precedence\ between\ tasks}}
+\DoxyCodeLine{11:\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}.precede(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}},\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}});\ }
+\DoxyCodeLine{12:\ }
+\DoxyCodeLine{13:\ tf::Future<void>\ fu\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{14:\ fu.wait();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ block\ until\ the\ execution\ completes}}
+\DoxyCodeLine{15:}
+\DoxyCodeLine{16:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}},\ []()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}end\ of\ 1\ run"{}};\ \}).wait();}
+\DoxyCodeLine{17:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a6d0617eebc9421f1ba1f82ce6dd02c00}{run\_n}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}},\ 4);}
+\DoxyCodeLine{18:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{wait\_for\_all}}();\ \ \textcolor{comment}{//\ block\ until\ all\ associated\ executions\ finish}}
+\DoxyCodeLine{19:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a6d0617eebc9421f1ba1f82ce6dd02c00}{run\_n}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}},\ 4,\ []()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}end\ of\ 4\ runs"{}};\ \}).wait();}
+\DoxyCodeLine{20:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a0f52e9dd64b65aba32ca0e13c1ed300a}{run\_until}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}},\ [cnt=0]\ ()\ \textcolor{keyword}{mutable}\ \{\ \textcolor{keywordflow}{return}\ ++cnt\ ==\ 10;\ \});}
+
+\end{DoxyCode}
+
+
+Debrief\+:
+
+\begin{DoxyItemize}
+\item Lines 6-\/8 create a taskflow of three tasks \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}, \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}, and C \item Lines 13-\/14 run the taskflow once and wait for completion \item Line 16 runs the taskflow once with a callback to invoke when the execution finishes \item Lines 17-\/18 run the taskflow four times and use \doxylink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{tf\+::\+Executor\+::wait\+\_\+for\+\_\+all} to wait for completion \item Line 19 runs the taskflow four times and invokes a callback at the end of the fourth execution \item Line 20 keeps running the taskflow until the predicate returns true\end{DoxyItemize}
+Issuing multiple runs on the same taskflow will automatically {\itshape synchronize} to a sequential chain of executions in the order of run calls.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ execution\ 1}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run\_n(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}},\ 10);\ \ \ \textcolor{comment}{//\ execution\ 2}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ execution\ 3}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.wait\_for\_all();\ \ \ \ \ \ \ \ \textcolor{comment}{//\ execution\ 1\ -\/>\ execution\ 2\ -\/>\ execution\ 3}}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} running taskflow must remain alive during its execution. It is your responsibility to ensure a taskflow not being destructed when it is running. For example, the code below can result undefined behavior.
+\end{DoxyAttention}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};\ \ \textcolor{comment}{//\ create\ an\ executor}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ taskflow\ whose\ lifetime\ is\ restricted\ by\ the\ scope}}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ add\ tasks\ to\ the\ taskflow}}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ ...\ }}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ run\ the\ taskflow}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\}\ \textcolor{comment}{//\ leaving\ the\ scope\ will\ destroy\ taskflow\ while\ it\ is\ running,\ }}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ resulting\ in\ undefined\ behavior}}
+
+\end{DoxyCode}
+
+
+Similarly, you should avoid touching a taskflow while it is running.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Add\ tasks\ into\ the\ taskflow}}
+\DoxyCodeLine{\textcolor{comment}{//\ ...}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Declare\ an\ executor}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_future}{tf::Future<void>}}\ future\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});\ \ \textcolor{comment}{//\ non-\/blocking\ return}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ alter\ the\ taskflow\ while\ running\ leads\ to\ undefined\ behavior\ }}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}Add\ a\ new\ task\(\backslash\)n"{}};\ \});}
+
+\end{DoxyCode}
+
+
+You must always keep a taskflow alive and must not modify it while it is running on an executor.\hypertarget{_execute_taskflow_ExecuteATaskflowWithTransferredOwnership}{}\doxysubsection{\texorpdfstring{Execute a Taskflow with Transferred Ownership}{Execute a Taskflow with Transferred Ownership}}\label{_execute_taskflow_ExecuteATaskflowWithTransferredOwnership}
+You can transfer the ownership of a taskflow to an executor and run it without wrangling with the lifetime issue of that taskflow. Each {\ttfamily run\+\_\+\texorpdfstring{$\ast$}{*}} method discussed in the previous section comes with an overload that takes a {\itshape moved} taskflow object.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ let\ the\ executor\ manage\ the\ lifetime\ of\ the\ submitted\ taskflow}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(std::move(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ now\ taskflow\ has\ no\ tasks}}
+\DoxyCodeLine{assert(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.num\_tasks()\ ==\ 0);}
+
+\end{DoxyCode}
+
+
+However, you should avoid moving a {\itshape running} taskflow which can result in undefined behavior.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ executor\ does\ not\ manage\ the\ lifetime\ of\ taskflow}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ error!\ you\ cannot\ move\ a\ taskflow\ while\ it\ is\ running}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(std::move(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}));\ \ }
+
+\end{DoxyCode}
+
+
+The correct way to submit a taskflow with moved ownership to an executor is to ensure all previous runs have completed. The executor will automatically release the resources of a moved taskflow right {\itshape after} its execution completes.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ submit\ the\ taskflow\ and\ wait\ until\ it\ completes}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ now\ it's\ safe\ to\ move\ the\ taskflow\ to\ the\ executor\ and\ run\ it}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(std::move(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}));\ \ }
+
+\end{DoxyCode}
+
+
+Likewise, you cannot move a taskflow that is running on an executor. You must wait until all the previous fires of runs on that taskflow complete before calling move.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ submit\ the\ taskflow\ and\ wait\ until\ it\ completes}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ now\ it's\ safe\ to\ move\ the\ taskflow\ to\ another}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ moved\_taskflow(std::move(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}));\ \ }
+
+\end{DoxyCode}
+\hypertarget{_execute_taskflow_ExecuteATaskflowFromAnInternalWorker}{}\doxysubsection{\texorpdfstring{Execute a Taskflow from an Internal Worker}{Execute a Taskflow from an Internal Worker}}\label{_execute_taskflow_ExecuteATaskflowFromAnInternalWorker}
+Each run variant of \doxylink{classtf_1_1_executor}{tf\+::\+Executor} returns a \doxylink{classtf_1_1_future}{tf\+::\+Future} object which allows you to wait for the result to complete. When calling {\ttfamily tf\+::\+Future\+::wait}, the caller blocks without doing anything until the associated state is written to be ready. This design, however, can introduce deadlock problem especially when you need to run multiple taskflows from the internal workers of an executor. For example, the code below creates a taskflow of 1000 tasks with each task running a taskflow of 500 tasks in a blocking fashion\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(2);}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{std::array<tf::Taskflow,\ 1000>\ others;}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::atomic<size\_t>\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\{0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}<1000;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}++)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<500;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}].emplace([\&]()\{\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}++;\ \});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}},\ \&tf=others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ blocking\ the\ worker\ can\ introduce\ deadlock\ where}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ all\ workers\ are\ waiting\ for\ their\ taskflows\ to\ finish}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(tf).wait();}
+\DoxyCodeLine{\ \ \});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+To avoid this problem, the executor has a method, \doxylink{classtf_1_1_executor_a8fcd9e0557922bb8194999f0cd433ea8}{tf\+::\+Executor\+::corun}, to execute a taskflow from a worker of that executor. The worker will not block but co-\/run the taskflow with other tasks in its work-\/stealing loop.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(2);}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{std::array<tf::Taskflow,\ 1000>\ others;}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::atomic<size\_t>\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}\{0\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}<1000;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}++)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<500;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ \ \ others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}].emplace([\&]()\{\ \mbox{\hyperlink{events_8c_ac6c464b0a83a481fee26175f6229c5cc}{counter}}++;\ \});}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}},\ \&tf=others[\mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}]]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ the\ caller\ worker\ will\ not\ block\ but\ corun\ these}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ taskflows\ through\ its\ work-\/stealing\ loop}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a8fcd9e0557922bb8194999f0cd433ea8}{corun}}(tf);}
+\DoxyCodeLine{\ \ \});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Similar to \doxylink{classtf_1_1_executor_a8fcd9e0557922bb8194999f0cd433ea8}{tf\+::\+Executor\+::corun}, the method \doxylink{classtf_1_1_executor_a0fc6eb19f168dc4a9cd0a7c6187c1d2d}{tf\+::\+Executor\+::corun\+\_\+until} is another variant that keeps the calling worker in the work-\/stealing loop until the given predicate becomes true. You can use this method to prevent blocking a worker from doing useful things, such as being blocked when submitting an outstanding task (e.\+g., a GPU operation).
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ fu\ =\ std::async([]()\{\ std::sleep(100\mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}});\ \});}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.corun\_until([]()\{}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{return}\ fu.wait\_for(std::chrono::seconds(0))\ ==\ future\_status::ready;}
+\DoxyCodeLine{\ \ \});}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+You must call \doxylink{classtf_1_1_executor_a0fc6eb19f168dc4a9cd0a7c6187c1d2d}{tf\+::\+Executor\+::corun\+\_\+until} and \doxylink{classtf_1_1_executor_a8fcd9e0557922bb8194999f0cd433ea8}{tf\+::\+Executor\+::corun} from a worker of the calling executor or an exception will be thrown.
+\end{DoxyAttention}
+\hypertarget{_execute_taskflow_ThreadSafety}{}\doxysubsection{\texorpdfstring{Touch an Executor from Multiple Threads}{Touch an Executor from Multiple Threads}}\label{_execute_taskflow_ThreadSafety}
+All {\ttfamily run\+\_\+\texorpdfstring{$\ast$}{*}} methods are {\itshape thread-\/safe}. You can have multiple threads call these methods from an executor to run different taskflows. However, the order which taskflow runs first is non-\/deterministic and is up to the runtime.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ 1:\ \mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{\ 2:}
+\DoxyCodeLine{\ 3:\ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<10;\ ++\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ 4:\ \ \ std::thread([\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}},\ \&]()\{}
+\DoxyCodeLine{\ 5:\ \ \ \ \ \textcolor{comment}{//\ ...\ modify\ my\ taskflow\ at\ i}}
+\DoxyCodeLine{\ 6:\ \ \ \ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(taskflows[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]);\ \ \textcolor{comment}{//\ run\ my\ taskflow\ at\ i}}
+\DoxyCodeLine{\ 7:\ \ \ \}).detach();}
+\DoxyCodeLine{\ 8:\ \}}
+\DoxyCodeLine{\ 9:}
+\DoxyCodeLine{10:\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_ab9aa252f70e9a40020a1e5a89d485b85}{wait\_for\_all}}();}
+
+\end{DoxyCode}
+\hypertarget{_execute_taskflow_QueryTheWorkerID}{}\doxysubsection{\texorpdfstring{Query the Worker ID}{Query the Worker ID}}\label{_execute_taskflow_QueryTheWorkerID}
+Each worker in an executor has an unique integer identifier in the range {\ttfamily \mbox{[}0, N)} that can be queried by the caller thread using \doxylink{classtf_1_1_executor_a6487d589cb1f6b078b69fd3bb1082345}{tf\+::\+Executor\+::this\+\_\+worker\+\_\+id}. If the caller thread is not a worker in the executor, {\ttfamily -\/1} is returned. This method is convenient for users to maintain a one-\/to-\/one mapping between a worker and its application data structure.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ worker\_vectors[8];\ \ \ \ \ \ \ \textcolor{comment}{//\ one\ vector\ per\ worker}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_taskflow}{tf::Taskflow}}\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_executor}{tf::Executor}}\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(8);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ an\ executor\ of\ eight\ workers}}
+\DoxyCodeLine{}
+\DoxyCodeLine{assert(\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.this\_worker\_id()\ ==\ -\/1);\ \ \textcolor{comment}{//\ master\ thread\ is\ not\ a\ worker}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{int}\ \textcolor{keywordtype}{id}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.this\_worker\_id();\ \ \ \ \ \textcolor{comment}{//\ in\ the\ range\ [0,\ 8)}}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ worker\_vectors[\mbox{\hyperlink{test__basics_8cpp_a4199986f3840a82e0749dab4781a5b2f}{worker\_id}}];}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+\hypertarget{_execute_taskflow_ObserveThreadActivities}{}\doxysubsection{\texorpdfstring{Observe Thread Activities}{Observe Thread Activities}}\label{_execute_taskflow_ObserveThreadActivities}
+You can observe thread activities in an executor when a worker thread participates in executing a task and leaves the execution using \doxylink{classtf_1_1_observer_interface}{tf\+::\+Observer\+Interface} -- an {\itshape interface} class that provides a set of methods for you to define what to do when a thread enters and leaves the execution context of a task.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{class\ }\mbox{\hyperlink{classtf_1_1_observer_interface}{ObserverInterface}}\ \{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classtf_1_1_observer_interface_adfd71c3af3ae2ea4f41eed26c1b6f604}{\string~ObserverInterface}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1_observer_interface_a41e6e62f12bf9d9dc4fa74632f6825d9}{set\_up}}(\textcolor{keywordtype}{size\_t}\ num\_workers)\ =\ 0;}
+\DoxyCodeLine{\ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1_observer_interface_a8225fcacb03089677a1efc4b16b734cc}{on\_entry}}(\mbox{\hyperlink{classtf_1_1_worker_view}{tf::WorkerView}}\ worker\_view,\ \mbox{\hyperlink{classtf_1_1_task_view}{tf::TaskView}}\ task\_view)\ =\ 0;}
+\DoxyCodeLine{\ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classtf_1_1_observer_interface_aa22f5378154653f08d9a58326bda4754}{on\_exit}}(\mbox{\hyperlink{classtf_1_1_worker_view}{tf::WorkerView}}\ worker\_view,\ \mbox{\hyperlink{classtf_1_1_task_view}{tf::TaskView}}\ task\_view)\ =\ 0;}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+There are three methods you must define in your derived class, \doxylink{classtf_1_1_observer_interface_a41e6e62f12bf9d9dc4fa74632f6825d9}{tf\+::\+Observer\+Interface\+::set\+\_\+up}, \doxylink{classtf_1_1_observer_interface_a8225fcacb03089677a1efc4b16b734cc}{tf\+::\+Observer\+Interface\+::on\+\_\+entry}, and \doxylink{classtf_1_1_observer_interface_aa22f5378154653f08d9a58326bda4754}{tf\+::\+Observer\+Interface\+::on\+\_\+exit}. The method, \doxylink{classtf_1_1_observer_interface_a41e6e62f12bf9d9dc4fa74632f6825d9}{tf\+::\+Observer\+Interface\+::set\+\_\+up}, is a constructor-\/like method that will be called by the executor when the observer is constructed. It passes an argument of the number of workers to observer in the executor. You may use it to preallocate or initialize data storage, e.\+g., an independent vector for each worker. The methods, \doxylink{classtf_1_1_observer_interface_a8225fcacb03089677a1efc4b16b734cc}{tf\+::\+Observer\+Interface\+::on\+\_\+entry} and \doxylink{classtf_1_1_observer_interface_aa22f5378154653f08d9a58326bda4754}{tf\+::\+Observer\+Interface\+::on\+\_\+exit}, are called by a worker thread before and after the execution context of a task, respectively. Both methods provide immutable access to the underlying worker and the running task using \doxylink{classtf_1_1_worker_view}{tf\+::\+Worker\+View} and \doxylink{classtf_1_1_task_view}{tf\+::\+Task\+View}. You may use them to record timepoints and calculate the elapsed time of a task.
+
+You can associate an executor with one or multiple observers (though one is common) using \doxylink{classtf_1_1_executor_aff77def96ae740d648dd84e571237c83}{tf\+::\+Executor\+::make\+\_\+observer}. We use std\+::shared\+\_\+ptr to manage the ownership of an observer. The executor loops through each observer and invoke the corresponding methods accordingly.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_8hpp}{taskflow/taskflow.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{struct\ }\mbox{\hyperlink{class_my_observer}{MyObserver}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classtf_1_1_observer_interface}{tf::ObserverInterface}}\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{class_my_observer}{MyObserver}}(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}})\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}constructing\ observer\ "{}}\ <<\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{void}\ set\_up(\textcolor{keywordtype}{size\_t}\ num\_workers)\ \textcolor{keyword}{override}\ \textcolor{keyword}{final}\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}setting\ up\ observer\ with\ "{}}\ <<\ num\_workers\ <<\ \textcolor{stringliteral}{"{}\ workers\(\backslash\)n"{}};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{void}\ on\_entry(tf::WorkerView\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}},\ tf::TaskView\ tv)\ \textcolor{keyword}{override}\ \textcolor{keyword}{final}\ \{}
+\DoxyCodeLine{\ \ \ \ std::ostringstream\ oss;}
+\DoxyCodeLine{\ \ \ \ oss\ <<\ \textcolor{stringliteral}{"{}worker\ "{}}\ <<\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id()\ <<\ \textcolor{stringliteral}{"{}\ ready\ to\ run\ "{}}\ <<\ tv.name()\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ oss.str();}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{void}\ on\_exit(tf::WorkerView\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}},\ tf::TaskView\ tv)\ \textcolor{keyword}{override}\ \textcolor{keyword}{final}\ \{}
+\DoxyCodeLine{\ \ \ \ std::ostringstream\ oss;}
+\DoxyCodeLine{\ \ \ \ oss\ <<\ \textcolor{stringliteral}{"{}worker\ "{}}\ <<\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id()\ <<\ \textcolor{stringliteral}{"{}\ finished\ running\ "{}}\ <<\ tv.name()\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ oss.str();}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Executor\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(4);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ Create\ a\ taskflow\ of\ eight\ tasks}}
+\DoxyCodeLine{\ \ tf::Taskflow\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}1\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}A"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}2\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}B"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}3\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}C"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{_eigen_solver___eigen_solver___matrix_type_8cpp_a925331f9b6e4844293d36a8df2256d38}{D}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}4\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}D"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{sandbox_2strassen_2omp_8cpp_a4bfa035cad7c3258704669810cd5de5d}{E}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}5\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}E"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{test__flow__graph_8cpp_a1c83625ec20fd09ecaf0e5b37c75f6f8}{F}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}6\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}F"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{_jacobi__make_givens_8cpp_ad2c49539791450cfceedabc09452d977}{G}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}7\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}G"{}});}
+\DoxyCodeLine{\ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{gnuplot__common__settings_8hh_a1312167399d185be316962d53af87c87}{H}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]\ ()\ \{\ std::cout\ <<\ \textcolor{stringliteral}{"{}8\(\backslash\)n"{}};\ \}).\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}H"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ an\ observer}}
+\DoxyCodeLine{\ \ std::shared\_ptr<MyObserver>\ \mbox{\hyperlink{test__basics_8cpp_ae362ef40752341c76d5edd1d99e46918}{observer}}\ =\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_aff77def96ae740d648dd84e571237c83}{make\_observer}}<MyObserver>(}
+\DoxyCodeLine{\ \ \ \ \textcolor{stringliteral}{"{}MyObserver"{}}}
+\DoxyCodeLine{\ \ );}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ run\ the\ taskflow}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).get();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ remove\ the\ observer\ (optional)}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a31081f492c376f7b798de0e430534531}{remove\_observer}}(std::move(\mbox{\hyperlink{test__basics_8cpp_ae362ef40752341c76d5edd1d99e46918}{observer}}));}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The above code produces the following output\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{constructing\ observer\ MyObserver}
+\DoxyCodeLine{setting\ up\ observer\ with\ 4\ workers}
+\DoxyCodeLine{worker\ 2\ ready\ to\ run\ A}
+\DoxyCodeLine{1}
+\DoxyCodeLine{worker\ 2\ finished\ running\ A}
+\DoxyCodeLine{worker\ 2\ ready\ to\ run\ B}
+\DoxyCodeLine{2}
+\DoxyCodeLine{worker\ 1\ ready\ to\ run\ C}
+\DoxyCodeLine{worker\ 2\ finished\ running\ B}
+\DoxyCodeLine{3}
+\DoxyCodeLine{worker\ 2\ ready\ to\ run\ D}
+\DoxyCodeLine{worker\ 3\ ready\ to\ run\ E}
+\DoxyCodeLine{worker\ 1\ finished\ running\ C}
+\DoxyCodeLine{4}
+\DoxyCodeLine{5}
+\DoxyCodeLine{worker\ 1\ ready\ to\ run\ F}
+\DoxyCodeLine{worker\ 2\ finished\ running\ D}
+\DoxyCodeLine{worker\ 3\ finished\ running\ E}
+\DoxyCodeLine{6}
+\DoxyCodeLine{worker\ 2\ ready\ to\ run\ G}
+\DoxyCodeLine{worker\ 3\ ready\ to\ run\ H}
+\DoxyCodeLine{worker\ 1\ finished\ running\ F}
+\DoxyCodeLine{7}
+\DoxyCodeLine{8}
+\DoxyCodeLine{worker\ 2\ finished\ running\ G}
+\DoxyCodeLine{worker\ 3\ finished\ running\ H}
+
+\end{DoxyCode}
+
+
+It is expected each line of std\+::cout interleaves with each other as there are four workers participating in task scheduling. However, the {\itshape ready} message always appears before the corresponding task message (e.\+g., numbers) and then the {\itshape finished} message.\hypertarget{_execute_taskflow_ModifyWorkerProperty}{}\doxysubsection{\texorpdfstring{Modify Worker Property}{Modify Worker Property}}\label{_execute_taskflow_ModifyWorkerProperty}
+You can change the property of each worker thread from its executor, such as assigning thread-\/processor affinity before the worker enters the scheduler loop and post-\/processing additional information after the worker leaves the scheduler loop, by passing an instance derived from \doxylink{classtf_1_1_worker_interface}{tf\+::\+Worker\+Interface} to the executor. The example demonstrates the usage of \doxylink{classtf_1_1_worker_interface}{tf\+::\+Worker\+Interface} to affine a worker to a specific CPU core equal to its id on a linux platform\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ affine\ the\ given\ thread\ to\ the\ given\ core\ index\ (linux-\/specific)}}
+\DoxyCodeLine{\textcolor{keywordtype}{bool}\ \mbox{\hyperlink{worker__interface_8cpp_ad0c789f976c6b00b0d60964fa21e0c87}{affine}}(std::thread\&\ thread,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ core\_id)\ \{}
+\DoxyCodeLine{\ \ cpu\_set\_t\ cpuset;}
+\DoxyCodeLine{\ \ CPU\_ZERO(\&cpuset);}
+\DoxyCodeLine{\ \ CPU\_SET(core\_id,\ \&cpuset);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{pthread__minport__windows_8h_ad665cf4bf4a61dd23aab712d9c5e9d81}{pthread\_t}}\ native\_handle\ =\ thread.native\_handle();}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ pthread\_setaffinity\_np(native\_handle,\ \textcolor{keyword}{sizeof}(cpu\_set\_t),\ \&cpuset)\ ==\ 0;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{class\ }\mbox{\hyperlink{class_custom_worker_behavior}{CustomWorkerBehavior}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classtf_1_1_worker_interface}{tf::WorkerInterface}}\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ to\ call\ before\ the\ worker\ enters\ the\ scheduling\ loop}}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{void}\ scheduler\_prologue(\mbox{\hyperlink{classtf_1_1_worker}{tf::Worker}}\&\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}})\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}worker\ \%lu\ prepares\ to\ enter\ the\ work-\/stealing\ loop\(\backslash\)n"{}},\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id());}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ now\ affine\ the\ worker\ to\ a\ particular\ CPU\ core\ equal\ to\ its\ id}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{worker__interface_8cpp_ad0c789f976c6b00b0d60964fa21e0c87}{affine}}(\mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.thread(),\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id()))\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}successfully\ affines\ worker\ \%lu\ to\ CPU\ core\ \%lu\(\backslash\)n"{}},\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id(),\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id());}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}failed\ to\ affine\ worker\ \%lu\ to\ CPU\ core\ \%lu\(\backslash\)n"{}},\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id(),\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id());}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ to\ call\ after\ the\ worker\ leaves\ the\ scheduling\ loop}}
+\DoxyCodeLine{\ \ \textcolor{keywordtype}{void}\ scheduler\_epilogue(tf::Worker\&\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}},\ std::exception\_ptr)\textcolor{keyword}{\ override\ }\{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}worker\ \%lu\ left\ the\ work-\/stealing\ loop\(\backslash\)n"{}},\ \mbox{\hyperlink{_matrix__resize__int_8cpp_aab236ce080522c9832217fd5f157541b}{w}}.id());}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{\ \ tf::Executor\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}(4,\ \mbox{\hyperlink{namespacetf_aa10195f7d5f2f1dd32bb852a9aa560f4}{tf::make\_worker\_interface<CustomWorkerBehavior>}}());}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+When running the program, we see the following one possible output\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{worker\ 3\ prepares\ to\ enter\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+\DoxyCodeLine{successfully\ affines\ worker\ 3\ to\ CPU\ core\ 3}
+\DoxyCodeLine{worker\ 3\ \mbox{\hyperlink{blas__interface_8hh_af32074257ed1b575dfd1ab2f6e6ba59f}{left}}\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+\DoxyCodeLine{worker\ 0\ prepares\ to\ enter\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+\DoxyCodeLine{successfully\ affines\ worker\ 0\ to\ CPU\ core\ 0}
+\DoxyCodeLine{worker\ 0\ \mbox{\hyperlink{blas__interface_8hh_af32074257ed1b575dfd1ab2f6e6ba59f}{left}}\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+\DoxyCodeLine{worker\ 1\ prepares\ to\ enter\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+\DoxyCodeLine{worker\ 2\ prepares\ to\ enter\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+\DoxyCodeLine{successfully\ affines\ worker\ 1\ to\ CPU\ core\ 1}
+\DoxyCodeLine{worker\ 1\ \mbox{\hyperlink{blas__interface_8hh_af32074257ed1b575dfd1ab2f6e6ba59f}{left}}\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+\DoxyCodeLine{successfully\ affines\ worker\ 2\ to\ CPU\ core\ 2}
+\DoxyCodeLine{worker\ 2\ \mbox{\hyperlink{blas__interface_8hh_af32074257ed1b575dfd1ab2f6e6ba59f}{left}}\ the\ \mbox{\hyperlink{graph__pipeline_2levelgraph_8hpp_aa24fdf691a71c708fccdc6e29a805b42}{work}}-\/stealing\ \mbox{\hyperlink{sugar_8h_a8093cf142de43413a3649101cf95152c}{loop}}}
+
+\end{DoxyCode}
+
+
+When you create an executor, it spawns a set of worker threads to run tasks using a work-\/stealing scheduling algorithm. The execution logic of the scheduler and its interaction with each spawned worker via \doxylink{classtf_1_1_worker_interface}{tf\+::\+Worker\+Interface} is given below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}=0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}<num\_workers;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__simple_8cpp_a5150192f625f4d7970d61169b9567f39}{n}}++)\ \{}
+\DoxyCodeLine{\ \ create\_thread([](\mbox{\hyperlink{classtf_1_1_worker}{Worker}}\&\ worker)}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ pre-\/processing\ executor-\/specific\ worker\ information}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ ...}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ enter\ the\ scheduling\ loop}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Here,\ WorkerInterface::scheduler\_prologue\ is\ invoked,\ if\ any}}
+\DoxyCodeLine{\ \ \ \ worker\_interface-\/>scheduler\_prologue(worker);}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ while(1)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ perform\_work\_stealing\_algorithm();}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ if(stop)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ break;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \}\ \textcolor{keywordflow}{catch}(...)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ exception\_ptr\ =\ std::current\_exception();}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ leaves\ the\ scheduling\ loop\ and\ joins\ this\ worker\ thread}}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ Here,\ WorkerInterface::scheduler\_epilogue\ is\ invoked,\ if\ any}}
+\DoxyCodeLine{\ \ \ \ worker\_interface-\/>scheduler\_epilogue(worker,\ exception\_ptr);}
+\DoxyCodeLine{\ \ );}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+\doxylink{classtf_1_1_worker_interface_a41c3b931a36bde8eff4aa8d375e8888a}{tf\+::\+Worker\+Interface\+::scheduler\+\_\+prologue} and tf\+::\+Worker\+Interface\+::scheduler\+\_\+eiplogue are invoked by each worker simultaneously. 
+\end{DoxyAttention}

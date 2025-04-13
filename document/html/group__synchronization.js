@@ -1,0 +1,167 @@
+var group__synchronization =
+[
+    [ "tbb::null_mutex", "classtbb_1_1null__mutex.html", [
+      [ "scoped_lock", "classtbb_1_1null__mutex_1_1scoped__lock.html", [
+        [ "scoped_lock", "classtbb_1_1null__mutex_1_1scoped__lock.html#a8234f2e4b166f68dfc6054797565903f", null ],
+        [ "scoped_lock", "classtbb_1_1null__mutex_1_1scoped__lock.html#af71834d1fc4c7406595e9df5b43ab7bb", null ],
+        [ "~scoped_lock", "classtbb_1_1null__mutex_1_1scoped__lock.html#aa2be69e6a6c1b7c71ede7b4222899248", null ],
+        [ "acquire", "classtbb_1_1null__mutex_1_1scoped__lock.html#a7d541c92b1678a7dde6a45783a02160f", null ],
+        [ "release", "classtbb_1_1null__mutex_1_1scoped__lock.html#a21f848f83dfa6504381e3da4de7a9e00", null ],
+        [ "try_acquire", "classtbb_1_1null__mutex_1_1scoped__lock.html#ac5d4d5a4182091ea13fb5d38667f6449", null ]
+      ] ],
+      [ "null_mutex", "classtbb_1_1null__mutex.html#a0675a52c32139509b1e2ffe777ffcdd0", null ],
+      [ "is_fair_mutex", "classtbb_1_1null__mutex.html#ae4684b268ff379a69cd1fe93718ee7fc", null ],
+      [ "is_recursive_mutex", "classtbb_1_1null__mutex.html#a49bd7f5da83382e39f898d06cbf0e23e", null ],
+      [ "is_rw_mutex", "classtbb_1_1null__mutex.html#a20ed8301299d9ec166588401269d1788", null ]
+    ] ],
+    [ "tbb::null_rw_mutex", "classtbb_1_1null__rw__mutex.html", [
+      [ "scoped_lock", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html", [
+        [ "scoped_lock", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#ab00dc5c1c2a7fa7eb532cda7ed1280b4", null ],
+        [ "scoped_lock", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#a4b7f9a3976c7744a96e435e027c6262c", null ],
+        [ "~scoped_lock", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#a32bec6242b799ae19415f93143d1ed2e", null ],
+        [ "acquire", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#a251d45c5c42ac6c6006d0463c2173bc8", null ],
+        [ "downgrade_to_reader", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#a899c14f8d077edd2fe7925bb82a94686", null ],
+        [ "release", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#a57d0613ea1614fe9c7daa0706e56efab", null ],
+        [ "try_acquire", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#afdb10af455fa8730b1a9bc8d5ca16c41", null ],
+        [ "upgrade_to_writer", "classtbb_1_1null__rw__mutex_1_1scoped__lock.html#a07ed8c0c225fec43b96dcec5b4d4380d", null ]
+      ] ],
+      [ "null_rw_mutex", "classtbb_1_1null__rw__mutex.html#adf7c18da30839515ce78f898c8ec3cb5", null ],
+      [ "is_fair_mutex", "classtbb_1_1null__rw__mutex.html#ab8500b8a645b1c03221fd1fb4156fa78", null ],
+      [ "is_recursive_mutex", "classtbb_1_1null__rw__mutex.html#ab153992db6e44aee96ce8c1b2d495c94", null ],
+      [ "is_rw_mutex", "classtbb_1_1null__rw__mutex.html#a2a676977ac67532f5f35f849ec7eac8c", null ]
+    ] ],
+    [ "tbb::queuing_mutex", "classtbb_1_1queuing__mutex.html", [
+      [ "scoped_lock", "classtbb_1_1queuing__mutex_1_1scoped__lock.html", [
+        [ "scoped_lock", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#a0afe0107eb0aae613e726f67624d2fca", null ],
+        [ "scoped_lock", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#aa82d9da0dcfe5b21f1c08473f8223105", null ],
+        [ "~scoped_lock", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#a469ec43836a8dd250ce0a22b02945630", null ],
+        [ "acquire", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#ac6b9289521c6b7568eedc8e0ff4e96d8", null ],
+        [ "initialize", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#a59f276bc4fe30ca24998fc8b1693b0b9", null ],
+        [ "release", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#a75112bddb38e011e9cfa69695050c771", null ],
+        [ "try_acquire", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#aa35c2a7b36eb58201a804be7a36b4ccd", null ],
+        [ "going", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#a48b37b0b590a9286b5a64493edbfa6bf", null ],
+        [ "mutex", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#a9219187a11dc1db2f06e6f8a974ecdc4", null ],
+        [ "next", "classtbb_1_1queuing__mutex_1_1scoped__lock.html#ab4879d19847f1f52b832e54cb179a4c1", null ]
+      ] ],
+      [ "queuing_mutex", "classtbb_1_1queuing__mutex.html#a0e58fce2062ae349a30b320b7fdc9155", null ],
+      [ "internal_construct", "classtbb_1_1queuing__mutex.html#aa017ec6c2bade06da0e9f57d2def25d7", null ],
+      [ "is_fair_mutex", "classtbb_1_1queuing__mutex.html#a5b4833b97208bd699cba061dfc3057cc", null ],
+      [ "is_recursive_mutex", "classtbb_1_1queuing__mutex.html#a47ad4cdac79581c01a66241e2e5c2c07", null ],
+      [ "is_rw_mutex", "classtbb_1_1queuing__mutex.html#a504f3af8a939468f1514604c0941bc62", null ],
+      [ "q_tail", "classtbb_1_1queuing__mutex.html#a087bf9251b9a1c63503594b1816e4dce", null ]
+    ] ],
+    [ "tbb::queuing_rw_mutex", "classtbb_1_1queuing__rw__mutex.html", [
+      [ "scoped_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html", [
+        [ "state_t", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a353247a87ec975f8fe8f1b0559fb5eca", null ],
+        [ "scoped_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a1ae3792726dcff8da1f2c5366fb2b754", null ],
+        [ "scoped_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#af1b55ca1839c9c7c2cd779cd2dd9c474", null ],
+        [ "~scoped_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a6cb16cc55f884bbbd5a69430c47b288f", null ],
+        [ "acquire", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#ab4bf2fb86d6a418f9ea36474eb8893f9", null ],
+        [ "acquire_internal_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a3513272129edcdae064da95d71315af5", null ],
+        [ "downgrade_to_reader", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#af0af63035147a3d8422f8c8d7b8d2629", null ],
+        [ "initialize", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a080c26691aad8bac8947724114e5f664", null ],
+        [ "release", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a50fb02b77f02a01c74754d163157ec77", null ],
+        [ "release_internal_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#aca691e3a0f5debfe5965b071357bddcd", null ],
+        [ "try_acquire", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a4843d40dddc37c1aa3444e27d35d2433", null ],
+        [ "try_acquire_internal_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a497dd2f219507fdd2d32ea91d44c5ac8", null ],
+        [ "unblock_or_wait_on_internal_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#abbfa06c642501544d508864ad072e883", null ],
+        [ "upgrade_to_writer", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#ae0f28ecfbbc5f8b3024cd47048b72b5b", null ],
+        [ "wait_for_release_of_internal_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a61d83842c6eacfbc63fa2da05ebe9973", null ],
+        [ "my_going", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#acaf818b6b0a341e93e1ad99eacf75128", null ],
+        [ "my_internal_lock", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#aa4f5cc6aa669484f354d547bcff217b4", null ],
+        [ "my_mutex", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#afb13f1f084f62193988095893cdc6093", null ],
+        [ "my_next", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a50cf5dff00f6644f6608cb2fb37b4733", null ],
+        [ "my_prev", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#ae5468283fd60c1c4283f6a4efab419ab", null ],
+        [ "my_state", "classtbb_1_1queuing__rw__mutex_1_1scoped__lock.html#a63577549e9bb49d85d9979b62d06f956", null ]
+      ] ],
+      [ "queuing_rw_mutex", "classtbb_1_1queuing__rw__mutex.html#a23de1ac415b6f54b778c8fd6ec6073e0", null ],
+      [ "~queuing_rw_mutex", "classtbb_1_1queuing__rw__mutex.html#ae67fe828d7e07222e7876ef9fd780fcc", null ],
+      [ "internal_construct", "classtbb_1_1queuing__rw__mutex.html#af0d7ca1c9b3aeb7d16baf16e0da3ce6a", null ],
+      [ "is_fair_mutex", "classtbb_1_1queuing__rw__mutex.html#a4704d512922b4b5d21c97901f9f7abd0", null ],
+      [ "is_recursive_mutex", "classtbb_1_1queuing__rw__mutex.html#ae8c3ee1f5ab3af3954abeec1d165ea8e", null ],
+      [ "is_rw_mutex", "classtbb_1_1queuing__rw__mutex.html#ae3dbfbf71bfa9c662a59688cd86bfbd7", null ],
+      [ "q_tail", "classtbb_1_1queuing__rw__mutex.html#af4b3071dfe4d6b47739dcf9190135540", null ]
+    ] ],
+    [ "tbb::spin_mutex", "classtbb_1_1spin__mutex.html", [
+      [ "scoped_lock", "classtbb_1_1spin__mutex_1_1scoped__lock.html", [
+        [ "scoped_lock", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a4287be975cf2448c95f068b065c45107", null ],
+        [ "scoped_lock", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a73f7381a9a112b9f5a856b1face525fb", null ],
+        [ "~scoped_lock", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a9940d6e494466d9c53846ed347d79d83", null ],
+        [ "acquire", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a7c702117f08ae82d034a98b3d5510ffc", null ],
+        [ "internal_acquire", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a56eb98743177c5d336313e2802aa135c", null ],
+        [ "internal_release", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a6f1953fe0c22d862cea2ec8bf76e07b8", null ],
+        [ "internal_try_acquire", "classtbb_1_1spin__mutex_1_1scoped__lock.html#ad06c3ea3c2738a37ba720a7fe042ebd8", null ],
+        [ "release", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a7e801b0c28fd8395fec400b96acc5c34", null ],
+        [ "try_acquire", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a76acbd67c74906f6ea33a1de6fd443ce", null ],
+        [ "spin_mutex", "classtbb_1_1spin__mutex_1_1scoped__lock.html#adf989c33fa5ee03e75925c2d0f86b89e", null ],
+        [ "my_mutex", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a521c717a477108976f745098a37c6423", null ],
+        [ "my_unlock_value", "classtbb_1_1spin__mutex_1_1scoped__lock.html#a445e9aa60203590941ec618eae20632f", null ]
+      ] ],
+      [ "spin_mutex", "classtbb_1_1spin__mutex.html#a6c96196965bf7df426311d282ad3c378", null ],
+      [ "internal_construct", "classtbb_1_1spin__mutex.html#a477d58c9b6c05bea717ded179d23b465", null ],
+      [ "lock", "classtbb_1_1spin__mutex.html#a8957e40b0781192419d01d28e5205ec4", null ],
+      [ "try_lock", "classtbb_1_1spin__mutex.html#a003ffb196d22bf22ca22142338b7eeab", null ],
+      [ "unlock", "classtbb_1_1spin__mutex.html#adfcf8fe840aa73c08c2cadd570fd48fd", null ],
+      [ "scoped_lock", "classtbb_1_1spin__mutex.html#afcf922650b2fd9d76b7b939d8511bbd8", null ],
+      [ "flag", "classtbb_1_1spin__mutex.html#aede69e1865651ccd7ea2e09d2c834eb9", null ],
+      [ "is_fair_mutex", "classtbb_1_1spin__mutex.html#ad00ec9a97f34c9160300950b36deac3e", null ],
+      [ "is_recursive_mutex", "classtbb_1_1spin__mutex.html#a0cae048c5dc5deffe75464e4a3a2b752", null ],
+      [ "is_rw_mutex", "classtbb_1_1spin__mutex.html#a7c3354db4bd5cc81bccee9f249abb9e8", null ]
+    ] ],
+    [ "tbb::spin_rw_mutex_v3", "classtbb_1_1spin__rw__mutex__v3.html", [
+      [ "scoped_lock", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html", [
+        [ "scoped_lock", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#a285b355121772c874a7ecaaf4d347224", null ],
+        [ "scoped_lock", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#a0a2e15358575f7651446bca13a5a2674", null ],
+        [ "~scoped_lock", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#a5c27ca2e0c9db960a9a7430082ff7edd", null ],
+        [ "acquire", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#a6d49df365396ab314e78ba07c6b96433", null ],
+        [ "downgrade_to_reader", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#aa693c05221d977856a98270a255fe5df", null ],
+        [ "release", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#a99e279a995a51abfb87b865e886949f8", null ],
+        [ "try_acquire", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#abf17ada91882fd70f139c503c0220f16", null ],
+        [ "upgrade_to_writer", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#afbe5de57eadc457518df7a1bb0d30c00", null ],
+        [ "is_writer", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#acfd129dc5106ad1129ba803e67311050", null ],
+        [ "mutex", "classtbb_1_1spin__rw__mutex__v3_1_1scoped__lock.html#a8d70c5a2348e30a6979bfbf677328dc4", null ]
+      ] ],
+      [ "state_t", "classtbb_1_1spin__rw__mutex__v3.html#a27adc7d791dfaa4a60638313b9d1c1f4", null ],
+      [ "spin_rw_mutex_v3", "classtbb_1_1spin__rw__mutex__v3.html#ad30fc1ffa0a2b8134e177e02c5821d7f", null ],
+      [ "internal_construct", "classtbb_1_1spin__rw__mutex__v3.html#a891c161e88a6af22d3911a25adedae7f", null ],
+      [ "lock", "classtbb_1_1spin__rw__mutex__v3.html#a51e207646300a4c242bb4aaa4e04e9b8", null ],
+      [ "lock_read", "classtbb_1_1spin__rw__mutex__v3.html#aa0e3bb644e9021d0f80ee36b03f228e4", null ],
+      [ "try_lock", "classtbb_1_1spin__rw__mutex__v3.html#ab6ec20b1ec43a49c8c2908984e35b5e8", null ],
+      [ "try_lock_read", "classtbb_1_1spin__rw__mutex__v3.html#ac932f65b0b66320688e7957ce9c3e2c1", null ],
+      [ "unlock", "classtbb_1_1spin__rw__mutex__v3.html#ab04321ed2cdf12ac5825c54591028fc0", null ],
+      [ "BUSY", "classtbb_1_1spin__rw__mutex__v3.html#a6a811c72bd7e5ad6a3a9161ee05e298c", null ],
+      [ "is_fair_mutex", "classtbb_1_1spin__rw__mutex__v3.html#affd403f6e3822589e985a2c23505fbd1", null ],
+      [ "is_recursive_mutex", "classtbb_1_1spin__rw__mutex__v3.html#a7f6aa8fe3e9c7c4ee4cdec6d221ffe45", null ],
+      [ "is_rw_mutex", "classtbb_1_1spin__rw__mutex__v3.html#addc8223faacc1bb2cc8626b609ab2c49", null ],
+      [ "ONE_READER", "classtbb_1_1spin__rw__mutex__v3.html#af1386a2fa5979432e4a58b94e68db23f", null ],
+      [ "READERS", "classtbb_1_1spin__rw__mutex__v3.html#a6cc93cdcf4ad43f6bf8b0f76cde66f9e", null ],
+      [ "state", "classtbb_1_1spin__rw__mutex__v3.html#aa28625051072472ccd8a2b19405d6fb3", null ],
+      [ "WRITER", "classtbb_1_1spin__rw__mutex__v3.html#aaeec59dde09fe92be196ecddb480777b", null ],
+      [ "WRITER_PENDING", "classtbb_1_1spin__rw__mutex__v3.html#a5b321914828e5e21baf24d58f32c66d5", null ]
+    ] ],
+    [ "tbb::spin_rw_mutex", "classtbb_1_1spin__rw__mutex.html", [
+      [ "scoped_lock", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html", [
+        [ "scoped_lock", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#a65696273b99d103d52067f648c7cf781", null ],
+        [ "scoped_lock", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#ad81b258e5e08ceae857a52633c43fc70", null ],
+        [ "~scoped_lock", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#a970a354169106f8700e02c210e78f508", null ],
+        [ "acquire", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#a712147de02598365defe35076ca9ec3f", null ],
+        [ "downgrade_to_reader", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#a9028aeeeca09e2964e197297988df9f2", null ],
+        [ "release", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#add1ba1f93fcb3676084dcaf6a5a367f8", null ],
+        [ "try_acquire", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#aed236c523ea40e19212f7f5c0b7db166", null ],
+        [ "upgrade_to_writer", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#a5bb48b38f4ef2e4eda0ee64187b9f941", null ],
+        [ "is_writer", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#a7b38037652933f6b8e655e11726430f4", null ],
+        [ "mutex", "classtbb_1_1spin__rw__mutex_1_1scoped__lock.html#aa0aaade01306fa5ccc91afaf1650249b", null ]
+      ] ],
+      [ "state_t", "classtbb_1_1spin__rw__mutex.html#a62fdf5c4041159ea32e5d1872730fbbc", null ],
+      [ "spin_rw_mutex", "classtbb_1_1spin__rw__mutex.html#a89f5fac1aed4a2eb2e5a1241b43a9380", null ],
+      [ "BUSY", "classtbb_1_1spin__rw__mutex.html#abeadad6e97347e68e1685d871df578c5", null ],
+      [ "ONE_READER", "classtbb_1_1spin__rw__mutex.html#a60d8e54f03128f5ba8fb23fa1af521b0", null ],
+      [ "READERS", "classtbb_1_1spin__rw__mutex.html#a26321766e400dc3bbc81ee75e59a392b", null ],
+      [ "state", "classtbb_1_1spin__rw__mutex.html#a0c0ea09bdefb5044400203ea516bb273", null ],
+      [ "WRITER", "classtbb_1_1spin__rw__mutex.html#ad91cc2ff9f3b6551297338e86645e84a", null ],
+      [ "WRITER_PENDING", "classtbb_1_1spin__rw__mutex.html#a2d57a507b8f24a5e72c367feefeaa8ea", null ]
+    ] ],
+    [ "__TBB_DECL_ATOMIC", "group__synchronization.html#ga0cb09f83ba16033ade02c8896ed69c9a", null ],
+    [ "tbb::speculative_spin_mutex", "group__synchronization.html#gaaa37cbd66059817a12393e6ff53ae3be", null ],
+    [ "tbb::interface8::speculative_spin_rw_mutex", "group__synchronization.html#ga802372513021fc3ba3741c387b294987", null ]
+];

@@ -1,0 +1,5 @@
+var struct_eigen_1_1internal_1_1traits_3_01_diagonal_matrix_3_01___scalar_00_01_size_at_compile_timeb0b2868b66e3b20cd28c00acb4409967 =
+[
+    [ "DiagonalVectorType", "struct_eigen_1_1internal_1_1traits_3_01_diagonal_matrix_3_01___scalar_00_01_size_at_compile_timeb0b2868b66e3b20cd28c00acb4409967.html#a27513ae71017b40bf3c27b5fcebff7f1", null ],
+    [ "StorageKind", "struct_eigen_1_1internal_1_1traits_3_01_diagonal_matrix_3_01___scalar_00_01_size_at_compile_timeb0b2868b66e3b20cd28c00acb4409967.html#a2225b46d111387e4395222c9ad6dccdc", null ]
+];

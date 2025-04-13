@@ -1,5 +1,5 @@
-#include <luisa/runtime/sparse_buffer.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/sparse_buffer.h>
+#include <runtime/core/logging.h>
 
 namespace luisa::compute {
 

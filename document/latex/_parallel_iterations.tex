@@ -1,0 +1,178 @@
+\doxysection{Parallel Iterations}
+\hypertarget{_parallel_iterations}{}\label{_parallel_iterations}\index{Parallel Iterations@{Parallel Iterations}}
+Taskflow provides template functions for constructing tasks to perform parallel iterations over ranges of items.\hypertarget{_parallel_iterations_ParallelIterationsIncludeTheHeader}{}\doxysubsection{\texorpdfstring{Include the Header}{Include the Header}}\label{_parallel_iterations_ParallelIterationsIncludeTheHeader}
+You need to include the header file, {\ttfamily taskflow/algorithm/for\+\_\+each.hpp}, for using parallel-\/iteration algorithms.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_2algorithm_2for__each_8hpp}{taskflow/algorithm/for\_each.hpp}}>}}
+
+\end{DoxyCode}
+\hypertarget{_parallel_iterations_A1IndexBasedParallelFor}{}\doxysubsection{\texorpdfstring{Create an Index-\/based Parallel-\/\+Iteration Task}{Create an Index-\/based Parallel-\/\+Iteration Task}}\label{_parallel_iterations_A1IndexBasedParallelFor}
+Index-\/based parallel-\/for performs parallel iterations over a range {\ttfamily \mbox{[}first, last)} with the given {\ttfamily step} size. The task created by \doxylink{classtf_1_1_flow_builder_a3b132bd902331a11b04b4ad66cf8bf77}{tf\+::\+Taskflow\+::for\+\_\+each\+\_\+index(\+B first, E last, S step, C callable, P part)} represents parallel execution of the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ positive\ step}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=first;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<last;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+=step)\ \{}
+\DoxyCodeLine{\ \ callable(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ negative\ step}}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=first;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}>last;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+=step)\ \{}
+\DoxyCodeLine{\ \ callable(\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+We support only integer-\/based range. The range can go positive or negative direction.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each\_index(0,\ 100,\ \ 2,\ [](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{\ \});\ \ \textcolor{comment}{//\ 50\ loops\ with\ a\ +\ step}}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each\_index(100,\ 0,\ -\/2,\ [](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{\ \});\ \ \textcolor{comment}{//\ 50\ loops\ with\ a\ -\/\ step}}
+
+\end{DoxyCode}
+
+
+Notice that either positive or negative direction is defined in terms of the range, {\ttfamily \mbox{[}first, last)}, where {\ttfamily end} is excluded. In the positive case, the 50 items are 0, 2, 4, 6, 8, ..., 96, 98. In the negative case, the 50 items are 100, 98, 96, 04, ... 4, 2. An example of the Taskflow graph for the positive case under 12 workers is depicted below\+:
+
+Instead of explicitly specifying the index range and the callable for each index invocation, the overload \doxylink{classtf_1_1_flow_builder_a2582a216d54dacca2b7022ea7e89452a}{tf\+::\+Taskflow\+::for\+\_\+each\+\_\+by\+\_\+index(\+R range, C callable, P part)} provides you with a more flexible way to iterate over subranges of indices. This overload uses \doxylink{classtf_1_1_index_range}{tf\+::\+Index\+Range} to partition the range into subranges, allowing finer control over how each subrange is processed. For instance, the code below does the same thing using two different approaches\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ data1(100),\ data2(100);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Approach\ 1:\ initialize\ data1\ using\ explicit\ index\ range}}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each\_index(0,\ 100,\ 1,\ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\{\ data1[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ 10;\ \});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ Approach\ 2:\ initialize\ data2\ using\ tf::IndexRange}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_index_range}{tf::IndexRange<int>}}\ range(0,\ 100,\ 1);}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each\_by\_index(range,\ [\&](\mbox{\hyperlink{classtf_1_1_index_range}{tf::IndexRange<int>}}\ subrange)\{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=subrange.\mbox{\hyperlink{classtf_1_1_index_range_a2b52381358ab392efa257e185a33d4af}{begin}}();\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<subrange.\mbox{\hyperlink{classtf_1_1_index_range_a280096cb4056bc19b86da77d019434e4}{end}}();\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+=subrange.\mbox{\hyperlink{classtf_1_1_index_range_aafd4f2d04614e550649cd9b7912e0bf1}{step\_size}}())\ \{}
+\DoxyCodeLine{\ \ \ \ data2[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ 10;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+
+
+Both approaches produce the same result, but the second approach offers more flexibility in terms of how each partitioned subrange is iterated. This is particularly useful for applications that benefit from SIMD optimizations or other range-\/based processing strategies.\hypertarget{_parallel_iterations_ParallelForEachCaptureIndicesByReference}{}\doxysubsection{\texorpdfstring{Capture Indices by Reference}{Capture Indices by Reference}}\label{_parallel_iterations_ParallelForEachCaptureIndicesByReference}
+You can pass indices by reference using @std\+\_\+ref to marshal parameter update between dependent tasks. This is especially useful when the range indices are unknown at the time of creating a for-\/each-\/index task, but is initialized from another task.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{int}*\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}};}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ first,\ last;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ \mbox{\hyperlink{structinit}{init}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ first\ =\ 0;}
+\DoxyCodeLine{\ \ last\ \ =\ 1000;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ \textcolor{keyword}{new}\ \textcolor{keywordtype}{int}[1000];\ \ }
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keyword}{auto}\ pf\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each\_index(std::ref(first),\ std::ref(last),\ 1,\ }
+\DoxyCodeLine{\ \ [\&]\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}parallel\ iteration\ on\ index\ "{}}\ <<\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ wrong!\ must\ use\ std::ref,\ or\ first\ and\ last\ are\ captured\ by\ copy}}
+\DoxyCodeLine{\textcolor{comment}{//\ auto\ pf\ =\ taskflow.for\_each\_index(first,\ last,\ 1,\ [\&](int\ i)\ \{}}
+\DoxyCodeLine{\textcolor{comment}{//\ \ \ std::cout\ <<\ "{}parallel\ iteration\ on\ index\ "{}\ <<\ vec[i]\ <<\ '\(\backslash\)n';}}
+\DoxyCodeLine{\textcolor{comment}{//\ \});}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}.precede(pf);}
+
+\end{DoxyCode}
+
+
+When {\ttfamily init} finishes, the parallel-\/for task {\ttfamily pf} will see {\ttfamily first} as 0 and {\ttfamily last} as 1000 and performs parallel iterations over the 1000 items.\hypertarget{_parallel_iterations_A1IteratorBasedParallelFor}{}\doxysubsection{\texorpdfstring{Create an Iterator-\/based Parallel-\/\+Iteration Task}{Create an Iterator-\/based Parallel-\/\+Iteration Task}}\label{_parallel_iterations_A1IteratorBasedParallelFor}
+Iterator-\/based parallel-\/for performs parallel iterations over a range specified by two \href{https://en.cppreference.com/w/cpp/iterator/iterator}{\texttt{ STL-\/styled iterators}}, {\ttfamily first} and {\ttfamily last}. The task created by \doxylink{classtf_1_1_flow_builder_aae3edfa278baa75b08414e083c14c836}{tf\+::\+Taskflow\+::for\+\_\+each(\+B first, E last, C callable, P part)} represents a parallel execution of the following loop\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{for}(\textcolor{keyword}{auto}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}=first;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}<last;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}++)\ \{}
+\DoxyCodeLine{\ \ callable(*\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}});}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+tf\+::\+Taskflow\+::for\+\_\+each(\+B first, E last, C callable, P\&\& part) simultaneously applies the callable to the object obtained by dereferencing every iterator in the range {\ttfamily \mbox{[}first, last)}. It is user\textquotesingle{}s responsibility for ensuring the range is valid within the execution of the parallel-\/for task. Iterators must have the post-\/increment operator ++ defined.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}\ =\ \{1,\ 2,\ 3,\ 4,\ 5\};}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each(\mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.begin(),\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.end(),\ [](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\{\ }
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}parallel\ for\ on\ item\ "{}}\ <<\ i\ <<\ \textcolor{stringliteral}{'\(\backslash\)n'};\ \ }
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{std::list<std::string>\ list\ =\ \{\textcolor{stringliteral}{"{}hi"{}},\ \textcolor{stringliteral}{"{}from"{}},\ \textcolor{stringliteral}{"{}t"{}},\ \textcolor{stringliteral}{"{}a"{}},\ \textcolor{stringliteral}{"{}s"{}},\ \textcolor{stringliteral}{"{}k"{}},\ \textcolor{stringliteral}{"{}f"{}},\ \textcolor{stringliteral}{"{}low"{}}\};}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each(\mbox{\hyperlink{namespaceluisa_afbdbb20de8bb3730f578eaba0e3803b6}{list}}.begin(),\ \mbox{\hyperlink{namespaceluisa_afbdbb20de8bb3730f578eaba0e3803b6}{list}}.end(),\ [](\textcolor{keyword}{const}\ std::string\&\ str)\{\ }
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}parallel\ for\ on\ item\ "{}}\ <<\ str\ <<\ \textcolor{stringliteral}{'\(\backslash\)n'};\ \ }
+\DoxyCodeLine{\});}
+
+\end{DoxyCode}
+\hypertarget{_parallel_iterations_ParallelForEachCaptureIteratorsByReference}{}\doxysubsection{\texorpdfstring{Capture Iterators by Reference}{Capture Iterators by Reference}}\label{_parallel_iterations_ParallelForEachCaptureIteratorsByReference}
+Similar to \doxylink{classtf_1_1_flow_builder_a3b132bd902331a11b04b4ad66cf8bf77}{tf\+::\+Taskflow\+::for\+\_\+each\+\_\+index}, iterators of \doxylink{classtf_1_1_flow_builder_aae3edfa278baa75b08414e083c14c836}{tf\+::\+Taskflow\+::for\+\_\+each} are templated to allow capturing range parameters by reference, such that one task can set up the range before another task performs the parallel-\/for algorithm. For example\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}};}
+\DoxyCodeLine{std::vector<int>::iterator\ first,\ last;;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{structinit}{init}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([\&]()\{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.resize(1000);}
+\DoxyCodeLine{\ \ first\ =\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.begin();}
+\DoxyCodeLine{\ \ last\ \ =\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.end();}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ pf\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each(std::ref(first),\ std::ref(last),\ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ std::cout\ <<\ \textcolor{stringliteral}{"{}parallel\ iteration\ on\ item\ "{}}\ <<\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <<\ \textcolor{charliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ wrong!\ must\ use\ std::ref,\ or\ first\ and\ last\ are\ captured\ by\ copy}}
+\DoxyCodeLine{\textcolor{comment}{//\ tf::Task\ pf\ =\ taskflow.for\_each(first,\ last,\ [\&](int\ i)\ \{}}
+\DoxyCodeLine{\textcolor{comment}{//\ \ \ std::cout\ <<\ "{}parallel\ iteration\ on\ item\ "{}\ <<\ i\ <<\ '\(\backslash\)n';}}
+\DoxyCodeLine{\textcolor{comment}{//\ \});}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}.precede(pf);}
+
+\end{DoxyCode}
+
+
+When {\ttfamily init} finishes, the parallel-\/for task {\ttfamily pf} will see {\ttfamily first} pointing to the beginning of {\ttfamily vec} and {\ttfamily last} pointing to the end of {\ttfamily vec} and performs parallel iterations over the 1000 items. The two tasks form an end-\/to-\/end task graph where the parameters of parallel-\/for are computed on the fly.\hypertarget{_parallel_iterations_ParallelIterationsConfigureAPartitioner}{}\doxysubsection{\texorpdfstring{Configure a Partitioner}{Configure a Partitioner}}\label{_parallel_iterations_ParallelIterationsConfigureAPartitioner}
+You can configure a partitioner for parallel-\/iteration tasks to run with different scheduling methods, such as guided partitioning, dynamic partitioning, and static partitioning. The following example creates two parallel-\/iteration tasks using two different partitioners, one with the static partitioning algorithm and another one with the guided partitioning algorithm\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{std::vector<int>\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}(1024,\ 0);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ two\ partitioners\ with\ a\ chunk\ size\ of\ 10}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_static_partitioner}{tf::StaticPartitioner}}\ static\_partitioner(10);}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_guided_partitioner}{tf::GuidedPartitioner}}\ guided\_partitioner(10);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ parallel-\/iteration\ task\ with\ static\ partitioner}}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each(}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.begin(),\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.end(),\ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}parallel\ iteration\ on\ item\ "{}}\ <<\ i\ <<\ \textcolor{stringliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \},}
+\DoxyCodeLine{\ \ static\_partitioner}
+\DoxyCodeLine{);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ create\ a\ parallel-\/iteration\ task\ with\ guided\ partitioner}}
+\DoxyCodeLine{\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.for\_each(}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.begin(),\ \mbox{\hyperlink{benchmarks_2for__each_2for__each_8hpp_ad86cbaae2e3f21959301250e9f7c2701}{vec}}.end(),\ [\&](\textcolor{keywordtype}{int}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}})\ \{}
+\DoxyCodeLine{\ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}parallel\ iteration\ on\ item\ "{}}\ <<\ i\ <<\ \textcolor{stringliteral}{'\(\backslash\)n'};}
+\DoxyCodeLine{\ \ \},}
+\DoxyCodeLine{\ \ guided\_partitioner}
+\DoxyCodeLine{);}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+By default, parallel-\/iteration tasks use \doxylink{namespacetf_ace2c5adcd5039483eebb6dbdbb6f33e3}{tf\+::\+Default\+Partitioner} if no partitioner is specified. 
+\end{DoxyAttention}

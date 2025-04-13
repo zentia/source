@@ -1,0 +1,769 @@
+\chapter{xx\+Hash fast digest algorithm}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec}{}\label{md_runtime_2xx_hash_2doc_2xxhash__spec}\index{xxHash fast digest algorithm@{xxHash fast digest algorithm}}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md392}{}\doxysubsection{\texorpdfstring{Notices}{Notices}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md392}
+Copyright (c) Yann Collet
+
+Permission is granted to copy and distribute this document for any purpose and without charge, including translations into other languages and incorporation into compilations, provided that the copyright notice and this notice are preserved, and that any substantive changes or deletions from the original are clearly marked. Distribution of this document is unlimited.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md393}{}\doxysubsection{\texorpdfstring{Version}{Version}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md393}
+0.\+2.\+0 (29/06/23)\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md394}{}\doxysection{\texorpdfstring{Table of Contents}{Table of Contents}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md394}
+
+\begin{DoxyItemize}
+\item Introduction
+\item XXH32 algorithm description
+\item XXH64 algorithm description
+\item XXH3 algorithm description
+\begin{DoxyItemize}
+\item Small inputs
+\item Medium inputs
+\item Large inputs
+\end{DoxyItemize}
+\item Performance considerations
+\item Reference Implementation
+\end{DoxyItemize}\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md395}{}\doxysection{\texorpdfstring{Introduction}{Introduction}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md395}
+This document describes the xx\+Hash digest algorithm for both 32-\/bit and 64-\/bit variants, named {\ttfamily XXH32} and {\ttfamily XXH64}. The algorithm takes an input a message of arbitrary length and an optional seed value, then produces an output of 32 or 64-\/bit as "{}fingerprint"{} or "{}digest"{}.
+
+xx\+Hash is primarily designed for speed. It is labeled non-\/cryptographic, and is not meant to avoid intentional collisions (same digest for 2 different messages), or to prevent producing a message with a predefined digest.
+
+XXH32 is designed to be fast on 32-\/bit machines. XXH64 is designed to be fast on 64-\/bit machines. Both variants produce different output. However, a given variant shall produce exactly the same output, irrespective of the cpu / os used. In particular, the result remains identical whatever the endianness and width of the cpu is.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md396}{}\doxysubsection{\texorpdfstring{Operation notations}{Operation notations}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md396}
+All operations are performed modulo \{32,64\} bits. Arithmetic overflows are expected. {\ttfamily XXH32} uses 32-\/bit modular operations. {\ttfamily XXH64} and {\ttfamily XXH3} use 64-\/bit modular operations. When an operation ingests input or secret as multi-\/bytes values, it reads it using little-\/endian convention.
+
+
+\begin{DoxyItemize}
+\item {\ttfamily +}\+: denotes modular addition
+\item {\ttfamily -\/}\+: denotes modular subtraction
+\item {\ttfamily \texorpdfstring{$\ast$}{*}}\+: denotes modular multiplication
+\begin{DoxyItemize}
+\item {\bfseries{Exception\+:}} In {\ttfamily XXH3}, if it is in the form {\ttfamily (u128)x \texorpdfstring{$\ast$}{*} (u128)y}, it denotes 64-\/bit by 64-\/bit normal multiplication into a full 128-\/bit result.
+\end{DoxyItemize}
+\item {\ttfamily X \texorpdfstring{$<$}{<}\texorpdfstring{$<$}{<}\texorpdfstring{$<$}{<} s}\+: denotes the value obtained by circularly shifting (rotating) {\ttfamily X} left by {\ttfamily s} bit positions.
+\item {\ttfamily X \texorpdfstring{$>$}{>}\texorpdfstring{$>$}{>} s}\+: denotes the value obtained by shifting {\ttfamily X} right by s bit positions. Upper {\ttfamily s} bits become {\ttfamily 0}.
+\item {\ttfamily X \texorpdfstring{$<$}{<}\texorpdfstring{$<$}{<} s}\+: denotes the value obtained by shifting {\ttfamily X} left by s bit positions. Lower {\ttfamily s} bits become {\ttfamily 0}.
+\item {\ttfamily X xor Y}\+: denotes the bit-\/wise XOR of {\ttfamily X} and {\ttfamily Y} (same width).
+\item {\ttfamily X \texorpdfstring{$\vert$}{|} Y}\+: denotes the bit-\/wise OR of {\ttfamily X} and {\ttfamily Y} (same width).
+\item {\ttfamily \texorpdfstring{$\sim$}{\string~}X}\+: denotes the bit-\/wise negation of {\ttfamily X}.
+\end{DoxyItemize}\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md397}{}\doxysection{\texorpdfstring{XXH32 Algorithm Description}{XXH32 Algorithm Description}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md397}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md398}{}\doxysubsection{\texorpdfstring{Overview}{Overview}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md398}
+We begin by supposing that we have a message of any length {\ttfamily L} as input, and that we wish to find its digest. Here {\ttfamily L} is an arbitrary nonnegative integer; {\ttfamily L} may be zero. The following steps are performed to compute the digest of the message.
+
+The algorithm collect and transform input in {\itshape stripes} of 16 bytes. The transforms are stored inside 4 "{}accumulators"{}, each one storing an unsigned 32-\/bit value. Each accumulator can be processed independently in parallel, speeding up processing for cpu with multiple execution units.
+
+The algorithm uses 32-\/bits addition, multiplication, rotate, shift and xor operations. Many operations require some 32-\/bits prime number constants, all defined below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u32\ PRIME32\_1\ =\ 0x9E3779B1U;\ \ \textcolor{comment}{//\ 0b10011110001101110111100110110001}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u32\ PRIME32\_2\ =\ 0x85EBCA77U;\ \ \textcolor{comment}{//\ 0b10000101111010111100101001110111}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u32\ PRIME32\_3\ =\ 0xC2B2AE3DU;\ \ \textcolor{comment}{//\ 0b11000010101100101010111000111101}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u32\ PRIME32\_4\ =\ 0x27D4EB2FU;\ \ \textcolor{comment}{//\ 0b00100111110101001110101100101111}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u32\ PRIME32\_5\ =\ 0x165667B1U;\ \ \textcolor{comment}{//\ 0b00010110010101100110011110110001}}
+
+\end{DoxyCode}
+
+
+These constants are prime numbers, and feature a good mix of bits 1 and 0, neither too regular, nor too dissymmetric. These properties help dispersion capabilities.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md399}{}\doxysubsection{\texorpdfstring{Step 1. Initialize internal accumulators}{Step 1. Initialize internal accumulators}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md399}
+Each accumulator gets an initial value based on optional {\ttfamily seed} input. Since the {\ttfamily seed} is optional, it can be {\ttfamily 0}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u32\ acc1\ =\ seed\ +\ PRIME32\_1\ +\ PRIME32\_2;}
+\DoxyCodeLine{u32\ acc2\ =\ seed\ +\ PRIME32\_2;}
+\DoxyCodeLine{u32\ acc3\ =\ seed\ +\ 0;}
+\DoxyCodeLine{u32\ acc4\ =\ seed\ -\/\ PRIME32\_1;}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md400}{}\doxysubsubsection{\texorpdfstring{Special case\+: input is less than 16 bytes}{Special case\+: input is less than 16 bytes}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md400}
+When the input is too small (\texorpdfstring{$<$}{<} 16 bytes), the algorithm will not process any stripes. Consequently, it will not make use of parallel accumulators.
+
+In this case, a simplified initialization is performed, using a single accumulator\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u32\ acc\ \ =\ seed\ +\ PRIME32\_5;}
+
+\end{DoxyCode}
+
+
+The algorithm then proceeds directly to step 4.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md401}{}\doxysubsection{\texorpdfstring{Step 2. Process stripes}{Step 2. Process stripes}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md401}
+A stripe is a contiguous segment of 16 bytes. It is evenly divided into 4 {\itshape lanes}, of 4 bytes each. The first lane is used to update accumulator 1, the second lane is used to update accumulator 2, and so on.
+
+Each lane read its associated 32-\/bit value using {\bfseries{little-\/endian}} convention.
+
+For each \{lane, accumulator\}, the update process is called a {\itshape round}, and applies the following formula\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{accN\ =\ accN\ +\ (laneN\ *\ PRIME32\_2);}
+\DoxyCodeLine{accN\ =\ accN\ <<<\ 13;}
+\DoxyCodeLine{accN\ =\ accN\ *\ PRIME32\_1;}
+
+\end{DoxyCode}
+
+
+This shuffles the bits so that any bit from input {\itshape lane} impacts several bits in output {\itshape accumulator}. All operations are performed modulo 2\texorpdfstring{$^\wedge$}{\string^}32.
+
+Input is consumed one full stripe at a time. Step 2 is looped as many times as necessary to consume the whole input, except for the last remaining bytes which cannot form a stripe (\texorpdfstring{$<$}{<} 16 bytes). When that happens, move to step 3.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md402}{}\doxysubsection{\texorpdfstring{Step 3. Accumulator convergence}{Step 3. Accumulator convergence}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md402}
+All 4 lane accumulators from the previous steps are merged to produce a single remaining accumulator of the same width (32-\/bit). The associated formula is as follows\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{acc\ =\ (acc1\ <<<\ 1)\ +\ (acc2\ <<<\ 7)\ +\ (acc3\ <<<\ 12)\ +\ (acc4\ <<<\ 18);}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md403}{}\doxysubsection{\texorpdfstring{Step 4. Add input length}{Step 4. Add input length}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md403}
+The input total length is presumed known at this stage. This step is just about adding the length to accumulator, so that it participates to final mixing.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{acc\ =\ acc\ +\ (u32)inputLength;}
+
+\end{DoxyCode}
+
+
+Note that, if input length is so large that it requires more than 32-\/bits, only the lower 32-\/bits are added to the accumulator.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md404}{}\doxysubsection{\texorpdfstring{Step 5. Consume remaining input}{Step 5. Consume remaining input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md404}
+There may be up to 15 bytes remaining to consume from the input. The final stage will digest them according to following pseudo-\/code\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (remainingLength\ >=\ 4)\ \{}
+\DoxyCodeLine{\ \ \ \ lane\ =\ read\_32bit\_little\_endian(input\_ptr);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ acc\ +\ lane\ *\ PRIME32\_3;}
+\DoxyCodeLine{\ \ \ \ acc\ =\ (acc\ <<<\ 17)\ *\ PRIME32\_4;}
+\DoxyCodeLine{\ \ \ \ input\_ptr\ +=\ 4;\ remainingLength\ -\/=\ 4;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (remainingLength\ >=\ 1)\ \{}
+\DoxyCodeLine{\ \ \ \ lane\ =\ read\_byte(input\_ptr);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ acc\ +\ lane\ *\ PRIME32\_5;}
+\DoxyCodeLine{\ \ \ \ acc\ =\ (acc\ <<<\ 11)\ *\ PRIME32\_1;}
+\DoxyCodeLine{\ \ \ \ input\_ptr\ +=\ 1;\ remainingLength\ -\/=\ 1;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+This process ensures that all input bytes are present in the final mix.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md405}{}\doxysubsection{\texorpdfstring{Step 6. Final mix (avalanche)}{Step 6. Final mix (avalanche)}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md405}
+The final mix ensures that all input bits have a chance to impact any bit in the output digest, resulting in an unbiased distribution. This is also called avalanche effect.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{acc\ =\ acc\ xor\ (acc\ >>\ 15);}
+\DoxyCodeLine{acc\ =\ acc\ *\ PRIME32\_2;}
+\DoxyCodeLine{acc\ =\ acc\ xor\ (acc\ >>\ 13);}
+\DoxyCodeLine{acc\ =\ acc\ *\ PRIME32\_3;}
+\DoxyCodeLine{acc\ =\ acc\ xor\ (acc\ >>\ 16);}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md406}{}\doxysubsection{\texorpdfstring{Step 7. Output}{Step 7. Output}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md406}
+The {\ttfamily \doxylink{group___x_x_h32__family_ga49360c30d0eef2cd4e20cabfe6ab1c55}{XXH32()}} function produces an unsigned 32-\/bit value as output.
+
+For systems which require to store and/or display the result in binary or hexadecimal format, the canonical format is defined to reproduce the same value as the natural decimal format, hence follows {\bfseries{big-\/endian}} convention (most significant byte first).\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md407}{}\doxysection{\texorpdfstring{XXH64 Algorithm Description}{XXH64 Algorithm Description}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md407}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md408}{}\doxysubsection{\texorpdfstring{Overview}{Overview}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md408}
+{\ttfamily XXH64}\textquotesingle{}s algorithm structure is very similar to {\ttfamily XXH32} one. The major difference is that {\ttfamily XXH64} uses 64-\/bit arithmetic, speeding up memory transfer for 64-\/bit compliant systems, but also relying on cpu capability to efficiently perform 64-\/bit operations.
+
+The algorithm collects and transforms input in {\itshape stripes} of 32 bytes. The transforms are stored inside 4 "{}accumulators"{}, each one storing an unsigned 64-\/bit value. Each accumulator can be processed independently in parallel, speeding up processing for cpu with multiple execution units.
+
+The algorithm uses 64-\/bit addition, multiplication, rotate, shift and xor operations. Many operations require some 64-\/bit prime number constants, all defined below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_1\ =\ 0x9E3779B185EBCA87ULL;\ \ \textcolor{comment}{//\ 0b1001111000110111011110011011000110000101111010111100101010000111}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_2\ =\ 0xC2B2AE3D27D4EB4FULL;\ \ \textcolor{comment}{//\ 0b1100001010110010101011100011110100100111110101001110101101001111}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_3\ =\ 0x165667B19E3779F9ULL;\ \ \textcolor{comment}{//\ 0b0001011001010110011001111011000110011110001101110111100111111001}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_4\ =\ 0x85EBCA77C2B2AE63ULL;\ \ \textcolor{comment}{//\ 0b1000010111101011110010100111011111000010101100101010111001100011}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_5\ =\ 0x27D4EB2F165667C5ULL;\ \ \textcolor{comment}{//\ 0b0010011111010100111010110010111100010110010101100110011111000101}}
+
+\end{DoxyCode}
+
+
+These constants are prime numbers, and feature a good mix of bits 1 and 0, neither too regular, nor too dissymmetric. These properties help dispersion capabilities.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md409}{}\doxysubsection{\texorpdfstring{Step 1. Initialize internal accumulators}{Step 1. Initialize internal accumulators}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md409}
+Each accumulator gets an initial value based on optional {\ttfamily seed} input. Since the {\ttfamily seed} is optional, it can be {\ttfamily 0}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u64\ acc1\ =\ seed\ +\ PRIME64\_1\ +\ PRIME64\_2;}
+\DoxyCodeLine{u64\ acc2\ =\ seed\ +\ PRIME64\_2;}
+\DoxyCodeLine{u64\ acc3\ =\ seed\ +\ 0;}
+\DoxyCodeLine{u64\ acc4\ =\ seed\ -\/\ PRIME64\_1;}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md410}{}\doxysubsubsection{\texorpdfstring{Special case\+: input is less than 32 bytes}{Special case\+: input is less than 32 bytes}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md410}
+When the input is too small (\texorpdfstring{$<$}{<} 32 bytes), the algorithm will not process any stripes. Consequently, it will not make use of parallel accumulators.
+
+In this case, a simplified initialization is performed, using a single accumulator\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u64\ acc\ \ =\ seed\ +\ PRIME64\_5;}
+
+\end{DoxyCode}
+
+
+The algorithm then proceeds directly to step 4.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md411}{}\doxysubsection{\texorpdfstring{Step 2. Process stripes}{Step 2. Process stripes}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md411}
+A stripe is a contiguous segment of 32 bytes. It is evenly divided into 4 {\itshape lanes}, of 8 bytes each. The first lane is used to update accumulator 1, the second lane is used to update accumulator 2, and so on.
+
+Each lane read its associated 64-\/bit value using {\bfseries{little-\/endian}} convention.
+
+For each \{lane, accumulator\}, the update process is called a {\itshape round}, and applies the following formula\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a90927ae1fde1878652edc202d9d55bb7}{round}}(accN,laneN):}
+\DoxyCodeLine{\ \ accN\ =\ accN\ +\ (laneN\ *\ PRIME64\_2);}
+\DoxyCodeLine{\ \ accN\ =\ accN\ <<<\ 31;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ accN\ *\ PRIME64\_1;}
+
+\end{DoxyCode}
+
+
+This shuffles the bits so that any bit from input {\itshape lane} impacts several bits in output {\itshape accumulator}. All operations are performed modulo 2\texorpdfstring{$^\wedge$}{\string^}64.
+
+Input is consumed one full stripe at a time. Step 2 is looped as many times as necessary to consume the whole input, except for the last remaining bytes which cannot form a stripe (\texorpdfstring{$<$}{<} 32 bytes). When that happens, move to step 3.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md412}{}\doxysubsection{\texorpdfstring{Step 3. Accumulator convergence}{Step 3. Accumulator convergence}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md412}
+All 4 lane accumulators from previous steps are merged to produce a single remaining accumulator of same width (64-\/bit). The associated formula is as follows.
+
+Note that accumulator convergence is more complex than 32-\/bit variant, and requires to define another function called {\itshape merge\+Accumulator()}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{mergeAccumulator(acc,accN):}
+\DoxyCodeLine{\ \ acc\ \ =\ acc\ xor\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a90927ae1fde1878652edc202d9d55bb7}{round}}(0,\ accN);}
+\DoxyCodeLine{\ \ acc\ \ =\ acc\ *\ PRIME64\_1;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ acc\ +\ PRIME64\_4;}
+
+\end{DoxyCode}
+
+
+which is then used in the convergence formula\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{acc\ =\ (acc1\ <<<\ 1)\ +\ (acc2\ <<<\ 7)\ +\ (acc3\ <<<\ 12)\ +\ (acc4\ <<<\ 18);}
+\DoxyCodeLine{acc\ =\ mergeAccumulator(acc,\ acc1);}
+\DoxyCodeLine{acc\ =\ mergeAccumulator(acc,\ acc2);}
+\DoxyCodeLine{acc\ =\ mergeAccumulator(acc,\ acc3);}
+\DoxyCodeLine{acc\ =\ mergeAccumulator(acc,\ acc4);}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md413}{}\doxysubsection{\texorpdfstring{Step 4. Add input length}{Step 4. Add input length}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md413}
+The input total length is presumed known at this stage. This step is just about adding the length to accumulator, so that it participates to final mixing.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{acc\ =\ acc\ +\ inputLength;}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md414}{}\doxysubsection{\texorpdfstring{Step 5. Consume remaining input}{Step 5. Consume remaining input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md414}
+There may be up to 31 bytes remaining to consume from the input. The final stage will digest them according to following pseudo-\/code\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (remainingLength\ >=\ 8)\ \{}
+\DoxyCodeLine{\ \ \ \ lane\ =\ read\_64bit\_little\_endian(input\_ptr);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ acc\ xor\ \mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a90927ae1fde1878652edc202d9d55bb7}{round}}(0,\ lane);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ (acc\ <<<\ 27)\ *\ PRIME64\_1;}
+\DoxyCodeLine{\ \ \ \ acc\ =\ acc\ +\ PRIME64\_4;}
+\DoxyCodeLine{\ \ \ \ input\_ptr\ +=\ 8;\ remainingLength\ -\/=\ 8;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{if}\ (remainingLength\ >=\ 4)\ \{}
+\DoxyCodeLine{\ \ \ \ lane\ =\ read\_32bit\_little\_endian(input\_ptr);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ acc\ xor\ (lane\ *\ PRIME64\_1);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ (acc\ <<<\ 23)\ *\ PRIME64\_2;}
+\DoxyCodeLine{\ \ \ \ acc\ =\ acc\ +\ PRIME64\_3;}
+\DoxyCodeLine{\ \ \ \ input\_ptr\ +=\ 4;\ remainingLength\ -\/=\ 4;}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordflow}{while}\ (remainingLength\ >=\ 1)\ \{}
+\DoxyCodeLine{\ \ \ \ lane\ =\ read\_byte(input\_ptr);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ acc\ xor\ (lane\ *\ PRIME64\_5);}
+\DoxyCodeLine{\ \ \ \ acc\ =\ (acc\ <<<\ 11)\ *\ PRIME64\_1;}
+\DoxyCodeLine{\ \ \ \ input\_ptr\ +=\ 1;\ remainingLength\ -\/=\ 1;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+This process ensures that all input bytes are present in the final mix.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md415}{}\doxysubsection{\texorpdfstring{Step 6. Final mix (avalanche)}{Step 6. Final mix (avalanche)}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md415}
+The final mix ensures that all input bits have a chance to impact any bit in the output digest, resulting in an unbiased distribution. This is also called avalanche effect.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{acc\ =\ acc\ xor\ (acc\ >>\ 33);}
+\DoxyCodeLine{acc\ =\ acc\ *\ PRIME64\_2;}
+\DoxyCodeLine{acc\ =\ acc\ xor\ (acc\ >>\ 29);}
+\DoxyCodeLine{acc\ =\ acc\ *\ PRIME64\_3;}
+\DoxyCodeLine{acc\ =\ acc\ xor\ (acc\ >>\ 32);}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md416}{}\doxysubsection{\texorpdfstring{Step 7. Output}{Step 7. Output}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md416}
+The {\ttfamily \doxylink{group___x_x_h64__family_ga582b359c2b7a04d83837f58e72e60a09}{XXH64()}} function produces an unsigned 64-\/bit value as output.
+
+For systems which require to store and/or display the result in binary or hexadecimal format, the canonical format is defined to reproduce the same value as the natural decimal format, hence follows {\bfseries{big-\/endian}} convention (most significant byte first).\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md417}{}\doxysection{\texorpdfstring{XXH3 Algorithm Overview}{XXH3 Algorithm Overview}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md417}
+XXH3 comes in two different versions\+: XXH3-\/64 and XXH3-\/128 (or XXH128), producing 64 and 128 bits of output, respectively.
+
+XXH3 uses different algorithms for small (0-\/16 bytes), medium (17-\/240 bytes), and large (241+ bytes) inputs. The algorithms for small and medium inputs are optimized for performance. The three algorithms are described in the following sections.
+
+Many operations require some 64-\/bit prime number constants, which are mostly the same constants used in XXH32 and XXH64, all defined below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME32\_1\ =\ 0x9E3779B1U;\ \ \textcolor{comment}{//\ 0b10011110001101110111100110110001}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME32\_2\ =\ 0x85EBCA77U;\ \ \textcolor{comment}{//\ 0b10000101111010111100101001110111}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME32\_3\ =\ 0xC2B2AE3DU;\ \ \textcolor{comment}{//\ 0b11000010101100101010111000111101}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_1\ =\ 0x9E3779B185EBCA87ULL;\ \ \textcolor{comment}{//\ 0b1001111000110111011110011011000110000101111010111100101010000111}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_2\ =\ 0xC2B2AE3D27D4EB4FULL;\ \ \textcolor{comment}{//\ 0b1100001010110010101011100011110100100111110101001110101101001111}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_3\ =\ 0x165667B19E3779F9ULL;\ \ \textcolor{comment}{//\ 0b0001011001010110011001111011000110011110001101110111100111111001}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_4\ =\ 0x85EBCA77C2B2AE63ULL;\ \ \textcolor{comment}{//\ 0b1000010111101011110010100111011111000010101100101010111001100011}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME64\_5\ =\ 0x27D4EB2F165667C5ULL;\ \ \textcolor{comment}{//\ 0b0010011111010100111010110010111100010110010101100110011111000101}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME\_MX1\ =\ 0x165667919E3779F9ULL;\ \ \textcolor{comment}{//\ 0b0001011001010110011001111001000110011110001101110111100111111001}}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u64\ PRIME\_MX2\ =\ 0x9FB21C651E98DF25ULL;\ \ \textcolor{comment}{//\ 0b1001111110110010000111000110010100011110100110001101111100100101}}
+
+\end{DoxyCode}
+
+
+The {\ttfamily \doxylink{xxh__x86dispatch_8h_a3d8a8a2f1875f7d46d9acbc7658d40f2}{XXH3\+\_\+64bits()}} function produces an unsigned 64-\/bit value. The {\ttfamily \doxylink{xxh__x86dispatch_8h_a7bd9fdebde0f76eda9bda4fdb4b52090}{XXH3\+\_\+128bits()}} function produces a {\ttfamily \doxylink{struct_x_x_h128__hash__t}{XXH128\+\_\+hash\+\_\+t}} struct containing {\ttfamily low64} and {\ttfamily high64} -\/ the lower and higher 64-\/bit half values of the result, respectively.
+
+For systems requiring storing and/or displaying the result in binary or hexadecimal format, the canonical format is defined to reproduce the same value as the natural decimal format, hence following {\bfseries{big-\/endian}} convention (most significant byte first).\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md418}{}\doxysubsection{\texorpdfstring{Seed and Secret}{Seed and Secret}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md418}
+XXH3 provides seeded hashing by introducing two configurable constants used in the hashing process\+: the seed and the secret. The seed is an unsigned 64-\/bit value, and the secret is an array of bytes that is at least 136 bytes in size. The default seed is 0, and the default secret is the following 192-\/byte value\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{static}\ \textcolor{keyword}{const}\ u8\ defaultSecret[192]\ =\ \{}
+\DoxyCodeLine{\ \ 0xb8,\ 0xfe,\ 0x6c,\ 0x39,\ 0x23,\ 0xa4,\ 0x4b,\ 0xbe,\ 0x7c,\ 0x01,\ 0x81,\ 0x2c,\ 0xf7,\ 0x21,\ 0xad,\ 0x1c,}
+\DoxyCodeLine{\ \ 0xde,\ 0xd4,\ 0x6d,\ 0xe9,\ 0x83,\ 0x90,\ 0x97,\ 0xdb,\ 0x72,\ 0x40,\ 0xa4,\ 0xa4,\ 0xb7,\ 0xb3,\ 0x67,\ 0x1f,}
+\DoxyCodeLine{\ \ 0xcb,\ 0x79,\ 0xe6,\ 0x4e,\ 0xcc,\ 0xc0,\ 0xe5,\ 0x78,\ 0x82,\ 0x5a,\ 0xd0,\ 0x7d,\ 0xcc,\ 0xff,\ 0x72,\ 0x21,}
+\DoxyCodeLine{\ \ 0xb8,\ 0x08,\ 0x46,\ 0x74,\ 0xf7,\ 0x43,\ 0x24,\ 0x8e,\ 0xe0,\ 0x35,\ 0x90,\ 0xe6,\ 0x81,\ 0x3a,\ 0x26,\ 0x4c,}
+\DoxyCodeLine{\ \ 0x3c,\ 0x28,\ 0x52,\ 0xbb,\ 0x91,\ 0xc3,\ 0x00,\ 0xcb,\ 0x88,\ 0xd0,\ 0x65,\ 0x8b,\ 0x1b,\ 0x53,\ 0x2e,\ 0xa3,}
+\DoxyCodeLine{\ \ 0x71,\ 0x64,\ 0x48,\ 0x97,\ 0xa2,\ 0x0d,\ 0xf9,\ 0x4e,\ 0x38,\ 0x19,\ 0xef,\ 0x46,\ 0xa9,\ 0xde,\ 0xac,\ 0xd8,}
+\DoxyCodeLine{\ \ 0xa8,\ 0xfa,\ 0x76,\ 0x3f,\ 0xe3,\ 0x9c,\ 0x34,\ 0x3f,\ 0xf9,\ 0xdc,\ 0xbb,\ 0xc7,\ 0xc7,\ 0x0b,\ 0x4f,\ 0x1d,}
+\DoxyCodeLine{\ \ 0x8a,\ 0x51,\ 0xe0,\ 0x4b,\ 0xcd,\ 0xb4,\ 0x59,\ 0x31,\ 0xc8,\ 0x9f,\ 0x7e,\ 0xc9,\ 0xd9,\ 0x78,\ 0x73,\ 0x64,}
+\DoxyCodeLine{\ \ 0xea,\ 0xc5,\ 0xac,\ 0x83,\ 0x34,\ 0xd3,\ 0xeb,\ 0xc3,\ 0xc5,\ 0x81,\ 0xa0,\ 0xff,\ 0xfa,\ 0x13,\ 0x63,\ 0xeb,}
+\DoxyCodeLine{\ \ 0x17,\ 0x0d,\ 0xdd,\ 0x51,\ 0xb7,\ 0xf0,\ 0xda,\ 0x49,\ 0xd3,\ 0x16,\ 0x55,\ 0x26,\ 0x29,\ 0xd4,\ 0x68,\ 0x9e,}
+\DoxyCodeLine{\ \ 0x2b,\ 0x16,\ 0xbe,\ 0x58,\ 0x7d,\ 0x47,\ 0xa1,\ 0xfc,\ 0x8f,\ 0xf8,\ 0xb8,\ 0xd1,\ 0x7a,\ 0xd0,\ 0x31,\ 0xce,}
+\DoxyCodeLine{\ \ 0x45,\ 0xcb,\ 0x3a,\ 0x8f,\ 0x95,\ 0x16,\ 0x04,\ 0x28,\ 0xaf,\ 0xd7,\ 0xfb,\ 0xca,\ 0xbb,\ 0x4b,\ 0x40,\ 0x7e,}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+
+
+The seed and the secret can be optionally specified using the {\ttfamily \texorpdfstring{$\ast$}{*}\+\_\+with\+Secret} and {\ttfamily \texorpdfstring{$\ast$}{*}\+\_\+with\+Seed} versions of the hash function.
+
+The seed and the secret cannot be specified simultaneously ({\ttfamily \texorpdfstring{$\ast$}{*}\+\_\+with\+Secret\+And\+Seed} is actually {\ttfamily \texorpdfstring{$\ast$}{*}\+\_\+with\+Seed} for short and medium inputs \texorpdfstring{$<$}{<}= 240 bytes, and {\ttfamily \texorpdfstring{$\ast$}{*}\+\_\+with\+Secret} for large inputs). When one is specified, the other one uses the default value. There is one exception though\+: when input is large (\texorpdfstring{$>$}{>} 240 bytes) and a seed is given, a secret is derived from the seed value and the default secret using the following procedure\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{deriveSecret(u64\ seed):}
+\DoxyCodeLine{\ \ u64\ derivedSecret[24]\ =\ defaultSecret[0:192];}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 12;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ derivedSecret[i*2]\ +=\ seed;}
+\DoxyCodeLine{\ \ \ \ derivedSecret[i*2+1]\ -\/=\ seed;}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ derivedSecret;\ \textcolor{comment}{//\ convert\ to\ u8[192]\ (little-\/endian)}}
+
+\end{DoxyCode}
+
+
+The derivation treats the secrets as 24 64-\/bit values. In XXH3 algorithms, the secret is always read similarly by treating a contiguous segment of the array as one or more 32-\/bit or 64-\/bit values. {\bfseries{The secret values are always read using little-\/endian convention}}.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md419}{}\doxysubsection{\texorpdfstring{Final Mixing Step (avalanche)}{Final Mixing Step (avalanche)}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md419}
+To make sure that all input bits have a chance to impact any bit in the output digest (avalanche effect), the final step of the XXH3 algorithm is usually one of the two fixed operations that mix the bits in a 64-\/bit value. These operations are denoted {\ttfamily avalanche()} and {\ttfamily avalanche\+\_\+\+XXH64()} in the following XXH3 description.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{avalanche(u64\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}):}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ xor\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ 37);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ *\ PRIME\_MX1;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ xor\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ 32);}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{avalanche\_XXH64(u64\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}):}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ xor\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ 33);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ *\ PRIME64\_2;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ xor\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ 29);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ *\ PRIME64\_3;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ xor\ (\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ >>\ 32);}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}};}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md420}{}\doxysection{\texorpdfstring{XXH3 Algorithm Description (for small inputs)}{XXH3 Algorithm Description (for small inputs)}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md420}
+The algorithm for small inputs (0-\/16 bytes of input) is further divided into 4 cases\+: empty, 1-\/3 bytes, 4-\/8 bytes, and 9-\/16 bytes of input.
+
+The algorithm uses byte-\/swap operations. The byte-\/swap operation reverses the byte order in a 32-\/bit or 64-\/bit value. It is denoted {\ttfamily bswap32} and {\ttfamily bswap64} for its 32-\/bit and 64-\/bit versions, respectively.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md421}{}\doxysubsection{\texorpdfstring{Empty input}{Empty input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md421}
+The hash of empty input is calculated from the seed and a segment of the secret\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{XXH3\_64\_empty():}
+\DoxyCodeLine{\ \ u64\ secretWords[2]\ =\ secret[56:72];}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ avalanche\_XXH64(seed\ xor\ secretWords[0]\ xor\ secretWords[1]);}
+\DoxyCodeLine{}
+\DoxyCodeLine{XXH3\_128\_empty():}
+\DoxyCodeLine{\ \ u64\ secretWords[4]\ =\ secret[64:96];}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \{avalanche\_XXH64(seed\ xor\ secretWords[0]\ xor\ secretWords[1]),\ \textcolor{comment}{//\ lower\ half}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ avalanche\_XXH64(seed\ xor\ secretWords[2]\ xor\ secretWords[3])\};\ \textcolor{comment}{//\ higher\ half}}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md422}{}\doxysubsection{\texorpdfstring{1-\/3 bytes of input}{1-\/3 bytes of input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md422}
+The algorithm starts from a single 32-\/bit value combining the input bytes and its length\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u32\ combined\ =\ (u32)input[inputLength-\/1]\ |\ ((u32)inputLength\ <<\ 8)\ |}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((u32)input[0]\ <<\ 16)\ |\ ((u32)input[inputLength>>1]\ <<\ 24);}
+\DoxyCodeLine{\textcolor{comment}{//\ LSB\ \ \ \ \ \ \ \ \ \ 8\ \ \ \ \ \ \ 16\ \ \ \ \ \ \ \ \ \ \ 24\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MSB}}
+\DoxyCodeLine{\textcolor{comment}{//\ \ |\ last\ byte\ |\ length\ |\ first\ byte\ |\ middle-\/or-\/last\ byte\ |}}
+
+\end{DoxyCode}
+
+
+Then the final output is calculated from the value and the first 8 bytes (XXH3-\/64) or 16 bytes (XXH3-\/128) of the secret to produce the final result. The secret here is read as 32-\/bit values instead of the usual 64-\/bit values.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{XXH3\_64\_1to3():}
+\DoxyCodeLine{\ \ u32\ secretWords[2]\ =\ secret[0:8];}
+\DoxyCodeLine{\ \ u64\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ ((u64)(secretWords[0]\ xor\ secretWords[1])\ +\ seed)\ xor\ (u64)combined;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ avalanche\_XXH64(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{XXH3\_128\_1to3():}
+\DoxyCodeLine{\ \ u32\ secretWords[4]\ =\ secret[0:16];}
+\DoxyCodeLine{\ \ u64\ low\ =\ ((u64)(secretWords[0]\ xor\ secretWords[1])\ +\ seed)\ xor\ (u64)combined;}
+\DoxyCodeLine{\ \ u64\ high\ =\ ((u64)(secretWords[2]\ xor\ secretWords[3])\ -\/\ seed)\ xor\ (u64)(bswap32(combined)\ <<<\ 13);}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ note\ that\ the\ bswap32(combined)\ <<<\ 13\ above\ is\ 32-\/bit\ rotate}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \{avalanche\_XXH64(low),\ \textcolor{comment}{//\ lower\ half}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ avalanche\_XXH64(high)\};\ \textcolor{comment}{//\ higher\ half}}
+
+\end{DoxyCode}
+
+
+Note that the XXH3-\/64 result is the lower half of XXH3-\/128 result.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md423}{}\doxysubsection{\texorpdfstring{4-\/8 bytes of input}{4-\/8 bytes of input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md423}
+The algorithm starts from reading the first and last 4 bytes of the input as little-\/endian 32-\/bit values, and a modified seed\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u32\ inputFirst\ =\ input[0:4];}
+\DoxyCodeLine{u32\ inputLast\ =\ input[inputLength-\/4:inputLength];}
+\DoxyCodeLine{u64\ modifiedSeed\ =\ seed\ xor\ ((u64)bswap32((u32)lowerHalf(seed))\ <<\ 32);}
+
+\end{DoxyCode}
+
+
+Again, these values are combined with a segment of the secret to produce the final value.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{XXH3\_64\_4to8():}
+\DoxyCodeLine{\ \ u64\ secretWords[2]\ =\ secret[8:24];}
+\DoxyCodeLine{\ \ u64\ combined\ =\ (u64)inputLast\ |\ ((u64)inputFirst\ <<\ 32);}
+\DoxyCodeLine{\ \ u64\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ ((secretWords[0]\ xor\ secretWords[1])\ -\/\ modifiedSeed)\ xor\ combined;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ xor\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ <<<\ 49)\ xor\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ <<<\ 24);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ *\ PRIME\_MX2;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ xor\ ((\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ >>\ 35)\ +\ inputLength);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ *\ PRIME\_MX2;}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ xor\ (\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ >>\ 28);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_a6b8c693f1c0454a1128432b746966c17}{return}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{XXH3\_128\_4to8():}
+\DoxyCodeLine{\ \ u64\ secretWords[2]\ =\ secret[16:32];}
+\DoxyCodeLine{\ \ u64\ combined\ =\ (u64)inputFirst\ |\ ((u64)inputLast\ <<\ 32);}
+\DoxyCodeLine{\ \ u64\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ ((secretWords[0]\ xor\ secretWords[1])\ +\ modifiedSeed)\ xor\ combined;}
+\DoxyCodeLine{\ \ u128\ mulResult\ =\ (u128)\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ *\ (u128)(PRIME64\_1\ +\ (inputLength\ <<\ 2));}
+\DoxyCodeLine{\ \ u64\ high\ =\ higherHalf(mulResult);\ \textcolor{comment}{//\ mulResult\ >>\ 64}}
+\DoxyCodeLine{\ \ u64\ low\ =\ lowerHalf(mulResult);\ \textcolor{comment}{//\ mulResult\ \&\ 0xFFFFFFFFFFFFFFFF}}
+\DoxyCodeLine{\ \ high\ =\ high\ +\ (low\ <<\ 1);}
+\DoxyCodeLine{\ \ low\ =\ low\ xor\ (high\ >>\ 3);}
+\DoxyCodeLine{\ \ low\ =\ low\ xor\ (low\ >>\ 35);}
+\DoxyCodeLine{\ \ low\ =\ low\ *\ PRIME\_MX2;}
+\DoxyCodeLine{\ \ low\ =\ low\ xor\ (low\ >>\ 28);}
+\DoxyCodeLine{\ \ high\ =\ avalanche(high);}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_a6b8c693f1c0454a1128432b746966c17}{return}}\ \{low,\ high\};}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md424}{}\doxysubsection{\texorpdfstring{9-\/16 bytes of input}{9-\/16 bytes of input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md424}
+The algorithm starts from reading the first and last 8 bytes of the input as little-\/endian 64-\/bit values\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u64\ inputFirst\ =\ input[0:8];}
+\DoxyCodeLine{u64\ inputLast\ =\ input[inputLength-\/8:inputLength];}
+
+\end{DoxyCode}
+
+
+Once again, these values are combined with a segment of the secret to produce the final value.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{XXH3\_64\_9to16():}
+\DoxyCodeLine{\ \ u64\ secretWords[4]\ =\ secret[24:56];}
+\DoxyCodeLine{\ \ u64\ low\ =\ ((secretWords[0]\ xor\ secretWords[1])\ +\ seed)\ xor\ inputFirst;}
+\DoxyCodeLine{\ \ u64\ high\ =\ ((secretWords[2]\ xor\ secretWords[3])\ -\/\ seed)\ xor\ inputLast;}
+\DoxyCodeLine{\ \ u128\ mulResult\ =\ (u128)low\ *\ (u128)high;}
+\DoxyCodeLine{\ \ u64\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ inputLength\ +\ bswap64(low)\ +\ high\ +\ (u64)(lowerHalf(mulResult)\ xor\ higherHalf(mulResult));}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ avalanche(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{XXH3\_128\_9to16():}
+\DoxyCodeLine{\ \ u64\ secretWords[4]\ =\ secret[32:64];}
+\DoxyCodeLine{\ \ u64\ val1\ =\ ((secretWords[0]\ xor\ secretWords[1])\ -\/\ seed)\ xor\ inputFirst\ xor\ inputLast;}
+\DoxyCodeLine{\ \ u64\ val2\ =\ ((secretWords[2]\ xor\ secretWords[3])\ +\ seed)\ xor\ inputLast;}
+\DoxyCodeLine{\ \ u128\ mulResult\ =\ (u128)val1\ *\ (u128)PRIME64\_1;}
+\DoxyCodeLine{\ \ u64\ low\ =\ lowerHalf(mulResult)\ +\ ((u64)(inputLength\ -\/\ 1)\ <<\ 54);}
+\DoxyCodeLine{\ \ u64\ high\ =\ higherHalf(mulResult)\ +\ ((u64)higherHalf(val2)\ <<\ 32)\ +\ (u64)lowerHalf(val2)\ *\ PRIME32\_2;}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ the\ above\ line\ can\ also\ be\ simplified\ to\ higherHalf(mulResult)\ +\ val2\ +\ (u64)lowerHalf(val2)\ *\ (PRIME32\_2\ -\/\ 1);}}
+\DoxyCodeLine{\ \ low\ =\ low\ xor\ bswap64(high);}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ the\ following\ three\ lines\ are\ in\ fact\ a\ 128x64\ -\/>\ 128\ multiplication\ (\{low,high\}\ =\ (u128)\{low,high\}\ *\ PRIME64\_2)}}
+\DoxyCodeLine{\ \ u128\ mulResult2\ =\ (u128)low\ *\ (u128)PRIME64\_2;}
+\DoxyCodeLine{\ \ low\ =\ lowerHalf(mulResult2);}
+\DoxyCodeLine{\ \ high\ =\ higherHalf(mulResult2)\ +\ high\ *\ PRIME64\_2;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \{avalanche(low),\ \textcolor{comment}{//\ lower\ half}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ avalanche(high)\};\ \textcolor{comment}{//\ higher\ half}}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md425}{}\doxysection{\texorpdfstring{XXH3 Algorithm Description (for medium inputs)}{XXH3 Algorithm Description (for medium inputs)}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md425}
+This algorithm is used for medium inputs (17-\/240 bytes of input). Its internal hash state is stored inside 1 (XXH3-\/64) or 2 (XXH3-\/128) "{}accumulators"{}, each storing an unsigned 64-\/bit value.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md426}{}\doxysubsection{\texorpdfstring{Step 1. Initialize internal accumulators}{Step 1. Initialize internal accumulators}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md426}
+The accumulator(s) are initialized based on the input length.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ For\ XXH3-\/64}}
+\DoxyCodeLine{u64\ acc\ =\ inputLength\ *\ PRIME64\_1;}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ For\ XXH3-\/128}}
+\DoxyCodeLine{u64\ acc[2]\ =\ \{inputLength\ *\ PRIME64\_1,\ 0\};}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md427}{}\doxysubsection{\texorpdfstring{Step 2. Process the input}{Step 2. Process the input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md427}
+This step is further divided into two cases\+: one for 17-\/128 bytes of input, and one for 129-\/240 bytes of input.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md428}{}\doxysubsubsection{\texorpdfstring{Mixing operation}{Mixing operation}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md428}
+This step uses a mixing operation that mixes a 16-\/byte segment of data, a 16-\/byte segment of secret and the seed into a 64-\/bit value as a building block. This operation treat the segment of data and secret as little-\/endian 64-\/bit values.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{mixStep(u8\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_abd87654504355b4c1bb002dcb1d4d16a}{data}}[16],\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ secretOffset,\ u64\ seed):}
+\DoxyCodeLine{\ \ u64\ dataWords[2]\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_abd87654504355b4c1bb002dcb1d4d16a}{data}}[0:16];}
+\DoxyCodeLine{\ \ u64\ secretWords[2]\ =\ secret[secretOffset:secretOffset+16];}
+\DoxyCodeLine{\ \ u128\ mulResult\ =\ (u128)(dataWords[0]\ xor\ (secretWords[0]\ +\ seed))\ *}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (u128)(dataWords[1]\ xor\ (secretWords[1]\ -\/\ seed));}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ lowerHalf(mulResult)\ xor\ higherHalf(mulResult);}
+
+\end{DoxyCode}
+
+
+The mixing operation is always invoked in groups of two in XXH3-\/128, where two 16-\/byte segments of data are mixed with a 32-\/byte segment of secret, and the accumulators are updated accordingly.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{mixTwoChunks(u8\ data1[16],\ u8\ data2[16],\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ secretOffset,\ u64\ seed):}
+\DoxyCodeLine{\ \ u64\ dataWords1[2]\ =\ data1[0:16];\ \textcolor{comment}{//\ again,\ little-\/endian\ conversion}}
+\DoxyCodeLine{\ \ u64\ dataWords2[2]\ =\ data2[0:16];}
+\DoxyCodeLine{\ \ acc[0]\ =\ acc[0]\ +\ mixStep(data1,\ secretOffset,\ seed);}
+\DoxyCodeLine{\ \ acc[1]\ =\ acc[1]\ +\ mixStep(data2,\ secretOffset\ +\ 16,\ seed);}
+\DoxyCodeLine{\ \ acc[0]\ =\ acc[0]\ xor\ (dataWords2[0]\ +\ dataWords2[1]);}
+\DoxyCodeLine{\ \ acc[1]\ =\ acc[1]\ xor\ (dataWords1[0]\ +\ dataWords1[1]);}
+
+\end{DoxyCode}
+
+
+The input is split into several 16-\/byte chunks and mixed, and the result is added to the accumulator(s).\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md429}{}\doxysubsubsection{\texorpdfstring{17-\/128 bytes of input}{17-\/128 bytes of input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md429}
+The input is read as {\itshape N} 16-\/byte chunks starting from the beginning and {\itshape N} chunks starting from the end, where {\itshape N} is the smallest number that these 2\texorpdfstring{$\ast$}{*}\+N\texorpdfstring{$\ast$}{*} chunks cover the whole input. These chunks are paired up and mixed, and the results are accumulated to the accumulator(s).
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ the\ loop\ variable\ \`{}i`\ should\ be\ signed\ to\ avoid\ underflow\ in\ implementation}}
+\DoxyCodeLine{processInput\_XXH3\_64\_17to128():}
+\DoxyCodeLine{\ \ u64\ numRounds\ =\ ((inputLength\ -\/\ 1)\ >>\ 5)\ +\ 1;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ numRounds\ -\/\ 1;\ i\ >=\ 0;\ i-\/-\/)\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ offsetStart\ =\ i*16;}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ offsetEnd\ =\ inputLength\ -\/\ i*16\ -\/\ 16;}
+\DoxyCodeLine{\ \ \ \ acc\ +=\ mixStep(input[offsetStart:offsetStart+16],\ i*32,\ seed);}
+\DoxyCodeLine{\ \ \ \ acc\ +=\ mixStep(input[offsetEnd:offsetEnd+16],\ i*32+16,\ seed);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{}
+\DoxyCodeLine{processInput\_XXH3\_128\_17to128():}
+\DoxyCodeLine{\ \ u64\ numRounds\ =\ ((inputLength\ -\/\ 1)\ >>\ 5)\ +\ 1;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ numRounds\ -\/\ 1;\ i\ >=\ 0;\ i-\/-\/)\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ offsetStart\ =\ i*16;}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ offsetEnd\ =\ inputLength\ -\/\ i*16\ -\/\ 16;}
+\DoxyCodeLine{\ \ \ \ mixTwoChunks(input[offsetStart:offsetStart+16],\ input[offsetEnd:offsetEnd+16],\ i*32,\ seed);}
+\DoxyCodeLine{\ \ \}}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md430}{}\doxysubsubsection{\texorpdfstring{129-\/240 bytes of input}{129-\/240 bytes of input}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md430}
+The input is split into 16-\/byte (XXH3-\/64) or 32-\/byte (XXH3-\/128) chunks. The first 128 bytes are first mixed chunk by chunk, followed by an intermediate avalanche operation. Then the remaining full chunks are processed, and finally the last 16/32 bytes are treated as a chunk to process.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{processInput\_XXH3\_64\_129to240():}
+\DoxyCodeLine{\ \ u64\ numChunks\ =\ inputLength\ >>\ 4;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ acc\ +=\ mixStep(input[i*16:i*16+16],\ i*16,\ seed);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ acc\ =\ avalanche(acc);}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 8;\ i\ <\ numChunks;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ acc\ +=\ mixStep(input[i*16:i*16+16],\ (i-\/8)*16\ +\ 3,\ seed);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ acc\ +=\ mixStep(input[inputLength-\/16:inputLength],\ 119,\ seed);}
+\DoxyCodeLine{}
+\DoxyCodeLine{processInput\_XXH3\_128\_129to240():}
+\DoxyCodeLine{\ \ u64\ numChunks\ =\ inputLength\ >>\ 5;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 4;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ mixTwoChunks(input[i*32:i*32+16],\ input[i*32+16:i*32+32],\ i*32,\ seed);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ acc[0]\ =\ avalanche(acc[0]);}
+\DoxyCodeLine{\ \ acc[1]\ =\ avalanche(acc[1]);}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 4;\ i\ <\ numChunks;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ mixTwoChunks(input[i*32:i*32+16],\ input[i*32+16:i*32+32],\ (i-\/4)*32\ +\ 3,\ seed);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ note\ that\ the\ half-\/chunk\ order\ and\ the\ seed\ is\ different\ here}}
+\DoxyCodeLine{\ \ mixTwoChunks(input[inputLength-\/16:inputLength],\ input[inputLength-\/32:inputLength-\/16],\ 103,\ (u64)0\ -\/\ seed);}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md431}{}\doxysubsection{\texorpdfstring{Step 3. Finalization}{Step 3. Finalization}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md431}
+The final result is extracted from the accumulator(s).
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{XXH3\_64\_17to240():}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_a6b8c693f1c0454a1128432b746966c17}{return}}\ avalanche(acc);}
+\DoxyCodeLine{}
+\DoxyCodeLine{XXH3\_128\_17to240():}
+\DoxyCodeLine{\ \ u64\ low\ =\ acc[0]\ +\ acc[1];}
+\DoxyCodeLine{\ \ u64\ high\ =\ (acc[0]\ *\ PRIME64\_1)\ +\ (acc[1]\ *\ PRIME64\_4)\ +\ (((u64)inputLength\ -\/\ seed)\ *\ PRIME64\_2);}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ \{avalanche(low),\ \textcolor{comment}{//\ lower\ half}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ (u64)0\ -\/\ avalanche(high)\};\ \textcolor{comment}{//\ higher\ half}}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md432}{}\doxysection{\texorpdfstring{XXH3 Algorithm Description (for large inputs)}{XXH3 Algorithm Description (for large inputs)}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md432}
+This algorithm is used for inputs larger than 240 bytes. The internal hash state is stored inside 8 "{}accumulators"{}, each one storing an unsigned 64-\/bit value.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md433}{}\doxysubsection{\texorpdfstring{Step 1. Initialize internal accumulators}{Step 1. Initialize internal accumulators}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md433}
+The accumulators are initialized to fixed constants\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{u64\ acc[8]\ =\ \{}
+\DoxyCodeLine{\ \ PRIME32\_3,\ PRIME64\_1,\ PRIME64\_2,\ PRIME64\_3,}
+\DoxyCodeLine{\ \ PRIME64\_4,\ PRIME32\_2,\ PRIME64\_5,\ PRIME32\_1\};}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md434}{}\doxysubsection{\texorpdfstring{Step 2. Process blocks}{Step 2. Process blocks}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md434}
+The input is consumed and processed one full block at a time. The size of the block depends on the length of the secret. Specifically, a block consists of several 64-\/byte stripes. The number of stripes per block is {\ttfamily floor((secret\+Length-\/64)/8)} . For the default 192-\/byte secret, there are 16 stripes in a block, and thus the block size is 1024 bytes.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{secretLength\ =\ lengthInBytes(secret);\ \ \ \ \textcolor{comment}{//\ default\ 192;\ at\ least\ 136}}
+\DoxyCodeLine{stripesPerBlock\ =\ (secretLength-\/64)\ /\ 8;\ \textcolor{comment}{//\ default\ 16;\ at\ least\ 9}}
+\DoxyCodeLine{blockSize\ =\ 64\ *\ stripesPerBlock;\ \ \ \ \ \ \ \ \textcolor{comment}{//\ default\ 1024;\ at\ least\ 576}}
+
+\end{DoxyCode}
+
+
+The process of processing a full block is called a {\itshape round}. It consists of the following two sub-\/steps\+:\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md435}{}\doxysubsubsection{\texorpdfstring{Step 2-\/1. Process stripes in the block}{Step 2-\/1. Process stripes in the block}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md435}
+A stripe is evenly divided into 8 lanes, of 8 bytes each. In an accumulation step, one stripe and a 64-\/byte contiguous segment of the secret are used to update the accumulators. Each lane reads its associated 64-\/bit value using little-\/endian convention.
+
+The accumulation step applies the following procedure\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceeastl_a8b3bbc9c015d2d82233fc382801ac5e2}{accumulate}}(u64\ stripe[8],\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ secretOffset):}
+\DoxyCodeLine{\ \ u64\ secretWords[8]\ =\ secret[secretOffset:secretOffset+64];}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ u64\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}\ =\ stripe[i]\ xor\ secretWords[i];}
+\DoxyCodeLine{\ \ \ \ acc[i\ xor\ 1]\ =\ acc[i\ xor\ 1]\ +\ stripe[i];}
+\DoxyCodeLine{\ \ \ \ acc[i]\ =\ acc[i]\ +\ (u64)lowerHalf(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ *\ (u64)higherHalf(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (value\ and\ 0xFFFFFFFF)\ *\ (value\ >>\ 32)}}
+\DoxyCodeLine{\ \ \}}
+
+\end{DoxyCode}
+
+
+The accumulation step is repeated for all stripes in a block, using different segments of the secret, starting from the first 64 bytes for the first stripe, and offset by 8 bytes for each following round\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{round\_accumulate(u8\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}[blockSize]):}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_a750e3136a03cedcdb7f5f2de4b988f5b}{for}}\ (n\ =\ 0;\ n\ <\ stripesPerBlock;\ n++)\ \{}
+\DoxyCodeLine{\ \ \ \ u64\ stripe[8]\ =\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}[n*64:n*64+64];\ \textcolor{comment}{//\ 64\ bytes\ =\ 8\ u64s}}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespaceeastl_a8b3bbc9c015d2d82233fc382801ac5e2}{accumulate}}(stripe,\ n*8);}
+\DoxyCodeLine{\ \ \}}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md436}{}\doxysubsubsection{\texorpdfstring{Step 2-\/2. Scramble accumulators}{Step 2-\/2. Scramble accumulators}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md436}
+After the accumulation steps are finished for all stripes in the block, the accumulators are scrambled using the last 64 bytes of the secret.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{round\_scramble():}
+\DoxyCodeLine{\ \ u64\ secretWords[8]\ =\ secret[secretLength-\/64:secretLength];}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 8;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ acc[i]\ =\ acc[i]\ xor\ (acc[i]\ >>\ 47);}
+\DoxyCodeLine{\ \ \ \ acc[i]\ =\ acc[i]\ xor\ secretWords[i];}
+\DoxyCodeLine{\ \ \ \ acc[i]\ =\ acc[i]\ *\ PRIME32\_1;}
+\DoxyCodeLine{\ \ \}}
+
+\end{DoxyCode}
+
+
+A round is thus a {\ttfamily round\+\_\+accumulate} followed by a {\ttfamily round\+\_\+scramble}\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceluisa_1_1compute_1_1dsl_a90927ae1fde1878652edc202d9d55bb7}{round}}(u8\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}[blockSize]):}
+\DoxyCodeLine{\ \ round\_accumulate(\mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}});}
+\DoxyCodeLine{\ \ round\_scramble();}
+
+\end{DoxyCode}
+
+
+Step 2 is looped to consume the input until there are less than or equal to {\ttfamily block\+Size} bytes of input left. Note that we leave the last block to the next step even if it is a full block.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md437}{}\doxysubsection{\texorpdfstring{Step 3. Process the last block and the last 64 bytes}{Step 3. Process the last block and the last 64 bytes}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md437}
+Accumulation steps are run for the stripes in the last block, except for the last stripe (whether it is full or not). After that, run a final accumulation step by treating the last 64 bytes as a stripe. Note that the last 64 bytes might overlap with the second-\/to-\/last block.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ len\ is\ the\ size\ of\ the\ last\ block\ (1\ <=\ len\ <=\ blockSize)}}
+\DoxyCodeLine{lastRound(u8\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}[],\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ len,\ u64\ lastStripe[8]):}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ nFullStripes\ =\ (len-\/1)/64;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (n\ =\ 0;\ n\ <\ nFullStripes;\ n++)\ \{}
+\DoxyCodeLine{\ \ \ \ u64\ stripe[8]\ =\ \mbox{\hyperlink{mimalloc_8h_a840cb394e7433c7fe0c4875a3030c955}{block}}[n*64:n*64+64];}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{namespaceeastl_a8b3bbc9c015d2d82233fc382801ac5e2}{accumulate}}(stripe,\ n\ *\ 8);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{namespaceeastl_a8b3bbc9c015d2d82233fc382801ac5e2}{accumulate}}(lastStripe,\ secretLength\ -\/\ 71);}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md438}{}\doxysubsection{\texorpdfstring{Step 4. Finalization}{Step 4. Finalization}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md438}
+In the finalization step, a merging procedure is used to extract a single 64-\/bit value from the accumulators, using an initial seed value and a 64-\/byte segment of the secret.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{finalMerge(u64\ initValue,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}\ secretOffset):}
+\DoxyCodeLine{\ \ u64\ secretWords[8]\ =\ secret[secretOffset:secretOffset+64];}
+\DoxyCodeLine{\ \ u64\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ initValue;}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ 4;\ i++)\ \{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ 64-\/bit\ by\ 64-\/bit\ multiplication\ to\ 128-\/bit\ full\ result}}
+\DoxyCodeLine{\ \ \ \ u128\ mulResult\ =\ (u128)(acc[i*2]\ xor\ secretWords[i*2])\ *}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (u128)(acc[i*2+1]\ xor\ secretWords[i*2+1]);}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}}\ +\ (lowerHalf(mulResult)\ xor\ higherHalf(mulResult));}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (mulResult\ and\ 0xFFFFFFFFFFFFFFFF)\ xor\ (mulResult\ >>\ 64)}}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ avalanche(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aa7f56a70231ed8bc64f97aa7c37fcb19}{result}});}
+
+\end{DoxyCode}
+
+
+XXH3-\/128 runs the merging procedure twice for the two halves of the result, using different secret segments and different initial values derived from the total input length. The XXH3-\/64 result is just the lower half of the XXH3-\/128 result.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{XXH3\_64\_large():}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_a6b8c693f1c0454a1128432b746966c17}{return}}\ finalMerge((u64)inputLength\ *\ PRIME64\_1,\ 11);}
+\DoxyCodeLine{}
+\DoxyCodeLine{XXH3\_128\_large():}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{sugar_8h_a6b8c693f1c0454a1128432b746966c17}{return}}\ \{finalMerge((u64)inputLength\ *\ PRIME64\_1,\ 11),\ \textcolor{comment}{//\ lower\ half}}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ finalMerge(\string~((u64)inputLength\ *\ PRIME64\_2),\ secretLength\ -\/\ 75)\};\ \textcolor{comment}{//\ higher\ half}}
+
+\end{DoxyCode}
+\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md439}{}\doxysection{\texorpdfstring{Performance considerations}{Performance considerations}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md439}
+The xx\+Hash algorithms are simple and compact to implement. They provide a system independent "{}fingerprint"{} or digest of a message of arbitrary length.
+
+The algorithm allows input to be streamed and processed in multiple steps. In such case, an internal buffer is needed to ensure data is presented to the algorithm in full stripes.
+
+On 64-\/bit systems, the 64-\/bit variant {\ttfamily XXH64} is generally faster to compute, so it is a recommended variant, even when only 32-\/bit are needed.
+
+On 32-\/bit systems though, positions are reversed\+: {\ttfamily XXH64} performance is reduced, due to its usage of 64-\/bit arithmetic. {\ttfamily XXH32} becomes a faster variant.
+
+Finally, when vector operations are possible, {\ttfamily XXH3} is likely the faster variant.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md440}{}\doxysection{\texorpdfstring{Reference Implementation}{Reference Implementation}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md440}
+A reference library written in C is available at \href{https://www.xxhash.com}{\texttt{ https\+://www.\+xxhash.\+com}}. The web page also links to multiple other implementations written in many different languages. It links to the \href{https://github.com/Cyan4973/xxHash}{\texttt{ github project page}} where an \href{https://github.com/Cyan4973/xxHash/issues}{\texttt{ issue board}} can be used for further public discussions on the topic.\hypertarget{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md441}{}\doxysection{\texorpdfstring{Version changes}{Version changes}}\label{md_runtime_2xx_hash_2doc_2xxhash__spec_autotoc_md441}
+v0.\+2.\+0\+: added XXH3 specification, by Adrien Wu v0.\+1.\+1\+: added a note on rationale for selection of constants v0.\+1.\+0\+: initial release 

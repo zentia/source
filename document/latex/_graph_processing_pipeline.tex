@@ -1,0 +1,233 @@
+\doxysection{Graph Processing Pipeline}
+\hypertarget{_graph_processing_pipeline}{}\label{_graph_processing_pipeline}\index{Graph Processing Pipeline@{Graph Processing Pipeline}}
+We study a graph processing pipeline that propagates a sequence of linearly dependent tasks over a dependency graph. In this particular workload, we will learn how to transform task graph parallelism into pipeline parallelism.\hypertarget{_graph_processing_pipeline_FormulateTheGraphProcessingPipelineProblem}{}\doxysubsection{\texorpdfstring{Formulate the Graph Processing Pipeline Problem}{Formulate the Graph Processing Pipeline Problem}}\label{_graph_processing_pipeline_FormulateTheGraphProcessingPipelineProblem}
+Given a directed acyclic graph (DAG), where each node encapsulates a sequence of linearly dependent tasks, namely {\itshape stage tasks}, and each edge represents a dependency between two tasks at the same stages of adjacent nodes. For example, assuming {\ttfamily fi(u)} represents the {\ttfamily i}\textsuperscript{th}-\/stage task of node {\ttfamily u}, a dependency from {\ttfamily u} to {\ttfamily v} requires {\ttfamily fi(u)} to run before {\ttfamily fi(v)}. The following figures shows an example of three stage tasks in a DAG of three nodes ({\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}}, {\ttfamily \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}}, and {\ttfamily C}) and two dependencies ({\ttfamily A-\/\texorpdfstring{$>$}{>}\doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}} and {\ttfamily A-\/\texorpdfstring{$>$}{>}C})\+:
+
+While we can directly create a taskflow for the DAG (i.\+e., each task in the taskflow runs {\ttfamily f1}, {\ttfamily f2}, and {\ttfamily f3} sequentially), we can describe the parallelism as a three-\/stage pipeline that propagates a topological order of the DAG through three stage tasks. Consider a valid topological order of this DAG, {\ttfamily \doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}, \doxylink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}, C}, its pipeline parallelism can be illustrated in the following figure\+:
+
+At the beginning, {\ttfamily f1(\+A)} runs first. When {\ttfamily f1(\+A)} completes, it moves on to {\ttfamily f2(\+A)} and, meanwhile, {\ttfamily f1(\+B)} can start to run together with {\ttfamily f2(\+A)}, and so on so forth. The straight line represents two parallel tasks that can overlap in time in the pipeline. For example, {\ttfamily f3(\+A)}, {\ttfamily f2(\+B)}, and {\ttfamily f1(\+C)} can run simultaneously. The following figures shows the task dependency graph of this pipeline workload\+:
+
+As we can see, tasks in diagonal lines (lower-\/left to upper-\/right) can run in parallel. This type of parallelism is also referred to as {\itshape wavefront} parallelism, which sweeps parallel elements in a diagonal direction.
+
+\begin{DoxyAttention}{注意}
+Depending on the graph size and the number of stage tasks, task graph parallelism and pipeline parallelism can bring very different performance results. For example, a small graph will a long chain of stage tasks may perform better with pipeline parallelism than task graph parallelism, and vice versa.
+\end{DoxyAttention}
+\hypertarget{_graph_processing_pipeline_CreateAGraphProcessingPipeline}{}\doxysubsection{\texorpdfstring{Create a Graph Processing Pipeline}{Create a Graph Processing Pipeline}}\label{_graph_processing_pipeline_CreateAGraphProcessingPipeline}
+Using the example from the previous section, we create a three-\/stage pipeline that encapsulates the three stage tasks ({\ttfamily f1, f2, f3}) in three pipes. By finding a topological order of the graph, we can transform the node dependency into a sequence of linearly dependent data tokens to feed into the pipeline. The overall implementation is shown below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_8hpp}{taskflow/taskflow.hpp}}>}}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{taskflow_2algorithm_2pipeline_8hpp}{taskflow/algorithm/pipeline.hpp}}>}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ 1st-\/stage\ function}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\textcolor{keyword}{const}\ std::string\&\ node)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}f1(\%s)\(\backslash\)n"{}},\ node.c\_str());}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ 2nd-\/stage\ function}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\textcolor{keyword}{const}\ std::string\&\ node)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}f2(\%s)\(\backslash\)n"{}},\ node.c\_str());}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ 3rd-\/stage\ function}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\textcolor{keyword}{const}\ std::string\&\ node)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}f3(\%s)\(\backslash\)n"{}},\ \mbox{\hyperlink{namespacecds_1_1intrusive_1_1msqueue_ab58d6c7c728a671b5b418888d3f055c8}{node}}.c\_str());}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{keywordtype}{int}\ \mbox{\hyperlink{main-override-static_8c_ae66f6b31b5ad750f1fe042a706a4e3d4}{main}}()\ \{}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ tf::Taskflow\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}(\textcolor{stringliteral}{"{}graph\ processing\ pipeline"{}});}
+\DoxyCodeLine{\ \ tf::Executor\ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ num\_lines\ =\ 2;}
+\DoxyCodeLine{\ \ }
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ a\ topological\ order\ of\ the\ graph}}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ \ \ \ |-\/>\ B}}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ A-\/-\/|}}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ \ \ \ |-\/>\ C}}
+\DoxyCodeLine{\ \ \textcolor{keyword}{const}\ std::vector<std::string>\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}\ =\ \{\textcolor{stringliteral}{"{}A"{}},\ \textcolor{stringliteral}{"{}B"{}},\ \textcolor{stringliteral}{"{}C"{}}\};}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ the\ pipeline\ consists\ of\ three\ serial\ pipes}}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ and\ up\ to\ two\ concurrent\ scheduling\ tokens}}
+\DoxyCodeLine{\ \ tf::Pipeline\ pl(num\_lines,}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ first\ pipe\ calls\ f1}}
+\DoxyCodeLine{\ \ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}.size())\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ pf.stop();}
+\DoxyCodeLine{\ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[pf.token()]);}
+\DoxyCodeLine{\ \ \ \ \ \ \}}
+\DoxyCodeLine{\ \ \ \ \}\},}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ second\ pipe\ calls\ f2}}
+\DoxyCodeLine{\ \ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[pf.token()]);}
+\DoxyCodeLine{\ \ \ \ \}\},}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ \textcolor{comment}{//\ third\ pipe\ calls\ f3}}
+\DoxyCodeLine{\ \ \ \ tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[pf.token()]);}
+\DoxyCodeLine{\ \ \ \ \}\}}
+\DoxyCodeLine{\ \ );}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ build\ the\ pipeline\ graph\ using\ composition}}
+\DoxyCodeLine{\ \ tf::Task\ \mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}ready\(\backslash\)n"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}starting\ pipeline"{}});}
+\DoxyCodeLine{\ \ tf::Task\ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.composed\_of(pl)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .name(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{\ \ tf::Task\ stop\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}stopped\(\backslash\)n"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}pipeline\ stopped"{}});}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ create\ task\ dependency}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}.precede(\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}});}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}.precede(stop);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ dump\ the\ pipeline\ graph\ structure\ (with\ composition)}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.dump(std::cout);}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{comment}{//\ run\ the\ pipeline}}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.\mbox{\hyperlink{classtf_1_1_executor_a519777f5783981d534e9e53b99712069}{run}}(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+\hypertarget{_graph_processing_pipeline_GraphPipelineFindATopologicalOrderOfTheGraph}{}\doxysubsubsection{\texorpdfstring{Find a Topological Order of the Graph}{Find a Topological Order of the Graph}}\label{_graph_processing_pipeline_GraphPipelineFindATopologicalOrderOfTheGraph}
+The first step is to find a valid topological order of the graph, such that we can transform the graph dependency into a linear sequence. In this example, we simply hard-\/code it\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keyword}{const}\ std::vector<std::string>\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}\ =\ \{\textcolor{stringliteral}{"{}A"{}},\ \textcolor{stringliteral}{"{}B"{}},\ \textcolor{stringliteral}{"{}C"{}}\};}
+
+\end{DoxyCode}
+\hypertarget{_graph_processing_pipeline_GraphPipelineDefineTheStageFunction}{}\doxysubsubsection{\texorpdfstring{Define the Stage Function}{Define the Stage Function}}\label{_graph_processing_pipeline_GraphPipelineDefineTheStageFunction}
+This particular workload does not propagate data directly through the pipeline. In most situations, data is directly stored in a custom graph data structure, and the stage function will just need to know which node to process. For demo\textquotesingle{}s sake, we simply output a message to show which stage function is processing which node\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ 1st-\/stage\ function}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\textcolor{keyword}{const}\ std::string\&\ node)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}f1(\%s)\(\backslash\)n"{}},\ node.c\_str());}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ 2nd-\/stage\ function}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\textcolor{keyword}{const}\ std::string\&\ node)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}f2(\%s)\(\backslash\)n"{}},\ node.c\_str());}
+\DoxyCodeLine{\}}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ 3rd-\/stage\ function}}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\textcolor{keyword}{const}\ std::string\&\ node)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{printf_8h_aee3ed3a831f25f07e7be3919fff2203a}{printf}}(\textcolor{stringliteral}{"{}f3(\%s)\(\backslash\)n"{}},\ \mbox{\hyperlink{namespacecds_1_1intrusive_1_1msqueue_ab58d6c7c728a671b5b418888d3f055c8}{node}}.c\_str());}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+\begin{DoxyAttention}{注意}
+\doxylink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A} key advantage of Taskflow\textquotesingle{}s pipeline programming model is that we do not provide any data abstraction but give users full control over data management, which is typically application-\/dependent. In an application like this graph processing pipeline, data is managed in a global custom graph data structure, and any data abstraction provided by the library can become a unnecessary overhead.
+\end{DoxyAttention}
+\hypertarget{_graph_processing_pipeline_GraphPipelineDefineThePipes}{}\doxysubsubsection{\texorpdfstring{Define the Pipes}{Define the Pipes}}\label{_graph_processing_pipeline_GraphPipelineDefineThePipes}
+The pipe structure is straightforward. Each pipe encapsulates the corresponding stage function and passes the node into the function argument. The first pipe will cease the pipeline scheduling when it has processed all nodes. To identify which node is being processed at a running pipe, we use \doxylink{classtf_1_1_pipeflow_a295e5d884665c076f4ef5d78139f7c51}{tf\+::\+Pipeflow\+::token} to find the index\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{comment}{//\ first\ pipe\ calls\ f1}}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_pipe}{tf::Pipe}}\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&](\mbox{\hyperlink{classtf_1_1_pipeflow}{tf::Pipeflow}}\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{if}(pf.token()\ ==\ \mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}.size())\ \{}
+\DoxyCodeLine{\ \ \ \ pf.stop();}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[pf.token()]);}
+\DoxyCodeLine{\ \ \}}
+\DoxyCodeLine{\}\},}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ second\ pipe\ calls\ f2}}
+\DoxyCodeLine{tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[pf.token()]);}
+\DoxyCodeLine{\}\},}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{comment}{//\ third\ pipe\ calls\ f3}}
+\DoxyCodeLine{tf::Pipe\{\mbox{\hyperlink{namespacetf_abb7a11e41fd457f69e7ff45d4c769564a7b804a28d6154ab8007287532037f1d0}{tf::PipeType::SERIAL}},\ [\&](tf::Pipeflow\&\ pf)\ \{}
+\DoxyCodeLine{\ \ \mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__do_2parallel__preorder_2main_8cpp_a6a5c3f7e9d33dd3ab656f0191f83aa79}{nodes}}[pf.token()]);}
+\DoxyCodeLine{\}\}}
+
+\end{DoxyCode}
+\hypertarget{_graph_processing_pipeline_GraphPipelineDefineTheTaskGraph}{}\doxysubsubsection{\texorpdfstring{Define the Task Graph}{Define the Task Graph}}\label{_graph_processing_pipeline_GraphPipelineDefineTheTaskGraph}
+To build up the taskflow for the pipeline, we create a module task with the defined pipeline structure and connect it with two tasks that output helper messages before and after the pipeline\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{structinit}{init}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}ready\(\backslash\)n"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}starting\ pipeline"{}});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ \mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.composed\_of(pl)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .name(\textcolor{stringliteral}{"{}pipeline"{}});}
+\DoxyCodeLine{\mbox{\hyperlink{classtf_1_1_task}{tf::Task}}\ stop\ =\ \mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}.emplace([]()\{\ std::cout\ <<\ \textcolor{stringliteral}{"{}stopped\(\backslash\)n"{}};\ \})}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_aab18cfce5ee7c6881ae04f18be70d94a}{name}}(\textcolor{stringliteral}{"{}pipeline\ stopped"{}});}
+\DoxyCodeLine{\mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}}.precede(\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}});}
+\DoxyCodeLine{\mbox{\hyperlink{test__partitioner__whitebox_8h_a5c4cf3d37a4eee22275de22cb9619863}{task}}.precede(stop);}
+
+\end{DoxyCode}
+\hypertarget{_graph_processing_pipeline_GraphPipelineSubmitTheTaskGraph}{}\doxysubsubsection{\texorpdfstring{Submit the Task Graph}{Submit the Task Graph}}\label{_graph_processing_pipeline_GraphPipelineSubmitTheTaskGraph}
+Finally, we submit the taskflow to the execution and run it once\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{thread__pool_8cpp_a543e564a8407bbeac15cb2d929fec755}{executor}}.run(\mbox{\hyperlink{poisson_8hpp_aa56fe360bb0ae38e0082f49e394ff825}{taskflow}}).wait();}
+
+\end{DoxyCode}
+
+
+Three possible outputs are shown below\+:
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\{.shell-\/session\}\ }
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ possible\ output\ 1}}
+\DoxyCodeLine{ready}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{stopped}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ possible\ output\ 2}}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{stopped}
+\DoxyCodeLine{}
+\DoxyCodeLine{\textcolor{preprocessor}{\#\ possible\ output\ 3}}
+\DoxyCodeLine{ready}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{bench__gemm_8cpp_addc86e8508f14411ec98f521c520f875}{A}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a20ea9116f00e19915f910ca726f7518f}{f1}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a894124d17350678007462a79ecc7eb36}{f2}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{bench__gemm_8cpp_a37a83060ac796961b44991c836f083f7}{B}})}
+\DoxyCodeLine{\mbox{\hyperlink{parallel__graph__pipeline_8cpp_a4e249d464ae215ce0d4d53e0b369ab98}{f3}}(\mbox{\hyperlink{test__buffer__node_8cpp_ac4cf4b2ab929bd23951a8676eeac086b}{C}})}
+\DoxyCodeLine{stopped}
+
+\end{DoxyCode}
+\hypertarget{_graph_processing_pipeline_GraphPipelineReference}{}\doxysubsection{\texorpdfstring{Reference}{Reference}}\label{_graph_processing_pipeline_GraphPipelineReference}
+We have applied the graph processing pipeline technique to speed up a circuit analysis problem. Details can be referred to our publication below\+:
+
+
+\begin{DoxyItemize}
+\item Cheng-\/\+Hsiang Chiu and Tsung-\/\+Wei Huang, "{}\href{https://tsung-wei-huang.github.io/papers/dac2022.pdf}{\texttt{ Efficient Timing Propagation with Simultaneous Structural and Pipeline Parallelisms}},"{} {\itshape ACM/\+IEEE Design Automation Conference (DAC)}, San Francisco, CA, 2022 
+\end{DoxyItemize}

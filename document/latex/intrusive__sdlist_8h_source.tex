@@ -1,0 +1,674 @@
+\doxysection{intrusive\+\_\+sdlist.\+h}
+\hypertarget{intrusive__sdlist_8h_source}{}\label{intrusive__sdlist_8h_source}\index{runtime/EASTL/include/EASTL/bonus/intrusive\_sdlist.h@{runtime/EASTL/include/EASTL/bonus/intrusive\_sdlist.h}}
+\mbox{\hyperlink{intrusive__sdlist_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ Copyright\ (c)\ Electronic\ Arts\ Inc.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ intrusive\_sdlist\ is\ a\ special\ kind\ of\ intrusive\ list\ which\ we\ say\ is\ }}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ "{}singly-\/doubly"{}\ linked.\ Instead\ of\ having\ a\ typical\ intrusive\ list\ node}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ which\ looks\ like\ this:}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ \ \ \ \ struct\ intrusive\_sdlist\_node\ \{}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ intrusive\_sdlist\_node\ *mpNext;}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ intrusive\_sdlist\_node\ *mpPrev;}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ \ \ \};}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ We\ instead\ have\ one\ that\ looks\ like\ this:}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ \ \ struct\ intrusive\_sdlist\_node\ \{}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ intrusive\_sdlist\_node*\ \ mpNext;}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ intrusive\_sdlist\_node**\ mppPrevNext;}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ \ \ \ \};}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ This\ may\ seem\ to\ be\ suboptimal,\ but\ it\ has\ one\ specific\ advantage:\ it\ allows}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ the\ intrusive\_sdlist\ class\ to\ be\ the\ size\ of\ only\ one\ pointer\ instead\ of\ two.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ This\ may\ seem\ like\ a\ minor\ optimization,\ but\ some\ users\ have\ wanted\ to\ create}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ thousands\ of\ empty\ instances\ of\ these.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ This\ is\ because\ while\ an\ intrusive\_list\ class\ looks\ like\ this:}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ \ \ class\ intrusive\_list\ \{}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ intrusive\_list\_node\ mBaseNode;}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ \ \ \};}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ \ \ }}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ an\ intrusive\_sdlist\ class\ looks\ like\ this:}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ class\ intrusive\_sdlist\ \{}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ intrusive\_sdlist\_node*\ mpNext;}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ \ \ \ \};}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ }}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ So\ here\ we\ make\ a\ list\ of\ plusses\ and\ minuses\ of\ intrusive\ sdlists}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ compared\ to\ intrusive\_lists\ and\ intrusive\_slists:}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ list\ \ \ |\ \ \ slist\ \ \ |\ \ \ sdlist}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ \ \ \ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ \ \ min\ size\ \ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ 8\ \ \ \ \ |\ \ \ \ \ 4\ \ \ \ \ |\ \ \ \ \ 4}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ \ node\ size\ \ \ \ \ \ \ \ \ \ \ |\ \ \ \ 8\ \ \ \ \ |\ \ \ \ \ 4\ \ \ \ \ |\ \ \ \ \ 8}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ \ \ \ anonymous\ erase\ \ \ \ \ |\ \ \ yes\ \ \ \ |\ \ \ \ \ no\ \ \ \ |\ \ \ \ \ yes}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ \ \ \ reverse\ iteration\ \ \ |\ \ \ yes\ \ \ \ |\ \ \ \ \ no\ \ \ \ |\ \ \ \ \ no}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ \ }}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\#ifndef\ EASTL\_INTRUSIVE\_SDLIST\_H}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#define\ EASTL\_INTRUSIVE\_SDLIST\_H}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{config_8h}{EASTL/internal/config.h}}>}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2iterator_8h}{EASTL/iterator.h}}>}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{_e_a_s_t_l_2include_2_e_a_s_t_l_2algorithm_8h}{EASTL/algorithm.h}}>}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#if\ defined(EA\_PRAGMA\_ONCE\_SUPPORTED)}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\ \ \ \ \#pragma\ once\ }\textcolor{comment}{//\ Some\ compilers\ (e.g.\ VC++)\ benefit\ significantly\ from\ using\ this.\ We've\ measured\ 3-\/4\%\ build\ speed\ improvements\ in\ apps\ as\ a\ result.}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceeastl}{eastl}}}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}}
+\DoxyCodeLine{00072\ \ \ \ \ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node_a91dd5fc80bb4765d748e30576c627622}{mpNext}};}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}**\ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node_a452f0b495d4327294fabcfe2bcfa4462}{mppPrevNext}};}
+\DoxyCodeLine{00075\ \ \ \ \ \};}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator}}}
+\DoxyCodeLine{00082\ \ \ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>}}\ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a3bac805ffc0a11e846d1b7f6c62c6f1f}{this\_type}};}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator<T,\ T*,\ T\&>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a6226d452504e5ab3f1605aa5201e03e0}{iterator}};}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator<T,\ const\ T*,\ const\ T\&>}}\ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a75848dd50f4de3fbb946f7a6e1638cf1}{const\_iterator}};}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{config_8h_a2229484fbe7886756129ec4132f03da1}{eastl\_size\_t}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a05edd0dd1dde5e034971be0e3f7e645a}{size\_type}};\ \ \ \ \ \textcolor{comment}{//\ See\ config.h\ for\ the\ definition\ of\ eastl\_size\_t,\ which\ defaults\ to\ size\_t.}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ ptrdiff\_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a3d938d522f37cd91a8969481fe4da468}{difference\_type}};}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab027e0865c9f07d2ffa87d3da093467d}{value\_type}};}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_aa786009e0f906350d049270c835695b5}{node\_type}};}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ Pointer\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab173a8cdaf0d50db8d474ef41effeb2f}{pointer}};}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ Reference\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ac77e7901f291bcda187647308bc456c0}{reference}};}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ EASTL\_ITC\_NS::forward\_iterator\_tag\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a8e923a3693462737903b51373b545b8d}{iterator\_category}};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab173a8cdaf0d50db8d474ef41effeb2f}{pointer}}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}};}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator}}();}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a255f56d0531d05c5791ac7b8f2095e7b}{IntrusiveSDListIterator}}(\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab173a8cdaf0d50db8d474ef41effeb2f}{pointer}}\ pNode);\ \textcolor{comment}{//\ Note\ that\ you\ can\ also\ construct\ an\ iterator\ from\ T\ via\ this,\ since\ value\_type\ ==\ node\_type.}}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a6fd415983983f9b56a0a8d507899efbf}{IntrusiveSDListIterator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a6226d452504e5ab3f1605aa5201e03e0}{iterator}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ac77e7901f291bcda187647308bc456c0}{reference}}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a1f28b34d3a623902e677c426200ca3a4}{operator*}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab173a8cdaf0d50db8d474ef41effeb2f}{pointer}}\ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a69c025354cddd7e2c6aec6ac8f86bdf4}{operator-\/>}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a3bac805ffc0a11e846d1b7f6c62c6f1f}{this\_type}}\&\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab0e131bcb05c60b8284811d95cb6c374}{operator++}}();}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a3bac805ffc0a11e846d1b7f6c62c6f1f}{this\_type}}\ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a4ca095b487db6aad092966ed83d46116}{operator++}}(\textcolor{keywordtype}{int});}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ \};\ \textcolor{comment}{//\ struct\ IntrusiveSDListIterator}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a4b944b1de3bc8d9bd52d9e0623f6b265}{intrusive\_sdlist\_base}}}
+\DoxyCodeLine{00118\ \ \ \ \ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{config_8h_a2229484fbe7886756129ec4132f03da1}{eastl\_size\_t}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a01374ebdac4df39efb438bd787455b69}{size\_type}};\ \ \ \ \ \textcolor{comment}{//\ See\ config.h\ for\ the\ definition\ of\ eastl\_size\_t,\ which\ defaults\ to\ size\_t.}}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ ptrdiff\_t\ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a6b3d3b1e09eaa211d2eff473dd05ef78}{difference\_type}};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a4b944b1de3bc8d9bd52d9e0623f6b265}{intrusive\_sdlist\_base}}();}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a7b0c701af58dfa22b0072597a674f96a}{empty}}()\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a01374ebdac4df39efb438bd787455b69}{size\_type}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a511f939656f6ed858a408023d664cff5}{size}}()\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a3915584517d7554eedb8410155c25858}{clear}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_afe0a385b670b685088dcbc49e39751bd}{pop\_front}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_ac6a490e5395cc3fb5cf1adb0ed4a88ea}{reverse}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{comment}{//bool\ \ \ \ validate()\ const;\ \ \ \ \ \ \ \ \ ///<\ Scans\ a\ list\ for\ linkage\ inconsistencies;\ O(n)\ time,\ O(1)\ space.\ Returns\ false\ if\ errors\ are\ detected,\ such\ as\ loops\ or\ branching.}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \};\ \textcolor{comment}{//\ class\ intrusive\_sdlist\_base}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T\ =\ \textcolor{keywordtype}{int}rusive\_sdlist\_node>}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a4b944b1de3bc8d9bd52d9e0623f6b265}{intrusive\_sdlist\_base}}}
+\DoxyCodeLine{00146\ \ \ \ \ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist<T>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}};}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a4b944b1de3bc8d9bd52d9e0623f6b265}{intrusive\_sdlist\_base}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a4c0f166db7f5da8d51661f3c7164c5e8}{base\_type}};}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a663af7a209e2ceb996ebc0b7fe06bc45}{node\_type}};}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}};}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a01374ebdac4df39efb438bd787455b69}{base\_type::size\_type}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ab4d76c1bb91246aaf8b3e211eeb692ad}{size\_type}};}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a6b3d3b1e09eaa211d2eff473dd05ef78}{base\_type::difference\_type}}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a029b46b0e0694b9cb390e398322b7c12}{difference\_type}};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a833feaddc1bc01b8e18d65a39377bb38}{reference}};}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ T\&\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ae6a6d788fcf1270ba1059a822b79e07e}{const\_reference}};}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ T*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a61e30acdfadf8c897835edec29269759}{pointer}};}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ T*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_af5fb1c1f27bb273eb4ea427f2d3740b7}{const\_pointer}};}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ T*,\ T\&>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}};}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ const\ T*,\ const\ T\&>}}\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}};}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1reverse__iterator}{eastl::reverse\_iterator<iterator>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aebfe898f4458e745d4e9feed5bfa5a12}{reverse\_iterator}};}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classeastl_1_1reverse__iterator}{eastl::reverse\_iterator<const\_iterator>}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ab5c18e1fc9d19298a56f71c792178228}{const\_reverse\_iterator}};}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a5c4b894aea8fc3408096b193be5c3163}{intrusive\_sdlist}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});\ \ \ \ \ }
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a5816943472c59623b922fb6084aff44c}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});\ }
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1823cd2e1deb1ed8a5bf7a8490e8913e}{begin}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a487b0823acdd3bae9d955a3703f7ec18}{begin}}()\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a68631db60da44cf75b2285313da585a3}{cbegin}}()\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1f919ab9fa170ba19882f73c7502fe10}{end}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a48422c29cb0cb85175b773d55046172c}{end}}()\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aeb458dd315125689b75bdcc33f5793ed}{cend}}()\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a833feaddc1bc01b8e18d65a39377bb38}{reference}}\ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aaf91cc366090d234a3a49d9663525e70}{front}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ae6a6d788fcf1270ba1059a822b79e07e}{const\_reference}}\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a170fb182b684963e8bcaf0ae0aa38d2b}{front}}()\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ab564de42dbfbec07ec59f158bf952e6e}{push\_front}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a492ef42211d01676fcfb4f0736f496b4}{push\_back}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a510b3ad3c2049ab04c38fe0ae2d0f238}{pop\_back}}();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a39c47e39789cd71cabda3b1f9fe9d6c7}{contains}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aedb1789db28cbe387b48a941837ac783}{locate}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ad45cc6a0afa21afb997ae718fd1916c8}{locate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ \textcolor{keyword}{const};\ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_af0e6609570e1a81e53258154f8491102}{insert}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});\ \ \ }
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a8bedf13b1cf92e87ac36d2f096cec5ae}{erase}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ae3ecc694f83620fcf45cfc16245d8994}{erase}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ first,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ last);\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a5ef62576eaf13556f390464d0e5396b3}{swap}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a57a7eca1a92b564a96cbf609eb0a3162}{remove}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ad76d2b8b6e19f9ebaeb277453df45d65}{splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9d7d6edba8c7d520e43318c9fddeb6f5}{splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}});\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_acd4b9e9039a9f7eb71dc57d1b7f8290e}{splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ xPosition);\ \ \ \ \ \ }
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a162b7d51cb121f7b0c82a4397acae16a}{splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ first,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ last);\ \ \ }
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a94f3db7c728563254ae978f7aa7bcc6e}{validate}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a10c4531a8fd1cd9ab94cff6ba6d40e57}{validate\_iterator}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ i)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \};\ \textcolor{comment}{//\ intrusive\_sdlist}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ IntrusiveSDListIterator\ functions}}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::IntrusiveSDListIterator}}()}
+\DoxyCodeLine{00221\ \ \ \ \ \{}
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ EASTL\_DEBUG}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00225\ \ \ \ \ \}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::IntrusiveSDListIterator}}(\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab173a8cdaf0d50db8d474ef41effeb2f}{pointer}}\ pNode)}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}(pNode)}
+\DoxyCodeLine{00230\ \ \ \ \ \{}
+\DoxyCodeLine{00231\ \ \ \ \ \}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a98fad4d68d42cd161f9acf0fa706b0de}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::IntrusiveSDListIterator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a6226d452504e5ab3f1605aa5201e03e0}{iterator}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}})}
+\DoxyCodeLine{00236\ \ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ac77e7901f291bcda187647308bc456c0}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::reference}}}
+\DoxyCodeLine{00241\ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a1f28b34d3a623902e677c426200ca3a4}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::operator*}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00242\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}};}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00247\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab173a8cdaf0d50db8d474ef41effeb2f}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::pointer}}}
+\DoxyCodeLine{00248\ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a69c025354cddd7e2c6aec6ac8f86bdf4}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::operator-\/>}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00249\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}};}
+\DoxyCodeLine{00251\ \ \ \ \ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a3bac805ffc0a11e846d1b7f6c62c6f1f}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::this\_type}}\&}
+\DoxyCodeLine{00255\ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab0e131bcb05c60b8284811d95cb6c374}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::operator++}}()}
+\DoxyCodeLine{00256\ \ \ \ \ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_aa786009e0f906350d049270c835695b5}{node\_type}}*\textcolor{keyword}{>}(\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mpNext);}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00259\ \ \ \ \ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a3bac805ffc0a11e846d1b7f6c62c6f1f}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::this\_type}}}
+\DoxyCodeLine{00263\ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ab0e131bcb05c60b8284811d95cb6c374}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>::operator++}}(\textcolor{keywordtype}{int})}
+\DoxyCodeLine{00264\ \ \ \ \ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_a3bac805ffc0a11e846d1b7f6c62c6f1f}{this\_type}}\ temp\ =\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_aa786009e0f906350d049270c835695b5}{node\_type}}*\textcolor{keyword}{>}(\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mpNext);}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ temp;}
+\DoxyCodeLine{00268\ \ \ \ \ \}}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{comment}{//\ The\ C++\ defect\ report\ \#179\ requires\ that\ we\ support\ comparisons\ between\ const\ and\ non-\/const\ iterators.}}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ Thus\ we\ provide\ additional\ template\ paremeters\ here\ to\ support\ this.\ The\ defect\ report\ does\ not}}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{comment}{//\ require\ us\ to\ support\ comparisons\ between\ reverse\_iterators\ and\ const\_reverse\_iterators.}}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}erA,\ \textcolor{keyword}{typename}\ ReferenceA,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}erB,\ \textcolor{keyword}{typename}\ ReferenceB>}
+\DoxyCodeLine{00274\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a927b4cbb10494e27e349b89c6fcde665}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ PointerA,\ ReferenceA>}}\&\ a,\ }
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ PointerB,\ ReferenceB>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00276\ \ \ \ \ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ a.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}\ ==\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.mpNode;}
+\DoxyCodeLine{00278\ \ \ \ \ \}}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}erA,\ \textcolor{keyword}{typename}\ ReferenceA,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}erB,\ \textcolor{keyword}{typename}\ ReferenceB>}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a89ff22bd2be381c89895174f2aacd819}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ PointerA,\ ReferenceA>}}\&\ a,\ }
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ PointerB,\ ReferenceB>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00284\ \ \ \ \ \{}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ a.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}\ !=\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.mpNode;}
+\DoxyCodeLine{00286\ \ \ \ \ \}}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{comment}{//\ We\ provide\ a\ version\ of\ operator!=\ for\ the\ case\ where\ the\ iterators\ are\ of\ the\ }}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{comment}{//\ same\ type.\ This\ helps\ prevent\ ambiguity\ errors\ in\ the\ presence\ of\ rel\_ops.}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Reference>}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a89ff22bd2be381c89895174f2aacd819}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>}}\&\ a,\ }
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator}{IntrusiveSDListIterator<T,\ Pointer,\ Reference>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00294\ \ \ \ \ \{}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ a.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}\ !=\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.mpNode;}
+\DoxyCodeLine{00296\ \ \ \ \ \}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{//\ intrusive\_sdlist\_base}}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a4b944b1de3bc8d9bd52d9e0623f6b265}{intrusive\_sdlist\_base::intrusive\_sdlist\_base}}()\ }
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \{\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};\ \}}
+\DoxyCodeLine{00306\ }
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a7b0c701af58dfa22b0072597a674f96a}{intrusive\_sdlist\_base::empty}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00309\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}\ ==\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};\ \}}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a01374ebdac4df39efb438bd787455b69}{intrusive\_sdlist\_base::size\_type}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a511f939656f6ed858a408023d664cff5}{intrusive\_sdlist\_base::size}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00313\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a01374ebdac4df39efb438bd787455b69}{size\_type}}\ n\ =\ 0;}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ pCurrent\ =\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};\ pCurrent;\ pCurrent\ =\ pCurrent-\/>mpNext)}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ \ \ n++;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ n;}
+\DoxyCodeLine{00318\ \ \ \ \ \}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a3915584517d7554eedb8410155c25858}{intrusive\_sdlist\_base::clear}}()}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \{\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};\ \}\ \textcolor{comment}{//\ Note\ that\ we\ don't\ do\ anything\ with\ the\ list\ nodes.}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_afe0a385b670b685088dcbc49e39751bd}{intrusive\_sdlist\_base::pop\_front}}()}
+\DoxyCodeLine{00326\ \ \ \ \ \{}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ To\ consider:\ Set\ mpNext's\ pointers\ to\ NULL\ in\ debug\ builds.}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}\ =\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}-\/>mpNext;}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}-\/>mppPrevNext\ =\ \&\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};}
+\DoxyCodeLine{00330\ \ \ \ \ \}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ intrusive\_sdlist}}
+\DoxyCodeLine{00337\ }
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist<T>::intrusive\_sdlist}}()}
+\DoxyCodeLine{00340\ \ \ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist<T>::intrusive\_sdlist}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \textcolor{comment}{/*x*/})}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ :\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a4b944b1de3bc8d9bd52d9e0623f6b265}{intrusive\_sdlist\_base}}()}
+\DoxyCodeLine{00347\ \ \ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ intentionally\ ignore\ argument\ x.}}
+\DoxyCodeLine{00349\ \ \ \ \ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00353\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{intrusive\_sdlist<T>::this\_type}}\&\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a5816943472c59623b922fb6084aff44c}{intrusive\_sdlist<T>::operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a6724e6f72a59c321a8350eaab053f33f}{this\_type}}\&\ \textcolor{comment}{/*x*/})}
+\DoxyCodeLine{00354\ \ \ \ \ \{\ }
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \textcolor{comment}{//\ We\ intentionally\ ignore\ argument\ x.}}
+\DoxyCodeLine{00356\ \ \ \ \ \}}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{intrusive\_sdlist<T>::iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1823cd2e1deb1ed8a5bf7a8490e8913e}{intrusive\_sdlist<T>::begin}}()}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}(\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}));\ \}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1823cd2e1deb1ed8a5bf7a8490e8913e}{intrusive\_sdlist<T>::begin}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00366\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}(\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}})));\ \}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a68631db60da44cf75b2285313da585a3}{intrusive\_sdlist<T>::cbegin}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00371\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}(\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}})));\ \}}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{intrusive\_sdlist<T>::iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1f919ab9fa170ba19882f73c7502fe10}{intrusive\_sdlist<T>::end}}()}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}(\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}));\ \}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00380\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1f919ab9fa170ba19882f73c7502fe10}{intrusive\_sdlist<T>::end}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00381\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}(\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }T*\textcolor{keyword}{>}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}));\ \}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aeb458dd315125689b75bdcc33f5793ed}{intrusive\_sdlist<T>::cend}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00386\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}(\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }T*\textcolor{keyword}{>}(\mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}}));\ \}}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a833feaddc1bc01b8e18d65a39377bb38}{intrusive\_sdlist<T>::reference}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aaf91cc366090d234a3a49d9663525e70}{intrusive\_sdlist<T>::front}}()}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{static\_cast<}T*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}});\ \}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ae6a6d788fcf1270ba1059a822b79e07e}{intrusive\_sdlist<T>::const\_reference}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aaf91cc366090d234a3a49d9663525e70}{intrusive\_sdlist<T>::front}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00396\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }T*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}});\ \}}
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00400\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ab564de42dbfbec07ec59f158bf952e6e}{intrusive\_sdlist<T>::push\_front}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00401\ \ \ \ \ \{}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext\ =\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mppPrevNext\ =\ \&\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}})}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}-\/>mppPrevNext\ =\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext;}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}\ =\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00407\ \ \ \ \ \}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ }
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a492ef42211d01676fcfb4f0736f496b4}{intrusive\_sdlist<T>::push\_back}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00412\ \ \ \ \ \{}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ \ pNext\ \ \ \ \ \ =\ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}**\ ppPrevNext\ =\ \&\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(pNext)}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \ \ ppPrevNext\ =\ \&pNext-\/>\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node_a91dd5fc80bb4765d748e30576c627622}{mpNext}};}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \ \ pNext\ \ \ \ \ \ =\ \ pNext-\/>\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node_a91dd5fc80bb4765d748e30576c627622}{mpNext}};}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ *ppPrevNext\ \ \ \ \ \ \ =\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mppPrevNext\ =\ ppPrevNext;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext\ \ \ \ \ \ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00425\ \ \ \ \ \}}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00429\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a510b3ad3c2049ab04c38fe0ae2d0f238}{intrusive\_sdlist<T>::pop\_back}}()}
+\DoxyCodeLine{00430\ \ \ \ \ \{}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a663af7a209e2ceb996ebc0b7fe06bc45}{node\_type}}*\ pCurrent\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a663af7a209e2ceb996ebc0b7fe06bc45}{node\_type}}*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}});}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(pCurrent-\/>mpNext)}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ \ \ pCurrent\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a663af7a209e2ceb996ebc0b7fe06bc45}{node\_type}}*\textcolor{keyword}{>}(pCurrent-\/>mpNext);}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ *pCurrent-\/>mppPrevNext\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00440\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a39c47e39789cd71cabda3b1f9fe9d6c7}{intrusive\_sdlist<T>::contains}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00441\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ pCurrent;}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(pCurrent\ =\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};\ pCurrent;\ pCurrent\ =\ pCurrent-\/>\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node_a91dd5fc80bb4765d748e30576c627622}{mpNext}})}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pCurrent\ ==\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (pCurrent\ !=\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}});}
+\DoxyCodeLine{00451\ \ \ \ \ \}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{intrusive\_sdlist<T>::iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aedb1789db28cbe387b48a941837ac783}{intrusive\_sdlist<T>::locate}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00456\ \ \ \ \ \{}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ pCurrent;}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(pCurrent\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}});\ pCurrent;\ pCurrent\ =\ pCurrent-\/>\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node_a91dd5fc80bb4765d748e30576c627622}{mpNext}})}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pCurrent\ ==\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}*\textcolor{keyword}{>}(pCurrent));}
+\DoxyCodeLine{00466\ \ \ \ \ \}}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_aedb1789db28cbe387b48a941837ac783}{intrusive\_sdlist<T>::locate}}(\textcolor{keyword}{const}\ T\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00471\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ pCurrent;}
+\DoxyCodeLine{00473\ }
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(pCurrent\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}*\textcolor{keyword}{>}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}});\ pCurrent;\ pCurrent\ =\ pCurrent-\/>\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node_a91dd5fc80bb4765d748e30576c627622}{mpNext}})}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pCurrent\ ==\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}*\textcolor{keyword}{>}(\textcolor{keyword}{const\_cast<}\mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\textcolor{keyword}{>}(pCurrent)));}
+\DoxyCodeLine{00481\ \ \ \ \ \}}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{intrusive\_sdlist<T>::iterator}}}
+\DoxyCodeLine{00486\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_af0e6609570e1a81e53258154f8491102}{intrusive\_sdlist<T>::insert}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00487\ \ \ \ \ \{}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mppPrevNext\ \ \ \ \ \ \ \ \ \ \ \ =\ position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mppPrevNext;}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}};}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mppPrevNext\ \ \ \ \ \ \ \ \ \ \ \ =\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}};}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mppPrevNext\ =\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext;}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}(\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00494\ \ \ \ \ \}}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ }
+\DoxyCodeLine{00497\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00498\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{intrusive\_sdlist<T>::iterator}}}
+\DoxyCodeLine{00499\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a8bedf13b1cf92e87ac36d2f096cec5ae}{intrusive\_sdlist<T>::erase}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ position)}
+\DoxyCodeLine{00500\ \ \ \ \ \{}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ *position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mppPrevNext\ \ \ \ \ \ \ \ \ =\ position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mpNext;}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mpNext-\/>mppPrevNext\ =\ position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mppPrevNext;}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}(position.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}});}
+\DoxyCodeLine{00505\ \ \ \ \ \}}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00509\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{intrusive\_sdlist<T>::iterator}}}
+\DoxyCodeLine{00510\ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a8bedf13b1cf92e87ac36d2f096cec5ae}{intrusive\_sdlist<T>::erase}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ first,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ last)}
+\DoxyCodeLine{00511\ \ \ \ \ \{}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(first.mpNode)\ \textcolor{comment}{//\ If\ not\ erasing\ the\ end...}}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ *first.mpNode-\/>mppPrevNext\ =\ last.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}};}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(last.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}})\ \textcolor{comment}{//\ If\ not\ erasing\ to\ the\ end...}}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ last.\mbox{\hyperlink{structeastl_1_1_intrusive_s_d_list_iterator_ae6f76b8fc1b830887d431d5735845199}{mpNode}}-\/>mppPrevNext\ =\ first.mpNode-\/>mppPrevNext;}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ last;}
+\DoxyCodeLine{00521\ \ \ \ \ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00525\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a57a7eca1a92b564a96cbf609eb0a3162}{intrusive\_sdlist<T>::remove}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})}
+\DoxyCodeLine{00526\ \ \ \ \ \{}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ *\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mppPrevNext\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext;}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext)}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mpNext-\/>mppPrevNext\ =\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}.mppPrevNext;}
+\DoxyCodeLine{00530\ \ \ \ \ \}}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a5ef62576eaf13556f390464d0e5396b3}{intrusive\_sdlist<T>::swap}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist}}\&\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})}
+\DoxyCodeLine{00535\ \ \ \ \ \{}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ swap\ anchors}}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structeastl_1_1intrusive__sdlist__node}{intrusive\_sdlist\_node}}*\ \textcolor{keyword}{const}\ temp(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}});}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}\ \ \ =\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}.mpNext;}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}.mpNext\ =\ temp;}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}.mpNext)}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}.mpNext-\/>mppPrevNext\ =\ \&\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}};}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}})}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist__base_a12d23c412fa25f8dc1859f5bedfbc23a}{mpNext}}-\/>mppPrevNext\ =\ \&\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}.mpNext;}
+\DoxyCodeLine{00546\ \ \ \ \ \}}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \ \ \ \ \textcolor{comment}{//\ To\ do:\ Complete\ these\ splice\ functions.\ Might\ want\ to\ look\ at\ intrusive\_sdlist\ for\ help.}}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00555\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ad76d2b8b6e19f9ebaeb277453df45d65}{intrusive\_sdlist<T>::splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \textcolor{comment}{/*position*/},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a9eaf300db5cf00a09698e186ad3ac63d}{value\_type}}\&\ \textcolor{comment}{/*value*/})}
+\DoxyCodeLine{00556\ \ \ \ \ \{}
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(\textcolor{keyword}{false});\ \textcolor{comment}{//\ If\ you\ need\ this\ working,\ ask\ Paul\ Pedriana\ or\ submit\ a\ working\ version\ for\ inclusion.}}
+\DoxyCodeLine{00558\ \ \ \ \ \}}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ }
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00562\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ad76d2b8b6e19f9ebaeb277453df45d65}{intrusive\_sdlist<T>::splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \textcolor{comment}{/*position*/},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist}}\&\ \textcolor{comment}{/*x*/})}
+\DoxyCodeLine{00563\ \ \ \ \ \{}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(\textcolor{keyword}{false});\ \textcolor{comment}{//\ If\ you\ need\ this\ working,\ ask\ Paul\ Pedriana\ or\ submit\ a\ working\ version\ for\ inclusion.}}
+\DoxyCodeLine{00565\ \ \ \ \ \}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ad76d2b8b6e19f9ebaeb277453df45d65}{intrusive\_sdlist<T>::splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \textcolor{comment}{/*position*/},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist}}\&\ \textcolor{comment}{/*x*/},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \textcolor{comment}{/*xPosition*/})}
+\DoxyCodeLine{00570\ \ \ \ \ \{}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(\textcolor{keyword}{false});\ \textcolor{comment}{//\ If\ you\ need\ this\ working,\ ask\ Paul\ Pedriana\ or\ submit\ a\ working\ version\ for\ inclusion.}}
+\DoxyCodeLine{00572\ \ \ \ \ \}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_ad76d2b8b6e19f9ebaeb277453df45d65}{intrusive\_sdlist<T>::splice}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \textcolor{comment}{/*position*/},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a2fdbc96c3d6ff7d4cb599ec7e31fd9b8}{intrusive\_sdlist}}\&\ \textcolor{comment}{/*x*/},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \textcolor{comment}{/*first*/},\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a19f65e7d258f68eb1ed596c7847d6480}{iterator}}\ \textcolor{comment}{/*last*/})}
+\DoxyCodeLine{00577\ \ \ \ \ \{}
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{config_8h_aaf0ef786918936fd84832eba26839434}{EASTL\_ASSERT}}(\textcolor{keyword}{false});\ \textcolor{comment}{//\ If\ you\ need\ this\ working,\ ask\ Paul\ Pedriana\ or\ submit\ a\ working\ version\ for\ inclusion.}}
+\DoxyCodeLine{00579\ \ \ \ \ \}}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00583\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a94f3db7c728563254ae978f7aa7bcc6e}{intrusive\_sdlist<T>::validate}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00584\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \textcolor{comment}{//\ To\ do.}}
+\DoxyCodeLine{00586\ \ \ \ \ \}}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a10c4531a8fd1cd9ab94cff6ba6d40e57}{intrusive\_sdlist<T>::validate\_iterator}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ i)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00591\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ To\ do:\ Come\ up\ with\ a\ more\ efficient\ mechanism\ of\ doing\ this.}}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{const\_iterator}}\ temp\ =\ \mbox{\hyperlink{namespaceeastl_a5416077556bbc43ecf1cdbab7b44c386}{begin}}(),\ tempEnd\ =\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}();\ temp\ !=\ tempEnd;\ ++temp)}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(temp\ ==\ i)}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{namespaceeastl_a84f33f71b40540213361b6dce7f22114a0c0403dd9c8be11f22f19871d07796eb}{isf\_valid}}\ |\ \mbox{\hyperlink{namespaceeastl_a84f33f71b40540213361b6dce7f22114ad62634dc0c0c9c82086ad545b184c51b}{isf\_current}}\ |\ \mbox{\hyperlink{namespaceeastl_a84f33f71b40540213361b6dce7f22114a2a51ce5116e42ff1efa6a22c56ea0377}{isf\_can\_dereference}});}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00599\ }
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i\ ==\ \mbox{\hyperlink{namespaceeastl_a015a7329c4b84d454b87496532739b69}{end}}())}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\mbox{\hyperlink{namespaceeastl_a84f33f71b40540213361b6dce7f22114a0c0403dd9c8be11f22f19871d07796eb}{isf\_valid}}\ |\ \mbox{\hyperlink{namespaceeastl_a84f33f71b40540213361b6dce7f22114ad62634dc0c0c9c82086ad545b184c51b}{isf\_current}});\ }
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_a84f33f71b40540213361b6dce7f22114a09d8173911e014a2ba3c343e3e5ac454}{isf\_none}};}
+\DoxyCodeLine{00604\ \ \ \ \ \}}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ }
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ }
+\DoxyCodeLine{00610\ \ \ \ \ \textcolor{comment}{//\ global\ operators}}
+\DoxyCodeLine{00612\ }
+\DoxyCodeLine{00613\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a927b4cbb10494e27e349b89c6fcde665}{operator==}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00615\ \ \ \ \ \{}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ we\ store\ an\ mSize\ member\ for\ intrusive\_sdlist,\ we\ want\ to\ take\ advantage\ of\ it\ here.}}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ ia\ \ \ =\ a.\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1823cd2e1deb1ed8a5bf7a8490e8913e}{begin}}();}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ ib\ \ \ =\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.begin();}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ enda\ =\ a.\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1f919ab9fa170ba19882f73c7502fe10}{end}}();}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a7dc82456b3fbc3aca58ca18d197782f3}{intrusive\_sdlist<T>::const\_iterator}}\ endb\ =\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.end();}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}((ia\ !=\ enda)\ \&\&\ (ib\ !=\ endb)\ \&\&\ (*ia\ ==\ *ib))}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ ++ia;}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ ++ib;}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (ia\ ==\ enda)\ \&\&\ (ib\ ==\ endb);}
+\DoxyCodeLine{00628\ \ \ \ \ \}}
+\DoxyCodeLine{00629\ }
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a289733486746877431e53fcf9adbf633}{operator<}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00632\ \ \ \ \ \{}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceeastl_ab64f96b0d49c1cd5c3d19d188b558d59}{eastl::lexicographical\_compare}}(a.\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1823cd2e1deb1ed8a5bf7a8490e8913e}{begin}}(),\ a.\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a1f919ab9fa170ba19882f73c7502fe10}{end}}(),\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.begin(),\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.end());}
+\DoxyCodeLine{00634\ \ \ \ \ \}}
+\DoxyCodeLine{00635\ }
+\DoxyCodeLine{00636\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a89ff22bd2be381c89895174f2aacd819}{operator!=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00638\ \ \ \ \ \{}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(a\ ==\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00640\ \ \ \ \ \}}
+\DoxyCodeLine{00641\ }
+\DoxyCodeLine{00642\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00643\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a26383d9098fb1b90256105f8990bb0c6}{operator>}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00644\ \ \ \ \ \{}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ <\ a;}
+\DoxyCodeLine{00646\ \ \ \ \ \}}
+\DoxyCodeLine{00647\ }
+\DoxyCodeLine{00648\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_a2b38d59a0faf07bfa368e2c20dd5caae}{operator<=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00650\ \ \ \ \ \{}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ <\ a);}
+\DoxyCodeLine{00652\ \ \ \ \ \}}
+\DoxyCodeLine{00653\ }
+\DoxyCodeLine{00654\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00655\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceeastl_ad7c33d73b84e2428c6927a335dbc1778}{operator>=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00656\ \ \ \ \ \{}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(a\ <\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00658\ \ \ \ \ \}}
+\DoxyCodeLine{00659\ }
+\DoxyCodeLine{00660\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00661\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceeastl_a98898432a5e178e354c5af6abeb58f8b}{swap}}(\mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ a,\ \mbox{\hyperlink{classeastl_1_1intrusive__sdlist}{intrusive\_sdlist<T>}}\&\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})}
+\DoxyCodeLine{00662\ \ \ \ \ \{}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classeastl_1_1intrusive__sdlist_a5ef62576eaf13556f390464d0e5396b3}{swap}}(\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00664\ \ \ \ \ \}}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ }
+\DoxyCodeLine{00667\ \}\ \textcolor{comment}{//\ namespace\ eastl}}
+\DoxyCodeLine{00668\ }
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ Header\ include\ guard}}
+\DoxyCodeLine{00671\ }
+\DoxyCodeLine{00672\ }
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ }
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ }
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ }
+\DoxyCodeLine{00685\ }
+\DoxyCodeLine{00686\ }
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ }
+\DoxyCodeLine{00689\ }
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ }
+\DoxyCodeLine{00692\ }
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ }
+
+\end{DoxyCode}

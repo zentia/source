@@ -1,0 +1,1446 @@
+\doxysection{unordered\+\_\+dense.\+h}
+\hypertarget{unordered__dense_8h_source}{}\label{unordered__dense_8h_source}\index{runtime/core/stl/unordered\_dense.h@{runtime/core/stl/unordered\_dense.h}}
+\mbox{\hyperlink{unordered__dense_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ A\ fast\ \&\ densely\ stored\ hashmap\ and\ hashset\ based\ on\ robin-\/hood\ backward\ shift\ deletion.}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Version\ 2.0.2}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ https://github.com/martinus/unordered\_dense}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Licensed\ under\ the\ MIT\ License\ <http://opensource.org/licenses/MIT>.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ MIT}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Copyright\ (c)\ 2022\ Martin\ Leitner-\/Ankerl\ <martin.ankerl@gmail.com>}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Permission\ is\ hereby\ granted,\ free\ of\ charge,\ to\ any\ person\ obtaining\ a\ copy}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ of\ this\ software\ and\ associated\ documentation\ files\ (the\ "{}Software"{}),\ to\ deal}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ in\ the\ Software\ without\ restriction,\ including\ without\ limitation\ the\ rights}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ to\ use,\ copy,\ modify,\ merge,\ publish,\ distribute,\ sublicense,\ and/or\ sell}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ copies\ of\ the\ Software,\ and\ to\ permit\ persons\ to\ whom\ the\ Software\ is}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ furnished\ to\ do\ so,\ subject\ to\ the\ following\ conditions:}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ The\ above\ copyright\ notice\ and\ this\ permission\ notice\ shall\ be\ included\ in\ all}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ copies\ or\ substantial\ portions\ of\ the\ Software.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ THE\ SOFTWARE\ IS\ PROVIDED\ "{}AS\ IS"{},\ WITHOUT\ WARRANTY\ OF\ ANY\ KIND,\ EXPRESS\ OR}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ IMPLIED,\ INCLUDING\ BUT\ NOT\ LIMITED\ TO\ THE\ WARRANTIES\ OF\ MERCHANTABILITY,}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ AND\ NONINFRINGEMENT.\ IN\ NO\ EVENT\ SHALL\ THE}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ AUTHORS\ OR\ COPYRIGHT\ HOLDERS\ BE\ LIABLE\ FOR\ ANY\ CLAIM,\ DAMAGES\ OR\ OTHER}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ LIABILITY,\ WHETHER\ IN\ AN\ ACTION\ OF\ CONTRACT,\ TORT\ OR\ OTHERWISE,\ ARISING\ FROM,}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ OUT\ OF\ OR\ IN\ CONNECTION\ WITH\ THE\ SOFTWARE\ OR\ THE\ USE\ OR\ OTHER\ DEALINGS\ IN\ THE}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ SOFTWARE.}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ LAST\ UPDATE\ IN\ LUISA\ COMPUTE:\ 2022-\/12-\/25}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#ifndef\ ANKERL\_UNORDERED\_DENSE\_H}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_H}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ see\ https://semver.org/spec/v2.0.0.html}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_VERSION\_MAJOR\ 2}\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/macro-\/usage)\ incompatible\ API\ changes}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_VERSION\_MINOR\ 0}\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/macro-\/usage)\ backwards\ compatible\ functionality}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_VERSION\_PATCH\ 2}\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/macro-\/usage)\ backwards\ compatible\ bug\ fixes}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ API\ versioning\ with\ inline\ namespace,\ see\ https://www.foonathan.net/2018/11/inline-\/namespaces/}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_VERSION\_CONCAT1(major,\ minor,\ patch)\ v\#\#major\#\#\_\#\#minor\#\#\_\#\#patch}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_VERSION\_CONCAT(major,\ minor,\ patch)\ ANKERL\_UNORDERED\_DENSE\_VERSION\_CONCAT1(major,\ minor,\ patch)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_NAMESPACE\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ ANKERL\_UNORDERED\_DENSE\_VERSION\_CONCAT(\ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ ANKERL\_UNORDERED\_DENSE\_VERSION\_MAJOR,\ ANKERL\_UNORDERED\_DENSE\_VERSION\_MINOR,\ ANKERL\_UNORDERED\_DENSE\_VERSION\_PATCH)}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#if\ defined(\_MSVC\_LANG)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_CPP\_VERSION\ \_MSVC\_LANG}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_CPP\_VERSION\ \_\_cplusplus}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)}}
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ NOLINTNEXTLINE(cppcoreguidelines-\/macro-\/usage)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_PACK(decl)\ decl\ \_\_attribute\_\_((\_\_packed\_\_))}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#elif\ defined(\_MSC\_VER)}}
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ NOLINTNEXTLINE(cppcoreguidelines-\/macro-\/usage)}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_PACK(decl)\ \_\_pragma(pack(push,\ 1))\ decl\ \_\_pragma(pack(pop))}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\#if\ ANKERL\_UNORDERED\_DENSE\_CPP\_VERSION\ <\ 201703L}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\#error\ ankerl::unordered\_dense\ requires\ C++17\ or\ higher}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\#include\ <array>}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#include\ <cstring>}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\#include\ <initializer\_list>}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#include\ <iterator>}}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#include\ <limits>}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#include\ <tuple>}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#include\ <cassert>}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{core_2stl_2type__traits_8h}{runtime/core/stl/type\_traits.h}}>}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#if\ defined(\_MSC\_VER)\ \&\&\ defined(\_M\_X64)}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{intrin_8h}{intrin.h}}>}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#pragma\ intrinsic(\_umul128)}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)\ ||\ defined(\_\_INTEL\_COMPILER)\ ||\ defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_LIKELY(x)\ \_\_builtin\_expect(x,\ 1)\ \ }\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/macro-\/usage)}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_UNLIKELY(x)\ \_\_builtin\_expect(x,\ 0)}\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/macro-\/usage)}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_LIKELY(x)\ (x)\ \ }\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/macro-\/usage)}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#define\ ANKERL\_UNORDERED\_DENSE\_UNLIKELY(x)\ (x)}\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/macro-\/usage)}}
+\DoxyCodeLine{00088\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{namespace\ }ankerl::unordered\_dense\ \{}
+\DoxyCodeLine{00091\ \textcolor{keyword}{inline}\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{unordered__dense_8h_a118c771e88ea4a2e08bf197e1938dd75}{ANKERL\_UNORDERED\_DENSE\_NAMESPACE}}\ \{}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ hash\ ///////////////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ This\ is\ a\ stripped-\/down\ implementation\ of\ wyhash:\ https://github.com/wangyi-\/fudan/wyhash}}
+\DoxyCodeLine{00096\ \textcolor{comment}{//\ No\ big-\/endian\ support\ (because\ different\ values\ on\ different\ machines\ don't\ matter),}}
+\DoxyCodeLine{00097\ \textcolor{comment}{//\ hardcodes\ seed\ and\ the\ secret,\ reformattes\ the\ code,\ and\ clang-\/tidy\ fixes.}}
+\DoxyCodeLine{00098\ \textcolor{keyword}{namespace\ }detail::wyhash\ \{}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ mum(\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ *a,\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ *\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ \{}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#if\ defined(\_\_SIZEOF\_INT128\_\_)}}
+\DoxyCodeLine{00102\ \ \ \ \ \_\_uint128\_t\ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ =\ *a;}
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ *=\ *\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}};}
+\DoxyCodeLine{00104\ \ \ \ \ *a\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}});}
+\DoxyCodeLine{00105\ \ \ \ \ *\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_a4788d82c901b9367dd5c0daff8a7616b}{r}}\ >>\ 64U);}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\#elif\ defined(\_MSC\_VER)\ \&\&\ defined(\_M\_X64)}}
+\DoxyCodeLine{00107\ \ \ \ \ *a\ =\ \_umul128(*a,\ *\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}},\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00109\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ ha\ =\ *a\ >>\ 32U;}
+\DoxyCodeLine{00110\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ hb\ =\ *\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ >>\ 32U;}
+\DoxyCodeLine{00111\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ la\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\textcolor{keyword}{>}(*a);}
+\DoxyCodeLine{00112\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ lb\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\textcolor{keyword}{>}(*b);}
+\DoxyCodeLine{00113\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ hi\{\};}
+\DoxyCodeLine{00114\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ lo\{\};}
+\DoxyCodeLine{00115\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ rh\ =\ ha\ *\ hb;}
+\DoxyCodeLine{00116\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ rm0\ =\ ha\ *\ lb;}
+\DoxyCodeLine{00117\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ rm1\ =\ hb\ *\ la;}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ rl\ =\ la\ *\ lb;}
+\DoxyCodeLine{00119\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ =\ rl\ +\ (rm0\ <<\ 32U);}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keyword}{auto}\ c\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\textcolor{keyword}{>}(\mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ <\ rl);}
+\DoxyCodeLine{00121\ \ \ \ \ lo\ =\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}}\ +\ (rm1\ <<\ 32U);}
+\DoxyCodeLine{00122\ \ \ \ \ c\ +=\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\textcolor{keyword}{>}(lo\ <\ \mbox{\hyperlink{boing_8c_a87accd1af8e0aff4b818d891374f7cec}{t}});}
+\DoxyCodeLine{00123\ \ \ \ \ hi\ =\ rh\ +\ (rm0\ >>\ 32U)\ +\ (rm1\ >>\ 32U)\ +\ c;}
+\DoxyCodeLine{00124\ \ \ \ \ *a\ =\ lo;}
+\DoxyCodeLine{00125\ \ \ \ \ *\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ hi;}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ multiply\ and\ xor\ mix\ function,\ aka\ MUM}}
+\DoxyCodeLine{00130\ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ mix(\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ a,\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ mum(\&a,\ \&\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{return}\ a\ \string^\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}};}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ read\ functions.\ WARNING:\ we\ don't\ care\ about\ endianness,\ so\ results\ are\ different\ on\ big\ endian!}}
+\DoxyCodeLine{00136\ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ r8(\textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ v\{\};}
+\DoxyCodeLine{00138\ \ \ \ \ std::memcpy(\&v,\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ 8U);}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordflow}{return}\ v;}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ r4(\textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ v\{\};}
+\DoxyCodeLine{00144\ \ \ \ \ std::memcpy(\&v,\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ 4);}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keywordflow}{return}\ v;}
+\DoxyCodeLine{00146\ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ reads\ 1,\ 2,\ or\ 3\ bytes}}
+\DoxyCodeLine{00149\ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ r3(\textcolor{keyword}{const}\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ \textcolor{keywordtype}{size\_t}\ k)\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\textcolor{keyword}{>}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}[0])\ <<\ 16U)\ |\ (\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\textcolor{keyword}{>}(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}[k\ >>\ 1U])\ <<\ 8U)\ |\ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}[k\ -\/\ 1];}
+\DoxyCodeLine{00151\ \}}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ [[maybe\_unused]]\ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ hash(\textcolor{keywordtype}{void}\ \textcolor{keyword}{const}\ *\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ \textcolor{keywordtype}{size\_t}\ len)\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ secret\ =\ std::array\{\mbox{\hyperlink{eabase_8h_a134ae84400d184ed2570e3270d5472c2}{UINT64\_C}}(0xa0761d6478bd642f),}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_a134ae84400d184ed2570e3270d5472c2}{UINT64\_C}}(0xe7037ed1a0b428db),}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_a134ae84400d184ed2570e3270d5472c2}{UINT64\_C}}(0x8ebc6af09c88c6e3),}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_a134ae84400d184ed2570e3270d5472c2}{UINT64\_C}}(0x589965cc75374cc3)\};}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ *\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ \textcolor{keyword}{const\ }*\textcolor{keyword}{>}(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00160\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ seed\ =\ secret[0];}
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ a\{\};}
+\DoxyCodeLine{00162\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\{\};}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keywordflow}{if}\ (ANKERL\_UNORDERED\_DENSE\_LIKELY(len\ <=\ 16))\ \{}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ANKERL\_UNORDERED\_DENSE\_LIKELY(len\ >=\ 4))\ \{}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ a\ =\ (r4(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ <<\ 32U)\ |\ r4(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ ((len\ >>\ 3U)\ <<\ 2U));}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ (r4(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ len\ -\/\ 4)\ <<\ 32U)\ |\ r4(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ len\ -\/\ 4\ -\/\ ((len\ >>\ 3U)\ <<\ 2U));}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (ANKERL\_UNORDERED\_DENSE\_LIKELY(len\ >\ 0))\ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ a\ =\ r3(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}},\ len);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ 0;}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ a\ =\ 0;}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ 0;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ i\ =\ len;}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ANKERL\_UNORDERED\_DENSE\_UNLIKELY(i\ >\ 48))\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ see1\ =\ seed;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ see2\ =\ seed;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ seed\ =\ mix(r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \string^\ secret[1],\ r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ 8)\ \string^\ seed);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ see1\ =\ mix(r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ 16)\ \string^\ secret[2],\ r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ 24)\ \string^\ see1);}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ see2\ =\ mix(r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ 32)\ \string^\ secret[3],\ r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ 40)\ \string^\ see2);}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +=\ 48;}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i\ -\/=\ 48;}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (ANKERL\_UNORDERED\_DENSE\_LIKELY(i\ >\ 48));}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ seed\ \string^=\ see1\ \string^\ see2;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (ANKERL\_UNORDERED\_DENSE\_UNLIKELY(i\ >\ 16))\ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ seed\ =\ mix(r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}})\ \string^\ secret[1],\ r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ 8)\ \string^\ seed);}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ i\ -\/=\ 16;}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +=\ 16;}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ a\ =\ r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ i\ -\/\ 16);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ =\ r8(\mbox{\hyperlink{main-override_8cpp_a117104b82864d3b23ec174af6d392709}{p}}\ +\ i\ -\/\ 8);}
+\DoxyCodeLine{00195\ \ \ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{keywordflow}{return}\ mix(secret[1]\ \string^\ len,\ mix(a\ \string^\ secret[1],\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}\ \string^\ seed));}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{auto}\ hash(\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keywordflow}{return}\ detail::wyhash::mix(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}},\ \mbox{\hyperlink{eabase_8h_a134ae84400d184ed2570e3270d5472c2}{UINT64\_C}}(0x9E3779B97F4A7C15));}
+\DoxyCodeLine{00202\ \}}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \}\textcolor{comment}{//\ namespace\ detail::wyhash}}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\#if\ defined(\_\_GNUC\_\_)\ \&\&\ !defined(\_\_clang\_\_)}}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\#pragma\ GCC\ diagnostic\ pop}}
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{comment}{//\ bucket\_type\ //////////////////////////////////////////////////////////}}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{keyword}{namespace\ }bucket\_type\ \{}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \textcolor{keyword}{struct\ }standard\ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ dist\_inc\ =\ 1U\ <<\ 8U;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ skip\ 1\ byte\ fingerprint}}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ fingerprint\_mask\ =\ dist\_inc\ -\/\ 1;\textcolor{comment}{//\ mask\ for\ 1\ byte\ of\ fingerprint}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ \ \ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ m\_dist\_and\_fingerprint;\textcolor{comment}{//\ upper\ 3\ byte:\ distance\ to\ original\ bucket.\ lower\ byte:\ fingerprint\ from\ hash}}
+\DoxyCodeLine{00218\ \ \ \ \ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ m\_value\_idx;\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ index\ into\ the\ m\_values\ vector.}}
+\DoxyCodeLine{00219\ \};}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ ANKERL\_UNORDERED\_DENSE\_PACK(\textcolor{keyword}{struct}\ big\ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ dist\_inc\ =\ 1U\ <<\ 8U;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ skip\ 1\ byte\ fingerprint}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ fingerprint\_mask\ =\ dist\_inc\ -\/\ 1;\textcolor{comment}{//\ mask\ for\ 1\ byte\ of\ fingerprint}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \mbox{\hyperlink{eabase_8h_a435d1572bf3f880d55459d9805097f62}{uint32\_t}}\ m\_dist\_and\_fingerprint;\textcolor{comment}{//\ upper\ 3\ byte:\ distance\ to\ original\ bucket.\ lower\ byte:\ fingerprint\ from\ hash}}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ m\_value\_idx;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ index\ into\ the\ m\_values\ vector.}}
+\DoxyCodeLine{00227\ \});}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \}\textcolor{comment}{//\ namespace\ bucket\_type}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacedetail}{detail}}\ \{}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{struct\ }nonesuch\ \{\};}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }Default,\ \textcolor{keyword}{class\ }AlwaysVoid,\ \textcolor{keyword}{template}<\textcolor{keyword}{class}...>\ \textcolor{keyword}{class\ }Op,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00236\ \textcolor{keyword}{struct\ }detector\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keyword}{using\ }value\_t\ =\ std::false\_type;}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}}\ =\ Default;}
+\DoxyCodeLine{00239\ \};}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }Default,\ \textcolor{keyword}{template}<\textcolor{keyword}{class}...>\ \textcolor{keyword}{class\ }Op,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00242\ \textcolor{keyword}{struct\ }detector<Default,\ \mbox{\hyperlink{namespacestd}{std}}::void\_t<Op<Args...>>,\ Op,\ Args...>\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keyword}{using\ }value\_t\ =\ std::true\_type;}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a63267399cd2a2ee217572c11d2e54f07}{type}}\ =\ Op<Args...>;}
+\DoxyCodeLine{00245\ \};}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{keyword}{template}<\textcolor{keyword}{template}<\textcolor{keyword}{class}...>\ \textcolor{keyword}{class\ }Op,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00248\ \textcolor{keyword}{using\ }is\_detected\ =\ \textcolor{keyword}{typename}\ detail::detector<detail::nonesuch,\ \mbox{\hyperlink{mimalloc_8h_a9d6d8aef94ac19034a5f163606f84830}{void}},\ Op,\ Args...>::value\_t;}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \textcolor{keyword}{template}<\textcolor{keyword}{template}<\textcolor{keyword}{class}...>\ \textcolor{keyword}{class\ }Op,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00251\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ is\_detected\_v\ =\ is\_detected<Op,\ Args...>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{::value}};}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00254\ \textcolor{keyword}{using\ }detect\_avalanching\ =\ \textcolor{keyword}{typename}\ T::is\_avalanching;}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00257\ \textcolor{keyword}{using\ }detect\_is\_transparent\ =\ \textcolor{keyword}{typename}\ T::is\_transparent;}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00260\ \textcolor{keyword}{using\ }detect\_iterator\ =\ \textcolor{keyword}{typename}\ T::iterator;}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00263\ \textcolor{keyword}{using\ }detect\_reserve\ =\ \textcolor{keyword}{decltype}(std::declval<T\ \&>().reserve(\textcolor{keywordtype}{size\_t}\{\}));}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \textcolor{comment}{//\ enable\_if\ helpers}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Mapped>}
+\DoxyCodeLine{00268\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ is\_map\_v\ =\ !std::is\_void\_v<Mapped>;}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Hash,\ \textcolor{keyword}{typename}\ KeyEqual>}
+\DoxyCodeLine{00271\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ is\_transparent\_v\ =\ is\_detected\_v<detect\_is\_transparent,\ Hash>\ ||\ is\_detected\_v<detect\_is\_transparent,\ KeyEqual>;}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ From,\ \textcolor{keyword}{typename}\ To1,\ \textcolor{keyword}{typename}\ To2>}
+\DoxyCodeLine{00274\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ is\_neither\_convertible\_v\ =\ !std::is\_convertible\_v<From,\ To1>\ \&\&\ !std::is\_convertible\_v<From,\ To2>;}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00277\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{bool}\ has\_reserve\ =\ is\_detected\_v<detect\_reserve,\ T>;}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{comment}{//\ base\ type\ for\ map\ has\ mapped\_type}}
+\DoxyCodeLine{00280\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ T>}
+\DoxyCodeLine{00281\ \textcolor{keyword}{struct\ }base\_table\_type\_map\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{using\ }mapped\_type\ =\ T;}
+\DoxyCodeLine{00283\ \};}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ base\ type\ for\ set\ doesn't\ have\ mapped\_type}}
+\DoxyCodeLine{00286\ \textcolor{keyword}{struct\ }base\_table\_type\_set\ \{\};}
+\DoxyCodeLine{00287\ }
+\DoxyCodeLine{00288\ \textcolor{comment}{//\ This\ is\ it,\ the\ table.\ Doubles\ as\ map\ and\ set,\ and\ uses\ \`{}void`\ for\ T\ when\ its\ used\ as\ a\ set.}}
+\DoxyCodeLine{00289\ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }Key,}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }T,\textcolor{comment}{//\ when\ void,\ treat\ it\ as\ a\ set.}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Hash,}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }KeyEqual,}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Allocator,}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Bucket,}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Vector>}
+\DoxyCodeLine{00296\ \textcolor{keyword}{class\ }table\ :\ \textcolor{keyword}{public}\ std::conditional\_t<std::is\_void\_v<T>,\ base\_table\_type\_set,\ base\_table\_type\_map<T>>\ \{}
+\DoxyCodeLine{00297\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{keyword}{using\ }value\_container\_type\ =\ Vector;}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{keyword}{using\ }bucket\_alloc\ =}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ std::allocator\_traits<Allocator>::template\ rebind\_alloc<Bucket>;}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keyword}{using\ }bucket\_alloc\_traits\ =\ std::allocator\_traits<bucket\_alloc>;}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ initial\_shifts\ =\ 64\ -\/\ 3;\textcolor{comment}{//\ 2\string^(64-\/m\_shift)\ number\ of\ buckets}}
+\DoxyCodeLine{00306\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keywordtype}{float}\ default\_max\_load\_factor\ =\ 0.8F;}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keyword}{using\ }key\_type\ =\ Key;}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keyword}{using\ }value\_type\ =\ \textcolor{keyword}{typename}\ value\_container\_type::value\_type;}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keyword}{using\ }size\_type\ =\ \textcolor{keyword}{typename}\ value\_container\_type::size\_type;}
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{keyword}{using\ }difference\_type\ =\ \textcolor{keyword}{typename}\ value\_container\_type::difference\_type;}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keyword}{using\ }hasher\ =\ Hash;}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keyword}{using\ }key\_equal\ =\ KeyEqual;}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keyword}{using\ }allocator\_type\ =\ \textcolor{keyword}{typename}\ value\_container\_type::allocator\_type;}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keyword}{using\ }reference\ =\ \textcolor{keyword}{typename}\ value\_container\_type::reference;}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keyword}{using\ }const\_reference\ =\ \textcolor{keyword}{typename}\ value\_container\_type::const\_reference;}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a114e561b64eeccad5bc17f0f799e1e08}{pointer}}\ =\ \textcolor{keyword}{typename}\ value\_container\_type::pointer;}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keyword}{using\ }const\_pointer\ =\ \textcolor{keyword}{typename}\ value\_container\_type::const\_pointer;}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keyword}{using\ }iterator\ =\ \textcolor{keyword}{typename}\ value\_container\_type::iterator;}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keyword}{using\ }const\_iterator\ =\ \textcolor{keyword}{typename}\ value\_container\_type::const\_iterator;}
+\DoxyCodeLine{00322\ \ \ \ \ \textcolor{keyword}{using\ }bucket\_type\ =\ Bucket;}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{using\ }value\_idx\_type\ =\ \textcolor{keyword}{decltype}(Bucket::m\_value\_idx);}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keyword}{using\ }dist\_and\_fingerprint\_type\ =\ \textcolor{keyword}{decltype}(Bucket::m\_dist\_and\_fingerprint);}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \textcolor{keyword}{static\_assert}(std::is\_trivially\_destructible\_v<Bucket>,\ \textcolor{stringliteral}{"{}assert\ there's\ no\ need\ to\ call\ destructor\ /\ std::destroy"{}});}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{keyword}{static\_assert}(std::is\_trivially\_copyable\_v<Bucket>,\ \textcolor{stringliteral}{"{}assert\ we\ can\ just\ memset\ /\ memcpy"{}});}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \ \ value\_container\_type\ m\_values\{\};\textcolor{comment}{//\ Contains\ all\ the\ key-\/value\ pairs\ in\ one\ densely\ stored\ container.\ No\ holes.}}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keyword}{typename}\ std::allocator\_traits<bucket\_alloc>::pointer\ m\_buckets\{\};}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ m\_num\_buckets\ =\ 0;}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ m\_max\_bucket\_capacity\ =\ 0;}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_max\_load\_factor\ =\ default\_max\_load\_factor;}
+\DoxyCodeLine{00336\ \ \ \ \ Hash\ m\_hash\{\};}
+\DoxyCodeLine{00337\ \ \ \ \ KeyEqual\ m\_equal\{\};}
+\DoxyCodeLine{00338\ \ \ \ \ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ m\_shifts\ =\ initial\_shifts;}
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ next(value\_idx\_type\ bucket\_idx)\ \textcolor{keyword}{const}\ -\/>\ value\_idx\_type\ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ANKERL\_UNORDERED\_DENSE\_UNLIKELY(bucket\_idx\ +\ 1U\ ==\ m\_num\_buckets)\ ?\ 0\ :\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(bucket\_idx\ +\ 1U);}
+\DoxyCodeLine{00342\ \ \ \ \ \}}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{comment}{//\ Helper\ to\ access\ bucket\ through\ pointer\ types}}
+\DoxyCodeLine{00345\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ at(\textcolor{keyword}{typename}\ std::allocator\_traits<bucket\_alloc>::pointer\ bucket\_ptr,\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}})}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ -\/>\ Bucket\ \&\ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *(bucket\_ptr\ +\ \textcolor{keyword}{static\_cast<}typename\ std::allocator\_traits<bucket\_alloc>::difference\_type\textcolor{keyword}{>}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}));}
+\DoxyCodeLine{00348\ \ \ \ \ \}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{comment}{//\ use\ the\ dist\_inc\ and\ dist\_dec\ functions\ so\ that\ uint16\_t\ types\ work\ without\ warning}}
+\DoxyCodeLine{00351\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ dist\_inc(dist\_and\_fingerprint\_type\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ -\/>\ dist\_and\_fingerprint\_type\ \{}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}dist\_and\_fingerprint\_type\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ +\ Bucket::dist\_inc);}
+\DoxyCodeLine{00353\ \ \ \ \ \}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ dist\_dec(dist\_and\_fingerprint\_type\ \mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}})\ -\/>\ dist\_and\_fingerprint\_type\ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}dist\_and\_fingerprint\_type\textcolor{keyword}{>}(\mbox{\hyperlink{offscreen_8c_ad0da36b2558901e21e7a30f6c227a45e}{x}}\ -\/\ Bucket::dist\_inc);}
+\DoxyCodeLine{00357\ \ \ \ \ \}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \ \ \ \ \textcolor{comment}{//\ The\ goal\ of\ mixed\_hash\ is\ to\ always\ produce\ a\ high\ quality\ 64bit\ hash.}}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K>}
+\DoxyCodeLine{00361\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ mixed\_hash(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ \mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ \{}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (is\_detected\_v<detect\_avalanching,\ Hash>)\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ know\ that\ the\ hash\ is\ good\ because\ is\_avalanching.}}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (\textcolor{keyword}{sizeof}(\textcolor{keyword}{decltype}(m\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})))\ <\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}))\ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 32bit\ hash\ and\ is\_avalanching\ =>\ multiply\ with\ a\ constant\ to\ avalanche\ bits\ upwards}}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ *\ \mbox{\hyperlink{eabase_8h_a134ae84400d184ed2570e3270d5472c2}{UINT64\_C}}(0x9ddfea08eb382d69);}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 64bit\ and\ is\_avalanching\ =>\ only\ use\ the\ hash\ itself.}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ not\ is\_avalanching\ =>\ apply\ wyhash}}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ wyhash::hash(m\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}));}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00375\ \ \ \ \ \}}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ dist\_and\_fingerprint\_from\_hash(\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ hash)\ \textcolor{keyword}{const}\ -\/>\ dist\_and\_fingerprint\_type\ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Bucket::dist\_inc\ |\ (\textcolor{keyword}{static\_cast<}dist\_and\_fingerprint\_type\textcolor{keyword}{>}(hash)\ \&\ Bucket::fingerprint\_mask);}
+\DoxyCodeLine{00379\ \ \ \ \ \}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ bucket\_idx\_from\_hash(\mbox{\hyperlink{eabase_8h_aaa5d1cd013383c889537491c3cfd9aad}{uint64\_t}}\ hash)\ \textcolor{keyword}{const}\ -\/>\ value\_idx\_type\ \{}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(hash\ >>\ m\_shifts);}
+\DoxyCodeLine{00383\ \ \ \ \ \}}
+\DoxyCodeLine{00384\ }
+\DoxyCodeLine{00385\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ get\_key(value\_type\ \textcolor{keyword}{const}\ \&vt)\ -\/>\ key\_type\ \textcolor{keyword}{const}\ \&\ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_void\_v<T>)\ \{}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ vt;}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ vt.first;}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00391\ \ \ \ \ \}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K>}
+\DoxyCodeLine{00394\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ next\_while\_less(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ Bucket\ \{}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\ =\ mixed\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dist\_and\_fingerprint\ =\ dist\_and\_fingerprint\_from\_hash(hash);}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_idx\ =\ bucket\_idx\_from\_hash(hash);}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (dist\_and\_fingerprint\ <\ at(m\_buckets,\ bucket\_idx).m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{dist\_and\_fingerprint,\ bucket\_idx\};}
+\DoxyCodeLine{00404\ \ \ \ \ \}}
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \ \ \ \ \textcolor{keywordtype}{void}\ place\_and\_shift\_up(Bucket\ bucket,\ value\_idx\_type\ place)\ \{}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (0\ !=\ at(m\_buckets,\ place).m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\ =\ std::exchange(at(m\_buckets,\ place),\ bucket);}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \ \ bucket.m\_dist\_and\_fingerprint\ =\ dist\_inc(bucket.m\_dist\_and\_fingerprint);}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \ \ place\ =\ next(place);}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ at(m\_buckets,\ place)\ =\ bucket;}
+\DoxyCodeLine{00413\ \ \ \ \ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ calc\_num\_buckets(\mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ shifts)\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::min(max\_bucket\_count(),\ \textcolor{keywordtype}{size\_t}\{1\}\ <<\ (64U\ -\/\ shifts));}
+\DoxyCodeLine{00417\ \ \ \ \ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ calc\_shifts\_for\_size(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}})\ \textcolor{keyword}{const}\ -\/>\ \mbox{\hyperlink{eabase_8h_aba7bc1797add20fe3efdf37ced1182c5}{uint8\_t}}\ \{}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ shifts\ =\ initial\_shifts;}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (shifts\ >\ 0\ \&\&\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{size\_t}\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(calc\_num\_buckets(shifts))\ *\ max\_load\_factor())\ <\ \mbox{\hyperlink{main-override_8cpp_a1384e7608274313a9433fa573868557b}{s}})\ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/shifts;}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ shifts;}
+\DoxyCodeLine{00425\ \ \ \ \ \}}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \ \ \ \ \textcolor{comment}{//\ assumes\ m\_values\ has\ data,\ m\_buckets=m\_buckets\_end=nullptr,\ m\_shifts\ is\ INITIAL\_SHIFTS}}
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keywordtype}{void}\ copy\_buckets(table\ \textcolor{keyword}{const}\ \&other)\ \{}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!empty())\ \{}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shifts\ =\ other.m\_shifts;}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ allocate\_buckets\_from\_shift();}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ std::memcpy(m\_buckets,\ other.m\_buckets,\ \textcolor{keyword}{sizeof}(Bucket)\ *\ bucket\_count());}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00434\ \ \ \ \ \}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00439\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ is\_full()\ \textcolor{keyword}{const}\ -\/>\ \textcolor{keywordtype}{bool}\ \{}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}()\ >=\ m\_max\_bucket\_capacity;}
+\DoxyCodeLine{00441\ \ \ \ \ \}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordtype}{void}\ deallocate\_buckets()\ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ba\ =\ bucket\_alloc(Allocator\{\});}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{nullptr}\ !=\ m\_buckets)\ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_alloc\_traits::deallocate(ba,\ m\_buckets,\ bucket\_count());}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ m\_buckets\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ m\_num\_buckets\ =\ 0;}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ m\_max\_bucket\_capacity\ =\ 0;}
+\DoxyCodeLine{00451\ \ \ \ \ \}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{keywordtype}{void}\ allocate\_buckets\_from\_shift()\ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ba\ =\ bucket\_alloc(Allocator\{\});}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ m\_num\_buckets\ =\ calc\_num\_buckets(m\_shifts);}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ m\_buckets\ =\ bucket\_alloc\_traits::allocate(ba,\ m\_num\_buckets);}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_buckets\ ==\ max\_bucket\_count())\ \{}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ reached\ the\ maximum,\ make\ sure\ we\ can\ use\ each\ bucket}}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \ \ \ \ \ \ m\_max\_bucket\_capacity\ =\ max\_bucket\_count();}
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ \ \ m\_max\_bucket\_capacity\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(m\_num\_buckets)\ *\ max\_load\_factor());}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00463\ \ \ \ \ \}}
+\DoxyCodeLine{00464\ }
+\DoxyCodeLine{00465\ \ \ \ \ \textcolor{keywordtype}{void}\ clear\_buckets()\ \{}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_buckets\ !=\ \textcolor{keyword}{nullptr})\ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ std::memset(\&*m\_buckets,\ 0,\ \textcolor{keyword}{sizeof}(Bucket)\ *\ bucket\_count());}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00469\ \ \ \ \ \}}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keywordtype}{void}\ clear\_and\_fill\_buckets\_from\_values()\ \{}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ clear\_buckets();}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (value\_idx\_type\ value\_idx\ =\ 0,\ end\_idx\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(m\_values.size());\ value\_idx\ <\ end\_idx;}
+\DoxyCodeLine{00474\ \ \ \ \ \ \ \ \ \ \ \ \ \ ++value\_idx)\ \{}
+\DoxyCodeLine{00475\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}\ =\ get\_key(m\_values[value\_idx]);}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ [dist\_and\_fingerprint,\ bucket]\ =\ next\_while\_less(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ know\ for\ certain\ that\ key\ has\ not\ yet\ been\ inserted,\ so\ no\ need\ to\ check\ it.}}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ place\_and\_shift\_up(\{dist\_and\_fingerprint,\ value\_idx\},\ bucket);}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00481\ \ \ \ \ \}}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keywordtype}{void}\ increase\_size()\ \{}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ "{}ankerl::unordered\_dense:\ reached\ max\ bucket\ size,\ cannot\ increase\ size"{}}}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ assert(!(ANKERL\_UNORDERED\_DENSE\_UNLIKELY(m\_max\_bucket\_capacity\ ==\ max\_bucket\_count())));}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ -\/-\/m\_shifts;}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ deallocate\_buckets();}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ allocate\_buckets\_from\_shift();}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ clear\_and\_fill\_buckets\_from\_values();}
+\DoxyCodeLine{00490\ \ \ \ \ \}}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \ \ \ \ \textcolor{keywordtype}{void}\ do\_erase(value\_idx\_type\ bucket\_idx)\ \{}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ value\_idx\_to\_remove\ =\ at(m\_buckets,\ bucket\_idx).m\_value\_idx;}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ shift\ down\ until\ either\ empty\ or\ an\ element\ with\ correct\ spot\ is\ found}}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ next\_bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (at(m\_buckets,\ next\_bucket\_idx).m\_dist\_and\_fingerprint\ >=\ Bucket::dist\_inc\ *\ 2)\ \{}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ at(m\_buckets,\ bucket\_idx)\ =\ \{dist\_dec(at(m\_buckets,\ next\_bucket\_idx).m\_dist\_and\_fingerprint),}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ at(m\_buckets,\ next\_bucket\_idx).m\_value\_idx\};}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ std::exchange(next\_bucket\_idx,\ next(next\_bucket\_idx));}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ at(m\_buckets,\ bucket\_idx)\ =\ \{\};}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ m\_values}}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (value\_idx\_to\_remove\ !=\ m\_values.size()\ -\/\ 1)\ \{}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ no\ luck,\ we'll\ have\ to\ replace\ the\ value\ with\ the\ last\ one\ and\ update\ the\ index\ accordingly}}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&val\ =\ m\_values[value\_idx\_to\_remove];}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ val\ =\ std::move(m\_values.back());}
+\DoxyCodeLine{00509\ }
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ the\ values\_idx\ of\ the\ moved\ entry.\ No\ need\ to\ play\ the\ info\ game,\ just\ look\ until\ we\ find\ the\ values\_idx}}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mh\ =\ mixed\_hash(get\_key(val));}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ bucket\_idx\_from\_hash(mh);}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ values\_idx\_back\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(m\_values.size()\ -\/\ 1);}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (values\_idx\_back\ !=\ at(m\_buckets,\ bucket\_idx).m\_value\_idx)\ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ at(m\_buckets,\ bucket\_idx).m\_value\_idx\ =\ value\_idx\_to\_remove;}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ m\_values.pop\_back();}
+\DoxyCodeLine{00521\ \ \ \ \ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K>}
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{keyword}{auto}\ do\_erase\_key(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (empty())\ \{}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ [dist\_and\_fingerprint,\ bucket\_idx]\ =\ next\_while\_less(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (dist\_and\_fingerprint\ ==\ at(m\_buckets,\ bucket\_idx).m\_dist\_and\_fingerprint\ \&\&}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ !m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ get\_key(m\_values[at(m\_buckets,\ bucket\_idx).m\_value\_idx])))\ \{}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ !=\ at(m\_buckets,\ bucket\_idx).m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00540\ \ \ \ \ \ \ \ \ do\_erase(bucket\_idx);}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 1;}
+\DoxyCodeLine{00542\ \ \ \ \ \}}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ M>}
+\DoxyCodeLine{00545\ \ \ \ \ \textcolor{keyword}{auto}\ do\_insert\_or\_assign(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ M\ \&\&mapped)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\_isinserted\ =\ try\_emplace(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<M>(mapped));}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!it\_isinserted.second)\ \{}
+\DoxyCodeLine{00548\ \ \ \ \ \ \ \ \ \ \ \ \ it\_isinserted.first-\/>second\ =\ std::forward<M>(mapped);}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ it\_isinserted;}
+\DoxyCodeLine{00551\ \ \ \ \ \}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{00554\ \ \ \ \ \textcolor{keyword}{auto}\ do\_place\_element(dist\_and\_fingerprint\_type\ dist\_and\_fingerprint,\ value\_idx\_type\ bucket\_idx,\ K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ \ \ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ emplace\ the\ new\ value.\ If\ that\ throws\ an\ exception,\ no\ harm\ done;\ index\ is\ still\ in\ a\ valid\ state}}
+\DoxyCodeLine{00558\ \ \ \ \ \ \ \ \ m\_values.emplace\_back(std::piecewise\_construct,}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::forward\_as\_tuple(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})),}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::forward\_as\_tuple(std::forward<Args>(args)...));}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ place\ element\ and\ shift\ up\ until\ we\ find\ an\ empty\ spot}}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ value\_idx\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(m\_values.size()\ -\/\ 1);}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ place\_and\_shift\_up(\{dist\_and\_fingerprint,\ value\_idx\},\ bucket\_idx);}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(value\_idx),\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{00566\ \ \ \ \ \}}
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{00569\ \ \ \ \ \textcolor{keyword}{auto}\ do\_try\_emplace(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ANKERL\_UNORDERED\_DENSE\_UNLIKELY(is\_full()))\ \{}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ increase\_size();}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\ =\ mixed\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dist\_and\_fingerprint\ =\ dist\_and\_fingerprint\_from\_hash(hash);}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_idx\ =\ bucket\_idx\_from\_hash(hash);}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ *bucket\ =\ \&at(m\_buckets,\ bucket\_idx);}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ ==\ bucket-\/>m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ m\_values[bucket-\/>m\_value\_idx].first))\ \{}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(bucket-\/>m\_value\_idx),\ \textcolor{keyword}{false}\};}
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ >\ bucket-\/>m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_place\_element(dist\_and\_fingerprint,\ bucket\_idx,\ std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<Args>(args)...);}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00590\ \ \ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K>}
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{keyword}{auto}\ do\_find(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (ANKERL\_UNORDERED\_DENSE\_UNLIKELY(empty()))\ \{}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ end();}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00597\ }
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ mh\ =\ mixed\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dist\_and\_fingerprint\ =\ dist\_and\_fingerprint\_from\_hash(mh);}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_idx\ =\ bucket\_idx\_from\_hash(mh);}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ *bucket\ =\ \&at(m\_buckets,\ bucket\_idx);}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ unrolled\ loop.\ *Always*\ check\ a\ few\ directly,\ then\ enter\ the\ loop.\ This\ is\ faster.}}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ ==\ bucket-\/>m\_dist\_and\_fingerprint\ \&\&\ m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ get\_key(m\_values[bucket-\/>m\_value\_idx])))\ \{}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(bucket-\/>m\_value\_idx);}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ bucket\ =\ \&at(m\_buckets,\ bucket\_idx);}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ ==\ bucket-\/>m\_dist\_and\_fingerprint\ \&\&\ m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ get\_key(m\_values[bucket-\/>m\_value\_idx])))\ \{}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(bucket-\/>m\_value\_idx);}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ bucket\ =\ \&at(m\_buckets,\ bucket\_idx);}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ ==\ bucket-\/>m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ get\_key(m\_values[bucket-\/>m\_value\_idx])))\ \{}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(bucket-\/>m\_value\_idx);}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ >\ bucket-\/>m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ end();}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\ =\ \&at(m\_buckets,\ bucket\_idx);}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00630\ \ \ \ \ \}}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K>}
+\DoxyCodeLine{00633\ \ \ \ \ \textcolor{keyword}{auto}\ do\_find(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ const\_iterator\ \{}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}table\ *\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/pro-\/type-\/const-\/cast)}}
+\DoxyCodeLine{00635\ \ \ \ \ \}}
+\DoxyCodeLine{00636\ }
+\DoxyCodeLine{00637\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{00639\ \ \ \ \ \textcolor{keyword}{auto}\ do\_at(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ Q\ \&\ \{}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{auto}\ it\ =\ find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});\ end()\ !=\ it)\ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ assert(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}ankerl::unordered\_dense::map::at():\ key\ not\ found"{}});}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ abort();}
+\DoxyCodeLine{00645\ \ \ \ \ \}}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{00649\ \ \ \ \ \textcolor{keyword}{auto}\ do\_at(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ Q\ \textcolor{keyword}{const}\ \&\ \{}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}table\ *\textcolor{keyword}{>}(\textcolor{keyword}{this})-\/>at(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});\textcolor{comment}{//\ NOLINT(cppcoreguidelines-\/pro-\/type-\/const-\/cast)}}
+\DoxyCodeLine{00651\ \ \ \ \ \}}
+\DoxyCodeLine{00652\ }
+\DoxyCodeLine{00653\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00654\ \ \ \ \ table()}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ :\ table(0)\ \{\}}
+\DoxyCodeLine{00656\ }
+\DoxyCodeLine{00657\ \ \ \ \ \textcolor{keyword}{explicit}\ table(\textcolor{keywordtype}{size\_t}\ bucket\_count,}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Hash\ \textcolor{keyword}{const}\ \&hash\ =\ Hash(),}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ KeyEqual\ \textcolor{keyword}{const}\ \&equal\ =\ KeyEqual(),}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ allocator\_type\ \textcolor{keyword}{const}\ \&alloc\_or\_container\ =\ allocator\_type())}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ :\ m\_values(alloc\_or\_container),\ m\_hash(hash),\ m\_equal(equal)\ \{}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ !=\ bucket\_count)\ \{}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \ \ reserve(bucket\_count);}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00665\ \ \ \ \ \}}
+\DoxyCodeLine{00666\ }
+\DoxyCodeLine{00667\ \ \ \ \ table(\textcolor{keywordtype}{size\_t}\ bucket\_count,\ allocator\_type\ \textcolor{keyword}{const}\ \&alloc)}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ :\ table(bucket\_count,\ Hash(),\ KeyEqual(),\ alloc)\ \{\}}
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ \ \ \ \ table(\textcolor{keywordtype}{size\_t}\ bucket\_count,\ Hash\ \textcolor{keyword}{const}\ \&hash,\ allocator\_type\ \textcolor{keyword}{const}\ \&alloc)}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ :\ table(bucket\_count,\ hash,\ KeyEqual(),\ alloc)\ \{\}}
+\DoxyCodeLine{00672\ }
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{keyword}{explicit}\ table(allocator\_type\ \textcolor{keyword}{const}\ \&alloc)}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \ \ :\ table(0,\ Hash(),\ KeyEqual(),\ alloc)\ \{\}}
+\DoxyCodeLine{00675\ }
+\DoxyCodeLine{00676\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ InputIt>}
+\DoxyCodeLine{00677\ \ \ \ \ table(InputIt\ first,}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ InputIt\ last,}
+\DoxyCodeLine{00679\ \ \ \ \ \ \ \ \ \ \ size\_type\ bucket\_count\ =\ 0,}
+\DoxyCodeLine{00680\ \ \ \ \ \ \ \ \ \ \ Hash\ \textcolor{keyword}{const}\ \&hash\ =\ Hash(),}
+\DoxyCodeLine{00681\ \ \ \ \ \ \ \ \ \ \ KeyEqual\ \textcolor{keyword}{const}\ \&equal\ =\ KeyEqual(),}
+\DoxyCodeLine{00682\ \ \ \ \ \ \ \ \ \ \ allocator\_type\ \textcolor{keyword}{const}\ \&alloc\ =\ allocator\_type())}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \ \ :\ table(bucket\_count,\ hash,\ equal,\ alloc)\ \{}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \ \ insert(first,\ last);}
+\DoxyCodeLine{00685\ \ \ \ \ \}}
+\DoxyCodeLine{00686\ }
+\DoxyCodeLine{00687\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ InputIt>}
+\DoxyCodeLine{00688\ \ \ \ \ table(InputIt\ first,\ InputIt\ last,\ size\_type\ bucket\_count,\ allocator\_type\ \textcolor{keyword}{const}\ \&alloc)}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ :\ table(first,\ last,\ bucket\_count,\ Hash(),\ KeyEqual(),\ alloc)\ \{\}}
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ InputIt>}
+\DoxyCodeLine{00692\ \ \ \ \ table(InputIt\ first,\ InputIt\ last,\ size\_type\ bucket\_count,\ Hash\ \textcolor{keyword}{const}\ \&hash,\ allocator\_type\ \textcolor{keyword}{const}\ \&alloc)}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ \ \ :\ table(first,\ last,\ bucket\_count,\ hash,\ KeyEqual(),\ alloc)\ \{\}}
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \ \ \ \ table(table\ \textcolor{keyword}{const}\ \&other)}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ :\ m\_values(other.m\_values),\ m\_max\_load\_factor(other.m\_max\_load\_factor),\ m\_hash(other.m\_hash),\ m\_equal(other.m\_equal)\ \{}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ \ \ copy\_buckets(other);}
+\DoxyCodeLine{00698\ \ \ \ \ \}}
+\DoxyCodeLine{00699\ \ \ \ \ table(table\ \&\&other)\ noexcept}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ :\ m\_values(std::move(other.m\_values)),\ m\_buckets(std::exchange(other.m\_buckets,\ \textcolor{keyword}{nullptr})),\ m\_num\_buckets(std::exchange(other.m\_num\_buckets,\ 0)),\ m\_max\_bucket\_capacity(std::exchange(other.m\_max\_bucket\_capacity,\ 0)),\ m\_max\_load\_factor(std::exchange(other.m\_max\_load\_factor,\ default\_max\_load\_factor)),\ m\_hash(std::exchange(other.m\_hash,\ \{\})),\ m\_equal(std::exchange(other.m\_equal,\ \{\})),\ m\_shifts(std::exchange(other.m\_shifts,\ initial\_shifts))\ \{}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ other.m\_values.clear();}
+\DoxyCodeLine{00702\ \ \ \ \ \}}
+\DoxyCodeLine{00703\ }
+\DoxyCodeLine{00704\ \ \ \ \ table(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist,}
+\DoxyCodeLine{00705\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bucket\_count\ =\ 0,}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ Hash\ \textcolor{keyword}{const}\ \&hash\ =\ Hash(),}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ \ \ \ \ KeyEqual\ \textcolor{keyword}{const}\ \&equal\ =\ KeyEqual(),}
+\DoxyCodeLine{00708\ \ \ \ \ \ \ \ \ \ \ allocator\_type\ \textcolor{keyword}{const}\ \&alloc\ =\ allocator\_type())}
+\DoxyCodeLine{00709\ \ \ \ \ \ \ \ \ :\ table(bucket\_count,\ hash,\ equal,\ alloc)\ \{}
+\DoxyCodeLine{00710\ \ \ \ \ \ \ \ \ insert(ilist);}
+\DoxyCodeLine{00711\ \ \ \ \ \}}
+\DoxyCodeLine{00712\ }
+\DoxyCodeLine{00713\ \ \ \ \ table(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist,\ size\_type\ bucket\_count,\ allocator\_type\ \textcolor{keyword}{const}\ \&alloc)}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \ \ :\ table(ilist,\ bucket\_count,\ Hash(),\ KeyEqual(),\ alloc)\ \{\}}
+\DoxyCodeLine{00715\ }
+\DoxyCodeLine{00716\ \ \ \ \ table(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ \mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}},\ size\_type\ bucket\_count,\ Hash\ \textcolor{keyword}{const}\ \&hash,\ allocator\_type\ \textcolor{keyword}{const}\ \&alloc)}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ :\ table(\mbox{\hyperlink{boing_8c_a2858154e2009b0e6e616f313177762bc}{init}},\ bucket\_count,\ hash,\ KeyEqual(),\ alloc)\ \{\}}
+\DoxyCodeLine{00718\ }
+\DoxyCodeLine{00719\ \ \ \ \ \string~table()\ \{}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ba\ =\ bucket\_alloc(Allocator\{\});}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ bucket\_alloc\_traits::deallocate(ba,\ m\_buckets,\ bucket\_count());}
+\DoxyCodeLine{00722\ \ \ \ \ \}}
+\DoxyCodeLine{00723\ }
+\DoxyCodeLine{00724\ \ \ \ \ \textcolor{keyword}{auto}\ operator=(table\ \textcolor{keyword}{const}\ \&other)\ -\/>\ table\ \&\ \{}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\&other\ !=\ \textcolor{keyword}{this})\ \{}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \ \ deallocate\_buckets();\textcolor{comment}{//\ deallocate\ before\ m\_values\ is\ set\ (might\ have\ another\ allocator)}}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ \ \ \ \ m\_values\ =\ other.m\_values;}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \ \ \ \ m\_max\_load\_factor\ =\ other.m\_max\_load\_factor;}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ \ \ \ m\_hash\ =\ other.m\_hash;}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \ \ \ \ m\_equal\ =\ other.m\_equal;}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shifts\ =\ initial\_shifts;}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \ \ \ \ \ \ copy\_buckets(other);}
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00735\ \ \ \ \ \}}
+\DoxyCodeLine{00736\ }
+\DoxyCodeLine{00737\ \ \ \ \ \textcolor{keyword}{auto}\ operator=(table\ \&\&other)\ \textcolor{keyword}{noexcept}(}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \textcolor{keyword}{noexcept}(std::is\_nothrow\_move\_assignable\_v<value\_container\_type>\ \&\&\ std::is\_nothrow\_move\_assignable\_v<Hash>\ \&\&}
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_nothrow\_move\_assignable\_v<KeyEqual>))\ -\/>\ table\ \&\ \{}
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\&other\ !=\ \textcolor{keyword}{this})\ \{}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ \ \ \ \ deallocate\_buckets();\textcolor{comment}{//\ deallocate\ before\ m\_values\ is\ set\ (might\ have\ another\ allocator)}}
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ \ \ \ \ m\_values\ =\ std::move(other.m\_values);}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \ \ \ \ m\_buckets\ =\ std::exchange(other.m\_buckets,\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \ \ \ \ m\_num\_buckets\ =\ std::exchange(other.m\_num\_buckets,\ 0);}
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \ \ \ \ \ \ m\_max\_bucket\_capacity\ =\ std::exchange(other.m\_max\_bucket\_capacity,\ 0);}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ \ \ \ \ m\_max\_load\_factor\ =\ std::exchange(other.m\_max\_load\_factor,\ default\_max\_load\_factor);}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ \ \ \ \ m\_hash\ =\ std::exchange(other.m\_hash,\ \{\});}
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \ \ \ \ \ \ m\_equal\ =\ std::exchange(other.m\_equal,\ \{\});}
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shifts\ =\ std::exchange(other.m\_shifts,\ initial\_shifts);}
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \ \ \ \ \ \ other.m\_values.clear();}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00753\ \ \ \ \ \}}
+\DoxyCodeLine{00754\ }
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{keyword}{auto}\ operator=(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist)\ -\/>\ table\ \&\ \{}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ clear();}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ \ \ insert(ilist);}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00759\ \ \ \ \ \}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \ \ \ \ \textcolor{keyword}{auto}\ get\_allocator()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ allocator\_type\ \{}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Allocator\{\};}
+\DoxyCodeLine{00763\ \ \ \ \ \}}
+\DoxyCodeLine{00764\ }
+\DoxyCodeLine{00765\ \ \ \ \ \textcolor{comment}{//\ iterators\ //////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{00766\ }
+\DoxyCodeLine{00767\ \ \ \ \ \textcolor{keyword}{auto}\ begin()\ \textcolor{keyword}{noexcept}\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.begin();}
+\DoxyCodeLine{00769\ \ \ \ \ \}}
+\DoxyCodeLine{00770\ }
+\DoxyCodeLine{00771\ \ \ \ \ \textcolor{keyword}{auto}\ begin()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ const\_iterator\ \{}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.begin();}
+\DoxyCodeLine{00773\ \ \ \ \ \}}
+\DoxyCodeLine{00774\ }
+\DoxyCodeLine{00775\ \ \ \ \ \textcolor{keyword}{auto}\ cbegin()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ const\_iterator\ \{}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.cbegin();}
+\DoxyCodeLine{00777\ \ \ \ \ \}}
+\DoxyCodeLine{00778\ }
+\DoxyCodeLine{00779\ \ \ \ \ \textcolor{keyword}{auto}\ end()\ \textcolor{keyword}{noexcept}\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.end();}
+\DoxyCodeLine{00781\ \ \ \ \ \}}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \ \ \ \ \textcolor{keyword}{auto}\ cend()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ const\_iterator\ \{}
+\DoxyCodeLine{00784\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.cend();}
+\DoxyCodeLine{00785\ \ \ \ \ \}}
+\DoxyCodeLine{00786\ }
+\DoxyCodeLine{00787\ \ \ \ \ \textcolor{keyword}{auto}\ end()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ const\_iterator\ \{}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.end();}
+\DoxyCodeLine{00789\ \ \ \ \ \}}
+\DoxyCodeLine{00790\ }
+\DoxyCodeLine{00791\ \ \ \ \ \textcolor{comment}{//\ capacity\ ///////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ empty()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ \textcolor{keywordtype}{bool}\ \{}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.empty();}
+\DoxyCodeLine{00795\ \ \ \ \ \}}
+\DoxyCodeLine{00796\ }
+\DoxyCodeLine{00797\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values.size();}
+\DoxyCodeLine{00799\ \ \ \ \ \}}
+\DoxyCodeLine{00800\ }
+\DoxyCodeLine{00801\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ max\_size()\ \textcolor{keyword}{noexcept}\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::numeric\_limits<value\_idx\_type>::max()\ ==\ std::numeric\_limits<size\_t>::max())\ \{}
+\DoxyCodeLine{00803\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keywordtype}{size\_t}\{1\}\ <<\ (\textcolor{keyword}{sizeof}(value\_idx\_type)\ *\ 8\ -\/\ 1);}
+\DoxyCodeLine{00804\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00805\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keywordtype}{size\_t}\{1\}\ <<\ (\textcolor{keyword}{sizeof}(value\_idx\_type)\ *\ 8);}
+\DoxyCodeLine{00806\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00807\ \ \ \ \ \}}
+\DoxyCodeLine{00808\ }
+\DoxyCodeLine{00809\ \ \ \ \ \textcolor{comment}{//\ modifiers\ //////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{00810\ }
+\DoxyCodeLine{00811\ \ \ \ \ \textcolor{keywordtype}{void}\ clear()\ \{}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ m\_values.clear();}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ \ \ clear\_buckets();}
+\DoxyCodeLine{00814\ \ \ \ \ \}}
+\DoxyCodeLine{00815\ }
+\DoxyCodeLine{00816\ \ \ \ \ \textcolor{keyword}{auto}\ insert(value\_type\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ emplace(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}});}
+\DoxyCodeLine{00818\ \ \ \ \ \}}
+\DoxyCodeLine{00819\ }
+\DoxyCodeLine{00820\ \ \ \ \ \textcolor{keyword}{auto}\ insert(value\_type\ \&\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ emplace(std::move(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00822\ \ \ \ \ \}}
+\DoxyCodeLine{00823\ }
+\DoxyCodeLine{00824\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ P>}
+\DoxyCodeLine{00825\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(luisa::is\_constructible\_v<value\_type,\ P\ \&\&>)}
+\DoxyCodeLine{00826\ \ \ \ \ \textcolor{keyword}{auto}\ insert(P\ \&\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00827\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ emplace(std::forward<P>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}));}
+\DoxyCodeLine{00828\ \ \ \ \ \}}
+\DoxyCodeLine{00829\ }
+\DoxyCodeLine{00830\ \ \ \ \ \textcolor{keyword}{auto}\ insert(const\_iterator\ \textcolor{comment}{/*hint*/},\ value\_type\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ insert(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}}).first;}
+\DoxyCodeLine{00832\ \ \ \ \ \}}
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ \ \ \ \ \textcolor{keyword}{auto}\ insert(const\_iterator\ \textcolor{comment}{/*hint*/},\ value\_type\ \&\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ insert(std::move(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})).first;}
+\DoxyCodeLine{00836\ \ \ \ \ \}}
+\DoxyCodeLine{00837\ }
+\DoxyCodeLine{00838\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ P>}
+\DoxyCodeLine{00839\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(luisa::is\_constructible\_v<value\_type,\ P\ \&\&>)}
+\DoxyCodeLine{00840\ \ \ \ \ \textcolor{keyword}{auto}\ insert(const\_iterator\ \textcolor{comment}{/*hint*/},\ P\ \&\&\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ insert(std::forward<P>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a1b2be7bfa84f129a2690a62f3ad82d62}{value}})).first;}
+\DoxyCodeLine{00842\ \ \ \ \ \}}
+\DoxyCodeLine{00843\ }
+\DoxyCodeLine{00844\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ InputIt>}
+\DoxyCodeLine{00845\ \ \ \ \ \textcolor{keywordtype}{void}\ insert(InputIt\ first,\ InputIt\ last)\ \{}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (first\ !=\ last)\ \{}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \ \ \ \ insert(*first);}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \ \ \ \ ++first;}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00850\ \ \ \ \ \}}
+\DoxyCodeLine{00851\ }
+\DoxyCodeLine{00852\ \ \ \ \ \textcolor{keywordtype}{void}\ insert(\mbox{\hyperlink{classstd_1_1initializer__list}{std::initializer\_list<value\_type>}}\ ilist)\ \{}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \ \ insert(ilist.\mbox{\hyperlink{classstd_1_1initializer__list_a9764f0e67f30359f99762af6f8c2e401}{begin}}(),\ ilist.\mbox{\hyperlink{classstd_1_1initializer__list_ae81976034149945787979d065b5bbbec}{end}}());}
+\DoxyCodeLine{00854\ \ \ \ \ \}}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00856\ \ \ \ \ \textcolor{comment}{//\ nonstandard\ API:\ *this\ is\ emptied.}}
+\DoxyCodeLine{00857\ \ \ \ \ \textcolor{comment}{//\ Also\ see\ "{}A\ Standard\ flat\_map"{}\ https://www.open-\/std.org/jtc1/sc22/wg21/docs/papers/2022/p0429r9.pdf}}
+\DoxyCodeLine{00858\ \ \ \ \ \textcolor{keyword}{auto}\ extract()\ \&\&\ -\/>\ value\_container\_type\ \{}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::move(m\_values);}
+\DoxyCodeLine{00860\ \ \ \ \ \}}
+\DoxyCodeLine{00861\ }
+\DoxyCodeLine{00862\ \ \ \ \ \textcolor{comment}{//\ nonstandard\ API:}}
+\DoxyCodeLine{00863\ \ \ \ \ \textcolor{comment}{//\ Discards\ the\ internally\ held\ container\ and\ replaces\ it\ with\ the\ one\ passed.\ Erases\ non-\/unique\ elements.}}
+\DoxyCodeLine{00864\ \ \ \ \ \textcolor{keyword}{auto}\ replace(value\_container\_type\ \&\&container)\ \{}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ "{}ankerl::unordered\_dense::map::replace():\ too\ many\ elements"{}}}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ assert(container.size()\ <=\ max\_size());}
+\DoxyCodeLine{00867\ }
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ shifts\ =\ calc\_shifts\_for\_size(container.size());}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ ==\ m\_num\_buckets\ ||\ shifts\ <\ m\_shifts\ ||\ container.get\_allocator()\ !=\ Allocator\{\})\ \{}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shifts\ =\ shifts;}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \ \ \ \ \ \ deallocate\_buckets();}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \ \ \ \ \ \ allocate\_buckets\_from\_shift();}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ \ \ clear\_buckets();}
+\DoxyCodeLine{00875\ }
+\DoxyCodeLine{00876\ \ \ \ \ \ \ \ \ m\_values\ =\ std::move(container);}
+\DoxyCodeLine{00877\ }
+\DoxyCodeLine{00878\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ can't\ use\ clear\_and\_fill\_buckets\_from\_values()\ because\ container\ elements\ might\ not\ be\ unique}}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ value\_idx\ =\ value\_idx\_type\{\};}
+\DoxyCodeLine{00880\ }
+\DoxyCodeLine{00881\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ loop\ until\ we\ reach\ the\ end\ of\ the\ container.\ duplicated\ entries\ will\ be\ replaced\ with\ back().}}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (value\_idx\ !=\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(m\_values.size()))\ \{}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}\ =\ get\_key(m\_values[value\_idx]);}
+\DoxyCodeLine{00884\ }
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\ =\ mixed\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dist\_and\_fingerprint\ =\ dist\_and\_fingerprint\_from\_hash(hash);}
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_idx\ =\ bucket\_idx\_from\_hash(hash);}
+\DoxyCodeLine{00888\ }
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ key\_found\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\textcolor{keyword}{true})\ \{}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ \&bucket\ =\ at(m\_buckets,\ bucket\_idx);}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ >\ bucket.m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ ==\ bucket.m\_dist\_and\_fingerprint\ \&\&}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ m\_values[bucket.m\_value\_idx].first))\ \{}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ key\_found\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00903\ }
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key\_found)\ \{}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (value\_idx\ !=\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(m\_values.size()\ -\/\ 1))\ \{}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_values[value\_idx]\ =\ std::move(m\_values.back());}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_values.pop\_back();}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ place\_and\_shift\_up(\{dist\_and\_fingerprint,\ value\_idx\},\ bucket\_idx);}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++value\_idx;}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00914\ \ \ \ \ \}}
+\DoxyCodeLine{00915\ }
+\DoxyCodeLine{00916\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ M,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{00918\ \ \ \ \ \textcolor{keyword}{auto}\ insert\_or\_assign(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ M\ \&\&mapped)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00919\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_insert\_or\_assign(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ std::forward<M>(mapped));}
+\DoxyCodeLine{00920\ \ \ \ \ \}}
+\DoxyCodeLine{00921\ }
+\DoxyCodeLine{00922\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ M,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{00924\ \ \ \ \ \textcolor{keyword}{auto}\ insert\_or\_assign(Key\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ M\ \&\&mapped)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_insert\_or\_assign(std::move(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<M>(mapped));}
+\DoxyCodeLine{00926\ \ \ \ \ \}}
+\DoxyCodeLine{00927\ }
+\DoxyCodeLine{00928\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{00929\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ M,}
+\DoxyCodeLine{00930\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{00931\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{00932\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>\ \&\&\ is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{00934\ \ \ \ \ \textcolor{keyword}{auto}\ insert\_or\_assign(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ M\ \&\&mapped)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_insert\_or\_assign(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<M>(mapped));}
+\DoxyCodeLine{00936\ \ \ \ \ \}}
+\DoxyCodeLine{00937\ }
+\DoxyCodeLine{00938\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ M,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{00940\ \ \ \ \ \textcolor{keyword}{auto}\ insert\_or\_assign(const\_iterator\ \textcolor{comment}{/*hint*/},\ Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ M\ \&\&mapped)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00941\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_insert\_or\_assign(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ std::forward<M>(mapped)).first;}
+\DoxyCodeLine{00942\ \ \ \ \ \}}
+\DoxyCodeLine{00943\ }
+\DoxyCodeLine{00944\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ M,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{00946\ \ \ \ \ \textcolor{keyword}{auto}\ insert\_or\_assign(const\_iterator\ \textcolor{comment}{/*hint*/},\ Key\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ M\ \&\&mapped)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00947\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_insert\_or\_assign(std::move(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<M>(mapped)).first;}
+\DoxyCodeLine{00948\ \ \ \ \ \}}
+\DoxyCodeLine{00949\ }
+\DoxyCodeLine{00950\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{00951\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ M,}
+\DoxyCodeLine{00952\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{00954\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>\ \&\&\ is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{00956\ \ \ \ \ \textcolor{keyword}{auto}\ insert\_or\_assign(const\_iterator\ \textcolor{comment}{/*hint*/},\ K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ M\ \&\&mapped)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_insert\_or\_assign(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<M>(mapped)).first;}
+\DoxyCodeLine{00958\ \ \ \ \ \}}
+\DoxyCodeLine{00959\ }
+\DoxyCodeLine{00960\ \ \ \ \ \textcolor{comment}{//\ Single\ arguments\ for\ unordered\_set\ can\ be\ used\ without\ having\ to\ construct\ the\ value\_type}}
+\DoxyCodeLine{00961\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }K,}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{00963\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{00965\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(!is\_map\_v<Q>\ \&\&\ is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{00966\ \ \ \ \ \textcolor{keyword}{auto}\ emplace(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00967\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_full())\ \{}
+\DoxyCodeLine{00968\ \ \ \ \ \ \ \ \ \ \ \ \ increase\_size();}
+\DoxyCodeLine{00969\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00970\ }
+\DoxyCodeLine{00971\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\ =\ mixed\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{00972\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dist\_and\_fingerprint\ =\ dist\_and\_fingerprint\_from\_hash(hash);}
+\DoxyCodeLine{00973\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_idx\ =\ bucket\_idx\_from\_hash(hash);}
+\DoxyCodeLine{00974\ }
+\DoxyCodeLine{00975\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (dist\_and\_fingerprint\ <=\ at(m\_buckets,\ bucket\_idx).m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{00976\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ ==\ at(m\_buckets,\ bucket\_idx).m\_dist\_and\_fingerprint\ \&\&}
+\DoxyCodeLine{00977\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ m\_values[at(m\_buckets,\ bucket\_idx).m\_value\_idx]))\ \{}
+\DoxyCodeLine{00978\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ found\ it,\ return\ without\ ever\ actually\ creating\ anything}}
+\DoxyCodeLine{00979\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(at(m\_buckets,\ bucket\_idx).m\_value\_idx),\ \textcolor{keyword}{false}\};}
+\DoxyCodeLine{00980\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{00982\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{00983\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00984\ }
+\DoxyCodeLine{00985\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ value\ is\ new,\ insert\ element\ first,\ so\ when\ exception\ happens\ we\ are\ in\ a\ valid\ state}}
+\DoxyCodeLine{00986\ \ \ \ \ \ \ \ \ m\_values.emplace\_back(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}));}
+\DoxyCodeLine{00987\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ now\ place\ the\ bucket\ and\ shift\ up\ until\ we\ find\ an\ empty\ spot}}
+\DoxyCodeLine{00988\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ value\_idx\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(m\_values.size()\ -\/\ 1);}
+\DoxyCodeLine{00989\ \ \ \ \ \ \ \ \ place\_and\_shift\_up(\{dist\_and\_fingerprint,\ value\_idx\},\ bucket\_idx);}
+\DoxyCodeLine{00990\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(value\_idx),\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{00991\ \ \ \ \ \}}
+\DoxyCodeLine{00992\ }
+\DoxyCodeLine{00993\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{00994\ \ \ \ \ \textcolor{keyword}{auto}\ emplace(Args\ \&\&...args)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{00995\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_full())\ \{}
+\DoxyCodeLine{00996\ \ \ \ \ \ \ \ \ \ \ \ \ increase\_size();}
+\DoxyCodeLine{00997\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00998\ }
+\DoxyCodeLine{00999\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ have\ to\ instantiate\ the\ value\_type\ to\ be\ able\ to\ access\ the\ key.}}
+\DoxyCodeLine{01000\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ 1.\ emplace\_back\ the\ object\ so\ it\ is\ constructed.\ 2.\ If\ the\ key\ is\ already\ there,\ pop\ it\ later\ in\ the\ loop.}}
+\DoxyCodeLine{01001\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}\ =\ get\_key(m\_values.emplace\_back(std::forward<Args>(args)...));}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\ =\ mixed\_hash(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dist\_and\_fingerprint\ =\ dist\_and\_fingerprint\_from\_hash(hash);}
+\DoxyCodeLine{01004\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_idx\ =\ bucket\_idx\_from\_hash(hash);}
+\DoxyCodeLine{01005\ }
+\DoxyCodeLine{01006\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (dist\_and\_fingerprint\ <=\ at(m\_buckets,\ bucket\_idx).m\_dist\_and\_fingerprint)\ \{}
+\DoxyCodeLine{01007\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dist\_and\_fingerprint\ ==\ at(m\_buckets,\ bucket\_idx).m\_dist\_and\_fingerprint\ \&\&}
+\DoxyCodeLine{01008\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_equal(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ get\_key(m\_values[at(m\_buckets,\ bucket\_idx).m\_value\_idx])))\ \{}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_values.pop\_back();\textcolor{comment}{//\ value\ was\ already\ there,\ so\ get\ rid\ of\ it}}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(at(m\_buckets,\ bucket\_idx).m\_value\_idx),\ \textcolor{keyword}{false}\};}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01012\ \ \ \ \ \ \ \ \ \ \ \ \ dist\_and\_fingerprint\ =\ dist\_inc(dist\_and\_fingerprint);}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01015\ }
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ value\ is\ new,\ place\ the\ bucket\ and\ shift\ up\ until\ we\ find\ an\ empty\ spot}}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ value\_idx\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(m\_values.size()\ -\/\ 1);}
+\DoxyCodeLine{01018\ \ \ \ \ \ \ \ \ place\_and\_shift\_up(\{dist\_and\_fingerprint,\ value\_idx\},\ bucket\_idx);}
+\DoxyCodeLine{01019\ }
+\DoxyCodeLine{01020\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(value\_idx),\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{01021\ \ \ \ \ \}}
+\DoxyCodeLine{01022\ }
+\DoxyCodeLine{01023\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{01024\ \ \ \ \ \textcolor{keyword}{auto}\ emplace\_hint(const\_iterator\ \textcolor{comment}{/*hint*/},\ Args\ \&\&...args)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ emplace(std::forward<Args>(args)...).first;}
+\DoxyCodeLine{01026\ \ \ \ \ \}}
+\DoxyCodeLine{01027\ }
+\DoxyCodeLine{01028\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01029\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01030\ \ \ \ \ \textcolor{keyword}{auto}\ try\_emplace(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{01031\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_try\_emplace(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ std::forward<Args>(args)...);}
+\DoxyCodeLine{01032\ \ \ \ \ \}}
+\DoxyCodeLine{01033\ }
+\DoxyCodeLine{01034\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01035\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01036\ \ \ \ \ \textcolor{keyword}{auto}\ try\_emplace(Key\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{01037\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_try\_emplace(std::move(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<Args>(args)...);}
+\DoxyCodeLine{01038\ \ \ \ \ \}}
+\DoxyCodeLine{01039\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01040\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01041\ \ \ \ \ \textcolor{keyword}{auto}\ force\_emplace(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01042\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ret\ =\ do\_try\_emplace(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ std::forward<Args>(args)...);}
+\DoxyCodeLine{01043\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!std::is\_same\_v<T,\ void>)\ \{}
+\DoxyCodeLine{01044\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!ret.second)\ \{}
+\DoxyCodeLine{01045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ret.first-\/>second.\string~T();}
+\DoxyCodeLine{01046\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (\&ret.first-\/>second)\ T(std::forward<Args>(args)...);}
+\DoxyCodeLine{01047\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01048\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01049\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret.first;}
+\DoxyCodeLine{01050\ \ \ \ \ \}}
+\DoxyCodeLine{01051\ }
+\DoxyCodeLine{01052\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01054\ \ \ \ \ \textcolor{keyword}{auto}\ force\_emplace(Key\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01055\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ret\ =\ do\_try\_emplace(std::move(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<Args>(args)...);}
+\DoxyCodeLine{01056\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!std::is\_same\_v<T,\ void>)\ \{}
+\DoxyCodeLine{01057\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!ret.second)\ \{}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ret.first-\/>second.\string~T();}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (\&ret.first-\/>second)\ T(std::forward<Args>(args)...);}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01062\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret.first;}
+\DoxyCodeLine{01063\ \ \ \ \ \}}
+\DoxyCodeLine{01064\ }
+\DoxyCodeLine{01065\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01066\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01067\ \ \ \ \ \textcolor{keyword}{auto}\ try\_emplace(const\_iterator\ \textcolor{comment}{/*hint*/},\ Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01068\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_try\_emplace(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ std::forward<Args>(args)...).first;}
+\DoxyCodeLine{01069\ \ \ \ \ \}}
+\DoxyCodeLine{01070\ }
+\DoxyCodeLine{01071\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}...\ Args,\ \textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01072\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01073\ \ \ \ \ \textcolor{keyword}{auto}\ try\_emplace(const\_iterator\ \textcolor{comment}{/*hint*/},\ Key\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_try\_emplace(std::move(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<Args>(args)...).first;}
+\DoxyCodeLine{01075\ \ \ \ \ \}}
+\DoxyCodeLine{01076\ }
+\DoxyCodeLine{01077\ \ \ \ \ \textcolor{keyword}{template}<}
+\DoxyCodeLine{01078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{01079\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}...\ Args,}
+\DoxyCodeLine{01080\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{01081\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{01082\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01083\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>\ \&\&\ is\_transparent\_v<H,\ KE>\ \&\&\ is\_neither\_convertible\_v<K\ \&\&,\ iterator,\ const\_iterator>)}
+\DoxyCodeLine{01084\ \ \ \ \ \textcolor{keyword}{auto}\ try\_emplace(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ std::pair<iterator,\ bool>\ \{}
+\DoxyCodeLine{01085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_try\_emplace(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<Args>(args)...);}
+\DoxyCodeLine{01086\ \ \ \ \ \}}
+\DoxyCodeLine{01087\ \ \ \ \ \textcolor{keyword}{template}<}
+\DoxyCodeLine{01088\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{01089\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}...\ Args,}
+\DoxyCodeLine{01090\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{01091\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{01092\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01093\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>\ \&\&\ is\_transparent\_v<H,\ KE>\ \&\&\ is\_neither\_convertible\_v<K\ \&\&,\ iterator,\ const\_iterator>)}
+\DoxyCodeLine{01094\ \ \ \ \ \textcolor{keyword}{auto}\ force\_emplace(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ret\ =\ do\_try\_emplace(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<Args>(args)...);}
+\DoxyCodeLine{01096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (!std::is\_same\_v<T,\ void>)\ \{}
+\DoxyCodeLine{01097\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!ret.second)\ \{}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ret.first-\/>second.\string~T();}
+\DoxyCodeLine{01099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{new}\ (\&ret.first-\/>second)\ T(std::forward<Args>(args)...);}
+\DoxyCodeLine{01100\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01101\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ret.first;}
+\DoxyCodeLine{01103\ \ \ \ \ \}}
+\DoxyCodeLine{01104\ }
+\DoxyCodeLine{01105\ \ \ \ \ \textcolor{keyword}{template}<}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}...\ Args,}
+\DoxyCodeLine{01108\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01111\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>\ \&\&\ is\_transparent\_v<H,\ KE>\ \&\&\ is\_neither\_convertible\_v<K\ \&\&,\ iterator,\ const\_iterator>)}
+\DoxyCodeLine{01112\ \ \ \ \ \textcolor{keyword}{auto}\ try\_emplace(const\_iterator\ \textcolor{comment}{/*hint*/},\ K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}},\ Args\ \&\&...args)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_try\_emplace(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}),\ std::forward<Args>(args)...).first;}
+\DoxyCodeLine{01114\ \ \ \ \ \}}
+\DoxyCodeLine{01115\ }
+\DoxyCodeLine{01116\ \ \ \ \ \textcolor{keyword}{auto}\ erase(iterator\ it)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01117\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ hash\ =\ mixed\_hash(get\_key(*it));}
+\DoxyCodeLine{01118\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_idx\ =\ bucket\_idx\_from\_hash(hash);}
+\DoxyCodeLine{01119\ }
+\DoxyCodeLine{01120\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ value\_idx\_to\_remove\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(it\ -\/\ cbegin());}
+\DoxyCodeLine{01121\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (at(m\_buckets,\ bucket\_idx).m\_value\_idx\ !=\ value\_idx\_to\_remove)\ \{}
+\DoxyCodeLine{01122\ \ \ \ \ \ \ \ \ \ \ \ \ bucket\_idx\ =\ next(bucket\_idx);}
+\DoxyCodeLine{01123\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01124\ }
+\DoxyCodeLine{01125\ \ \ \ \ \ \ \ \ do\_erase(bucket\_idx);}
+\DoxyCodeLine{01126\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ begin()\ +\ \textcolor{keyword}{static\_cast<}difference\_type\textcolor{keyword}{>}(value\_idx\_to\_remove);}
+\DoxyCodeLine{01127\ \ \ \ \ \}}
+\DoxyCodeLine{01128\ }
+\DoxyCodeLine{01129\ \ \ \ \ \textcolor{keyword}{auto}\ erase(const\_iterator\ it)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ erase(begin()\ +\ (it\ -\/\ cbegin()));}
+\DoxyCodeLine{01131\ \ \ \ \ \}}
+\DoxyCodeLine{01132\ }
+\DoxyCodeLine{01133\ \ \ \ \ \textcolor{keyword}{auto}\ erase(const\_iterator\ first,\ const\_iterator\ last)\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01134\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ idx\_first\ =\ first\ -\/\ cbegin();}
+\DoxyCodeLine{01135\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ idx\_last\ =\ last\ -\/\ cbegin();}
+\DoxyCodeLine{01136\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ first\_to\_last\ =\ std::distance(first,\ last);}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ last\_to\_end\ =\ std::distance(last,\ cend());}
+\DoxyCodeLine{01138\ }
+\DoxyCodeLine{01139\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ remove\ elements\ from\ left\ to\ right\ which\ moves\ elements\ from\ the\ end\ back}}
+\DoxyCodeLine{01140\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ mid\ =\ idx\_first\ +\ std::min(first\_to\_last,\ last\_to\_end);}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ idx\ =\ idx\_first;}
+\DoxyCodeLine{01142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (idx\ !=\ mid)\ \{}
+\DoxyCodeLine{01143\ \ \ \ \ \ \ \ \ \ \ \ \ erase(begin()\ +\ idx);}
+\DoxyCodeLine{01144\ \ \ \ \ \ \ \ \ \ \ \ \ ++idx;}
+\DoxyCodeLine{01145\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01146\ }
+\DoxyCodeLine{01147\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ all\ elements\ from\ the\ right\ are\ moved,\ now\ remove\ the\ last\ element\ until\ all\ done}}
+\DoxyCodeLine{01148\ \ \ \ \ \ \ \ \ idx\ =\ idx\_last;}
+\DoxyCodeLine{01149\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (idx\ !=\ mid)\ \{}
+\DoxyCodeLine{01150\ \ \ \ \ \ \ \ \ \ \ \ \ -\/-\/idx;}
+\DoxyCodeLine{01151\ \ \ \ \ \ \ \ \ \ \ \ \ erase(begin()\ +\ idx);}
+\DoxyCodeLine{01152\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01153\ }
+\DoxyCodeLine{01154\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ begin()\ +\ idx\_first;}
+\DoxyCodeLine{01155\ \ \ \ \ \}}
+\DoxyCodeLine{01156\ }
+\DoxyCodeLine{01157\ \ \ \ \ \textcolor{keyword}{auto}\ erase(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{01158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_erase\_key(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01159\ \ \ \ \ \}}
+\DoxyCodeLine{01160\ }
+\DoxyCodeLine{01161\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ H\ =\ Hash,\ \textcolor{keyword}{class}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01162\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01163\ \ \ \ \ \textcolor{keyword}{auto}\ erase(K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{01164\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_erase\_key(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}));}
+\DoxyCodeLine{01165\ \ \ \ \ \}}
+\DoxyCodeLine{01166\ }
+\DoxyCodeLine{01167\ \ \ \ \ \textcolor{keywordtype}{void}\ swap(table\ \&other)\ \textcolor{keyword}{noexcept}(\textcolor{keyword}{noexcept}(std::is\_nothrow\_swappable\_v<value\_container\_type>\ \&\&}
+\DoxyCodeLine{01168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::is\_nothrow\_swappable\_v<Hash>\ \&\&\ std::is\_nothrow\_swappable\_v<KeyEqual>))\ \{}
+\DoxyCodeLine{01169\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::swap;}
+\DoxyCodeLine{01170\ \ \ \ \ \ \ \ \ swap(other,\ *\textcolor{keyword}{this});}
+\DoxyCodeLine{01171\ \ \ \ \ \}}
+\DoxyCodeLine{01172\ }
+\DoxyCodeLine{01173\ \ \ \ \ \textcolor{comment}{//\ lookup\ /////////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{01174\ }
+\DoxyCodeLine{01175\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01176\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01177\ \ \ \ \ \textcolor{keyword}{auto}\ at(key\_type\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ Q\ \&\ \{}
+\DoxyCodeLine{01178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_at(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01179\ \ \ \ \ \}}
+\DoxyCodeLine{01180\ }
+\DoxyCodeLine{01181\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{01182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{01183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{01184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01185\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01186\ \ \ \ \ \textcolor{keyword}{auto}\ at(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ Q\ \&\ \{}
+\DoxyCodeLine{01187\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_at(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01188\ \ \ \ \ \}}
+\DoxyCodeLine{01189\ }
+\DoxyCodeLine{01190\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01191\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01192\ \ \ \ \ \textcolor{keyword}{auto}\ at(key\_type\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ Q\ \textcolor{keyword}{const}\ \&\ \{}
+\DoxyCodeLine{01193\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_at(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01194\ \ \ \ \ \}}
+\DoxyCodeLine{01195\ }
+\DoxyCodeLine{01196\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{01197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{01198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{01199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01200\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01201\ \ \ \ \ \textcolor{keyword}{auto}\ at(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ Q\ \textcolor{keyword}{const}\ \&\ \{}
+\DoxyCodeLine{01202\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_at(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01203\ \ \ \ \ \}}
+\DoxyCodeLine{01204\ }
+\DoxyCodeLine{01205\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01206\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01207\ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{operator}[](Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ Q\ \&\ \{}
+\DoxyCodeLine{01208\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ try\_emplace(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}}).first-\/>second;}
+\DoxyCodeLine{01209\ \ \ \ \ \}}
+\DoxyCodeLine{01210\ }
+\DoxyCodeLine{01211\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Q\ =\ T>}
+\DoxyCodeLine{01212\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_map\_v<Q>)}
+\DoxyCodeLine{01213\ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{operator}[](Key\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ Q\ \&\ \{}
+\DoxyCodeLine{01214\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ try\_emplace(std::move(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})).first-\/>second;}
+\DoxyCodeLine{01215\ \ \ \ \ \}}
+\DoxyCodeLine{01216\ }
+\DoxyCodeLine{01217\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ K,}
+\DoxyCodeLine{01218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Q\ =\ T,}
+\DoxyCodeLine{01219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ H\ =\ Hash,}
+\DoxyCodeLine{01220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01221\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01222\ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{operator}[](K\ \&\&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ Q\ \&\ \{}
+\DoxyCodeLine{01223\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ try\_emplace(std::forward<K>(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})).first-\/>second;}
+\DoxyCodeLine{01224\ \ \ \ \ \}}
+\DoxyCodeLine{01225\ }
+\DoxyCodeLine{01226\ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{01227\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ ==\ end()\ ?\ 0\ :\ 1;}
+\DoxyCodeLine{01228\ \ \ \ \ \}}
+\DoxyCodeLine{01229\ }
+\DoxyCodeLine{01230\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ H\ =\ Hash,\ \textcolor{keyword}{class}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01231\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01232\ \ \ \ \ \textcolor{keyword}{auto}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{01233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ ==\ end()\ ?\ 0\ :\ 1;}
+\DoxyCodeLine{01234\ \ \ \ \ \}}
+\DoxyCodeLine{01235\ }
+\DoxyCodeLine{01236\ \ \ \ \ \textcolor{keyword}{auto}\ find(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01237\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01238\ \ \ \ \ \}}
+\DoxyCodeLine{01239\ }
+\DoxyCodeLine{01240\ \ \ \ \ \textcolor{keyword}{auto}\ find(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ const\_iterator\ \{}
+\DoxyCodeLine{01241\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01242\ \ \ \ \ \}}
+\DoxyCodeLine{01243\ }
+\DoxyCodeLine{01244\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ H\ =\ Hash,\ \textcolor{keyword}{class}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01245\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01246\ \ \ \ \ \textcolor{keyword}{auto}\ find(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ iterator\ \{}
+\DoxyCodeLine{01247\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01248\ \ \ \ \ \}}
+\DoxyCodeLine{01249\ }
+\DoxyCodeLine{01250\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ H\ =\ Hash,\ \textcolor{keyword}{class}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01251\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01252\ \ \ \ \ \textcolor{keyword}{auto}\ find(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ const\_iterator\ \{}
+\DoxyCodeLine{01253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01254\ \ \ \ \ \}}
+\DoxyCodeLine{01255\ }
+\DoxyCodeLine{01256\ \ \ \ \ \textcolor{keyword}{auto}\ contains(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ \textcolor{keywordtype}{bool}\ \{}
+\DoxyCodeLine{01257\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ !=\ end();}
+\DoxyCodeLine{01258\ \ \ \ \ \}}
+\DoxyCodeLine{01259\ }
+\DoxyCodeLine{01260\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ H\ =\ Hash,\ \textcolor{keyword}{class}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01261\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01262\ \ \ \ \ \textcolor{keyword}{auto}\ contains(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ \textcolor{keywordtype}{bool}\ \{}
+\DoxyCodeLine{01263\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ !=\ end();}
+\DoxyCodeLine{01264\ \ \ \ \ \}}
+\DoxyCodeLine{01265\ }
+\DoxyCodeLine{01266\ \ \ \ \ \textcolor{keyword}{auto}\ equal\_range(Key\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ std::pair<iterator,\ iterator>\ \{}
+\DoxyCodeLine{01267\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{it,\ it\ ==\ end()\ ?\ end()\ :\ it\ +\ 1\};}
+\DoxyCodeLine{01269\ \ \ \ \ \}}
+\DoxyCodeLine{01270\ }
+\DoxyCodeLine{01271\ \ \ \ \ \textcolor{keyword}{auto}\ equal\_range(\textcolor{keyword}{const}\ Key\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ std::pair<const\_iterator,\ const\_iterator>\ \{}
+\DoxyCodeLine{01272\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01273\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{it,\ it\ ==\ end()\ ?\ end()\ :\ it\ +\ 1\};}
+\DoxyCodeLine{01274\ \ \ \ \ \}}
+\DoxyCodeLine{01275\ }
+\DoxyCodeLine{01276\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ H\ =\ Hash,\ \textcolor{keyword}{class}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01277\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01278\ \ \ \ \ \textcolor{keyword}{auto}\ equal\_range(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ -\/>\ std::pair<iterator,\ iterator>\ \{}
+\DoxyCodeLine{01279\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01280\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{it,\ it\ ==\ end()\ ?\ end()\ :\ it\ +\ 1\};}
+\DoxyCodeLine{01281\ \ \ \ \ \}}
+\DoxyCodeLine{01282\ }
+\DoxyCodeLine{01283\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ K,\ \textcolor{keyword}{class}\ H\ =\ Hash,\ \textcolor{keyword}{class}\ KE\ =\ KeyEqual>}
+\DoxyCodeLine{01284\ \ \ \ \ \ \ \ \ \textcolor{keyword}{requires}(is\_transparent\_v<H,\ KE>)}
+\DoxyCodeLine{01285\ \ \ \ \ \textcolor{keyword}{auto}\ equal\_range(K\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}})\ \textcolor{keyword}{const}\ -\/>\ std::pair<const\_iterator,\ const\_iterator>\ \{}
+\DoxyCodeLine{01286\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ do\_find(\mbox{\hyperlink{gears_8c_accd6b5b92b78666e36543412d4ac14cd}{key}});}
+\DoxyCodeLine{01287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{it,\ it\ ==\ end()\ ?\ end()\ :\ it\ +\ 1\};}
+\DoxyCodeLine{01288\ \ \ \ \ \}}
+\DoxyCodeLine{01289\ }
+\DoxyCodeLine{01290\ \ \ \ \ \textcolor{comment}{//\ bucket\ interface\ ///////////////////////////////////////////////////////}}
+\DoxyCodeLine{01291\ }
+\DoxyCodeLine{01292\ \ \ \ \ \textcolor{keyword}{auto}\ bucket\_count()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{\textcolor{comment}{//\ NOLINT(modernize-\/use-\/nodiscard)}}
+\DoxyCodeLine{01293\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_num\_buckets;}
+\DoxyCodeLine{01294\ \ \ \ \ \}}
+\DoxyCodeLine{01295\ }
+\DoxyCodeLine{01296\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{auto}\ max\_bucket\_count()\ \textcolor{keyword}{noexcept}\ -\/>\ \textcolor{keywordtype}{size\_t}\ \{\textcolor{comment}{//\ NOLINT(modernize-\/use-\/nodiscard)}}
+\DoxyCodeLine{01297\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ max\_size();}
+\DoxyCodeLine{01298\ \ \ \ \ \}}
+\DoxyCodeLine{01299\ }
+\DoxyCodeLine{01300\ \ \ \ \ \textcolor{comment}{//\ hash\ policy\ ////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{01301\ }
+\DoxyCodeLine{01302\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ load\_factor()\ \textcolor{keyword}{const}\ -\/>\ \textcolor{keywordtype}{float}\ \{}
+\DoxyCodeLine{01303\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ bucket\_count()\ ?\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}())\ /\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(bucket\_count())\ :\ 0.0F;}
+\DoxyCodeLine{01304\ \ \ \ \ \}}
+\DoxyCodeLine{01305\ }
+\DoxyCodeLine{01306\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ max\_load\_factor()\ \textcolor{keyword}{const}\ -\/>\ \textcolor{keywordtype}{float}\ \{}
+\DoxyCodeLine{01307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_max\_load\_factor;}
+\DoxyCodeLine{01308\ \ \ \ \ \}}
+\DoxyCodeLine{01309\ }
+\DoxyCodeLine{01310\ \ \ \ \ \textcolor{keywordtype}{void}\ max\_load\_factor(\textcolor{keywordtype}{float}\ ml)\ \{}
+\DoxyCodeLine{01311\ \ \ \ \ \ \ \ \ m\_max\_load\_factor\ =\ ml;}
+\DoxyCodeLine{01312\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_num\_buckets\ !=\ max\_bucket\_count())\ \{}
+\DoxyCodeLine{01313\ \ \ \ \ \ \ \ \ \ \ \ \ m\_max\_bucket\_capacity\ =\ \textcolor{keyword}{static\_cast<}value\_idx\_type\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(bucket\_count())\ *\ max\_load\_factor());}
+\DoxyCodeLine{01314\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01315\ \ \ \ \ \}}
+\DoxyCodeLine{01316\ }
+\DoxyCodeLine{01317\ \ \ \ \ \textcolor{keywordtype}{void}\ rehash(\textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}})\ \{}
+\DoxyCodeLine{01318\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}}\ =\ std::min(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ max\_size());}
+\DoxyCodeLine{01319\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ shifts\ =\ calc\_shifts\_for\_size(std::max(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a619bc20e8198de3bd3f3d7fc34de66b2}{count}},\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}()));}
+\DoxyCodeLine{01320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shifts\ !=\ m\_shifts)\ \{}
+\DoxyCodeLine{01321\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shifts\ =\ shifts;}
+\DoxyCodeLine{01322\ \ \ \ \ \ \ \ \ \ \ \ \ deallocate\_buckets();}
+\DoxyCodeLine{01323\ \ \ \ \ \ \ \ \ \ \ \ \ m\_values.shrink\_to\_fit();}
+\DoxyCodeLine{01324\ \ \ \ \ \ \ \ \ \ \ \ \ allocate\_buckets\_from\_shift();}
+\DoxyCodeLine{01325\ \ \ \ \ \ \ \ \ \ \ \ \ clear\_and\_fill\_buckets\_from\_values();}
+\DoxyCodeLine{01326\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01327\ \ \ \ \ \}}
+\DoxyCodeLine{01328\ }
+\DoxyCodeLine{01329\ \ \ \ \ \textcolor{keywordtype}{void}\ reserve(\textcolor{keywordtype}{size\_t}\ capa)\ \{}
+\DoxyCodeLine{01330\ \ \ \ \ \ \ \ \ capa\ =\ std::min(capa,\ max\_size());}
+\DoxyCodeLine{01331\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (has\_reserve<value\_container\_type>)\ \{}
+\DoxyCodeLine{01332\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ std::deque\ doesn't\ have\ reserve().\ Make\ sure\ we\ only\ call\ when\ available}}
+\DoxyCodeLine{01333\ \ \ \ \ \ \ \ \ \ \ \ \ m\_values.reserve(capa);}
+\DoxyCodeLine{01334\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01335\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ shifts\ =\ calc\_shifts\_for\_size(std::max(capa,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_a3d1e3edfcf61ca2d831883e1afbad89e}{size}}()));}
+\DoxyCodeLine{01336\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (0\ ==\ m\_num\_buckets\ ||\ shifts\ <\ m\_shifts)\ \{}
+\DoxyCodeLine{01337\ \ \ \ \ \ \ \ \ \ \ \ \ m\_shifts\ =\ shifts;}
+\DoxyCodeLine{01338\ \ \ \ \ \ \ \ \ \ \ \ \ deallocate\_buckets();}
+\DoxyCodeLine{01339\ \ \ \ \ \ \ \ \ \ \ \ \ allocate\_buckets\_from\_shift();}
+\DoxyCodeLine{01340\ \ \ \ \ \ \ \ \ \ \ \ \ clear\_and\_fill\_buckets\_from\_values();}
+\DoxyCodeLine{01341\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01342\ \ \ \ \ \}}
+\DoxyCodeLine{01343\ }
+\DoxyCodeLine{01344\ \ \ \ \ \textcolor{comment}{//\ observers\ //////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{01345\ }
+\DoxyCodeLine{01346\ \ \ \ \ \textcolor{keyword}{auto}\ hash\_function()\ \textcolor{keyword}{const}\ -\/>\ hasher\ \{}
+\DoxyCodeLine{01347\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_hash;}
+\DoxyCodeLine{01348\ \ \ \ \ \}}
+\DoxyCodeLine{01349\ }
+\DoxyCodeLine{01350\ \ \ \ \ \textcolor{keyword}{auto}\ key\_eq()\ \textcolor{keyword}{const}\ -\/>\ key\_equal\ \{}
+\DoxyCodeLine{01351\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_equal;}
+\DoxyCodeLine{01352\ \ \ \ \ \}}
+\DoxyCodeLine{01353\ }
+\DoxyCodeLine{01354\ \ \ \ \ \textcolor{comment}{//\ nonstandard\ API:\ expose\ the\ underlying\ values\ container}}
+\DoxyCodeLine{01355\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{auto}\ values()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ -\/>\ value\_container\_type\ \textcolor{keyword}{const}\ \&\ \{}
+\DoxyCodeLine{01356\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_values;}
+\DoxyCodeLine{01357\ \ \ \ \ \}}
+\DoxyCodeLine{01358\ }
+\DoxyCodeLine{01359\ \ \ \ \ \textcolor{comment}{//\ non-\/member\ functions\ ///////////////////////////////////////////////////}}
+\DoxyCodeLine{01360\ }
+\DoxyCodeLine{01361\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{safe__ptr_8h_aa70685c379499032704de691f795148b}{operator==}}(table\ \textcolor{keyword}{const}\ \&a,\ table\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ -\/>\ \textcolor{keywordtype}{bool}\ \{}
+\DoxyCodeLine{01362\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\&a\ ==\ \&\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ \{}
+\DoxyCodeLine{01363\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{01364\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01365\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (a.size()\ !=\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}}.size())\ \{}
+\DoxyCodeLine{01366\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01367\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01368\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ \&b\_entry\ :\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ \{}
+\DoxyCodeLine{01369\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ a.find(get\_key(b\_entry));}
+\DoxyCodeLine{01370\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_void\_v<T>)\ \{}
+\DoxyCodeLine{01371\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ set:\ only\ check\ that\ the\ key\ is\ here}}
+\DoxyCodeLine{01372\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (a.end()\ ==\ it)\ \{}
+\DoxyCodeLine{01373\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01374\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01375\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{01376\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ map:\ check\ that\ key\ is\ here,\ then\ also\ check\ that\ value\ is\ the\ same}}
+\DoxyCodeLine{01377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (a.end()\ ==\ it\ ||\ !(b\_entry.second\ ==\ it-\/>second))\ \{}
+\DoxyCodeLine{01378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{01379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01380\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01381\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01382\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{01383\ \ \ \ \ \}}
+\DoxyCodeLine{01384\ }
+\DoxyCodeLine{01385\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{safe__ptr_8h_ac06cb8494d83bc922e7edf52f51d9ac1}{operator!=}}(table\ \textcolor{keyword}{const}\ \&a,\ table\ \textcolor{keyword}{const}\ \&\mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}})\ -\/>\ \textcolor{keywordtype}{bool}\ \{}
+\DoxyCodeLine{01386\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(a\ ==\ \mbox{\hyperlink{offscreen_8c_a83fc1af92e29717b4513d121b0c72c7d}{b}});}
+\DoxyCodeLine{01387\ \ \ \ \ \}}
+\DoxyCodeLine{01388\ \};}
+\DoxyCodeLine{01389\ }
+\DoxyCodeLine{01390\ \}\textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{01391\ }
+\DoxyCodeLine{01392\ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }Key,}
+\DoxyCodeLine{01393\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }T,}
+\DoxyCodeLine{01394\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Hash,}
+\DoxyCodeLine{01395\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }KeyEqual,}
+\DoxyCodeLine{01396\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Allocator,}
+\DoxyCodeLine{01397\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Vector,}
+\DoxyCodeLine{01398\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Bucket\ =\ bucket\_type::standard>}
+\DoxyCodeLine{01399\ \textcolor{keyword}{using\ }\mbox{\hyperlink{bundled_2ranges_8h_a080be1238e6ee3bd4b9f193b4181cf4da1d78dc8ed51214e518b5114fe24490ae}{map}}\ =\ detail::table<Key,\ T,\ Hash,\ KeyEqual,\ Allocator,\ Bucket,\ Vector>;}
+\DoxyCodeLine{01400\ }
+\DoxyCodeLine{01401\ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }Key,}
+\DoxyCodeLine{01402\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Hash,}
+\DoxyCodeLine{01403\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }KeyEqual,}
+\DoxyCodeLine{01404\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Allocator,}
+\DoxyCodeLine{01405\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Vector,}
+\DoxyCodeLine{01406\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{class\ }Bucket\ =\ bucket\_type::standard>}
+\DoxyCodeLine{01407\ \textcolor{keyword}{using\ }\mbox{\hyperlink{bundled_2ranges_8h_a080be1238e6ee3bd4b9f193b4181cf4dacdaeeeba9b4a4c5ebf042c0215a7bb0e}{set}}\ =\ detail::table<Key,\ void,\ Hash,\ KeyEqual,\ Allocator,\ Bucket,\ Vector>;}
+\DoxyCodeLine{01408\ }
+\DoxyCodeLine{01409\ \textcolor{comment}{//\ deduction\ guides\ ///////////////////////////////////////////////////////////}}
+\DoxyCodeLine{01410\ }
+\DoxyCodeLine{01411\ \textcolor{comment}{//\ deduction\ guides\ for\ alias\ templates\ are\ only\ possible\ since\ C++20}}
+\DoxyCodeLine{01412\ \textcolor{comment}{//\ see\ https://en.cppreference.com/w/cpp/language/class\_template\_argument\_deduction}}
+\DoxyCodeLine{01413\ }
+\DoxyCodeLine{01414\ \}}
+\DoxyCodeLine{01415\ \}\textcolor{comment}{//\ namespace\ ankerl::unordered\_dense::ANKERL\_UNORDERED\_DENSE\_NAMESPACE}}
+\DoxyCodeLine{01416\ }
+\DoxyCodeLine{01417\ \textcolor{comment}{//\ std\ extensions\ /////////////////////////////////////////////////////////////}}
+\DoxyCodeLine{01418\ }
+\DoxyCodeLine{01419\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespacestd}{std}}\ \{\textcolor{comment}{//\ NOLINT(cert-\/dcl58-\/cpp)}}
+\DoxyCodeLine{01420\ }
+\DoxyCodeLine{01421\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Key,\ \textcolor{keyword}{class}\ T,\ \textcolor{keyword}{class}\ Hash,\ \textcolor{keyword}{class}\ KeyEqual,\ \textcolor{keyword}{class}\ Allocator,\ \textcolor{keyword}{class}\ Bucket,\ \textcolor{keyword}{class}\ Vector,\ \textcolor{keyword}{class}\ Pred>}
+\DoxyCodeLine{01422\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespaceeastl_a43ec3fbd0d46f88f25b905f7a7bbe264}{erase\_if}}(ankerl::unordered\_dense::detail::table<Key,\ T,\ Hash,\ KeyEqual,\ Allocator,\ Bucket,\ Vector>\ \&\mbox{\hyperlink{bundled_2ranges_8h_a080be1238e6ee3bd4b9f193b4181cf4da1d78dc8ed51214e518b5114fe24490ae}{map}},\ Pred\ pred)}
+\DoxyCodeLine{01423\ \ \ \ \ -\/>\ \textcolor{keywordtype}{size\_t}\ \{}
+\DoxyCodeLine{01424\ \ \ \ \ \textcolor{keyword}{using\ }map\_t\ =\ ankerl::unordered\_dense::detail::table<Key,\ T,\ Hash,\ KeyEqual,\ Allocator,\ Bucket,\ Vector>;}
+\DoxyCodeLine{01425\ }
+\DoxyCodeLine{01426\ \ \ \ \ \textcolor{comment}{//\ going\ back\ to\ front\ because\ erase()\ invalidates\ the\ end\ iterator}}
+\DoxyCodeLine{01427\ \ \ \ \ \textcolor{keyword}{auto}\ \textcolor{keyword}{const}\ old\_size\ =\ \mbox{\hyperlink{bundled_2ranges_8h_a080be1238e6ee3bd4b9f193b4181cf4da1d78dc8ed51214e518b5114fe24490ae}{map}}.size();}
+\DoxyCodeLine{01428\ \ \ \ \ \textcolor{keyword}{auto}\ idx\ =\ old\_size;}
+\DoxyCodeLine{01429\ \ \ \ \ \textcolor{keywordflow}{while}\ (idx)\ \{}
+\DoxyCodeLine{01430\ \ \ \ \ \ \ \ \ -\/-\/idx;}
+\DoxyCodeLine{01431\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ \mbox{\hyperlink{bundled_2ranges_8h_a080be1238e6ee3bd4b9f193b4181cf4da1d78dc8ed51214e518b5114fe24490ae}{map}}.begin()\ +\ \textcolor{keyword}{static\_cast<}typename\ map\_t::difference\_type\textcolor{keyword}{>}(idx);}
+\DoxyCodeLine{01432\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pred(*it))\ \{}
+\DoxyCodeLine{01433\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{bundled_2ranges_8h_a080be1238e6ee3bd4b9f193b4181cf4da1d78dc8ed51214e518b5114fe24490ae}{map}}.erase(it);}
+\DoxyCodeLine{01434\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01435\ \ \ \ \ \}}
+\DoxyCodeLine{01436\ }
+\DoxyCodeLine{01437\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{bundled_2ranges_8h_a080be1238e6ee3bd4b9f193b4181cf4da1d78dc8ed51214e518b5114fe24490ae}{map}}.size()\ -\/\ old\_size;}
+\DoxyCodeLine{01438\ \}}
+\DoxyCodeLine{01439\ }
+\DoxyCodeLine{01440\ \}\textcolor{comment}{//\ namespace\ std}}
+\DoxyCodeLine{01441\ }
+\DoxyCodeLine{01442\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01443\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

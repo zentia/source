@@ -1,0 +1,28 @@
+var arch__fetch__xor_8h =
+[
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQ_REL_128_AVAILABLE", "arch__fetch__xor_8h.html#a38d46e7969c9d7b916c47ea4f0a310ba", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQ_REL_16_AVAILABLE", "arch__fetch__xor_8h.html#a597f4c9d3e99f1f23e09d485fbceeb37", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQ_REL_32_AVAILABLE", "arch__fetch__xor_8h.html#a0d5379875dd01f18542c6d68798385b3", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQ_REL_64_AVAILABLE", "arch__fetch__xor_8h.html#a938feb60605417ebd5d52b52dff12aa7", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQ_REL_8_AVAILABLE", "arch__fetch__xor_8h.html#a1329ee920027808e04d5ed30eff81939", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQUIRE_128_AVAILABLE", "arch__fetch__xor_8h.html#a6a4eca51d94762c82142909bde804d2f", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQUIRE_16_AVAILABLE", "arch__fetch__xor_8h.html#a2a45e2847eb7c1fec4b4ca1808e1a71d", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQUIRE_32_AVAILABLE", "arch__fetch__xor_8h.html#ad072993f38f1414a189eeac441598c83", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQUIRE_64_AVAILABLE", "arch__fetch__xor_8h.html#a5726d9707ee5c168c14e6c5a8d5d9cf9", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_ACQUIRE_8_AVAILABLE", "arch__fetch__xor_8h.html#a8e095d72d4fc8ffdd02949614bddfd84", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELAXED_128_AVAILABLE", "arch__fetch__xor_8h.html#adcfa413e967ed1eada094bf8948435a2", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELAXED_16_AVAILABLE", "arch__fetch__xor_8h.html#aec426d688aba6a90eee8a8585fd9e016", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELAXED_32_AVAILABLE", "arch__fetch__xor_8h.html#af143b7d6e22ecadee735888511635883", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELAXED_64_AVAILABLE", "arch__fetch__xor_8h.html#a44e9f748771ef4dcb40466d3896e5096", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELAXED_8_AVAILABLE", "arch__fetch__xor_8h.html#a64f29159eb980967db7c5d2116a6af20", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELEASE_128_AVAILABLE", "arch__fetch__xor_8h.html#af7346178d0edc7323483031cb837156d", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELEASE_16_AVAILABLE", "arch__fetch__xor_8h.html#ad8f977520f007f58431fceb1506c91f9", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELEASE_32_AVAILABLE", "arch__fetch__xor_8h.html#a96b5d7f9782aa36fab3fcc959bbaee69", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELEASE_64_AVAILABLE", "arch__fetch__xor_8h.html#a0529a049dba69de368c7fea3b7cd15de", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_RELEASE_8_AVAILABLE", "arch__fetch__xor_8h.html#af4e7c41f78db4d49b3f34699f6c4af35", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_SEQ_CST_128_AVAILABLE", "arch__fetch__xor_8h.html#a3b2f6ff6bd09f8a7f302f706d9da54a0", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_SEQ_CST_16_AVAILABLE", "arch__fetch__xor_8h.html#a66ca921d7b90463502b3fec6dda916f7", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_SEQ_CST_32_AVAILABLE", "arch__fetch__xor_8h.html#adf76beb1adc33560f706e3fe5fdf10a8", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_SEQ_CST_64_AVAILABLE", "arch__fetch__xor_8h.html#abab768a73433a4cb71dc7ec9bbdbb03d", null ],
+    [ "EASTL_ARCH_ATOMIC_FETCH_XOR_SEQ_CST_8_AVAILABLE", "arch__fetch__xor_8h.html#aabc6dd8bc3d3b404e1226e723863b53e", null ]
+];

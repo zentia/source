@@ -1,0 +1,756 @@
+\doxysection{Tensor\+Reduction\+Cuda.\+h}
+\hypertarget{_tensor_reduction_cuda_8h_source}{}\label{_tensor_reduction_cuda_8h_source}\index{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/CXX11/src/Tensor/TensorReductionCuda.h@{external/taskflow/3rd-\/party/eigen-\/3.3.7/unsupported/Eigen/CXX11/src/Tensor/TensorReductionCuda.h}}
+\mbox{\hyperlink{_tensor_reduction_cuda_8h}{浏览该文件的文档.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ Benoit\ Steiner\ <benoit.steiner.goog@gmail.com>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_CXX11\_TENSOR\_TENSOR\_REDUCTION\_CUDA\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_CXX11\_TENSOR\_TENSOR\_REDUCTION\_CUDA\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespace_eigen_1_1internal}{internal}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_USE\_GPU)\ \&\&\ defined(\_\_CUDACC\_\_)}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ Full\ reducers\ for\ GPU,\ don't\ vectorize\ for\ now}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ Reducer\ function\ that\ enables\ multiple\ cuda\ thread\ to\ safely\ accumulate\ at\ the\ same}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ output\ address.\ It\ basically\ reads\ the\ current\ value\ of\ the\ output\ variable,\ and}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ attempts\ to\ update\ it\ with\ the\ new\ value.\ If\ in\ the\ meantime\ another\ cuda\ thread}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ updated\ the\ content\ of\ the\ output\ address\ it\ will\ try\ again.}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ R>}
+\DoxyCodeLine{00025\ \_\_device\_\_\ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_a1fdc6f94f20527c7275768d82b2eb9ce}{EIGEN\_ALWAYS\_INLINE}}\ \textcolor{keywordtype}{void}\ atomicReduce(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}\ accum,\ \mbox{\hyperlink{test__broadcast__node_8cpp_a554e63228b946db0d44c4f398b18e212}{R}}\&\ reducer)\ \{}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#if\ \_\_CUDA\_ARCH\_\_\ >=\ 300}}
+\DoxyCodeLine{00027\ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})\ ==\ 4)}
+\DoxyCodeLine{00028\ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ oldval\ =\ *\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}*\textcolor{keyword}{>}(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ newval\ =\ oldval;}
+\DoxyCodeLine{00031\ \ \ \ \ reducer.reduce(accum,\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\&newval));}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keywordflow}{if}\ (newval\ ==\ oldval)\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00034\ \ \ \ \ \}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ readback;}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordflow}{while}\ ((readback\ =\ atomicCAS((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}*)\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ oldval,\ newval))\ !=\ oldval)\ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ oldval\ =\ readback;}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ newval\ =\ oldval;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ reducer.reduce(accum,\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\&newval));}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (newval\ ==\ oldval)\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{sizeof}(\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}})\ ==\ 8)\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ oldval\ =\ *\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}*\textcolor{keyword}{>}(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ newval\ =\ oldval;}
+\DoxyCodeLine{00048\ \ \ \ \ reducer.reduce(accum,\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\&newval));}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordflow}{if}\ (newval\ ==\ oldval)\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00051\ \ \ \ \ \}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ readback;}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keywordflow}{while}\ ((readback\ =\ atomicCAS((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}*)\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ oldval,\ newval))\ !=\ oldval)\ \{}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ oldval\ =\ readback;}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ newval\ =\ oldval;}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ reducer.reduce(accum,\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{test__overwrite__node_8cpp_a0acb682b8260ab1c60b918599864e2e5}{T}}*\textcolor{keyword}{>}(\&newval));}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (newval\ ==\ oldval)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00060\ \ \ \ \ \}}
+\DoxyCodeLine{00061\ \ \ \}}
+\DoxyCodeLine{00062\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ assert(0\ \&\&\ \textcolor{stringliteral}{"{}Wordsize\ not\ supported"{}});}
+\DoxyCodeLine{00064\ \ \ \}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00066\ \ \ assert(0\ \&\&\ \textcolor{stringliteral}{"{}Shouldn't\ be\ called\ on\ unsupported\ device"{}});}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ We\ extend\ atomicExch\ to\ support\ extra\ data\ types}}
+\DoxyCodeLine{00071\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Type>}
+\DoxyCodeLine{00072\ \_\_device\_\_\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Type}}\ atomicExchCustom(\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Type}}*\ \mbox{\hyperlink{ittnotify__static_8h_aee2b510694d56cbe27f47b65477e7049}{address}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Type}}\ val)\ \{}
+\DoxyCodeLine{00073\ \ \ \textcolor{keywordflow}{return}\ atomicExch(\mbox{\hyperlink{ittnotify__static_8h_aee2b510694d56cbe27f47b65477e7049}{address}},\ val);}
+\DoxyCodeLine{00074\ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00077\ \_\_device\_\_\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{double}\ atomicExchCustom(\textcolor{keywordtype}{double}*\ \mbox{\hyperlink{ittnotify__static_8h_aee2b510694d56cbe27f47b65477e7049}{address}},\ \textcolor{keywordtype}{double}\ val)\ \{}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}*\ address\_as\_ull\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}*\textcolor{keyword}{>}(\mbox{\hyperlink{ittnotify__static_8h_aee2b510694d56cbe27f47b65477e7049}{address}});}
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordflow}{return}\ \_\_longlong\_as\_double(atomicExch(address\_as\_ull,\ \_\_double\_as\_longlong(val)));}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{template}\ <\textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{test__broadcast__node_8cpp_a554e63228b946db0d44c4f398b18e212}{R}}>}
+\DoxyCodeLine{00084\ \_\_device\_\_\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ atomicReduce(\mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ accum,\ \mbox{\hyperlink{test__broadcast__node_8cpp_a554e63228b946db0d44c4f398b18e212}{R<half>}}\&\ reducer)\ \{}
+\DoxyCodeLine{00085\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ oldval\ =\ *\textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}*\textcolor{keyword}{>}(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ newval\ =\ oldval;}
+\DoxyCodeLine{00087\ \ \ reducer.reducePacket(accum,\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\textcolor{keyword}{>}(\&newval));}
+\DoxyCodeLine{00088\ \ \ \textcolor{keywordflow}{if}\ (newval\ ==\ oldval)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00090\ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ readback;}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordflow}{while}\ ((readback\ =\ atomicCAS((\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}*)\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ oldval,\ newval))\ !=\ oldval)\ \{}
+\DoxyCodeLine{00093\ \ \ \ \ oldval\ =\ readback;}
+\DoxyCodeLine{00094\ \ \ \ \ newval\ =\ oldval;}
+\DoxyCodeLine{00095\ \ \ \ \ reducer.reducePacket(accum,\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\textcolor{keyword}{>}(\&newval));}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{if}\ (newval\ ==\ oldval)\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00098\ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \}}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00104\ \_\_device\_\_\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ atomicReduce(\textcolor{keywordtype}{float}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keywordtype}{float}\ accum,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_sum_reducer}{SumReducer<float>}}\&)\ \{}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\#if\ \_\_CUDA\_ARCH\_\_\ >=\ 300}}
+\DoxyCodeLine{00106\ \ \ atomicAdd(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ accum);}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00108\ \ \ assert(0\ \&\&\ \textcolor{stringliteral}{"{}Shouldn't\ be\ called\ on\ unsupported\ device"{}});}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ CoeffType,\ \textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00114\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ ReductionInitKernel(\textcolor{keyword}{const}\ CoeffType\ val,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_preserved\_coeffs,\ CoeffType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}})\ \{}
+\DoxyCodeLine{00115\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00116\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_threads\ =\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ gridDim.x;}
+\DoxyCodeLine{00117\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ num\_preserved\_coeffs;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ num\_threads)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ val;}
+\DoxyCodeLine{00119\ \ \ \}}
+\DoxyCodeLine{00120\ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ BlockSize,\ \textcolor{keywordtype}{int}\ NumPerThread,\ \textcolor{keyword}{typename}\ Self,}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Reducer,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}>}
+\DoxyCodeLine{00125\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ FullReductionKernel(Reducer\ reducer,\ \textcolor{keyword}{const}\ Self\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_coeffs,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Self::CoeffReturnType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}*\ semaphore)\ \{}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\#if\ \_\_CUDA\_ARCH\_\_\ >=\ 300}}
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{//\ Initialize\ the\ output\ value}}
+\DoxyCodeLine{00129\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ first\_index\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ BlockSize\ *\ NumPerThread\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00130\ \ \ \textcolor{keywordflow}{if}\ (gridDim.x\ ==\ 1)\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keywordflow}{if}\ (first\_index\ ==\ 0)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ *\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}\ =\ reducer.initialize();}
+\DoxyCodeLine{00133\ \ \ \ \ \}}
+\DoxyCodeLine{00134\ \ \ \}}
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x\ ==\ 0)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{mimalloc_8h_af7f922b73e3acdb4a430b72f1a1334a5}{block}}\ =\ atomicCAS(semaphore,\ 0\mbox{\hyperlink{external_2taskflow_23rd-party_2tbb_2examples_2parallel__for_2seismic_2main_8cpp_a2a671aca47b8db55cef1dd7174adad6f}{u}},\ 1u);}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{mimalloc_8h_af7f922b73e3acdb4a430b72f1a1334a5}{block}}\ ==\ 0)\ \{}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We're\ the\ first\ block\ to\ run,\ initialize\ the\ output\ value}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ atomicExchCustom(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ reducer.initialize());}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \_\_threadfence();}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ atomicExch(semaphore,\ 2u);}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wait\ for\ the\ first\ block\ to\ initialize\ the\ output\ value.}}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Use\ atomicCAS\ here\ to\ ensure\ that\ the\ reads\ aren't\ cached}}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ val;}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ val\ =\ atomicCAS(semaphore,\ 2u,\ 2u);}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (val\ <\ 2u);}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ \ \ \}}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(gridDim.x\ ==\ 1\ ||\ *semaphore\ >=\ 2u);}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \ \textcolor{keyword}{typename}\ Self::CoeffReturnType\ accum\ =\ reducer.initialize();}
+\DoxyCodeLine{00161\ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ max\_iter\ =\ \mbox{\hyperlink{namespace_eigen_1_1numext_ab3b30bf0bcfa1ad91dbec75fabb3bea0}{numext::mini<Index>}}(num\_coeffs\ -\/\ first\_index,\ NumPerThread*BlockSize);}
+\DoxyCodeLine{00162\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ max\_iter;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}+=BlockSize)\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ =\ first\_index\ +\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}};}
+\DoxyCodeLine{00164\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ <\ num\_coeffs);}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keyword}{typename}\ Self::CoeffReturnType\ val\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}});}
+\DoxyCodeLine{00166\ \ \ \ \ reducer.reduce(val,\ \&accum);}
+\DoxyCodeLine{00167\ \ \ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#pragma\ unroll}}
+\DoxyCodeLine{00170\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ warpSize/2;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ >\ 0;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ /=\ 2)\ \{}
+\DoxyCodeLine{00171\ \ \ \ \ reducer.reduce(\_\_shfl\_down(accum,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ warpSize),\ \&accum);}
+\DoxyCodeLine{00172\ \ \ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x\ \&\ (warpSize\ -\/\ 1))\ ==\ 0)\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ atomicReduce(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ accum,\ reducer);}
+\DoxyCodeLine{00176\ \ \ \}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \textcolor{keywordflow}{if}\ (gridDim.x\ >\ 1\ \&\&\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x\ ==\ 0)\ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{comment}{//\ Let\ the\ last\ block\ reset\ the\ semaphore}}
+\DoxyCodeLine{00180\ \ \ \ \ atomicInc(semaphore,\ gridDim.x\ +\ 1);}
+\DoxyCodeLine{00181\ \ \ \}}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00183\ \ \ assert(0\ \&\&\ \textcolor{stringliteral}{"{}Shouldn't\ be\ called\ on\ unsupported\ device"{}});}
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00185\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00189\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Reducer,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}>}
+\DoxyCodeLine{00191\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ ReductionInitFullReduxKernelHalfFloat(Reducer\ reducer,\ \textcolor{keyword}{const}\ Self\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_coeffs,\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\ scratch)\ \{}
+\DoxyCodeLine{00192\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ ==\ 1);}
+\DoxyCodeLine{00193\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(gridDim.x\ ==\ 1);}
+\DoxyCodeLine{00194\ \ \ \textcolor{keywordflow}{if}\ (num\_coeffs\ \%\ 2\ !=\ 0)\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ \mbox{\hyperlink{namespacetbb_1_1internal_a18405c9631e7064d3af5662f30a84dd2}{last}}\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff(num\_coeffs-\/1);}
+\DoxyCodeLine{00196\ \ \ \ \ *scratch\ =\ \_\_halves2half2(last,\ reducer.initialize());}
+\DoxyCodeLine{00197\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ *scratch\ =\ reducer.template\ initializePacket<half2>();}
+\DoxyCodeLine{00199\ \ \ \}}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Reducer,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}>}
+\DoxyCodeLine{00204\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ ReductionInitKernelHalfFloat(Reducer\ reducer,\ \textcolor{keyword}{const}\ Self\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_coeffs,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}})\ \{}
+\DoxyCodeLine{00205\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00206\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_threads\ =\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ gridDim.x;}
+\DoxyCodeLine{00207\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_packets\ =\ num\_coeffs\ /\ 2;}
+\DoxyCodeLine{00208\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ num\_packets;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ num\_threads)\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ ((\mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*)\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}})[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ reducer.template\ initializePacket<half2>();}
+\DoxyCodeLine{00210\ \ \ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}}\ ==\ 0\ \&\&\ num\_coeffs\ \%\ 2\ !=\ 0)\ \{}
+\DoxyCodeLine{00213\ \ \ \ \ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}[num\_coeffs-\/1]\ =\ reducer.initialize();}
+\DoxyCodeLine{00214\ \ \ \}}
+\DoxyCodeLine{00215\ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ BlockSize,\ \textcolor{keywordtype}{int}\ NumPerThread,\ \textcolor{keyword}{typename}\ Self,}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Reducer,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}>}
+\DoxyCodeLine{00219\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ FullReductionKernelHalfFloat(Reducer\ reducer,\ \textcolor{keyword}{const}\ Self\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_coeffs,}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\ scratch)\ \{}
+\DoxyCodeLine{00221\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(NumPerThread\ \%\ 2\ ==\ 0);}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ first\_index\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ BlockSize\ *\ NumPerThread\ +\ 2*\mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \textcolor{comment}{//\ Initialize\ the\ output\ value\ if\ it\ wasn't\ initialized\ by\ the\ ReductionInitKernel}}
+\DoxyCodeLine{00226\ \ \ \textcolor{keywordflow}{if}\ (gridDim.x\ ==\ 1\ \&\&\ first\_index\ ==\ 0)\ \{}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_coeffs\ \%\ 2\ !=\ 0)\ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ \mbox{\hyperlink{namespacetbb_1_1internal_a18405c9631e7064d3af5662f30a84dd2}{last}}\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff(num\_coeffs-\/1);}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ *scratch\ =\ \_\_halves2half2(last,\ reducer.initialize());}
+\DoxyCodeLine{00230\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ *scratch\ =\ reducer.template\ initializePacket<half2>();}
+\DoxyCodeLine{00232\ \ \ \ \ \}}
+\DoxyCodeLine{00233\ \ \ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00234\ \ \ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \ \ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ accum\ =\ reducer.template\ initializePacket<half2>();}
+\DoxyCodeLine{00237\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ max\_iter\ =\ \mbox{\hyperlink{namespace_eigen_1_1numext_ab3b30bf0bcfa1ad91dbec75fabb3bea0}{numext::mini<Index>}}((num\_coeffs\ -\/\ first\_index)\ /\ 2,\ NumPerThread*BlockSize\ /\ 2);}
+\DoxyCodeLine{00238\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 0;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ max\_iter;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ BlockSize)\ \{}
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ =\ first\_index\ +\ 2*\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}};}
+\DoxyCodeLine{00240\ \ \ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}}\ +\ 1\ <\ num\_coeffs);}
+\DoxyCodeLine{00241\ \ \ \ \ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ val\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.template\ packet<Unaligned>(\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ab47dd9958bcadea08866b42bf358e95e}{index}});}
+\DoxyCodeLine{00242\ \ \ \ \ reducer.reducePacket(val,\ \&accum);}
+\DoxyCodeLine{00243\ \ \ \}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\#pragma\ unroll}}
+\DoxyCodeLine{00246\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ warpSize/2;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ >\ 0;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ /=\ 2)\ \{}
+\DoxyCodeLine{00247\ \ \ \ \ reducer.reducePacket(\_\_shfl\_down(accum,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ warpSize),\ \&accum);}
+\DoxyCodeLine{00248\ \ \ \}}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x\ \&\ (warpSize\ -\/\ 1))\ ==\ 0)\ \{}
+\DoxyCodeLine{00251\ \ \ \ \ atomicReduce(scratch,\ accum,\ reducer);}
+\DoxyCodeLine{00252\ \ \ \}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \textcolor{keywordflow}{if}\ (gridDim.x\ ==\ 1\ \&\&\ first\_index\ ==\ 0)\ \{}
+\DoxyCodeLine{00257\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ \mbox{\hyperlink{namespacegenerate__static__link__cmd__macos_a7c2dcd7f9bee7a5258b5c61341deb157}{tmp}}\ =\ \_\_low2half(*scratch);}
+\DoxyCodeLine{00258\ \ \ \ \ reducer.reduce(\_\_high2half(*scratch),\ \&tmp);}
+\DoxyCodeLine{00259\ \ \ \ \ *\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}\ =\ \mbox{\hyperlink{namespacegenerate__static__link__cmd__macos_a7c2dcd7f9bee7a5258b5c61341deb157}{tmp}};}
+\DoxyCodeLine{00260\ \ \ \}}
+\DoxyCodeLine{00261\ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00264\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ ReductionCleanupKernelHalfFloat(Op\&\ reducer,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\ scratch)\ \{}
+\DoxyCodeLine{00265\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x\ ==\ 1);}
+\DoxyCodeLine{00266\ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ \mbox{\hyperlink{namespacegenerate__static__link__cmd__macos_a7c2dcd7f9bee7a5258b5c61341deb157}{tmp}}\ =\ \_\_low2half(*scratch);}
+\DoxyCodeLine{00267\ \ \ reducer.reduce(\_\_high2half(*scratch),\ \&tmp);}
+\DoxyCodeLine{00268\ \ \ *\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}\ =\ \mbox{\hyperlink{namespacegenerate__static__link__cmd__macos_a7c2dcd7f9bee7a5258b5c61341deb157}{tmp}};}
+\DoxyCodeLine{00269\ \}}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op,\ \textcolor{keyword}{typename}\ OutputType,\ \textcolor{keywordtype}{bool}\ PacketAccess,\ \textcolor{keyword}{typename}\ Enabled\ =\ \textcolor{keywordtype}{void}>}
+\DoxyCodeLine{00274\ \textcolor{keyword}{struct\ }FullReductionLauncher\ \{}
+\DoxyCodeLine{00275\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&,\ Op\&,\ \textcolor{keyword}{const}\ GpuDevice\&,\ OutputType*,\ \textcolor{keyword}{typename}\ Self::Index)\ \{}
+\DoxyCodeLine{00276\ \ \ \ \ assert(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}Should\ only\ be\ called\ on\ doubles,\ floats\ and\ half\ floats"{}});}
+\DoxyCodeLine{00277\ \ \ \}}
+\DoxyCodeLine{00278\ \};}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \textcolor{comment}{//\ Specialization\ for\ float\ and\ double}}
+\DoxyCodeLine{00281\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op,\ \textcolor{keyword}{typename}\ OutputType,\ \textcolor{keywordtype}{bool}\ PacketAccess>}
+\DoxyCodeLine{00282\ \textcolor{keyword}{struct\ }FullReductionLauncher<}
+\DoxyCodeLine{00283\ \ \ \ \ Self,\ Op,\ OutputType,\ PacketAccess,}
+\DoxyCodeLine{00284\ \ \ \ \ typename\ internal::\mbox{\hyperlink{struct_eigen_1_1internal_1_1enable__if}{enable\_if}}<}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ internal::is\_same<float,\ OutputType>::value\ ||}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ internal::is\_same<double,\ OutputType>::value,}
+\DoxyCodeLine{00287\ \ \ \ \ void>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae8396ff85d63082521e3324820df1009}{::type}}>\ \{}
+\DoxyCodeLine{00288\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&\ self,\ Op\&\ reducer,\ \textcolor{keyword}{const}\ GpuDevice\&\ device,\ OutputType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keyword}{typename}\ Self::Index\ num\_coeffs)\ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Self::Index\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}};}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Self::CoeffReturnType\ \mbox{\hyperlink{bench__gemm_8cpp_a052eb942d12b6404aade6fae4b075fb9}{Scalar}};}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ =\ 256;}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_per\_thread\ =\ 128;}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ divup<int>(num\_coeffs,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ *\ num\_per\_thread);}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}*\ semaphore\ =\ \mbox{\hyperlink{eabase_8h_a070d2ce7b6bb7e5c05602aa8c308d0c4}{NULL}};}
+\DoxyCodeLine{00296\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_blocks\ >\ 1)\ \{}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ semaphore\ =\ device.semaphore();}
+\DoxyCodeLine{00298\ \ \ \ \ \}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ LAUNCH\_CUDA\_KERNEL((FullReductionKernel<block\_size,\ num\_per\_thread,\ Self,\ Op,\ Index>),}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_blocks,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}},\ 0,\ device,\ reducer,\ self,\ num\_coeffs,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ semaphore);}
+\DoxyCodeLine{00302\ \ \ \}}
+\DoxyCodeLine{00303\ \};}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00306\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00307\ \textcolor{keyword}{struct\ }FullReductionLauncher<Self,\ Op,\ Eigen::\mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}},\ \mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}>\ \{}
+\DoxyCodeLine{00308\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&,\ Op\&,\ \textcolor{keyword}{const}\ GpuDevice\&,\ \mbox{\hyperlink{sugar_8h_a143fa055fc894f4591a2715c96eaeb01}{half}}*,\ \textcolor{keyword}{typename}\ Self::Index)\ \{}
+\DoxyCodeLine{00309\ \ \ \ \ assert(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}Should\ not\ be\ called\ since\ there\ is\ no\ packet\ accessor"{}});}
+\DoxyCodeLine{00310\ \ \ \}}
+\DoxyCodeLine{00311\ \};}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00314\ \textcolor{keyword}{struct\ }FullReductionLauncher<Self,\ Op,\ Eigen::\mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}},\ \mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>\ \{}
+\DoxyCodeLine{00315\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&\ self,\ Op\&\ reducer,\ \textcolor{keyword}{const}\ GpuDevice\&\ device,\ \mbox{\hyperlink{sugar_8h_a143fa055fc894f4591a2715c96eaeb01}{half}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keyword}{typename}\ Self::Index\ num\_coeffs)\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Self::Index\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}};}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ =\ 256;}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_per\_thread\ =\ 128;}
+\DoxyCodeLine{00320\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ divup<int>(num\_coeffs,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ *\ num\_per\_thread);}
+\DoxyCodeLine{00321\ \ \ \ \ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\ scratch\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*\textcolor{keyword}{>}(device.scratchpad());}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_blocks\ >\ 1)\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ initialize\ the\ output\ and\ the\ scrathpad\ outside\ the\ reduction\ kernel\ when\ we\ can't\ be\ sure\ that\ there}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \textcolor{comment}{//\ won't\ be\ a\ race\ conditions\ between\ multiple\ thread\ blocks.}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ LAUNCH\_CUDA\_KERNEL((ReductionInitFullReduxKernelHalfFloat<Self,\ Op,\ Index>),}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ 1,\ 0,\ device,\ reducer,\ self,\ num\_coeffs,\ scratch);}
+\DoxyCodeLine{00328\ \ \ \ \ \}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ LAUNCH\_CUDA\_KERNEL((FullReductionKernelHalfFloat<block\_size,\ num\_per\_thread,\ Self,\ Op,\ Index>),}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_blocks,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}},\ 0,\ device,\ reducer,\ self,\ num\_coeffs,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ scratch);}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_blocks\ >\ 1)\ \{}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ LAUNCH\_CUDA\_KERNEL((ReductionCleanupKernelHalfFloat<Op>),}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ 1,\ 0,\ device,\ reducer,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ scratch);}
+\DoxyCodeLine{00336\ \ \ \ \ \}}
+\DoxyCodeLine{00337\ \ \ \}}
+\DoxyCodeLine{00338\ \};}
+\DoxyCodeLine{00339\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op,\ \textcolor{keywordtype}{bool}\ Vectorizable>}
+\DoxyCodeLine{00343\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1_full_reducer}{FullReducer}}<Self,\ Op,\ GpuDevice,\ Vectorizable>\ \{}
+\DoxyCodeLine{00344\ \ \ \textcolor{comment}{//\ Unfortunately\ nvidia\ doesn't\ support\ well\ exotic\ types\ such\ as\ complex,}}
+\DoxyCodeLine{00345\ \ \ \textcolor{comment}{//\ so\ reduce\ the\ scope\ of\ the\ optimized\ version\ of\ the\ code\ to\ the\ simple\ cases}}
+\DoxyCodeLine{00346\ \ \ \textcolor{comment}{//\ of\ doubles,\ floats\ and\ half\ floats}}
+\DoxyCodeLine{00347\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00348\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_full_reducer_afdb7b8d8326a460adec840d3f38b097e}{HasOptimizedImplementation}}\ =\ !Op::IsStateful\ \&\&}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ float>::value}}\ ||}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ double>::value}}\ ||}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ Eigen::half>::value}}\ \&\&\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1reducer__traits_afa8693481d37decc180833e7f9c53ff3a182285e009d3b4550f2f97bdd19261d6}{reducer\_traits<Op,\ GpuDevice>::PacketAccess}}));}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00353\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_full_reducer_afdb7b8d8326a460adec840d3f38b097e}{HasOptimizedImplementation}}\ =\ !Op::IsStateful\ \&\&}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ float>::value}}\ ||}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ double>::value}});}
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ OutputType>}
+\DoxyCodeLine{00359\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_full_reducer_a506159dc2c13ca4882575512f42f972f}{run}}(\textcolor{keyword}{const}\ Self\&\ self,\ Op\&\ reducer,\ \textcolor{keyword}{const}\ GpuDevice\&\ device,\ OutputType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}})\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ assert(\mbox{\hyperlink{struct_eigen_1_1internal_1_1_full_reducer_afdb7b8d8326a460adec840d3f38b097e}{HasOptimizedImplementation}}\ \&\&\ \textcolor{stringliteral}{"{}Should\ only\ be\ called\ on\ doubles,\ floats\ or\ half\ floats"{}});}
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ num\_coeffs\ =\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3b99e338d92a91c8b3f89d32d0ca2c39}{array\_prod}}(self.m\_impl.dimensions());}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{comment}{//\ Don't\ crash\ when\ we're\ called\ with\ an\ input\ tensor\ of\ size\ 0.}}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_coeffs\ ==\ 0)\ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00365\ \ \ \ \ \}}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ FullReductionLauncher<Self,\ Op,\ OutputType,\ reducer\_traits<Op,\ GpuDevice>::PacketAccess>\mbox{\hyperlink{struct_eigen_1_1internal_1_1_full_reducer_a506159dc2c13ca4882575512f42f972f}{::run}}(self,\ reducer,\ device,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ num\_coeffs);}
+\DoxyCodeLine{00368\ \ \ \}}
+\DoxyCodeLine{00369\ \};}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ NumPerThread,\ \textcolor{keyword}{typename}\ Self,}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Reducer,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}>}
+\DoxyCodeLine{00374\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ InnerReductionKernel(Reducer\ reducer,\ \textcolor{keyword}{const}\ Self\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_coeffs\_to\_reduce,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_preserved\_coeffs,}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Self::CoeffReturnType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}})\ \{}
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\#if\ \_\_CUDA\_ARCH\_\_\ >=\ 300}}
+\DoxyCodeLine{00377\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Self::CoeffReturnType\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Type}};}
+\DoxyCodeLine{00378\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.y\ ==\ 1);}
+\DoxyCodeLine{00379\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.z\ ==\ 1);}
+\DoxyCodeLine{00380\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(gridDim.y\ ==\ 1);}
+\DoxyCodeLine{00381\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(gridDim.z\ ==\ 1);}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ unroll\_times\ =\ 16;}
+\DoxyCodeLine{00384\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(NumPerThread\ \%\ unroll\_times\ ==\ 0);}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ input\_col\_blocks\ =\ \mbox{\hyperlink{namespace_eigen_a13ec9832931270b80961236d30f6d2e3}{divup<Index>}}(num\_coeffs\_to\_reduce,\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ NumPerThread);}
+\DoxyCodeLine{00387\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_input\_blocks\ =\ input\_col\_blocks\ *\ num\_preserved\_coeffs;}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_threads\ =\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ gridDim.x;}
+\DoxyCodeLine{00390\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \ \ \textcolor{comment}{//\ Initialize\ the\ output\ values\ if\ they\ weren't\ initialized\ by\ the\ ReductionInitKernel}}
+\DoxyCodeLine{00393\ \ \ \textcolor{keywordflow}{if}\ (gridDim.x\ ==\ 1)\ \{}
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ num\_preserved\_coeffs;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ num\_threads)\ \{}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ reducer.initialize();}
+\DoxyCodeLine{00396\ \ \ \ \ \}}
+\DoxyCodeLine{00397\ \ \ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00398\ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ num\_input\_blocks;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ gridDim.x)\ \{}
+\DoxyCodeLine{00401\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ =\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ /\ input\_col\_blocks;}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ <\ num\_preserved\_coeffs)\ \{}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ col\_block\ =\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ \%\ input\_col\_blocks;}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ col\_begin\ =\ col\_block\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ NumPerThread\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Type}}\ reduced\_val\ =\ reducer.initialize();}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ NumPerThread;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ +=\ unroll\_times)\ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ last\_col\ =\ col\_begin\ +\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ +\ unroll\_times\ -\/\ 1);}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (last\_col\ >=\ num\_coeffs\_to\_reduce)\ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ =\ col\_begin\ +\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ <\ num\_coeffs\_to\_reduce;\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ +=\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x)\ \{}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Type}}\ val\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff(\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ *\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}});}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reduce(val,\ \&reduced\_val);}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Faster\ version\ of\ the\ loop\ with\ no\ branches\ after\ unrolling.}}
+\DoxyCodeLine{00419\ \textcolor{preprocessor}{\#pragma\ unroll}}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ unroll\_times;\ ++k)\ \{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ =\ col\_begin\ +\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ +\ k);}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reduce(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff(\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ *\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}),\ \&reduced\_val);}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00426\ }
+\DoxyCodeLine{00427\ \textcolor{preprocessor}{\#pragma\ unroll}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ warpSize/2;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ >\ 0;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ /=\ 2)\ \{}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ reducer.reduce(\_\_shfl\_down(reduced\_val,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}),\ \&reduced\_val);}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x\ \&\ (warpSize\ -\/\ 1))\ ==\ 0)\ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ atomicReduce(\&(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}[\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}]),\ reduced\_val,\ reducer);}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00435\ \ \ \ \ \}}
+\DoxyCodeLine{00436\ \ \ \}}
+\DoxyCodeLine{00437\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00438\ \ \ assert(0\ \&\&\ \textcolor{stringliteral}{"{}Shouldn't\ be\ called\ on\ unsupported\ device"{}});}
+\DoxyCodeLine{00439\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00440\ \}}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00443\ }
+\DoxyCodeLine{00444\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ NumPerThread,\ \textcolor{keyword}{typename}\ Self,}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Reducer,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}>}
+\DoxyCodeLine{00446\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ InnerReductionKernelHalfFloat(Reducer\ reducer,\ \textcolor{keyword}{const}\ Self\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_coeffs\_to\_reduce,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_preserved\_coeffs,}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}})\ \{}
+\DoxyCodeLine{00448\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.y\ ==\ 1);}
+\DoxyCodeLine{00449\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(\mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.z\ ==\ 1);}
+\DoxyCodeLine{00450\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(gridDim.y\ ==\ 1);}
+\DoxyCodeLine{00451\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(gridDim.z\ ==\ 1);}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ unroll\_times\ =\ 16;}
+\DoxyCodeLine{00454\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(NumPerThread\ \%\ unroll\_times\ ==\ 0);}
+\DoxyCodeLine{00455\ \ \ \mbox{\hyperlink{eigen-3_83_87_2_eigen_2src_2_core_2util_2_macros_8h_acaa7ba89800cfe18d5fd6eed620aea9c}{eigen\_assert}}(unroll\_times\ \%\ 2\ ==\ 0);}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ input\_col\_blocks\ =\ \mbox{\hyperlink{namespace_eigen_a13ec9832931270b80961236d30f6d2e3}{divup<Index>}}(num\_coeffs\_to\_reduce,\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ NumPerThread\ *\ 2);}
+\DoxyCodeLine{00458\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_input\_blocks\ =\ \mbox{\hyperlink{namespace_eigen_a13ec9832931270b80961236d30f6d2e3}{divup<Index>}}(input\_col\_blocks\ *\ num\_preserved\_coeffs,\ 2);}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_threads\ =\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ gridDim.x;}
+\DoxyCodeLine{00461\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \textcolor{comment}{//\ Initialize\ the\ output\ values\ if\ they\ weren't\ initialized\ by\ the\ ReductionInitKernel}}
+\DoxyCodeLine{00464\ \ \ \textcolor{keywordflow}{if}\ (gridDim.x\ ==\ 1)\ \{}
+\DoxyCodeLine{00465\ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ 2*\mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}};}
+\DoxyCodeLine{00466\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +\ 1\ <\ num\_preserved\_coeffs;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ 2*num\_threads)\ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}*\ loc\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}\ +\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}};}
+\DoxyCodeLine{00468\ \ \ \ \ \ \ *((\mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*)loc)\ =\ reducer.template\ initializePacket<half2>();}
+\DoxyCodeLine{00469\ \ \ \ \ \}}
+\DoxyCodeLine{00470\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ num\_preserved\_coeffs)\ \{}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ reducer.initialize();}
+\DoxyCodeLine{00472\ \ \ \ \ \}}
+\DoxyCodeLine{00473\ \ \ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00474\ \ \ \}}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ num\_input\_blocks;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ gridDim.x)\ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ =\ 2\ *\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ /\ input\_col\_blocks);}
+\DoxyCodeLine{00478\ }
+\DoxyCodeLine{00479\ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ +\ 1\ <\ num\_preserved\_coeffs)\ \{}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ col\_block\ =\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ \%\ input\_col\_blocks;}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ col\_begin\ =\ 2\ *\ (col\_block\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ NumPerThread\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x);}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ reduced\_val1\ =\ reducer.template\ initializePacket<half2>();}
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ reduced\_val2\ =\ reducer.template\ initializePacket<half2>();}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ 0;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ NumPerThread;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ +=\ unroll\_times)\ \{}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ last\_col\ =\ col\_begin\ +\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ +\ unroll\_times\ -\/\ 1)\ *\ 2;}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (last\_col\ >=\ num\_coeffs\_to\_reduce)\ \{}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ =\ col\_begin\ +\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}};}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ +\ 1\ <\ num\_coeffs\_to\_reduce;\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ +=\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x)\ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ val1\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.template\ packet<Unaligned>(\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ *\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}});}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reducePacket(val1,\ \&reduced\_val1);}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ val2\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.template\ packet<Unaligned>((\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}+1)\ *\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}});}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reducePacket(val2,\ \&reduced\_val2);}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ <\ num\_coeffs\_to\_reduce)\ \{}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Peel;}}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ last1\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff(\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ *\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}});}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ val1\ =\ \_\_halves2half2(last1,\ reducer.initialize());}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reducePacket(val1,\ \&reduced\_val1);}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ last2\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff((\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}+1)\ *\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}});}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ val2\ =\ \_\_halves2half2(last2,\ reducer.initialize());}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reducePacket(val2,\ \&reduced\_val2);}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Faster\ version\ of\ the\ loop\ with\ no\ branches\ after\ unrolling.}}
+\DoxyCodeLine{00508\ \textcolor{preprocessor}{\#pragma\ unroll}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ unroll\_times;\ ++k)\ \{}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}\ =\ col\_begin\ +\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ (\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ +\ k)\ *\ 2;}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reducePacket(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.template\ packet<Unaligned>(\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ *\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}),\ \&reduced\_val1);}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ reducer.reducePacket(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.template\ packet<Unaligned>((\mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}}\ +\ 1)*\ num\_coeffs\_to\_reduce\ +\ \mbox{\hyperlink{_matrix_base__col_8cpp_aa168d9544aa6d49fce0cbfc0bec849b0}{col}}),\ \&reduced\_val2);}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ \textcolor{preprocessor}{\#pragma\ unroll}}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ =\ warpSize/2;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ >\ 0;\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}}\ /=\ 2)\ \{}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ reducer.reducePacket(\_\_shfl\_down(reduced\_val1,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ warpSize),\ \&reduced\_val1);}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ reducer.reducePacket(\_\_shfl\_down(reduced\_val2,\ \mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae1b92ae085ddef4b1cdca7d749339fb0}{offset}},\ warpSize),\ \&reduced\_val2);}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ val1\ =\ \ \_\_low2half(reduced\_val1);}
+\DoxyCodeLine{00524\ \ \ \ \ \ \ reducer.reduce(\_\_high2half(reduced\_val1),\ \&val1);}
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}\ val2\ =\ \ \_\_low2half(reduced\_val2);}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ reducer.reduce(\_\_high2half(reduced\_val2),\ \&val2);}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}\ val\ =\ \_\_halves2half2(val1,\ val2);}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((\mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x\ \&\ (warpSize\ -\/\ 1))\ ==\ 0)\ \{}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}}*\ loc\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}\ +\ \mbox{\hyperlink{_matrix_base__row_8cpp_a64ef8efef59f875033a27e7cbbc879ec}{row}};}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ atomicReduce((\mbox{\hyperlink{sugar_8h_a3c4b6810e53e7e0359a602895ef510d2}{half2}}*)loc,\ val,\ reducer);}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00533\ \ \ \ \ \}}
+\DoxyCodeLine{00534\ \ \ \}}
+\DoxyCodeLine{00535\ \}}
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00537\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op,\ \textcolor{keyword}{typename}\ OutputType,\ \textcolor{keywordtype}{bool}\ PacketAccess,\ \textcolor{keyword}{typename}\ Enabled\ =\ \textcolor{keywordtype}{void}>}
+\DoxyCodeLine{00540\ \textcolor{keyword}{struct\ }InnerReductionLauncher\ \{}
+\DoxyCodeLine{00541\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&,\ Op\&,\ \textcolor{keyword}{const}\ GpuDevice\&,\ OutputType*,\ \textcolor{keyword}{typename}\ Self::Index,\ \textcolor{keyword}{typename}\ Self::Index)\ \{}
+\DoxyCodeLine{00542\ \ \ \ \ assert(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}Should\ only\ be\ called\ to\ reduce\ doubles,\ floats\ and\ half\ floats\ on\ a\ gpu\ device"{}});}
+\DoxyCodeLine{00543\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00544\ \ \ \}}
+\DoxyCodeLine{00545\ \};}
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00547\ \textcolor{comment}{//\ Specialization\ for\ float\ and\ double}}
+\DoxyCodeLine{00548\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op,\ \textcolor{keyword}{typename}\ OutputType,\ \textcolor{keywordtype}{bool}\ PacketAccess>}
+\DoxyCodeLine{00549\ \textcolor{keyword}{struct\ }InnerReductionLauncher<}
+\DoxyCodeLine{00550\ \ \ Self,\ Op,\ OutputType,\ PacketAccess,}
+\DoxyCodeLine{00551\ \ \ typename\ internal::\mbox{\hyperlink{struct_eigen_1_1internal_1_1enable__if}{enable\_if}}<}
+\DoxyCodeLine{00552\ \ \ \ \ internal::is\_same<float,\ OutputType>::value\ ||}
+\DoxyCodeLine{00553\ \ \ \ \ internal::is\_same<double,\ OutputType>::value,}
+\DoxyCodeLine{00554\ \ \ void>\mbox{\hyperlink{imgui__impl__opengl3__loader_8h_ae8396ff85d63082521e3324820df1009}{::type}}>\ \{}
+\DoxyCodeLine{00555\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&\ self,\ Op\&\ reducer,\ \textcolor{keyword}{const}\ GpuDevice\&\ device,\ OutputType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keyword}{typename}\ Self::Index\ num\_coeffs\_to\_reduce,\ \textcolor{keyword}{typename}\ Self::Index\ num\_preserved\_vals)\ \{}
+\DoxyCodeLine{00556\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Self::Index\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}};}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ num\_coeffs\ =\ num\_coeffs\_to\_reduce\ *\ num\_preserved\_vals;}
+\DoxyCodeLine{00559\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ =\ 256;}
+\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_per\_thread\ =\ 128;}
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ dyn\_blocks\ =\ divup<int>(num\_coeffs,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ *\ num\_per\_thread);}
+\DoxyCodeLine{00562\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ max\_blocks\ =\ device.getNumCudaMultiProcessors()\ *}
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ device.maxCudaThreadsPerMultiProcessor()\ /\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}};}
+\DoxyCodeLine{00564\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ numext::mini<int>(max\_blocks,\ dyn\_blocks);}
+\DoxyCodeLine{00565\ }
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_blocks\ >\ 1)\ \{}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ initialize\ the\ outputs\ outside\ the\ reduction\ kernel\ when\ we\ can't\ be\ sure\ that\ there}}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ \textcolor{comment}{//\ won't\ be\ a\ race\ conditions\ between\ multiple\ thread\ blocks.}}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ dyn\_blocks\ =\ divup<int>(num\_preserved\_vals,\ 1024);}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ max\_blocks\ =\ device.getNumCudaMultiProcessors()\ *}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ device.maxCudaThreadsPerMultiProcessor()\ /\ 1024;}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ numext::mini<int>(max\_blocks,\ dyn\_blocks);}
+\DoxyCodeLine{00573\ \ \ \ \ \ \ LAUNCH\_CUDA\_KERNEL((ReductionInitKernel<OutputType,\ Index>),}
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_blocks,\ 1024,\ 0,\ device,\ reducer.initialize(),}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_preserved\_vals,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00576\ \ \ \ \ \}}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \ \ \ \ LAUNCH\_CUDA\_KERNEL((InnerReductionKernel<num\_per\_thread,\ Self,\ Op,\ Index>),}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_blocks,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}},\ 0,\ device,\ reducer,\ self,\ num\_coeffs\_to\_reduce,\ num\_preserved\_vals,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00582\ \ \ \}}
+\DoxyCodeLine{00583\ \};}
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00586\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00587\ \textcolor{keyword}{struct\ }InnerReductionLauncher<Self,\ Op,\ Eigen::\mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}},\ \mbox{\hyperlink{yyjson_8h_a65e9886d74aaee76545e83dd09011727}{false}}>\ \{}
+\DoxyCodeLine{00588\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&,\ Op\&,\ \textcolor{keyword}{const}\ GpuDevice\&,\ \mbox{\hyperlink{sugar_8h_a143fa055fc894f4591a2715c96eaeb01}{half}}*,\ \textcolor{keyword}{typename}\ Self::Index,\ \textcolor{keyword}{typename}\ Self::Index)\ \{}
+\DoxyCodeLine{00589\ \ \ \ \ assert(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}Should\ not\ be\ called\ since\ there\ is\ no\ packet\ accessor"{}});}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00591\ \ \ \}}
+\DoxyCodeLine{00592\ \};}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00595\ \textcolor{keyword}{struct\ }InnerReductionLauncher<Self,\ Op,\ Eigen::\mbox{\hyperlink{struct_eigen_1_1internal_1_1packet__traits}{half}},\ \mbox{\hyperlink{yyjson_8h_a41f9c5fb8b08eb5dc3edce4dcb37fee7}{true}}>\ \{}
+\DoxyCodeLine{00596\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{poisson_8cpp_ae12af222b820baf64e953be588c5bbbe}{run}}(\textcolor{keyword}{const}\ Self\&\ self,\ Op\&\ reducer,\ \textcolor{keyword}{const}\ GpuDevice\&\ device,\ \mbox{\hyperlink{sugar_8h_a143fa055fc894f4591a2715c96eaeb01}{half}}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keyword}{typename}\ Self::Index\ num\_coeffs\_to\_reduce,\ \textcolor{keyword}{typename}\ Self::Index\ num\_preserved\_vals)\ \{}
+\DoxyCodeLine{00597\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Self::Index\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}};}
+\DoxyCodeLine{00598\ }
+\DoxyCodeLine{00599\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_preserved\_vals\ \%\ 2\ !=\ 0)\ \{}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \textcolor{comment}{//\ Not\ supported\ yet,\ revert\ to\ the\ slower\ code\ path}}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00602\ \ \ \ \ \}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ num\_coeffs\ =\ num\_coeffs\_to\_reduce\ *\ num\_preserved\_vals;}
+\DoxyCodeLine{00605\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ =\ \textcolor{comment}{/*256*/}128;}
+\DoxyCodeLine{00606\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_per\_thread\ =\ \textcolor{comment}{/*128*/}64;}
+\DoxyCodeLine{00607\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ dyn\_blocks\ =\ divup<int>(num\_coeffs,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ *\ num\_per\_thread);}
+\DoxyCodeLine{00608\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ max\_blocks\ =\ device.getNumCudaMultiProcessors()\ *}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ device.maxCudaThreadsPerMultiProcessor()\ /\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}};}
+\DoxyCodeLine{00610\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ numext::mini<int>(max\_blocks,\ dyn\_blocks);}
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_blocks\ >\ 1)\ \{}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ initialize\ the\ outputs\ outside\ the\ reduction\ kernel\ when\ we\ can't\ be\ sure\ that\ there}}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \textcolor{comment}{//\ won't\ be\ a\ race\ conditions\ between\ multiple\ thread\ blocks.}}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ dyn\_blocks\ =\ divup<int>(num\_preserved\_vals,\ 1024);}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ max\_blocks\ =\ device.getNumCudaMultiProcessors()\ *}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ device.maxCudaThreadsPerMultiProcessor()\ /\ 1024;}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ numext::mini<int>(max\_blocks,\ dyn\_blocks);}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ LAUNCH\_CUDA\_KERNEL((ReductionInitKernelHalfFloat<Self,\ Op,\ Index>),}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1,\ 1,\ 0,\ device,\ reducer,\ self,\ num\_preserved\_vals,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00621\ \ \ \ \ \}}
+\DoxyCodeLine{00622\ }
+\DoxyCodeLine{00623\ \ \ \ \ LAUNCH\_CUDA\_KERNEL((InnerReductionKernelHalfFloat<num\_per\_thread,\ Self,\ Op,\ Index>),}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_blocks,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}},\ 0,\ device,\ reducer,\ self,\ num\_coeffs\_to\_reduce,\ num\_preserved\_vals,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00627\ \ \ \}}
+\DoxyCodeLine{00628\ \};}
+\DoxyCodeLine{00629\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00630\ }
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00633\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1_inner_reducer}{InnerReducer}}<Self,\ Op,\ GpuDevice>\ \{}
+\DoxyCodeLine{00634\ \ \ \textcolor{comment}{//\ Unfortunately\ nvidia\ doesn't\ support\ well\ exotic\ types\ such\ as\ complex,}}
+\DoxyCodeLine{00635\ \ \ \textcolor{comment}{//\ so\ reduce\ the\ scope\ of\ the\ optimized\ version\ of\ the\ code\ to\ the\ simple\ case}}
+\DoxyCodeLine{00636\ \ \ \textcolor{comment}{//\ of\ floats\ and\ half\ floats.}}
+\DoxyCodeLine{00637\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00638\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_inner_reducer_aa157c28481202ce463fd531c4c12104c}{HasOptimizedImplementation}}\ =\ !Op::IsStateful\ \&\&}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ float>::value}}\ ||}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ double>::value}}\ ||}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ Eigen::half>::value}}\ \&\&\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1reducer__traits_afa8693481d37decc180833e7f9c53ff3a182285e009d3b4550f2f97bdd19261d6}{reducer\_traits<Op,\ GpuDevice>::PacketAccess}}));}
+\DoxyCodeLine{00642\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00643\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_inner_reducer_aa157c28481202ce463fd531c4c12104c}{HasOptimizedImplementation}}\ =\ !Op::IsStateful\ \&\&}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ float>::value}}\ ||}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ double>::value}});}
+\DoxyCodeLine{00646\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00647\ }
+\DoxyCodeLine{00648\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ OutputType>}
+\DoxyCodeLine{00649\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_inner_reducer_ab0f80bf14245c83efc5e5616f2775a7e}{run}}(\textcolor{keyword}{const}\ Self\&\ self,\ Op\&\ reducer,\ \textcolor{keyword}{const}\ GpuDevice\&\ device,\ OutputType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keyword}{typename}\ Self::Index\ num\_coeffs\_to\_reduce,\ \textcolor{keyword}{typename}\ Self::Index\ num\_preserved\_vals)\ \{}
+\DoxyCodeLine{00650\ \ \ \ \ assert(\mbox{\hyperlink{struct_eigen_1_1internal_1_1_inner_reducer_aa157c28481202ce463fd531c4c12104c}{HasOptimizedImplementation}}\ \&\&\ \textcolor{stringliteral}{"{}Should\ only\ be\ called\ on\ doubles,\ floats\ or\ half\ floats"{}});}
+\DoxyCodeLine{00651\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ num\_coeffs\ =\ \mbox{\hyperlink{namespace_eigen_1_1internal_a3b99e338d92a91c8b3f89d32d0ca2c39}{array\_prod}}(self.m\_impl.dimensions());}
+\DoxyCodeLine{00652\ \ \ \ \ \textcolor{comment}{//\ Don't\ crash\ when\ we're\ called\ with\ an\ input\ tensor\ of\ size\ 0.}}
+\DoxyCodeLine{00653\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_coeffs\ ==\ 0)\ \{}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00655\ \ \ \ \ \}}
+\DoxyCodeLine{00656\ \ \ \ \ \textcolor{comment}{//\ It's\ faster\ to\ use\ the\ usual\ code.}}
+\DoxyCodeLine{00657\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_coeffs\_to\_reduce\ <=\ 128)\ \{}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00659\ \ \ \ \ \}}
+\DoxyCodeLine{00660\ }
+\DoxyCodeLine{00661\ \ \ \ \ \textcolor{keywordflow}{return}\ InnerReductionLauncher<Self,\ Op,\ OutputType,\ reducer\_traits<Op,\ GpuDevice>::PacketAccess>\mbox{\hyperlink{struct_eigen_1_1internal_1_1_inner_reducer_ab0f80bf14245c83efc5e5616f2775a7e}{::run}}(self,\ reducer,\ device,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ num\_coeffs\_to\_reduce,\ num\_preserved\_vals);}
+\DoxyCodeLine{00662\ \ \ \}}
+\DoxyCodeLine{00663\ \};}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ NumPerThread,\ \textcolor{keyword}{typename}\ Self,}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Reducer,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}>}
+\DoxyCodeLine{00667\ \_\_global\_\_\ \textcolor{keywordtype}{void}\ OuterReductionKernel(Reducer\ reducer,\ \textcolor{keyword}{const}\ Self\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}},\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_coeffs\_to\_reduce,\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_preserved\_coeffs,}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Self::CoeffReturnType*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}})\ \{}
+\DoxyCodeLine{00669\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ num\_threads\ =\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ *\ gridDim.x;}
+\DoxyCodeLine{00670\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}}\ =\ \mbox{\hyperlink{cuda__common_8h_ab30e5f6958c9264d3c5235d463eb2b57}{blockIdx}}.x\ *\ \mbox{\hyperlink{cuda__common_8h_a1a2cdcc50d7e1505a058c5832ebe5702}{blockDim}}.x\ +\ \mbox{\hyperlink{cuda__common_8h_a0a680a9519f7aaccce02a4bb4c0a0b52}{threadIdx}}.x;}
+\DoxyCodeLine{00671\ \ \ \textcolor{comment}{//\ Initialize\ the\ output\ values\ if\ they\ weren't\ initialized\ by\ the\ ReductionInitKernel}}
+\DoxyCodeLine{00672\ \ \ \textcolor{keywordflow}{if}\ (gridDim.x\ ==\ 1)\ \{}
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ num\_preserved\_coeffs;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ num\_threads)\ \{}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}[\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}]\ =\ reducer.initialize();}
+\DoxyCodeLine{00675\ \ \ \ \ \}}
+\DoxyCodeLine{00676\ \ \ \ \ \_\_syncthreads();}
+\DoxyCodeLine{00677\ \ \ \}}
+\DoxyCodeLine{00678\ }
+\DoxyCodeLine{00679\ \ \ \textcolor{comment}{//\ Do\ the\ reduction.}}
+\DoxyCodeLine{00680\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ max\_iter\ =\ num\_preserved\_coeffs\ *\ \mbox{\hyperlink{namespace_eigen_a13ec9832931270b80961236d30f6d2e3}{divup<Index>}}(num\_coeffs\_to\_reduce,\ NumPerThread);}
+\DoxyCodeLine{00681\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ =\ \mbox{\hyperlink{sugar_8h_a67af2cba5d35997524b2d5adb0a0e40a}{thread\_id}};\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ <\ max\_iter;\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ +=\ num\_threads)\ \{}
+\DoxyCodeLine{00682\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ input\_col\ =\ \mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ \%\ num\_preserved\_coeffs;}
+\DoxyCodeLine{00683\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ input\_row\ =\ (\mbox{\hyperlink{_bi_c_g_s_t_a_b__step__by__step_8cpp_acb559820d9ca11295b4500f179ef6392}{i}}\ /\ num\_preserved\_coeffs)\ *\ NumPerThread;}
+\DoxyCodeLine{00684\ \ \ \ \ \textcolor{keyword}{typename}\ Self::CoeffReturnType\ reduced\_val\ =\ reducer.initialize();}
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ max\_row\ =\ \mbox{\hyperlink{namespace_eigen_1_1numext_ab3b30bf0bcfa1ad91dbec75fabb3bea0}{numext::mini}}(input\_row\ +\ NumPerThread,\ num\_coeffs\_to\_reduce);}
+\DoxyCodeLine{00686\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1traits}{Index}}\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ =\ input\_row;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ <\ max\_row;\ \mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}++)\ \{}
+\DoxyCodeLine{00687\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Self::CoeffReturnType\ val\ =\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_ab7e6955a695fad0be513586926040b1a}{input}}.m\_impl.coeff(\mbox{\hyperlink{tut__arithmetic__redux__minmax_8cpp_a39513f0f8d942bf9ef17b2e87ac6d34e}{j}}\ *\ num\_preserved\_coeffs\ +\ input\_col);}
+\DoxyCodeLine{00688\ \ \ \ \ \ \ reducer.reduce(val,\ \&reduced\_val);}
+\DoxyCodeLine{00689\ \ \ \ \ \}}
+\DoxyCodeLine{00690\ \ \ \ \ atomicReduce(\&(\mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}}[input\_col]),\ reduced\_val,\ reducer);}
+\DoxyCodeLine{00691\ \ \ \}}
+\DoxyCodeLine{00692\ \}}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ }
+\DoxyCodeLine{00695\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Self,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00696\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_eigen_1_1internal_1_1_outer_reducer}{OuterReducer}}<Self,\ Op,\ GpuDevice>\ \{}
+\DoxyCodeLine{00697\ \ \ \textcolor{comment}{//\ Unfortunately\ nvidia\ doesn't\ support\ well\ exotic\ types\ such\ as\ complex,}}
+\DoxyCodeLine{00698\ \ \ \textcolor{comment}{//\ so\ reduce\ the\ scope\ of\ the\ optimized\ version\ of\ the\ code\ to\ the\ simple\ case}}
+\DoxyCodeLine{00699\ \ \ \textcolor{comment}{//\ of\ floats.}}
+\DoxyCodeLine{00700\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_outer_reducer_a6fab6aeec440dc8dfb1e274334ffcea4}{HasOptimizedImplementation}}\ =\ !Op::IsStateful\ \&\&}
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ float>::value}}\ ||}
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{struct_eigen_1_1internal_1_1is__same_af25a72bdd5714fb18ddd798fde8c32a9a5989163e8cfc8db2aa0f60d16e735921}{internal::is\_same<typename\ Self::CoeffReturnType,\ double>::value}});}
+\DoxyCodeLine{00703\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Device,\ \textcolor{keyword}{typename}\ OutputType>}
+\DoxyCodeLine{00704\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_outer_reducer_a8136f58f94804c6134d1c4162c61820d}{run}}(\textcolor{keyword}{const}\ Self\&,\ Op\&,\ \textcolor{keyword}{const}\ Device\&,\ OutputType*,\ \textcolor{keyword}{typename}\ Self::Index,\ \textcolor{keyword}{typename}\ Self::Index)\ \{}
+\DoxyCodeLine{00705\ \ \ \ \ assert(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}Should\ only\ be\ called\ to\ reduce\ doubles\ or\ floats\ on\ a\ gpu\ device"{}});}
+\DoxyCodeLine{00706\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00707\ \ \ \}}
+\DoxyCodeLine{00708\ }
+\DoxyCodeLine{00709\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_eigen_1_1internal_1_1_outer_reducer_a8136f58f94804c6134d1c4162c61820d}{run}}(\textcolor{keyword}{const}\ Self\&\ self,\ Op\&\ reducer,\ \textcolor{keyword}{const}\ GpuDevice\&\ device,\ \textcolor{keywordtype}{float}*\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}},\ \textcolor{keyword}{typename}\ Self::Index\ num\_coeffs\_to\_reduce,\ \textcolor{keyword}{typename}\ Self::Index\ num\_preserved\_vals)\ \{}
+\DoxyCodeLine{00710\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Self::Index\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}};}
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \ \ \ \ \textcolor{comment}{//\ It's\ faster\ to\ use\ the\ usual\ code.}}
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_coeffs\_to\_reduce\ <=\ 32)\ \{}
+\DoxyCodeLine{00714\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00715\ \ \ \ \ \}}
+\DoxyCodeLine{00716\ }
+\DoxyCodeLine{00717\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespace_eigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ num\_coeffs\ =\ num\_coeffs\_to\_reduce\ *\ num\_preserved\_vals;}
+\DoxyCodeLine{00718\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ =\ 256;}
+\DoxyCodeLine{00719\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_per\_thread\ =\ 16;}
+\DoxyCodeLine{00720\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ dyn\_blocks\ =\ \mbox{\hyperlink{namespace_eigen_a13ec9832931270b80961236d30f6d2e3}{divup<int>}}(num\_coeffs,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}}\ *\ num\_per\_thread);}
+\DoxyCodeLine{00721\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ max\_blocks\ =\ device.getNumCudaMultiProcessors()\ *}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ device.maxCudaThreadsPerMultiProcessor()\ /\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}};}
+\DoxyCodeLine{00723\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ \mbox{\hyperlink{namespace_eigen_1_1numext_ab3b30bf0bcfa1ad91dbec75fabb3bea0}{numext::mini<int>}}(max\_blocks,\ dyn\_blocks);}
+\DoxyCodeLine{00724\ }
+\DoxyCodeLine{00725\ \ \ \ \ \textcolor{keywordflow}{if}\ (num\_blocks\ >\ 1)\ \{}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \textcolor{comment}{//\ We\ initialize\ the\ outputs\ in\ the\ reduction\ kernel\ itself\ when\ we\ don't\ have\ to\ worry}}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \textcolor{comment}{//\ about\ race\ conditions\ between\ multiple\ thread\ blocks.}}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ dyn\_blocks\ =\ \mbox{\hyperlink{namespace_eigen_a13ec9832931270b80961236d30f6d2e3}{divup<int>}}(num\_preserved\_vals,\ 1024);}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ max\_blocks\ =\ device.getNumCudaMultiProcessors()\ *}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ device.maxCudaThreadsPerMultiProcessor()\ /\ 1024;}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ num\_blocks\ =\ \mbox{\hyperlink{namespace_eigen_1_1numext_ab3b30bf0bcfa1ad91dbec75fabb3bea0}{numext::mini<int>}}(max\_blocks,\ dyn\_blocks);}
+\DoxyCodeLine{00732\ \ \ \ \ \ \ LAUNCH\_CUDA\_KERNEL((ReductionInitKernel<float,\ Index>),}
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_blocks,\ 1024,\ 0,\ device,\ reducer.initialize(),}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_preserved\_vals,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00735\ \ \ \ \ \}}
+\DoxyCodeLine{00736\ }
+\DoxyCodeLine{00737\ \ \ \ \ LAUNCH\_CUDA\_KERNEL((OuterReductionKernel<num\_per\_thread,\ Self,\ Op,\ Index>),}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ num\_blocks,\ \mbox{\hyperlink{sugar_8h_a9766f5ceca5e25981858ec7384456072}{block\_size}},\ 0,\ device,\ reducer,\ self,\ num\_coeffs\_to\_reduce,\ num\_preserved\_vals,\ \mbox{\hyperlink{benchmarks_2scan_2scan_8hpp_a8390452002ecc7a0dadc5ae0dccc9b6c}{output}});}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00741\ \ \ \}}
+\DoxyCodeLine{00742\ \};}
+\DoxyCodeLine{00743\ }
+\DoxyCodeLine{00744\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ }
+\DoxyCodeLine{00747\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00748\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00749\ }
+\DoxyCodeLine{00750\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_CXX11\_TENSOR\_TENSOR\_REDUCTION\_CUDA\_H}}
+
+\end{DoxyCode}

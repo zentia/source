@@ -237,7 +237,7 @@ struct TypeDesc<float4x4> {
 template<typename... T>
 struct TypeDesc<std::tuple<T...>> {
     static luisa::string_view description() noexcept {
-        auto alignment = std::max({alignof(T)...});
+        auto alignment = (std::max)({alignof(T)...});
         static thread_local auto s = make_struct_description(
             alignment, {TypeDesc<T>::description()...});
         return s;

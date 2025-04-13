@@ -1,0 +1,7 @@
+var struct_eigen_1_1internal_1_1traits_3_01_permutation_matrix_3_01_size_at_compile_time_00_01_max_sd0808d93099012556270f7c7cd36fcc5 =
+[
+    [ "IndicesType", "struct_eigen_1_1internal_1_1traits_3_01_permutation_matrix_3_01_size_at_compile_time_00_01_max_sd0808d93099012556270f7c7cd36fcc5.html#ae1a4a00b2b672bb90f5fa2865a685089", null ],
+    [ "Scalar", "struct_eigen_1_1internal_1_1traits_3_01_permutation_matrix_3_01_size_at_compile_time_00_01_max_sd0808d93099012556270f7c7cd36fcc5.html#aed1bb3143b5cb628201bd7dab896a797", null ],
+    [ "StorageIndex", "struct_eigen_1_1internal_1_1traits_3_01_permutation_matrix_3_01_size_at_compile_time_00_01_max_sd0808d93099012556270f7c7cd36fcc5.html#a3b0de4f65dbfa61abb07e006b2961804", null ],
+    [ "StorageKind", "struct_eigen_1_1internal_1_1traits_3_01_permutation_matrix_3_01_size_at_compile_time_00_01_max_sd0808d93099012556270f7c7cd36fcc5.html#aacb0bfda5e0099c12ba651125823f7ce", null ]
+];

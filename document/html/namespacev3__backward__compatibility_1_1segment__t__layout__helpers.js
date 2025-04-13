@@ -1,0 +1,7 @@
+var namespacev3__backward__compatibility_1_1segment__t__layout__helpers =
+[
+    [ "access_vector_fields", "structv3__backward__compatibility_1_1segment__t__layout__helpers_1_1access__vector__fields.html", null ],
+    [ "alignment_check_helper", "structv3__backward__compatibility_1_1segment__t__layout__helpers_1_1alignment__check__helper.html", "structv3__backward__compatibility_1_1segment__t__layout__helpers_1_1alignment__check__helper" ],
+    [ "internal_segments_table_v3", "structv3__backward__compatibility_1_1segment__t__layout__helpers_1_1internal__segments__table__v3.html", "structv3__backward__compatibility_1_1segment__t__layout__helpers_1_1internal__segments__table__v3" ],
+    [ "segment_t_v3", "structv3__backward__compatibility_1_1segment__t__layout__helpers_1_1segment__t__v3.html", "structv3__backward__compatibility_1_1segment__t__layout__helpers_1_1segment__t__v3" ]
+];
