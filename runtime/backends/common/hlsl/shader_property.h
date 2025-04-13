@@ -1,5 +1,5 @@
 #pragma once
-#include <luisa/core/basic_traits.h>
+#include <runtime/core/basic_traits.h>
 namespace lc::hlsl {
 using namespace luisa;
 enum class ShaderVariableType : uint8_t {

@@ -12,8 +12,8 @@
 #include <EASTL/fixed_hash_set.h>
 #endif
 
-#include <luisa/core/stl/hash.h>
-#include <luisa/core/stl/functional.h>
+#include <runtime/core/stl/hash.h>
+#include <runtime/core/stl/functional.h>
 
 namespace luisa {
 

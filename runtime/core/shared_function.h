@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atomic>
-#include <luisa/core/stl/memory.h>
+#include <runtime/core/stl/memory.h>
 
 namespace luisa {
 

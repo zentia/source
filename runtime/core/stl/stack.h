@@ -5,7 +5,7 @@
 #include <vector>
 #else
 #include <EASTL/stack.h>
-#include <luisa/core/stl/vector.h>
+#include <runtime/core/stl/vector.h>
 #endif
 
 namespace luisa {

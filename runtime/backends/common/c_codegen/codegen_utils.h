@@ -1,14 +1,14 @@
 #pragma once
-#include <luisa/vstl/common.h>
-#include <luisa/ast/type.h>
-#include <luisa/ast/usage.h>
-#include <luisa/ast/op.h>
-#include <luisa/ast/function.h>
-#include <luisa/ast/function_builder.h>
-#include <luisa/ast/constant_data.h>
+#include <runtime/vstl/common.h>
+#include <runtime/ast/type.h>
+#include <runtime/ast/usage.h>
+#include <runtime/ast/op.h>
+#include <runtime/ast/function.h>
+#include <runtime/ast/function_builder.h>
+#include <runtime/ast/constant_data.h>
 #include "../hlsl/string_builder.h"
-#include <luisa/core/mathematics.h>
-#include <luisa/core/logging.h>
+#include <runtime/core/mathematics.h>
+#include <runtime/core/logging.h>
 namespace luisa::compute {
 class CodegenVisitor;
 class Clanguage_CodegenUtils {
@@ -157,7 +157,7 @@ struct PrintValue<half> {
 template<>
 struct PrintValue<short> {
     void operator()(short const &v, vstd::StringBuilder &str) {
-        str.append(luisa::format("(int16_t){}", v));
+        str.append(luisa::format<const char*>("(int16_t){}", v));
     }
 };
 

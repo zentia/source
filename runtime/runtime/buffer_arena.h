@@ -1,7 +1,7 @@
 #pragma once
 
-#include <luisa/runtime/buffer.h>
-#include <luisa/runtime/device.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/runtime/device.h>
 
 namespace luisa::compute {
 

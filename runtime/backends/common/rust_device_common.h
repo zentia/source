@@ -1,6 +1,6 @@
 #pragma once
 
-#include <luisa/runtime/rhi/device_interface.h>
+#include <runtime/runtime/rhi/device_interface.h>
 
 namespace luisa::compute::rust {
 

@@ -1,5 +1,5 @@
 #pragma once
-#include <luisa/core/stl/string.h>
+#include <runtime/core/stl/string.h>
 namespace lc_hlsl{
 extern unsigned char accel_process[];
 extern unsigned char bindless_upload[];

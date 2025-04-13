@@ -1,9 +1,9 @@
 #pragma once
-#include <luisa/vstl/common.h>
-#include <luisa/vstl/functional.h>
-#include <luisa/ast/function.h>
-#include <luisa/ast/expression.h>
-#include <luisa/ast/statement.h>
+#include <runtime/vstl/common.h>
+#include <runtime/vstl/functional.h>
+#include <runtime/ast/function.h>
+#include <runtime/ast/expression.h>
+#include <runtime/ast/statement.h>
 #include "string_builder.h"
 namespace lc::hlsl {
 class CodegenUtility;

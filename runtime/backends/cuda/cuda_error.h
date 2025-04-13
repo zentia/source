@@ -5,7 +5,7 @@
 #include <cuda.h>
 #include "optix_api.h"
 
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 
 #define LUISA_CHECK_CUDA(...)                            \
     do {                                                 \

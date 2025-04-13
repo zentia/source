@@ -1,10 +1,10 @@
 #pragma once
 #include <filesystem>
-#include <luisa/core/dynamic_module.h>
+#include <runtime/core/dynamic_module.h>
 #include <wrl/client.h>
 #include "dxcapi.h"
-#include <luisa/vstl/common.h>
-#include <luisa/core/platform.h>
+#include <runtime/vstl/common.h>
+#include <runtime/core/platform.h>
 
 namespace lc::hlsl {
 class ShaderCompilerModule : public vstd::IOperatorNewBase {

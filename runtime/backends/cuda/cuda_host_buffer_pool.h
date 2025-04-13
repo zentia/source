@@ -5,10 +5,10 @@
 
 #include <cuda.h>
 
-#include <luisa/core/pool.h>
-#include <luisa/core/spin_mutex.h>
-#include <luisa/core/mathematics.h>
-#include <luisa/core/first_fit.h>
+#include <runtime/core/pool.h>
+#include <runtime/core/spin_mutex.h>
+#include <runtime/core/mathematics.h>
+#include <runtime/core/first_fit.h>
 #include "cuda_error.h"
 #include "cuda_callback_context.h"
 

@@ -11,6 +11,7 @@ global_headerfiles = {}
 global_files = {}
 global_deps = {}
 global_defines = {}
+global_on_load = {}
 
 includes(
     "external/xmake.lua",
@@ -103,7 +104,9 @@ target("source")
     add_defines(table.unpack(global_defines))
     add_rules("module")
     -- add_rules("c++.unity_build", {batchsize = 2})
-    
+    on_load(function(target)
+        import("runtime.backends.cuda.module")(target)
+    end)
     after_build(function (target) 
         local source_file = os.projectdir() .. "\\configuration\\development\\source_editor.json"
         local build_dir = os.projectdir() .. "\\" .. target:targetdir()

@@ -2,7 +2,7 @@
 
 #include <cuda.h>
 
-#include <luisa/runtime/rhi/device_interface.h>
+#include <runtime/runtime/rhi/device_interface.h>
 #include "../common/default_binary_io.h"
 #include "cuda_error.h"
 #include "cuda_texture.h"

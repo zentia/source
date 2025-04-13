@@ -1,5 +1,5 @@
-#include <luisa/rust/ir.hpp>
-#include <luisa/rust/api_types.hpp>
+#include <runtime/rust/ir.hpp>
+#include <runtime/rust/api_types.hpp>
 
 namespace luisa::compute::backend {
 using namespace luisa::compute::api;
@@ -8,19 +8,19 @@ using luisa::compute::ir::KernelModule;
 using luisa::compute::ir::Type;
 }// namespace luisa::compute::backend
 
-#include <luisa/core/dynamic_module.h>
-#include <luisa/core/logging.h>
-#include <luisa/runtime/context.h>
-#include <luisa/runtime/rtx/triangle.h>
-#include <luisa/ir/ast2ir.h>
-#include <luisa/ir/transform.h>
-#include <luisa/runtime/rtx/aabb.h>
-#include <luisa/runtime/stream.h>
+#include <runtime/core/dynamic_module.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/context.h>
+#include <runtime/runtime/rtx/triangle.h>
+#include <runtime/ir/ast2ir.h>
+#include <runtime/ir/transform.h>
+#include <runtime/runtime/rtx/aabb.h>
+#include <runtime/runtime/stream.h>
 #include "rust_device_common.h"
 
 // must go last to avoid name conflicts
-#include <luisa/runtime/rhi/resource.h>
-#include <luisa/backends/ext/denoiser_ext.h>
+#include <runtime/runtime/rhi/resource.h>
+#include <runtime/backends/ext/denoiser_ext.h>
 
 #if LUISA_BACKEND_ENABLE_OIDN
 #include "oidn_denoiser.h"

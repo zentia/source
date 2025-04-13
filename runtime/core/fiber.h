@@ -4,9 +4,9 @@
 #include <marl/future.h>
 #include <marl/waitgroup.h>
 #include <marl/finally.h>
-#include <luisa/core/shared_function.h>
-#include <luisa/core/stl/functional.h>
-#include <luisa/core/concepts.h>
+#include <runtime/core/shared_function.h>
+#include <runtime/core/stl/functional.h>
+#include <runtime/core/concepts.h>
 
 namespace marl {
 

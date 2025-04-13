@@ -1,8 +1,8 @@
 #pragma once
 
-#include <luisa/ast/type.h>
-#include <luisa/ast/variable.h>
-#include <luisa/ast/expression.h>
-#include <luisa/ast/statement.h>
-#include <luisa/ast/function.h>
+#include <runtime/ast/type.h>
+#include <runtime/ast/variable.h>
+#include <runtime/ast/expression.h>
+#include <runtime/ast/statement.h>
+#include <runtime/ast/function.h>
 

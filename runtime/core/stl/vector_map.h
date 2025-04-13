@@ -8,7 +8,7 @@
 #include <EASTL/vector_set.h>
 #include <EASTL/vector_multimap.h>
 #include <EASTL/vector_multiset.h>
-#include <luisa/core/stl/functional.h>
+#include <runtime/core/stl/functional.h>
 #endif
 
 namespace luisa {

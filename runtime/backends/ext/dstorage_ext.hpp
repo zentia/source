@@ -1,16 +1,16 @@
 #pragma once
 
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 
-#include <luisa/runtime/rhi/resource.h>
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/stream.h>
-#include <luisa/runtime/sparse_image.h>
-#include <luisa/runtime/sparse_volume.h>
-#include <luisa/runtime/buffer.h>
+#include <runtime/runtime/rhi/resource.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/stream.h>
+#include <runtime/runtime/sparse_image.h>
+#include <runtime/runtime/sparse_volume.h>
+#include <runtime/runtime/buffer.h>
 
-#include <luisa/backends/ext/dstorage_ext_interface.h>
-#include <luisa/backends/ext/dstorage_cmd.h>
+#include <runtime/backends/ext/dstorage_ext_interface.h>
+#include <runtime/backends/ext/dstorage_cmd.h>
 
 namespace luisa::compute {
 

@@ -1,0 +1,1 @@
+table.insert(global_files, "runtime/sdl/*.cpp")

@@ -1,13 +1,13 @@
 #include <string_view>
 
-#include <luisa/core/stl/algorithm.h>
-#include <luisa/core/logging.h>
-#include <luisa/ast/type_registry.h>
-#include <luisa/ast/constant_data.h>
-#include <luisa/runtime/rtx/ray.h>
-#include <luisa/runtime/rtx/hit.h>
-#include <luisa/runtime/dispatch_buffer.h>
-#include <luisa/dsl/rtx/ray_query.h>
+#include <runtime/core/stl/algorithm.h>
+#include <runtime/core/logging.h>
+#include <runtime/ast/type_registry.h>
+#include <runtime/ast/constant_data.h>
+#include <runtime/runtime/rtx/ray.h>
+#include <runtime/runtime/rtx/hit.h>
+#include <runtime/runtime/dispatch_buffer.h>
+#include <runtime/dsl/rtx/ray_query.h>
 
 #include "cuda_texture.h"
 #include "cuda_codegen_ast.h"

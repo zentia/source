@@ -1,15 +1,15 @@
 #pragma once
 //#define USE_SPIRV
-#include <luisa/vstl/common.h>
-#include <luisa/vstl/functional.h>
-#include <luisa/ast/function.h>
-#include <luisa/ast/expression.h>
-#include <luisa/ast/statement.h>
-#include <luisa/vstl/md5.h>
+#include <runtime/vstl/common.h>
+#include <runtime/vstl/functional.h>
+#include <runtime/ast/function.h>
+#include <runtime/ast/expression.h>
+#include <runtime/ast/statement.h>
+#include <runtime/vstl/md5.h>
 #include "shader_property.h"
-#include <luisa/runtime/raster/raster_state.h>
-#include <luisa/core/logging.h>
-#include <luisa/core/binary_io.h>
+#include <runtime/runtime/raster/raster_state.h>
+#include <runtime/core/logging.h>
+#include <runtime/core/binary_io.h>
 #include "string_builder.h"
 namespace lc::hlsl {
 using namespace luisa;

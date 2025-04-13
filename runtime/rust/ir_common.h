@@ -8,7 +8,7 @@ const static inline size_t usize_MAX = (size_t)-1;
 
 #ifdef __cplusplus
 
-#include <luisa/core/stl/memory.h>
+#include <runtime/core/stl/memory.h>
 
 namespace luisa::compute::ir {
 

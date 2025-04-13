@@ -1,4 +1,4 @@
-#include <luisa/core/platform.h>
+#include <runtime/core/platform.h>
 
 #include "../common/rust_device_common.h"
 #include "cpu_device.h"

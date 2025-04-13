@@ -1,9 +1,9 @@
 #pragma once
 
-#include <luisa/core/platform.h>
-#include <luisa/backends/ext/denoiser_ext.h>
+#include <runtime/core/platform.h>
+#include <runtime/backends/ext/denoiser_ext.h>
 #include <OpenImageDenoise/oidn.hpp>
-#include <luisa/core/dll_export.h>
+#include <runtime/core/dll_export.h>
 #include <shared_mutex>
 
 namespace luisa::compute {

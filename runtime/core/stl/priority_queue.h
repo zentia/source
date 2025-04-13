@@ -4,8 +4,8 @@
 #include <queue>
 #else
 #include <EASTL/priority_queue.h>
-#include <luisa/core/stl/vector.h>
-#include <luisa/core/stl/functional.h>
+#include <runtime/core/stl/vector.h>
+#include <runtime/core/stl/functional.h>
 #endif
 
 

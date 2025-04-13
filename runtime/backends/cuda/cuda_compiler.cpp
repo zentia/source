@@ -1,5 +1,5 @@
-#include <luisa/core/clock.h>
-#include <luisa/core/binary_io.h>
+#include <runtime/core/clock.h>
+#include <runtime/core/binary_io.h>
 #include "../common/subprocess.h"
 #include "cuda_error.h"
 #include "cuda_device.h"

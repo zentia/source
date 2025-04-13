@@ -1,10 +1,10 @@
 #include "codegen_utils.h"
 #include "codegen_visitor.h"
-#include <luisa/core/logging.h>
-#include <luisa/vstl/md5.h>
-#include <luisa/ast/type_registry.h>
+#include <runtime/core/logging.h>
+#include <runtime/vstl/md5.h>
+#include <runtime/ast/type_registry.h>
 #include "codegen_visitor.h"
-#include <luisa/vstl/functional.h>
+#include <runtime/vstl/functional.h>
 namespace luisa::compute {
 namespace c_codegen_detail {
 static bool is_integer(Type const *t) {

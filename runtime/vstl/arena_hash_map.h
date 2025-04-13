@@ -1,6 +1,6 @@
 #pragma once
-#include <luisa/core/stl/type_traits.h>
-#include <luisa/vstl/hash_map.h>
+#include <runtime/core/stl/type_traits.h>
+#include <runtime/vstl/hash_map.h>
 namespace vstd {
 template<typename Arena, typename K, typename V = void, typename Hash = HashValue, typename Compare = compare<K>>
     requires(std::is_trivially_destructible_v<K> && (std::is_void_v<V> || std::is_trivially_destructible_v<V>))

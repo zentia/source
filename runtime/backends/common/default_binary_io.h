@@ -1,12 +1,12 @@
 #pragma once
 
 #include <shared_mutex>
-#include <luisa/core/spin_mutex.h>
-#include <luisa/core/binary_io.h>
-#include <luisa/core/stl/filesystem.h>
-#include <luisa/vstl/common.h>
-#include <luisa/runtime/context.h>
-#include <luisa/vstl/lmdb.hpp>
+#include <runtime/core/spin_mutex.h>
+#include <runtime/core/binary_io.h>
+#include <runtime/core/stl/filesystem.h>
+#include <runtime/vstl/common.h>
+#include <runtime/runtime/context.h>
+#include <runtime/vstl/lmdb.hpp>
 
 namespace luisa::compute {
 

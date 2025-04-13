@@ -9,9 +9,9 @@
 #include <EASTL/bonus/lru_cache.h>
 #endif
 
-#include <luisa/core/stl/hash_fwd.h>
-#include <luisa/core/stl/memory.h>
-#include <luisa/core/stl/optional.h>
+#include <runtime/core/stl/hash_fwd.h>
+#include <runtime/core/stl/memory.h>
+#include <runtime/core/stl/optional.h>
 
 namespace luisa {
 

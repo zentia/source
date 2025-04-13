@@ -1,8 +1,8 @@
 #pragma once
-#include <luisa/core/dynamic_module.h>
-#include <luisa/core/first_fit.h>
-#include <luisa/ast/type.h>
-#include <luisa/ast/function_builder.h>
+#include <runtime/core/dynamic_module.h>
+#include <runtime/core/first_fit.h>
+#include <runtime/ast/type.h>
+#include <runtime/ast/function_builder.h>
 namespace luisa {
 class MemorySanitizer {
     MemorySanitizer() = delete;

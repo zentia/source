@@ -1,5 +1,5 @@
 #pragma once
-#include <luisa/vstl/common.h>
+#include <runtime/vstl/common.h>
 #include "hlsl_codegen.h"
 #include "struct_generator.h"
 #include "access_chain.h"

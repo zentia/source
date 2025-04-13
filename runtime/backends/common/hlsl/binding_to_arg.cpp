@@ -1,5 +1,5 @@
 #include "binding_to_arg.h"
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 namespace lc::hlsl {
 vstd::vector<Argument> binding_to_arg(vstd::span<const Function::Binding> bindings) {
     vstd::vector<Argument> r;

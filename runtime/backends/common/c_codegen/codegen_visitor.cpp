@@ -1,6 +1,6 @@
 #include "codegen_visitor.h"
-#include <luisa/core/logging.h>
-#include <luisa/core/mathematics.h>
+#include <runtime/core/logging.h>
+#include <runtime/core/mathematics.h>
 #include "../shader_print_formatter.h"
 namespace luisa::compute {
 CodegenVisitor::~CodegenVisitor() {}

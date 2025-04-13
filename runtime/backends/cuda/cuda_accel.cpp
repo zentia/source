@@ -1,8 +1,8 @@
 #include <cstdlib>
 #include <nvtx3/nvToolsExtCuda.h>
 
-#include <luisa/core/clock.h>
-#include <luisa/core/logging.h>
+#include <runtime/core/clock.h>
+#include <runtime/core/logging.h>
 #include "optix_api.h"
 #include "cuda_error.h"
 #include "cuda_stream.h"

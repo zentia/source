@@ -1,6 +1,6 @@
 #pragma once
-#include <luisa/ast/expression.h>
-#include <luisa/ast/statement.h>
+#include <runtime/ast/expression.h>
+#include <runtime/ast/statement.h>
 #include "codegen_utils.h"
 namespace luisa::compute {
 class CodegenVisitor : public ExprVisitor, public StmtVisitor {

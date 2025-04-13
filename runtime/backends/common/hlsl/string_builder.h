@@ -1,5 +1,5 @@
 #pragma once
-#include <luisa/vstl/common.h>
+#include <runtime/vstl/common.h>
 
 namespace vstd {
 class StringBuilder final {
