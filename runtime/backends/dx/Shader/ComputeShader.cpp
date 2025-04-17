@@ -2,8 +2,8 @@
 #include <Shader/ShaderSerializer.h>
 #include "../../common/hlsl/hlsl_codegen.h"
 #include "../../common/hlsl/shader_compiler.h"
-#include <luisa/core/logging.h>
-#include <luisa/vstl/md5.h>
+#include <runtime/core/logging.h>
+#include <runtime/vstl/md5.h>
 namespace lc::dx {
 namespace ComputeShaderDetail {
 static const bool PRINT_CODE = ([] {

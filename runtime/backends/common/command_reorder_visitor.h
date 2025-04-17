@@ -1,16 +1,16 @@
 #pragma once
 
-#include <luisa/runtime/device.h>
-#include <luisa/core/stl/hash.h>
+#include <runtime/runtime/device.h>
+#include <runtime/core/stl/hash.h>
 #include <cstdint>
-#include <luisa/vstl/common.h>
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/runtime/buffer.h>
-#include <luisa/runtime/rhi/argument.h>
-#include <luisa/core/logging.h>
-#include <luisa/backends/ext/raster_cmd.h>
-#include <luisa/vstl/stack_allocator.h>
-#include <luisa/vstl/arena_hash_map.h>
+#include <runtime/vstl/common.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/runtime/rhi/argument.h>
+#include <runtime/core/logging.h>
+#include <runtime/backends/ext/raster_cmd.h>
+#include <runtime/vstl/stack_allocator.h>
+#include <runtime/vstl/arena_hash_map.h>
 
 namespace luisa::compute {
 class ArenaRef {

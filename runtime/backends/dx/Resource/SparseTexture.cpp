@@ -1,6 +1,6 @@
 #include <Resource/SparseTexture.h>
 #include <Resource/DescriptorHeap.h>
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 #include "SparseHeap.h"
 #include <DXRuntime/UpdateTileTracker.h>
 namespace lc::dx {

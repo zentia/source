@@ -1,11 +1,11 @@
 #pragma once
-#include <luisa/vstl/functional.h>
+#include <runtime/vstl/functional.h>
 #include <DXRuntime/CommandBuffer.h>
-#include <luisa/vstl/stack_allocator.h>
+#include <runtime/vstl/stack_allocator.h>
 #include <Resource/UploadBuffer.h>
 #include <Resource/DefaultBuffer.h>
 #include <Resource/ReadbackBuffer.h>
-#include <luisa/vstl/lockfree_array_queue.h>
+#include <runtime/vstl/lockfree_array_queue.h>
 #include <dxgi1_4.h>
 namespace lc::dx {
 class CommandQueue;

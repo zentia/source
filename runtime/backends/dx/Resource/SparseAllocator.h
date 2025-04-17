@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DXRuntime/Device.h>
-#include <luisa/vstl/functional.h>
+#include <runtime/vstl/functional.h>
 
 namespace lc::dx {
 using namespace Microsoft::WRL;

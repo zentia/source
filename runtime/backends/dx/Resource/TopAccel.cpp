@@ -4,7 +4,7 @@
 #include <DXRuntime/ResourceStateTracker.h>
 #include <DXRuntime/CommandBuffer.h>
 #include <Resource/BottomAccel.h>
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 
 namespace lc::dx {
 

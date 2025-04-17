@@ -3,8 +3,8 @@
 #include <Shader/ShaderSerializer.h>
 #include "../../common/hlsl/hlsl_codegen.h"
 #include "../../common/hlsl/shader_compiler.h"
-#include <luisa/vstl/md5.h>
-#include <luisa/core/logging.h>
+#include <runtime/vstl/md5.h>
+#include <runtime/core/logging.h>
 namespace lc::dx {
 namespace RasterShaderDetail {
 static const bool PRINT_CODE = ([] {

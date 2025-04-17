@@ -64,6 +64,7 @@ target("source")
         "module/world/**.h"
         )
     add_headerfiles(table.unpack(global_headerfiles))
+    add_headerfiles("precompiled_header/*.h")
     add_files(
         "module/camera/**.cpp",
         "module/config/**.cpp",

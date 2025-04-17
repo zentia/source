@@ -1,6 +1,6 @@
 #pragma once
 #include <DXRuntime/Device.h>
-#include <luisa/vstl/lockfree_array_queue.h>
+#include <runtime/vstl/lockfree_array_queue.h>
 #include <DXRuntime/DxPtr.h>
 #include <dxgi1_4.h>
 namespace lc::dx {

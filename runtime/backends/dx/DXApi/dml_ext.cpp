@@ -1,9 +1,9 @@
 #include "dml_ext.h"
 #include "LCCmdBuffer.h"
-#include <luisa/runtime/stream.h>
+#include <runtime/runtime/stream.h>
 #define _D3D12MA_IUNKNOWN_IMPL_FUNCTIONS
 #include "DirectMLX.h"
-#include <luisa/backends/ext/dx_custom_cmd.h>
+#include <runtime/backends/ext/dx_custom_cmd.h>
 #include <wrl/client.h>
 //#include <wil/result_macros.h>
 using namespace luisa;

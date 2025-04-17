@@ -1,12 +1,12 @@
 #pragma once
 
-#include <luisa/runtime/context.h>
+#include <runtime/runtime/context.h>
 #ifdef byte
 #undef byte
 #endif
 #include <d3d12.h>
 #include <dxgi1_2.h>
-#include <luisa/runtime/rhi/device_interface.h>
+#include <runtime/runtime/rhi/device_interface.h>
 
 struct IDxcCompiler3;
 struct IDxcLibrary;

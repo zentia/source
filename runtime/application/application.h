@@ -11,6 +11,7 @@
 #include "module/window/window_module.h"
 #include "module/world/world_module.h"
 #include "module/ui/ui_module.h"
+#include "runtime/runtime/stream.h"
 
 namespace source_runtime
 {
@@ -50,5 +51,7 @@ namespace source_runtime
         static application* instance();
     private:
         static application* m_application_;
+        luisa::compute::Device m_device_;
+        luisa::compute::Stream m_stream_;
     };
 }

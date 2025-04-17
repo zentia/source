@@ -1,5 +1,5 @@
 #pragma once
-#include <luisa/backends/ext/dx_hdr_ext_interface.h>
+#include <runtime/backends/ext/dx_hdr_ext_interface.h>
 #include <DXApi/LCDevice.h>
 namespace lc::dx {
 

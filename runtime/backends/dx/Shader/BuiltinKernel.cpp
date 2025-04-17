@@ -1,5 +1,5 @@
 #include <Shader/BuiltinKernel.h>
-#include <luisa/core/stl/filesystem.h>
+#include <runtime/core/stl/filesystem.h>
 #include "../common/hlsl/hlsl_codegen.h"
 namespace lc::dx {
 ComputeShader *BuiltinKernel::LoadAccelSetKernel(Device *device) {

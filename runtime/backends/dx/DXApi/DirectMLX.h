@@ -15,8 +15,8 @@
 
 #include <cstdint>
 #include <cassert>
-#include <luisa/vstl/common.h>
-#include <luisa/vstl/functional.h>
+#include <runtime/vstl/common.h>
+#include <runtime/vstl/functional.h>
 #include <array>
 #include <deque>
 #include <memory>

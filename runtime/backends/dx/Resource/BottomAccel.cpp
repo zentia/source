@@ -3,8 +3,8 @@
 #include <DXRuntime/CommandBuffer.h>
 #include <DXRuntime/ResourceStateTracker.h>
 #include <Resource/TopAccel.h>
-#include <luisa/runtime/rtx/aabb.h>
-#include <luisa/core/logging.h>
+#include <runtime/runtime/rtx/aabb.h>
+#include <runtime/core/logging.h>
 namespace lc::dx {
 using namespace luisa::compute;
 namespace detail {

@@ -1,9 +1,11 @@
 #include "application.h"
 
+#include "core/logging.h"
 #include "runtime/core/core_globals.h"
 #include "editor/ui/editor_ui.h"
 #include "module/render/render_module.h"
 #include "module/rhi/d3d12/d3d12_rhi.h"
+#include "runtime/runtime/context.h"
 
 namespace source_runtime
 {
@@ -13,6 +15,8 @@ namespace source_runtime
 		: m_RecreateGfxDevice(false)
 		, m_LoadRenderDoc(false)
 	{
+		luisa::compute::Context context{ exe_path };
+		m_device_ = context.create_device("dx");
 		m_application_ = this;
 	}
 
@@ -24,13 +28,14 @@ namespace source_runtime
 
 	void application::initialize(const std::string& config_file_path)
 	{
+		luisa::log_level_info();
 		core::initialize();
 		m_config_module = std::make_shared<config_module>();
 		m_config_module->initialize(config_file_path);
 
 		m_asset_module = std::make_shared<source_module::asset::asset_module>(m_config_module->get_root_folder());
 
-		m_window_module = std::make_shared<source_module::window::window_module>(/*m_device, m_stream*/);
+		m_window_module = std::make_shared<source_module::window::window_module>(m_device_, m_stream_);
 		source_module::window::window_create_info windowCreateInfo;
 		m_window_module->initialize(windowCreateInfo);
 		m_render_module = std::make_shared<source_module::render::render_module>();

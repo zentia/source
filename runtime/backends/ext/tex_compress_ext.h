@@ -1,7 +1,7 @@
 #pragma once
 
-#include <luisa/runtime/rhi/device_interface.h>
-#include <luisa/runtime/image.h>
+#include <runtime/runtime/rhi/device_interface.h>
+#include <runtime/runtime/image.h>
 
 namespace luisa::compute {
 

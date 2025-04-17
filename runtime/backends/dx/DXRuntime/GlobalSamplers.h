@@ -1,6 +1,6 @@
 #pragma once
 #include <d3dx12.h>
-#include <luisa/runtime/rhi/sampler.h>
+#include <runtime/runtime/rhi/sampler.h>
 namespace lc::dx {
 using namespace luisa::compute;
 class GlobalSamplers {

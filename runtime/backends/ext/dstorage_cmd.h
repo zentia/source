@@ -1,8 +1,8 @@
 #pragma once
 
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/backends/ext/registry.h>
-#include <luisa/backends/ext/dstorage_ext_interface.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/backends/ext/registry.h>
+#include <runtime/backends/ext/dstorage_ext_interface.h>
 
 namespace luisa::compute {
 

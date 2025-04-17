@@ -1,8 +1,8 @@
 #include <DXRuntime/ResourceStateTracker.h>
 #include <DXRuntime/CommandBuffer.h>
 #include <Resource/TextureBase.h>
-#include <luisa/core/logging.h>
-#include <luisa/core/magic_enum.h>
+#include <runtime/core/logging.h>
+#include <runtime/core/magic_enum.h>
 namespace lc::dx {
 namespace detail {
 static bool IsReadState(D3D12_RESOURCE_STATES state) {

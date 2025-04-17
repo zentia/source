@@ -1,10 +1,10 @@
 #pragma once
 
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/core/stl/functional.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/core/stl/functional.h>
 #include <d3d12.h>
 #include <dxgi1_2.h>
-#include <luisa/backends/ext/registry.h>
+#include <runtime/backends/ext/registry.h>
 
 namespace lc::dx {
 class LCCmdBuffer;

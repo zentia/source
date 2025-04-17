@@ -63,7 +63,7 @@ class ContextImpl {
 public:
     luisa::filesystem::path runtime_directory;
     luisa::unordered_map<luisa::string, luisa::unique_ptr<BackendModule>> loaded_backends;
-    luisa::vector<luisa::string> installed_backends;
+    luisa::vector<luisa::string> installed_backends{"dx","vulkan","cuda"};
     ValidationLayer validation_layer;
     luisa::unordered_map<luisa::string, luisa::unique_ptr<luisa::filesystem::path>> runtime_subdir_paths;
     std::mutex runtime_subdir_mutex;
@@ -188,10 +188,10 @@ Device Context::create_device(
     bool enable_validation) noexcept {
     luisa::string backend_name{backend_name_in};
     auto &&m = _impl->load_backend(backend_name);
-    auto interface = m.creator(Context{_impl}, settings);
-    interface->_backend_name = std::move(backend_name);
+    auto inter = m.creator(Context{_impl}, settings);
+    inter->_backend_name = std::move(backend_name);
     auto handle = Device::Handle{
-        interface,
+        inter,
         [impl = _impl, deleter = m.deleter](auto p) noexcept {
             deleter(p);
         }};

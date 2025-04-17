@@ -1,5 +1,5 @@
 #pragma once
-#include <luisa/vstl/common.h>
+#include <runtime/vstl/common.h>
 #include <Windows.h>
 #include <d3dx12.h>
 #include "../../common/hlsl/shader_property.h"

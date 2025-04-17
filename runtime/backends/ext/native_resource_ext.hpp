@@ -1,13 +1,13 @@
 #pragma once
 
-#include <luisa/ast/type_registry.h>
-#include <luisa/runtime/image.h>
-#include <luisa/runtime/volume.h>
-#include <luisa/runtime/raster/depth_buffer.h>
-#include <luisa/runtime/buffer.h>
-#include <luisa/runtime/swapchain.h>
-#include <luisa/backends/ext/raster_ext.hpp>
-#include <luisa/backends/ext/native_resource_ext_interface.h>
+#include <runtime/ast/type_registry.h>
+#include <runtime/runtime/image.h>
+#include <runtime/runtime/volume.h>
+#include <runtime/runtime/raster/depth_buffer.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/runtime/swapchain.h>
+#include <runtime/backends/ext/raster_ext.hpp>
+#include <runtime/backends/ext/native_resource_ext_interface.h>
 
 namespace luisa::compute {
 

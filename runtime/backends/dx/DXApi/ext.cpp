@@ -3,7 +3,7 @@
 #include <DXRuntime/Device.h>
 #include <Resource/RenderTexture.h>
 #include <DXApi/LCCmdBuffer.h>
-#include <luisa/runtime/stream.h>
+#include <runtime/runtime/stream.h>
 #include <Resource/ExternalBuffer.h>
 #include <Resource/ExternalTexture.h>
 #include <Resource/ExternalDepth.h>
@@ -14,7 +14,7 @@
 #include <DXApi/LCSwapChain.h>
 #include <DXRuntime/DStorageCommandQueue.h>
 #include <DXApi/TypeCheck.h>
-#include <luisa/runtime/image.h>
+#include <runtime/runtime/image.h>
 namespace lc::dx {
 // IUtil *LCDevice::get_util() noexcept {
 //     if (!util) {

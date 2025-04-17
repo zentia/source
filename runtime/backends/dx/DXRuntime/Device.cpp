@@ -6,8 +6,8 @@
 #include <Shader/BuiltinKernel.h>
 #include "../../common/hlsl/shader_compiler.h"
 #include <Shader/ComputeShader.h>
-#include <luisa/core/logging.h>
-#include <luisa/runtime/context.h>
+#include <runtime/core/logging.h>
+#include <runtime/runtime/context.h>
 
 namespace lc::dx {
 DirectXHeap DXAllocatorImpl::AllocateBufferHeap(

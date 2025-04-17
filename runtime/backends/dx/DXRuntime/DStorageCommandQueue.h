@@ -1,11 +1,11 @@
 #pragma once
 #include <dstorage/dstorage.h>
 #include <DXRuntime/Device.h>
-#include <luisa/vstl/lockfree_array_queue.h>
+#include <runtime/vstl/lockfree_array_queue.h>
 #include <DXRuntime/DxPtr.h>
 #include <DXApi/CmdQueueBase.h>
-#include <luisa/runtime/command_list.h>
-#include <luisa/backends/ext/dstorage_ext_interface.h>
+#include <runtime/runtime/command_list.h>
+#include <runtime/backends/ext/dstorage_ext_interface.h>
 
 namespace lc::dx {
 

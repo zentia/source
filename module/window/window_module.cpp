@@ -4,7 +4,7 @@
 
 namespace source_module::window
 {
-	window_module::window_module(/*luisa::compute::Device& device, luisa::compute::Stream& stream*/) /*: ImGuiWindow(device, stream, "source")*/
+	window_module::window_module(luisa::compute::Device& device, luisa::compute::Stream& stream) : ImGuiWindow(device, stream, "source")
 	{
 		
 	}

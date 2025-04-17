@@ -4,7 +4,7 @@
 #include <functional>
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
-//#include <luisa/gui/imgui_window.h>
+#include <runtime/gui/imgui_window.h>
 
 namespace source_module::window
 {
@@ -16,10 +16,10 @@ namespace source_module::window
 		bool isFullscreen{ false };
 	};
 
-	class window_module //: public luisa::compute::ImGuiWindow
+	class window_module : public luisa::compute::ImGuiWindow
 	{
 	public:
-		window_module(/*luisa::compute::Device &device, luisa::compute::Stream &stream*/);
+		window_module(luisa::compute::Device &device, luisa::compute::Stream &stream);
 		~window_module();
 		void initialize(window_create_info createInfo);
 		bool should_close() const;

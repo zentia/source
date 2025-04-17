@@ -1,7 +1,7 @@
 #pragma once
 #include <DXRuntime/Device.h>
-#include <luisa/runtime/rhi/command.h>
-#include <luisa/runtime/device.h>
+#include <runtime/runtime/rhi/command.h>
+#include <runtime/runtime/device.h>
 #include <Resource/Resource.h>
 using namespace luisa::compute;
 namespace lc::dx {

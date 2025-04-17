@@ -1,6 +1,6 @@
 #pragma once
-#include <luisa/vstl/common.h>
-#include <luisa/runtime/device.h>
+#include <runtime/vstl/common.h>
+#include <runtime/runtime/device.h>
 #include <DXRuntime/Device.h>
 #include <DXRuntime/UpdateTileTracker.h>
 namespace lc::dx {

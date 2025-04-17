@@ -1,10 +1,10 @@
 #include "DStorageCommandQueue.h"
 #include <DXApi/LCEvent.h>
-#include <luisa/core/logging.h>
-#include <luisa/backends/ext/dstorage_ext_interface.h>
+#include <runtime/core/logging.h>
+#include <runtime/backends/ext/dstorage_ext_interface.h>
 #include <Resource/SparseTexture.h>
 #include <Resource/Buffer.h>
-#include <luisa/backends/ext/dstorage_cmd.h>
+#include <runtime/backends/ext/dstorage_cmd.h>
 namespace lc::dx {
 void DStorageCommandQueue::ExecuteThread() {
     while (enabled || executedAllocators.length() != 0) {

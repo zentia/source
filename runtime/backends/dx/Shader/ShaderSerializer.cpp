@@ -2,7 +2,7 @@
 #include <Shader/ComputeShader.h>
 #include <Shader/RasterShader.h>
 #include <DXRuntime/GlobalSamplers.h>
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 namespace lc::dx {
 namespace shader_ser {
 struct Header {

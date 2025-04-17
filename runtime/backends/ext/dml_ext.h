@@ -1,8 +1,8 @@
 #pragma once
 
-#include <luisa/runtime/rhi/device_interface.h>
-#include <luisa/runtime/buffer.h>
-#include <luisa/tensor/fused_activation.h>
+#include <runtime/runtime/rhi/device_interface.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/tensor/fused_activation.h>
 namespace luisa::compute {
 
 class DMLGraph {

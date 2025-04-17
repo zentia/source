@@ -1,8 +1,8 @@
 #include <Resource/D3D12MemoryAllocator/D3D12MemAlloc.h>
 #include <Resource/GpuAllocator.h>
 #include <Resource/Resource.h>
-#include <luisa/core/logging.h>
-#include <luisa/core/platform.h>
+#include <runtime/core/logging.h>
+#include <runtime/core/platform.h>
 
 namespace lc::dx {
 namespace ma_detail {

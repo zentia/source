@@ -9,14 +9,14 @@
 // PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
 //
 //*********************************************************
-#include <luisa/vstl/common.h>
+#include <runtime/vstl/common.h>
 #include <Windows.h>
 #include <d3d12.h>
 #include <comdef.h>
-#include <luisa/vstl/functional.h>
+#include <runtime/vstl/functional.h>
 #include <dxgi.h>
-#include <luisa/core/basic_types.h>
-#include <luisa/core/logging.h>
+#include <runtime/core/basic_types.h>
+#include <runtime/core/logging.h>
 #ifdef UNICODE
 using lcdx_pchar = LPCWSTR;
 #else
@@ -3260,7 +3260,7 @@ inline const char *d3d12_error_name(HRESULT hr) {
         }                                                                         \
     } while (false)
 #endif
-#include <luisa/vstl/unique_ptr.h>
+#include <runtime/vstl/unique_ptr.h>
 namespace vstd {
 template<typename T>
 struct com_deleter {

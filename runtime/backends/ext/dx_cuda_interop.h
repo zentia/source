@@ -1,13 +1,13 @@
 #pragma once
-#include <luisa/runtime/rhi/device_interface.h>
-#include <luisa/runtime/buffer.h>
-#include <luisa/runtime/image.h>
-#include <luisa/runtime/device.h>
-#include <luisa/runtime/volume.h>
-#include <luisa/vstl/meta_lib.h>
-#include <luisa/backends/ext/native_resource_ext.hpp>
+#include <runtime/runtime/rhi/device_interface.h>
+#include <runtime/runtime/buffer.h>
+#include <runtime/runtime/image.h>
+#include <runtime/runtime/device.h>
+#include <runtime/runtime/volume.h>
+#include <runtime/vstl/meta_lib.h>
+#include <runtime/backends/ext/native_resource_ext.hpp>
 #ifndef NDEBUG
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 #endif
 namespace luisa::compute {
 class DxCudaInterop;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <luisa/runtime/rhi/resource.h>
-#include <luisa/runtime/rhi/device_interface.h>
-#include <luisa/runtime/buffer.h>
+#include <runtime/runtime/rhi/resource.h>
+#include <runtime/runtime/rhi/device_interface.h>
+#include <runtime/runtime/buffer.h>
 
 namespace lc::validation {
 class PinnedMemoryExtImpl;

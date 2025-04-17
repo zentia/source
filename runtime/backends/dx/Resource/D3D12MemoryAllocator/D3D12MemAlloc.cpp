@@ -29,7 +29,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <malloc.h>// for _aligned_malloc, _aligned_free
-#include <luisa/core/stl/algorithm.h>
+#include <runtime/core/stl/algorithm.h>
 #ifndef _WIN32
 #include <shared_mutex>
 #endif
@@ -62,7 +62,7 @@
 
 #ifndef D3D12MA_ASSERT
 #include <cassert>
-#include <luisa/core/intrin.h>
+#include <runtime/core/intrin.h>
 #define D3D12MA_ASSERT(cond) LUISA_ASSUME(cond)
 #endif
 
