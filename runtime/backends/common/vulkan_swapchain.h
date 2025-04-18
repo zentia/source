@@ -2,8 +2,8 @@
 
 #include <vulkan/vulkan_core.h>
 
-#include <luisa/core/basic_types.h>
-#include <luisa/core/stl/memory.h>
+#include <runtime/core/basic_types.h>
+#include <runtime/core/stl/memory.h>
 
 namespace luisa::compute {
 

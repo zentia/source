@@ -3,8 +3,6 @@
 #include "pipeline/rhi_pipeline.h"
 #include <array>
 
-#include "taskflow.hpp"
-
 #define ALLOC_COMMAND(...) new ( alloc_command(sizeof(__VA_ARGS__), alignof(__VA_ARGS__)) ) __VA_ARGS__
 
 namespace source_module::rhi
@@ -112,10 +110,8 @@ namespace source_module::rhi
 		static rhi_command_list_immediate& get_immediate_command_list();
 		void latch_bypass();
 		bool bypass() const;
-		std::shared_ptr<tf::Taskflow> submit(std::span<rhi_command_list_base*> additional_command_lists, rhi_submit_flags submit_flags);
 		rhi_command_list_immediate m_command_list_immediate;
 	private:
-		std::shared_ptr<tf::Taskflow> m_completion_event_{ nullptr };
 		bool m_latched_bypass_{ false };
 	};
 

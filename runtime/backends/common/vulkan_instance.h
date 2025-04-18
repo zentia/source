@@ -32,10 +32,10 @@
 #include <volk.h>
 #endif
 
-#include <luisa/core/stl/memory.h>
-#include <luisa/core/stl/string.h>
-#include <luisa/core/stl/vector.h>
-#include <luisa/core/magic_enum.h>
+#include <runtime/core/stl/memory.h>
+#include <runtime/core/stl/string.h>
+#include <runtime/core/stl/vector.h>
+#include <runtime/core/magic_enum.h>
 
 #define LUISA_CHECK_VULKAN(x)                                            \
     do {                                                                 \

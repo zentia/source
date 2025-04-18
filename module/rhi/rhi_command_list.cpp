@@ -130,11 +130,4 @@ namespace source_module::rhi
 		return m_latched_bypass_;
 	}
 
-	std::shared_ptr<tf::Taskflow> rhi_command_list_executor::submit(std::span<rhi_command_list_base*> additional_command_lists, rhi_submit_flags submit_flags)
-	{
-		assert(source_runtime::core::is_in_rendering_thread());
-
-		return m_completion_event_;
-	}
-
 }

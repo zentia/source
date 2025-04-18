@@ -438,7 +438,7 @@ OIDN_NAMESPACE_BEGIN
       oidnUnsetFilterImage(handle, name);
     }
 
-    OIDN_DEPRECATED("removeImage is deprecated. Use unsetImage instead.")
+    [[deprecated("removeImage is deprecated. Use unsetImage instead.")]]
     void removeImage(const char* name)
     {
       oidnUnsetFilterImage(handle, name);
@@ -462,7 +462,7 @@ OIDN_NAMESPACE_BEGIN
       oidnUnsetFilterData(handle, name);
     }
 
-    OIDN_DEPRECATED("removeData is deprecated. Use unsetData instead.")
+    [[deprecated("removeData is deprecated. Use unsetData instead.")]]
     void removeData(const char* name)
     {
       oidnUnsetFilterData(handle, name);

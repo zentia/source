@@ -1,8 +1,8 @@
 #include "shader_compiler.h"
-#include <luisa/core/dynamic_module.h>
-#include <luisa/vstl/string_utility.h>
-#include <luisa/core/logging.h>
-#include <luisa/vstl/spin_mutex.h>
+#include <runtime/core/dynamic_module.h>
+#include <runtime/vstl/string_utility.h>
+#include <runtime/core/logging.h>
+#include <runtime/vstl/spin_mutex.h>
 namespace lc::hlsl {
 #ifndef LC_DXC_THROW_IF_FAILED
 #define LC_DXC_THROW_IF_FAILED(x)                  \

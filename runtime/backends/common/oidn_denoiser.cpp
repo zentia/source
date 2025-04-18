@@ -1,5 +1,5 @@
 #include "oidn_denoiser.h"
-#include <luisa/core/logging.h>
+#include <runtime/core/logging.h>
 namespace luisa::compute {
 
 OidnDenoiser::OidnDenoiser(DeviceInterface *device, oidn::DeviceRef &&oidn_device, uint64_t stream) noexcept
