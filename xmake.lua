@@ -14,7 +14,6 @@ global_defines = {}
 global_on_load = {}
 
 includes(
-    "external/xmake.lua",
     "module/xmake.lua",
     "platform/xmake.lua",
     "runtime/xmake.lua"
@@ -97,10 +96,6 @@ target("source")
     add_defines("ENABLE_ASSERTIONS")
     add_defines("EASTL_USER_DEFINED_ALLOCATOR=")
     set_pcxxheader("precompiled_header/source_prefix.h")
-    add_deps(
-        "reflect-cpp",
-        "spine-runtimes"
-    )
     add_deps(table.unpack(global_deps))
     add_defines(table.unpack(global_defines))
     add_rules("module")
