@@ -1,7 +1,0 @@
-var _sparse_map_8h =
-[
-    [ "Eigen::internal::traits< Map< SparseMatrix< MatScalar, MatOptions, MatIndex >, Options, StrideType > >", "struct_eigen_1_1internal_1_1traits_3_01_map_3_01_sparse_matrix_3_01_mat_scalar_00_01_mat_optionsc906e4e1b3a968ac003455586a92664c.html", "struct_eigen_1_1internal_1_1traits_3_01_map_3_01_sparse_matrix_3_01_mat_scalar_00_01_mat_optionsc906e4e1b3a968ac003455586a92664c" ],
-    [ "Eigen::internal::traits< Map< const SparseMatrix< MatScalar, MatOptions, MatIndex >, Options, StrideType > >", "struct_eigen_1_1internal_1_1traits_3_01_map_3_01const_01_sparse_matrix_3_01_mat_scalar_00_01_matec7066c11e5361dce6e4102c84e4bcd2.html", "struct_eigen_1_1internal_1_1traits_3_01_map_3_01const_01_sparse_matrix_3_01_mat_scalar_00_01_matec7066c11e5361dce6e4102c84e4bcd2" ],
-    [ "Eigen::internal::evaluator< Map< SparseMatrix< MatScalar, MatOptions, MatIndex >, Options, StrideType > >", "struct_eigen_1_1internal_1_1evaluator_3_01_map_3_01_sparse_matrix_3_01_mat_scalar_00_01_mat_optic7190da6f4a73606f624a88388745a36.html", "struct_eigen_1_1internal_1_1evaluator_3_01_map_3_01_sparse_matrix_3_01_mat_scalar_00_01_mat_optic7190da6f4a73606f624a88388745a36" ],
-    [ "Eigen::internal::evaluator< Map< const SparseMatrix< MatScalar, MatOptions, MatIndex >, Options, StrideType > >", "struct_eigen_1_1internal_1_1evaluator_3_01_map_3_01const_01_sparse_matrix_3_01_mat_scalar_00_01_0f7d77d8dc2e7e7ccd8fbd3de5b937dd.html", "struct_eigen_1_1internal_1_1evaluator_3_01_map_3_01const_01_sparse_matrix_3_01_mat_scalar_00_01_0f7d77d8dc2e7e7ccd8fbd3de5b937dd" ]
-];

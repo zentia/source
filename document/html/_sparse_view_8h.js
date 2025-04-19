@@ -1,8 +1,0 @@
-var _sparse_view_8h =
-[
-    [ "Eigen::internal::traits< SparseView< MatrixType > >", "struct_eigen_1_1internal_1_1traits_3_01_sparse_view_3_01_matrix_type_01_4_01_4.html", "struct_eigen_1_1internal_1_1traits_3_01_sparse_view_3_01_matrix_type_01_4_01_4" ],
-    [ "Eigen::internal::unary_evaluator< SparseView< ArgType >, IteratorBased >", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_iterator_based_01_4.html", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_iterator_based_01_4" ],
-    [ "Eigen::internal::unary_evaluator< SparseView< ArgType >, IteratorBased >::InnerIterator", "class_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_iterator_based_01_4_1_1_inner_iterator.html", "class_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_iterator_based_01_4_1_1_inner_iterator" ],
-    [ "Eigen::internal::unary_evaluator< SparseView< ArgType >, IndexBased >", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_index_based_01_4.html", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_index_based_01_4" ],
-    [ "Eigen::internal::unary_evaluator< SparseView< ArgType >, IndexBased >::InnerIterator", "class_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_index_based_01_4_1_1_inner_iterator.html", "class_eigen_1_1internal_1_1unary__evaluator_3_01_sparse_view_3_01_arg_type_01_4_00_01_index_based_01_4_1_1_inner_iterator" ]
-];

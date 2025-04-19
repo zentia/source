@@ -1,4 +1,0 @@
-var structrfl_1_1internal_1_1define__named__tuple_3_01_named_tuple_3_01_tup_content_8_8_8_01_4_00_01bf79be74b23b63d946decdc78b6b57d3 =
-[
-    [ "type", "structrfl_1_1internal_1_1define__named__tuple_3_01_named_tuple_3_01_tup_content_8_8_8_01_4_00_01bf79be74b23b63d946decdc78b6b57d3.html#af8ef21023cd7d438f16c9b825398d946", null ]
-];

@@ -1,5 +1,0 @@
-var class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example_1_1_state_name_to_animation_reference =
-[
-    [ "animation", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example_1_1_state_name_to_animation_reference.html#a26ef68438d96ae190c5adb08fbd635a9", null ],
-    [ "stateName", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example_1_1_state_name_to_animation_reference.html#ad164722a490c4e9e886c12d9536b4163", null ]
-];

@@ -1,4 +1,0 @@
-var structeastl_1_1common__type_3_01chrono_1_1time__point_3_01_clock_00_01_duration1_01_4_00_01chron9153b2272221935f2f5421a2102f99f1 =
-[
-    [ "type", "structeastl_1_1common__type_3_01chrono_1_1time__point_3_01_clock_00_01_duration1_01_4_00_01chron9153b2272221935f2f5421a2102f99f1.html#aed3a014e40c10cfbe11cc82cdd31a5a1", null ]
-];

@@ -1,4 +1,0 @@
-var structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1traits___ellen_bin_tree_set__yield =
-[
-    [ "back_off", "structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1traits___ellen_bin_tree_set__yield.html#ab1ad6988d0f1ef32d4e8ee8b8de86268", null ]
-];

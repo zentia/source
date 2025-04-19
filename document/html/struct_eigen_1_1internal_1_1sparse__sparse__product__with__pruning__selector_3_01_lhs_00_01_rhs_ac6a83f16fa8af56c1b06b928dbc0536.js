@@ -1,5 +1,0 @@
-var struct_eigen_1_1internal_1_1sparse__sparse__product__with__pruning__selector_3_01_lhs_00_01_rhs_ac6a83f16fa8af56c1b06b928dbc0536 =
-[
-    [ "RealScalar", "struct_eigen_1_1internal_1_1sparse__sparse__product__with__pruning__selector_3_01_lhs_00_01_rhs_ac6a83f16fa8af56c1b06b928dbc0536.html#a8d32063834114722ee849e34a9a425a3", null ],
-    [ "run", "struct_eigen_1_1internal_1_1sparse__sparse__product__with__pruning__selector_3_01_lhs_00_01_rhs_ac6a83f16fa8af56c1b06b928dbc0536.html#a6570dcb375260e10571ddc92e4989698", null ]
-];

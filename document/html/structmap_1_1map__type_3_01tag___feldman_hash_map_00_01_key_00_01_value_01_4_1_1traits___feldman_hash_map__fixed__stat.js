@@ -1,4 +1,0 @@
-var structmap_1_1map__type_3_01tag___feldman_hash_map_00_01_key_00_01_value_01_4_1_1traits___feldman_hash_map__fixed__stat =
-[
-    [ "stat", "structmap_1_1map__type_3_01tag___feldman_hash_map_00_01_key_00_01_value_01_4_1_1traits___feldman_hash_map__fixed__stat.html#adedad23be77685dd8c637461b0e174dc", null ]
-];

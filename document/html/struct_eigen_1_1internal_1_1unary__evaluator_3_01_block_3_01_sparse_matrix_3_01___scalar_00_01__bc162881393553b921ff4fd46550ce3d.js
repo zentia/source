@@ -1,6 +1,0 @@
-var struct_eigen_1_1internal_1_1unary__evaluator_3_01_block_3_01_sparse_matrix_3_01___scalar_00_01__bc162881393553b921ff4fd46550ce3d =
-[
-    [ "Base", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_block_3_01_sparse_matrix_3_01___scalar_00_01__bc162881393553b921ff4fd46550ce3d.html#a221d36e0f40c7c9edfc9a9faf72faf09", null ],
-    [ "XprType", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_block_3_01_sparse_matrix_3_01___scalar_00_01__bc162881393553b921ff4fd46550ce3d.html#ad19817d69cf39da9a1f1f130513f9bbe", null ],
-    [ "unary_evaluator", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_block_3_01_sparse_matrix_3_01___scalar_00_01__bc162881393553b921ff4fd46550ce3d.html#a1e0c1698ff67d0d184113a085bfce4db", null ]
-];

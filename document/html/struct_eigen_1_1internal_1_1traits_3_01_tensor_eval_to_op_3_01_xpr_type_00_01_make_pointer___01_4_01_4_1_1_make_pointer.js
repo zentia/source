@@ -1,5 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01_tensor_eval_to_op_3_01_xpr_type_00_01_make_pointer___01_4_01_4_1_1_make_pointer =
-[
-    [ "MakePointerT", "struct_eigen_1_1internal_1_1traits_3_01_tensor_eval_to_op_3_01_xpr_type_00_01_make_pointer___01_4_01_4_1_1_make_pointer.html#a0f9cc40eef1427b1547580f12867a070", null ],
-    [ "Type", "struct_eigen_1_1internal_1_1traits_3_01_tensor_eval_to_op_3_01_xpr_type_00_01_make_pointer___01_4_01_4_1_1_make_pointer.html#ac6ba8fc5ef2af9cb2df627a47bf39063", null ]
-];

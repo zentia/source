@@ -1,4 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01_sparse_q_r_matrix_q_transpose_return_type_3_01_sparse_q_r_type_01_4_01_4 =
-[
-    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01_sparse_q_r_matrix_q_transpose_return_type_3_01_sparse_q_r_type_01_4_01_4.html#a3d2567bf554756c12327729f4a16ddcc", null ]
-];

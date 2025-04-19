@@ -1,4 +1,0 @@
-var struct_eigen_1_1internal_1_1eval_3_01_tensor_scan_op_3_01_op_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4 =
-[
-    [ "type", "struct_eigen_1_1internal_1_1eval_3_01_tensor_scan_op_3_01_op_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4.html#abb119e04564c58c5b87d2c2def2199fe", null ]
-];

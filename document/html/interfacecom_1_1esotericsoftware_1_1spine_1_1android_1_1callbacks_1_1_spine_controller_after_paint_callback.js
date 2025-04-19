@@ -1,4 +1,0 @@
-var interfacecom_1_1esotericsoftware_1_1spine_1_1android_1_1callbacks_1_1_spine_controller_after_paint_callback =
-[
-    [ "execute", "interfacecom_1_1esotericsoftware_1_1spine_1_1android_1_1callbacks_1_1_spine_controller_after_paint_callback.html#a15009d4cd76e9c6d1a1eb85ae8a59bb0", null ]
-];

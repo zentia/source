@@ -1,8 +1,0 @@
-var _tensor_shuffling_8h =
-[
-    [ "Eigen::internal::traits< TensorShufflingOp< Shuffle, XprType > >", "struct_eigen_1_1internal_1_1traits_3_01_tensor_shuffling_op_3_01_shuffle_00_01_xpr_type_01_4_01_4.html", "struct_eigen_1_1internal_1_1traits_3_01_tensor_shuffling_op_3_01_shuffle_00_01_xpr_type_01_4_01_4" ],
-    [ "Eigen::internal::eval< TensorShufflingOp< Shuffle, XprType >, Eigen::Dense >", "struct_eigen_1_1internal_1_1eval_3_01_tensor_shuffling_op_3_01_shuffle_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4.html", "struct_eigen_1_1internal_1_1eval_3_01_tensor_shuffling_op_3_01_shuffle_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4" ],
-    [ "Eigen::internal::nested< TensorShufflingOp< Shuffle, XprType >, 1, typename eval< TensorShufflingOp< Shuffle, XprType > >::type >", "struct_eigen_1_1internal_1_1nested_3_01_tensor_shuffling_op_3_01_shuffle_00_01_xpr_type_01_4_00_dada54f27507131254ad9331d623790d.html", "struct_eigen_1_1internal_1_1nested_3_01_tensor_shuffling_op_3_01_shuffle_00_01_xpr_type_01_4_00_dada54f27507131254ad9331d623790d" ],
-    [ "Eigen::TensorShufflingOp< Shuffle, XprType >", "class_eigen_1_1_tensor_shuffling_op.html", "class_eigen_1_1_tensor_shuffling_op" ],
-    [ "Eigen::TensorEvaluator< TensorShufflingOp< Shuffle, ArgType >, Device >", "struct_eigen_1_1_tensor_evaluator_3_01_tensor_shuffling_op_3_01_shuffle_00_01_arg_type_01_4_00_01_device_01_4.html", "struct_eigen_1_1_tensor_evaluator_3_01_tensor_shuffling_op_3_01_shuffle_00_01_arg_type_01_4_00_01_device_01_4" ]
-];

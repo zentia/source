@@ -1,6 +1,0 @@
-var struct_eigen_1_1internal_1_1sparse__solve__triangular__sparse__selector_3_01_lhs_00_01_rhs_00_0103d70089ab1c1a5e4529163773532981 =
-[
-    [ "Scalar", "struct_eigen_1_1internal_1_1sparse__solve__triangular__sparse__selector_3_01_lhs_00_01_rhs_00_0103d70089ab1c1a5e4529163773532981.html#a4f0d0f5c5568306a874f992dbbe24ae6", null ],
-    [ "StorageIndex", "struct_eigen_1_1internal_1_1sparse__solve__triangular__sparse__selector_3_01_lhs_00_01_rhs_00_0103d70089ab1c1a5e4529163773532981.html#ab8c3a75c71eb844bd27b0b402490c56f", null ],
-    [ "run", "struct_eigen_1_1internal_1_1sparse__solve__triangular__sparse__selector_3_01_lhs_00_01_rhs_00_0103d70089ab1c1a5e4529163773532981.html#afaf80269f4b56b9a0b974fc2826a73cc", null ]
-];

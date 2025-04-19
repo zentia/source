@@ -1,7 +1,0 @@
-var msgpack_2test__box_8cpp =
-[
-    [ "test_box::DecisionTree", "structtest__box_1_1_decision_tree.html", "structtest__box_1_1_decision_tree" ],
-    [ "test_box::DecisionTree::Leaf", "structtest__box_1_1_decision_tree_1_1_leaf.html", "structtest__box_1_1_decision_tree_1_1_leaf" ],
-    [ "test_box::DecisionTree::Node", "structtest__box_1_1_decision_tree_1_1_node.html", "structtest__box_1_1_decision_tree_1_1_node" ],
-    [ "test_box::TEST", "namespacetest__box.html#a651d0b798a28bd41209bfa01d7d7913d", null ]
-];

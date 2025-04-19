@@ -1,4 +1,0 @@
-var structeastl_1_1meta_1_1double__pack__expansion_3_01index__sequence_3_01_is_8_8_8_01_4_00_01_i_01_4 =
-[
-    [ "type", "structeastl_1_1meta_1_1double__pack__expansion_3_01index__sequence_3_01_is_8_8_8_01_4_00_01_i_01_4.html#a54b1cc9773155217b9639d32ababf889", null ]
-];

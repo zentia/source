@@ -1,4 +1,0 @@
-var _spine_controller_callback_8java =
-[
-    [ "com.esotericsoftware.spine.android.callbacks.SpineControllerCallback", "interfacecom_1_1esotericsoftware_1_1spine_1_1android_1_1callbacks_1_1_spine_controller_callback.html", "interfacecom_1_1esotericsoftware_1_1spine_1_1android_1_1callbacks_1_1_spine_controller_callback" ]
-];

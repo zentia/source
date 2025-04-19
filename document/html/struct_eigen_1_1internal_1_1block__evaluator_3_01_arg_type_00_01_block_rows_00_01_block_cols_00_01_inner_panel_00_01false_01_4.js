@@ -1,5 +1,0 @@
-var struct_eigen_1_1internal_1_1block__evaluator_3_01_arg_type_00_01_block_rows_00_01_block_cols_00_01_inner_panel_00_01false_01_4 =
-[
-    [ "XprType", "struct_eigen_1_1internal_1_1block__evaluator_3_01_arg_type_00_01_block_rows_00_01_block_cols_00_01_inner_panel_00_01false_01_4.html#aace900a8b95db4b5bb32d001ed47046d", null ],
-    [ "block_evaluator", "struct_eigen_1_1internal_1_1block__evaluator_3_01_arg_type_00_01_block_rows_00_01_block_cols_00_01_inner_panel_00_01false_01_4.html#a60d48f1e854540b4482f08a2df683f01", null ]
-];

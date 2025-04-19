@@ -1,5 +1,0 @@
-var structeastl_1_1_tuple_vec_internal_1_1tuplevec__index_3_01_t_00_01_tuple_types_3_01_t_00_01_ts_rest_8_8_8_01_4_01_4 =
-[
-    [ "DuplicateTypeCheck", "structeastl_1_1_tuple_vec_internal_1_1tuplevec__index_3_01_t_00_01_tuple_types_3_01_t_00_01_ts_rest_8_8_8_01_4_01_4.html#ab76c45f494e40be854b213d20bb6548f", null ],
-    [ "index", "structeastl_1_1_tuple_vec_internal_1_1tuplevec__index_3_01_t_00_01_tuple_types_3_01_t_00_01_ts_rest_8_8_8_01_4_01_4.html#a2aba73ab365af5a646c297d13d3df3fb", null ]
-];

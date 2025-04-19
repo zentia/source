@@ -1,6 +1,0 @@
-var struct_eigen_1_1internal_1_1binary__evaluator_3_01_cwise_binary_op_3_01scalar__boolean__and__op_e9805903bdca4d8b3e2f0d1430158176 =
-[
-    [ "Base", "struct_eigen_1_1internal_1_1binary__evaluator_3_01_cwise_binary_op_3_01scalar__boolean__and__op_e9805903bdca4d8b3e2f0d1430158176.html#a993955e35964a2108462990f0df9f047", null ],
-    [ "XprType", "struct_eigen_1_1internal_1_1binary__evaluator_3_01_cwise_binary_op_3_01scalar__boolean__and__op_e9805903bdca4d8b3e2f0d1430158176.html#aae75565ff2eef6dcd3cdb26247dca232", null ],
-    [ "binary_evaluator", "struct_eigen_1_1internal_1_1binary__evaluator_3_01_cwise_binary_op_3_01scalar__boolean__and__op_e9805903bdca4d8b3e2f0d1430158176.html#a92a63ea9d84cb5fa395ef722c620fbbc", null ]
-];

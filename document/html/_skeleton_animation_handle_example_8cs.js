@@ -1,6 +1,0 @@
-var _skeleton_animation_handle_example_8cs =
-[
-    [ "Spine.Unity.Examples.SkeletonAnimationHandleExample", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example.html", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example" ],
-    [ "Spine.Unity.Examples.SkeletonAnimationHandleExample.StateNameToAnimationReference", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example_1_1_state_name_to_animation_reference.html", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example_1_1_state_name_to_animation_reference" ],
-    [ "Spine.Unity.Examples.SkeletonAnimationHandleExample.AnimationTransition", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example_1_1_animation_transition.html", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_animation_handle_example_1_1_animation_transition" ]
-];

@@ -1,4 +1,0 @@
-var struct_eigen_1_1internal_1_1dense__assignment__loop_3_01_kernel_00_01_slice_vectorized_traversal_00_01_no_unrolling_01_4 =
-[
-    [ "run", "struct_eigen_1_1internal_1_1dense__assignment__loop_3_01_kernel_00_01_slice_vectorized_traversal_00_01_no_unrolling_01_4.html#a293c80494b4f743a63dff2b5c2d8345c", null ]
-];

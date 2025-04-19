@@ -1,4 +1,0 @@
-var structeastl_1_1visitor__caller__n__r_3_01_r_00_01index__sequence_3_01_variant_indices_8_8_8_01_48a1c6c251f9146309afe0c8122b50310 =
-[
-    [ "invoke_visitor_leaf_r", "structeastl_1_1visitor__caller__n__r_3_01_r_00_01index__sequence_3_01_variant_indices_8_8_8_01_48a1c6c251f9146309afe0c8122b50310.html#a43fbc23a003d7dc7eadaf23a0cbd40f7", null ]
-];

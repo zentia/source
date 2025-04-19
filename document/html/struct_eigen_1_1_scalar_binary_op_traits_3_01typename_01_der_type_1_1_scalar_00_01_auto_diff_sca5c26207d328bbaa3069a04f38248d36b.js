@@ -1,4 +1,0 @@
-var struct_eigen_1_1_scalar_binary_op_traits_3_01typename_01_der_type_1_1_scalar_00_01_auto_diff_sca5c26207d328bbaa3069a04f38248d36b =
-[
-    [ "ReturnType", "struct_eigen_1_1_scalar_binary_op_traits_3_01typename_01_der_type_1_1_scalar_00_01_auto_diff_sca5c26207d328bbaa3069a04f38248d36b.html#a5f2f186ee03a4f32839029d3503807e9", null ]
-];

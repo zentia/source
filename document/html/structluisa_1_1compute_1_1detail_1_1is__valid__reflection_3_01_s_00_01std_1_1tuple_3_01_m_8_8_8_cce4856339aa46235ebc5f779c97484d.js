@@ -1,5 +1,0 @@
-var structluisa_1_1compute_1_1detail_1_1is__valid__reflection_3_01_s_00_01std_1_1tuple_3_01_m_8_8_8_cce4856339aa46235ebc5f779c97484d =
-[
-    [ "_check", "structluisa_1_1compute_1_1detail_1_1is__valid__reflection_3_01_s_00_01std_1_1tuple_3_01_m_8_8_8_cce4856339aa46235ebc5f779c97484d.html#a43db55d391e8e5f2a96d9e3e59514d79", null ],
-    [ "value", "structluisa_1_1compute_1_1detail_1_1is__valid__reflection_3_01_s_00_01std_1_1tuple_3_01_m_8_8_8_cce4856339aa46235ebc5f779c97484d.html#addb24f1a7a6ee51366f3e6f7cc6c6d8c", null ]
-];

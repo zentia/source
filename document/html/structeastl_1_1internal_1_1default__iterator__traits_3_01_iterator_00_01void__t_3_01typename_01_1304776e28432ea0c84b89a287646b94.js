@@ -1,8 +1,0 @@
-var structeastl_1_1internal_1_1default__iterator__traits_3_01_iterator_00_01void__t_3_01typename_01_1304776e28432ea0c84b89a287646b94 =
-[
-    [ "difference_type", "structeastl_1_1internal_1_1default__iterator__traits_3_01_iterator_00_01void__t_3_01typename_01_1304776e28432ea0c84b89a287646b94.html#af48c3745ad9d72736f711eb9544bd7f5", null ],
-    [ "iterator_category", "structeastl_1_1internal_1_1default__iterator__traits_3_01_iterator_00_01void__t_3_01typename_01_1304776e28432ea0c84b89a287646b94.html#af346471db7a425620e0975396051b33b", null ],
-    [ "pointer", "structeastl_1_1internal_1_1default__iterator__traits_3_01_iterator_00_01void__t_3_01typename_01_1304776e28432ea0c84b89a287646b94.html#a018a0f335ce9d60ff3832169267c0168", null ],
-    [ "reference", "structeastl_1_1internal_1_1default__iterator__traits_3_01_iterator_00_01void__t_3_01typename_01_1304776e28432ea0c84b89a287646b94.html#aea93cbc3f078aba4a6b1714ac6957b50", null ],
-    [ "value_type", "structeastl_1_1internal_1_1default__iterator__traits_3_01_iterator_00_01void__t_3_01typename_01_1304776e28432ea0c84b89a287646b94.html#a0c559d3748314fd4685ad2f94ef152ba", null ]
-];

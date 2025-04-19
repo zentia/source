@@ -1,4 +1,0 @@
-var structset_1_1set__type_3_01tag___cuckoo_set_00_01_key_00_01_val_01_4_1_1traits___cuckoo_striped_set =
-[
-    [ "mutex_policy", "structset_1_1set__type_3_01tag___cuckoo_set_00_01_key_00_01_val_01_4_1_1traits___cuckoo_striped_set.html#a2cad59295b23d4c34ff904720d40f01c", null ]
-];

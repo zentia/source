@@ -1,4 +1,0 @@
-var structmap_1_1map__type_3_01tag___cuckoo_map_00_01_key_00_01_value_01_4_1_1traits___cuckoo_map__vector__ord__stat =
-[
-    [ "stat", "structmap_1_1map__type_3_01tag___cuckoo_map_00_01_key_00_01_value_01_4_1_1traits___cuckoo_map__vector__ord__stat.html#a098dd74cfe248f117ef3b2ce16adb0f8", null ]
-];

@@ -1,4 +1,0 @@
-var structeastl_1_1meta_1_1_internal_1_1get__type__index_3_01_i_00_01_t_00_01_head_00_01_types_8_8_8_01_4 =
-[
-    [ "value", "structeastl_1_1meta_1_1_internal_1_1get__type__index_3_01_i_00_01_t_00_01_head_00_01_types_8_8_8_01_4.html#a589f763173c22b7d0a1d1d9257d7e72b", null ]
-];

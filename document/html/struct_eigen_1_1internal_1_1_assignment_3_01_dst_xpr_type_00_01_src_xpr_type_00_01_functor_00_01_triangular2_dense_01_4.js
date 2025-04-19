@@ -1,4 +1,0 @@
-var struct_eigen_1_1internal_1_1_assignment_3_01_dst_xpr_type_00_01_src_xpr_type_00_01_functor_00_01_triangular2_dense_01_4 =
-[
-    [ "run", "struct_eigen_1_1internal_1_1_assignment_3_01_dst_xpr_type_00_01_src_xpr_type_00_01_functor_00_01_triangular2_dense_01_4.html#a931b3b9ca1a40b366c22143993b50f67", null ]
-];

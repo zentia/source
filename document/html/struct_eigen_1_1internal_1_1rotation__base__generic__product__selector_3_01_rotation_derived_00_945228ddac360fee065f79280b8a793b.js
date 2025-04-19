@@ -1,5 +1,0 @@
-var struct_eigen_1_1internal_1_1rotation__base__generic__product__selector_3_01_rotation_derived_00_945228ddac360fee065f79280b8a793b =
-[
-    [ "ReturnType", "struct_eigen_1_1internal_1_1rotation__base__generic__product__selector_3_01_rotation_derived_00_945228ddac360fee065f79280b8a793b.html#a523751106cdef07ae1ea8cd07ab84d2a", null ],
-    [ "run", "struct_eigen_1_1internal_1_1rotation__base__generic__product__selector_3_01_rotation_derived_00_945228ddac360fee065f79280b8a793b.html#acfd1798f465474344d93478b104ff21e", null ]
-];

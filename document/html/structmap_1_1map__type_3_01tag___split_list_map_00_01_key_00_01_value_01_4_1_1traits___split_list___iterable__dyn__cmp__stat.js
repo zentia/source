@@ -1,5 +1,0 @@
-var structmap_1_1map__type_3_01tag___split_list_map_00_01_key_00_01_value_01_4_1_1traits___split_list___iterable__dyn__cmp__stat =
-[
-    [ "ordered_list_traits", "structmap_1_1map__type_3_01tag___split_list_map_00_01_key_00_01_value_01_4_1_1traits___split_list___iterable__dyn__cmp__stat.html#ae5b62103aad92cf6bcb4e74dba36ea01", null ],
-    [ "stat", "structmap_1_1map__type_3_01tag___split_list_map_00_01_key_00_01_value_01_4_1_1traits___split_list___iterable__dyn__cmp__stat.html#adeb7ad00df8f28981602726500945e97", null ]
-];

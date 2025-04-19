@@ -1,5 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01_m_i_n_r_e_s_3_01___matrix_type_00_01___up_lo_00_01___preconditioner_01_4_01_4 =
-[
-    [ "MatrixType", "struct_eigen_1_1internal_1_1traits_3_01_m_i_n_r_e_s_3_01___matrix_type_00_01___up_lo_00_01___preconditioner_01_4_01_4.html#a3691fee920b886dd88c999822c6e9e5c", null ],
-    [ "Preconditioner", "struct_eigen_1_1internal_1_1traits_3_01_m_i_n_r_e_s_3_01___matrix_type_00_01___up_lo_00_01___preconditioner_01_4_01_4.html#a3f3f17b775bea08e709a72ed320f9e91", null ]
-];

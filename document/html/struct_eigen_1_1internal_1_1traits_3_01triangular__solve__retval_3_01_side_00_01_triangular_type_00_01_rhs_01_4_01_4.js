@@ -1,4 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01triangular__solve__retval_3_01_side_00_01_triangular_type_00_01_rhs_01_4_01_4 =
-[
-    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01triangular__solve__retval_3_01_side_00_01_triangular_type_00_01_rhs_01_4_01_4.html#abc717df63c78808ab97f24831f702190", null ]
-];

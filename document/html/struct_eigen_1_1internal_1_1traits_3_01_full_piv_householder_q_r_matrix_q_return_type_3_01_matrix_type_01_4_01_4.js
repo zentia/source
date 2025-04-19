@@ -1,4 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01_full_piv_householder_q_r_matrix_q_return_type_3_01_matrix_type_01_4_01_4 =
-[
-    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01_full_piv_householder_q_r_matrix_q_return_type_3_01_matrix_type_01_4_01_4.html#a1b18d24309d6c761c5b756e76f99f4f9", null ]
-];

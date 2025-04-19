@@ -1,5 +1,0 @@
-var spine_android_2spine_android_2src_2main_2java_2com_2esotericsoftware_2spine_2android_2_skeleton_renderer_8java =
-[
-    [ "com.esotericsoftware.spine.android.SkeletonRenderer", "classcom_1_1esotericsoftware_1_1spine_1_1android_1_1_skeleton_renderer.html", "classcom_1_1esotericsoftware_1_1spine_1_1android_1_1_skeleton_renderer" ],
-    [ "com.esotericsoftware.spine.android.SkeletonRenderer.RenderCommand", "classcom_1_1esotericsoftware_1_1spine_1_1android_1_1_skeleton_renderer_1_1_render_command.html", "classcom_1_1esotericsoftware_1_1spine_1_1android_1_1_skeleton_renderer_1_1_render_command" ]
-];

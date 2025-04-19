@@ -1,5 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01_tensor_reduction_op_3_01_op_00_01_dims_00_01_xpr_type_00c39382462f4a2e2ae6af6fe0f8aab669 =
-[
-    [ "MakePointerT", "struct_eigen_1_1internal_1_1traits_3_01_tensor_reduction_op_3_01_op_00_01_dims_00_01_xpr_type_00c39382462f4a2e2ae6af6fe0f8aab669.html#ac76d9908bb2bf70cd409d93aaa2f23ed", null ],
-    [ "Type", "struct_eigen_1_1internal_1_1traits_3_01_tensor_reduction_op_3_01_op_00_01_dims_00_01_xpr_type_00c39382462f4a2e2ae6af6fe0f8aab669.html#af5c5a370bc10cc801691de11562f8be3", null ]
-];

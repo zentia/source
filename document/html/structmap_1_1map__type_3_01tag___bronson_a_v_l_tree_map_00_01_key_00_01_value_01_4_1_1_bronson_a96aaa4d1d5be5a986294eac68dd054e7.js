@@ -1,4 +1,0 @@
-var structmap_1_1map__type_3_01tag___bronson_a_v_l_tree_map_00_01_key_00_01_value_01_4_1_1_bronson_a96aaa4d1d5be5a986294eac68dd054e7 =
-[
-    [ "sync_monitor", "structmap_1_1map__type_3_01tag___bronson_a_v_l_tree_map_00_01_key_00_01_value_01_4_1_1_bronson_a96aaa4d1d5be5a986294eac68dd054e7.html#a7d44d4e1f34d32519b5976beb502b4c9", null ]
-];

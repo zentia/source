@@ -1,4 +1,0 @@
-var structmove__only__function__detail_1_1__drop__first__arg__to__invoke_3_01_m_01_g_1_1_5_00_01_t_01_4 =
-[
-    [ "type", "structmove__only__function__detail_1_1__drop__first__arg__to__invoke_3_01_m_01_g_1_1_5_00_01_t_01_4.html#a268e0f1a0bf004a9db57cffa225bdb8f", null ]
-];

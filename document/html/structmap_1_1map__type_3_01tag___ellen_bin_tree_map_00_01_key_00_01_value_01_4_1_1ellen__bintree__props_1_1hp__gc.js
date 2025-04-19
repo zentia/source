@@ -1,6 +1,0 @@
-var structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1ellen__bintree__props_1_1hp__gc =
-[
-    [ "internal_node", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1ellen__bintree__props_1_1hp__gc.html#a7ccc2877e4213021a6de84cf6419d686", null ],
-    [ "leaf_node", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1ellen__bintree__props_1_1hp__gc.html#a2b4750d13d820bc0770d3e8dc8464125", null ],
-    [ "update_desc", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1ellen__bintree__props_1_1hp__gc.html#a40c66d370bc4e4e59f1d4a6e70d5a151", null ]
-];

@@ -1,6 +1,0 @@
-var struct_eigen_1_1internal_1_1permutation__matrix__product_3_01_expression_type_00_01_side_00_01_t00744509fe9d67128974220180aea840 =
-[
-    [ "MatrixType", "struct_eigen_1_1internal_1_1permutation__matrix__product_3_01_expression_type_00_01_side_00_01_t00744509fe9d67128974220180aea840.html#a2f041a5f2ebbbc314513bff80fcbad69", null ],
-    [ "MatrixTypeCleaned", "struct_eigen_1_1internal_1_1permutation__matrix__product_3_01_expression_type_00_01_side_00_01_t00744509fe9d67128974220180aea840.html#ab490ca1ee4f78042bf0abb820f155b50", null ],
-    [ "run", "struct_eigen_1_1internal_1_1permutation__matrix__product_3_01_expression_type_00_01_side_00_01_t00744509fe9d67128974220180aea840.html#a3210a391ac134c77d74d8542d6ed57dd", null ]
-];

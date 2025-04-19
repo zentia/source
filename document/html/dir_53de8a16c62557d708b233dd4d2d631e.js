@@ -1,4 +1,0 @@
-var dir_53de8a16c62557d708b233dd4d2d631e =
-[
-    [ "catch2", "dir_a682ff15226757025f11063dc114b0c7.html", "dir_a682ff15226757025f11063dc114b0c7" ]
-];

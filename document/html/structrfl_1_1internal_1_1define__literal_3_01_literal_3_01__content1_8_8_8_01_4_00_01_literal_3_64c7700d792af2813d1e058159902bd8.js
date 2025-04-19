@@ -1,4 +1,0 @@
-var structrfl_1_1internal_1_1define__literal_3_01_literal_3_01__content1_8_8_8_01_4_00_01_literal_3_64c7700d792af2813d1e058159902bd8 =
-[
-    [ "type", "structrfl_1_1internal_1_1define__literal_3_01_literal_3_01__content1_8_8_8_01_4_00_01_literal_3_64c7700d792af2813d1e058159902bd8.html#a630a4bd30d67ed370ecd84f76a156231", null ]
-];

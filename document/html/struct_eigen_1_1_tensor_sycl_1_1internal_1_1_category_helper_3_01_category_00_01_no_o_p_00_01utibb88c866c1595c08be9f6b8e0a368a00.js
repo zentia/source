@@ -1,4 +1,0 @@
-var struct_eigen_1_1_tensor_sycl_1_1internal_1_1_category_helper_3_01_category_00_01_no_o_p_00_01utibb88c866c1595c08be9f6b8e0a368a00 =
-[
-    [ "Type", "struct_eigen_1_1_tensor_sycl_1_1internal_1_1_category_helper_3_01_category_00_01_no_o_p_00_01utibb88c866c1595c08be9f6b8e0a368a00.html#a7fbb62f8d61633da54166fce6bf8aae6", null ]
-];

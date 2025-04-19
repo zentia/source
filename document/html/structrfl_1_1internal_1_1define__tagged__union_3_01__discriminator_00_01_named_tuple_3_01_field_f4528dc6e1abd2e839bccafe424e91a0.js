@@ -1,4 +1,0 @@
-var structrfl_1_1internal_1_1define__tagged__union_3_01__discriminator_00_01_named_tuple_3_01_field_f4528dc6e1abd2e839bccafe424e91a0 =
-[
-    [ "type", "structrfl_1_1internal_1_1define__tagged__union_3_01__discriminator_00_01_named_tuple_3_01_field_f4528dc6e1abd2e839bccafe424e91a0.html#a3693c19407db640694cb445518af289a", null ]
-];

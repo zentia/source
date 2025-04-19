@@ -1,5 +1,0 @@
-var struct_eigen_1_1_spline_traits_3_01_spline_3_01___scalar_00_01___dim_00_01___degree_01_4_00_01___derivative_order_01_4 =
-[
-    [ "BasisDerivativeType", "struct_eigen_1_1_spline_traits_3_01_spline_3_01___scalar_00_01___dim_00_01___degree_01_4_00_01___derivative_order_01_4.html#a507283e4ba6108e20eae19e805816770", null ],
-    [ "DerivativeType", "struct_eigen_1_1_spline_traits_3_01_spline_3_01___scalar_00_01___dim_00_01___degree_01_4_00_01___derivative_order_01_4.html#a5e0a0e3b07c844c84cf164a7f0db9314", null ]
-];

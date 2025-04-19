@@ -1,4 +1,0 @@
-var structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__hp =
-[
-    [ "update_desc_allocator", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__hp.html#a0b8f3a4b1313f137acbf6cffe6110228", null ]
-];

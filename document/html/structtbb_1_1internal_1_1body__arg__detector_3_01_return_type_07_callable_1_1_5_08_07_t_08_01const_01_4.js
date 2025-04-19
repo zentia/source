@@ -1,4 +1,0 @@
-var structtbb_1_1internal_1_1body__arg__detector_3_01_return_type_07_callable_1_1_5_08_07_t_08_01const_01_4 =
-[
-    [ "arg_type", "structtbb_1_1internal_1_1body__arg__detector_3_01_return_type_07_callable_1_1_5_08_07_t_08_01const_01_4.html#acc8076763dca1d48332ea04bb23cb861", null ]
-];

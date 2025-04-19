@@ -1,4 +1,0 @@
-var structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1traits___ellen_bin_tree_set__yield__gpb =
-[
-    [ "update_desc_allocator", "structset_1_1set__type_3_01tag___ellen_bin_tree_set_00_01_key_00_01_val_01_4_1_1traits___ellen_bin_tree_set__yield__gpb.html#a353f4fe67ed677556e67bde4f26e2016", null ]
-];

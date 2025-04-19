@@ -1,7 +1,0 @@
-var _sparse_cwise_unary_op_8h =
-[
-    [ "Eigen::internal::unary_evaluator< CwiseUnaryOp< UnaryOp, ArgType >, IteratorBased >", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_op_3_01_unary_op_00_01_arg_type_01_4_00_01_iterator_based_01_4.html", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_op_3_01_unary_op_00_01_arg_type_01_4_00_01_iterator_based_01_4" ],
-    [ "Eigen::internal::unary_evaluator< CwiseUnaryOp< UnaryOp, ArgType >, IteratorBased >::InnerIterator", "class_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_op_3_01_unary_op_00_01_arg_type_01_629bdbe0b310981fdaf6bb6b6c73ef55.html", "class_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_op_3_01_unary_op_00_01_arg_type_01_629bdbe0b310981fdaf6bb6b6c73ef55" ],
-    [ "Eigen::internal::unary_evaluator< CwiseUnaryView< ViewOp, ArgType >, IteratorBased >", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_view_3_01_view_op_00_01_arg_type_01_4_00_01_iterator_based_01_4.html", "struct_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_view_3_01_view_op_00_01_arg_type_01_4_00_01_iterator_based_01_4" ],
-    [ "Eigen::internal::unary_evaluator< CwiseUnaryView< ViewOp, ArgType >, IteratorBased >::InnerIterator", "class_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_view_3_01_view_op_00_01_arg_type_011a5afe598192a9657664b0cfbd26765b.html", "class_eigen_1_1internal_1_1unary__evaluator_3_01_cwise_unary_view_3_01_view_op_00_01_arg_type_011a5afe598192a9657664b0cfbd26765b" ]
-];

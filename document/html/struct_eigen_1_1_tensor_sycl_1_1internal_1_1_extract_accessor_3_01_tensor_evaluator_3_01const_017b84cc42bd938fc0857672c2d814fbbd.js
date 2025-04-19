@@ -1,4 +1,0 @@
-var struct_eigen_1_1_tensor_sycl_1_1internal_1_1_extract_accessor_3_01_tensor_evaluator_3_01const_017b84cc42bd938fc0857672c2d814fbbd =
-[
-    [ "getTuple", "struct_eigen_1_1_tensor_sycl_1_1internal_1_1_extract_accessor_3_01_tensor_evaluator_3_01const_017b84cc42bd938fc0857672c2d814fbbd.html#a9807b599fdcff1ffbb36cf75d3cc52f1", null ]
-];

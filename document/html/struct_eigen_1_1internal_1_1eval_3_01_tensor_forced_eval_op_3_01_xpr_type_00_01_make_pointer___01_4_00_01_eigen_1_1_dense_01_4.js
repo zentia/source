@@ -1,4 +1,0 @@
-var struct_eigen_1_1internal_1_1eval_3_01_tensor_forced_eval_op_3_01_xpr_type_00_01_make_pointer___01_4_00_01_eigen_1_1_dense_01_4 =
-[
-    [ "type", "struct_eigen_1_1internal_1_1eval_3_01_tensor_forced_eval_op_3_01_xpr_type_00_01_make_pointer___01_4_00_01_eigen_1_1_dense_01_4.html#ade1b06ed4dc5b7051ff7848c189b7e61", null ]
-];

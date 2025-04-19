@@ -1,7 +1,0 @@
-var struct_eigen_1_1internal_1_1_assignment_3_01_dst_xpr_type_00_01_sparse_q_r_matrix_q_return_type_359637caee80b00c35b5e63bb0a6509c =
-[
-    [ "Scalar", "struct_eigen_1_1internal_1_1_assignment_3_01_dst_xpr_type_00_01_sparse_q_r_matrix_q_return_type_359637caee80b00c35b5e63bb0a6509c.html#a23aebc524b5ccb1c9b8e5bb72f1c5e17", null ],
-    [ "SrcXprType", "struct_eigen_1_1internal_1_1_assignment_3_01_dst_xpr_type_00_01_sparse_q_r_matrix_q_return_type_359637caee80b00c35b5e63bb0a6509c.html#a93e5753112691850ff80b94096ba0726", null ],
-    [ "StorageIndex", "struct_eigen_1_1internal_1_1_assignment_3_01_dst_xpr_type_00_01_sparse_q_r_matrix_q_return_type_359637caee80b00c35b5e63bb0a6509c.html#a4c1abbabaa62775474fce84d579c40dc", null ],
-    [ "run", "struct_eigen_1_1internal_1_1_assignment_3_01_dst_xpr_type_00_01_sparse_q_r_matrix_q_return_type_359637caee80b00c35b5e63bb0a6509c.html#a18b3b76ddaa1791e72d847be2d137961", null ]
-];

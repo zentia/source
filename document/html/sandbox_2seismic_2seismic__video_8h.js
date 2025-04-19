@@ -1,4 +1,0 @@
-var sandbox_2seismic_2seismic__video_8h =
-[
-    [ "SeismicVideo", "class_seismic_video.html", "class_seismic_video" ]
-];

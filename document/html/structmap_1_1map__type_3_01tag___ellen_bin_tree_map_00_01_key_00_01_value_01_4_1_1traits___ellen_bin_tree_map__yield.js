@@ -1,4 +1,0 @@
-var structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__yield =
-[
-    [ "back_off", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__yield.html#a7f3f6683021ebcc177ff920d5519b120", null ]
-];

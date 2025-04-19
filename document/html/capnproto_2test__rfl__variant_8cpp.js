@@ -1,8 +1,0 @@
-var capnproto_2test__rfl__variant_8cpp =
-[
-    [ "test_variant::Circle", "structtest__variant_1_1_circle.html", "structtest__variant_1_1_circle" ],
-    [ "test_variant::Rectangle", "structtest__variant_1_1_rectangle.html", "structtest__variant_1_1_rectangle" ],
-    [ "test_variant::Square", "structtest__variant_1_1_square.html", "structtest__variant_1_1_square" ],
-    [ "test_variant::Shapes", "structtest__variant_1_1_shapes.html", "structtest__variant_1_1_shapes" ],
-    [ "test_variant::TEST", "namespacetest__variant.html#a9457afba8d651b21d8e8aba3f4e2e2a7", null ]
-];

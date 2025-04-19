@@ -1,4 +1,0 @@
-var structset_1_1set__type_3_01tag___split_list_set_00_01_key_00_01_val_01_4_1_1traits___split_list___michael__dyn__cmp__swar =
-[
-    [ "bit_reversal", "structset_1_1set__type_3_01tag___split_list_set_00_01_key_00_01_val_01_4_1_1traits___split_list___michael__dyn__cmp__swar.html#a5b52b1a383e1063e7ecb298245d6a9d5", null ]
-];

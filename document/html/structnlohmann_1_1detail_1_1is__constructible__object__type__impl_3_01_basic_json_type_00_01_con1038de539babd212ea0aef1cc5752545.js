@@ -1,5 +1,0 @@
-var structnlohmann_1_1detail_1_1is__constructible__object__type__impl_3_01_basic_json_type_00_01_con1038de539babd212ea0aef1cc5752545 =
-[
-    [ "object_t", "structnlohmann_1_1detail_1_1is__constructible__object__type__impl_3_01_basic_json_type_00_01_con1038de539babd212ea0aef1cc5752545.html#ae335fdc59d1b0d79e52a808b71b11c67", null ],
-    [ "value", "structnlohmann_1_1detail_1_1is__constructible__object__type__impl_3_01_basic_json_type_00_01_con1038de539babd212ea0aef1cc5752545.html#a50418a0a88d63afbf7246af49f3e554c", null ]
-];

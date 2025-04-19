@@ -1,5 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01_least_squares_conjugate_gradient_3_01___matrix_type_00_01___preconditioner_01_4_01_4 =
-[
-    [ "MatrixType", "struct_eigen_1_1internal_1_1traits_3_01_least_squares_conjugate_gradient_3_01___matrix_type_00_01___preconditioner_01_4_01_4.html#a3d4afaf55e0afb29f11774075ba3345c", null ],
-    [ "Preconditioner", "struct_eigen_1_1internal_1_1traits_3_01_least_squares_conjugate_gradient_3_01___matrix_type_00_01___preconditioner_01_4_01_4.html#a0e72eaaca694d18095ebf0edf113b465", null ]
-];

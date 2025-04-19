@@ -1,4 +1,0 @@
-var structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__dhp__yield =
-[
-    [ "update_desc_allocator", "structmap_1_1map__type_3_01tag___ellen_bin_tree_map_00_01_key_00_01_value_01_4_1_1traits___ellen_bin_tree_map__dhp__yield.html#a26efcf2ead135484d4db746cea13a6b7", null ]
-];

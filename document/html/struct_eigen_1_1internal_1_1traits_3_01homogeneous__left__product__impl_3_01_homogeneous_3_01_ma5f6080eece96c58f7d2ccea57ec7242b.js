@@ -1,7 +1,0 @@
-var struct_eigen_1_1internal_1_1traits_3_01homogeneous__left__product__impl_3_01_homogeneous_3_01_ma5f6080eece96c58f7d2ccea57ec7242b =
-[
-    [ "LhsMatrixType", "struct_eigen_1_1internal_1_1traits_3_01homogeneous__left__product__impl_3_01_homogeneous_3_01_ma5f6080eece96c58f7d2ccea57ec7242b.html#a595c32d9896fc2f15a47df3abd723427", null ],
-    [ "LhsMatrixTypeCleaned", "struct_eigen_1_1internal_1_1traits_3_01homogeneous__left__product__impl_3_01_homogeneous_3_01_ma5f6080eece96c58f7d2ccea57ec7242b.html#a43d1b178bc4d950cb11352deab9fda12", null ],
-    [ "MatrixTypeCleaned", "struct_eigen_1_1internal_1_1traits_3_01homogeneous__left__product__impl_3_01_homogeneous_3_01_ma5f6080eece96c58f7d2ccea57ec7242b.html#a44842fe354bb9881d2a2eaa09d33b6df", null ],
-    [ "ReturnType", "struct_eigen_1_1internal_1_1traits_3_01homogeneous__left__product__impl_3_01_homogeneous_3_01_ma5f6080eece96c58f7d2ccea57ec7242b.html#a32fe622ca667e546e88d66c580541138", null ]
-];

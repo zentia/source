@@ -1,6 +1,0 @@
-var structmap_1_1map__type_3_01tag___bronson_a_v_l_tree_map_00_01_key_00_01_value_01_4_1_1_bronson_af2b8540129c8330bed5410f8941908ed =
-[
-    [ "stat", "structmap_1_1map__type_3_01tag___bronson_a_v_l_tree_map_00_01_key_00_01_value_01_4_1_1_bronson_af2b8540129c8330bed5410f8941908ed.html#a4733abb1780bfd9c79bdd4df224b2287", null ],
-    [ "sync_monitor", "structmap_1_1map__type_3_01tag___bronson_a_v_l_tree_map_00_01_key_00_01_value_01_4_1_1_bronson_af2b8540129c8330bed5410f8941908ed.html#abb89b8d87ee18e7ccfeca23ce8b01744", null ],
-    [ "relaxed_insert", "structmap_1_1map__type_3_01tag___bronson_a_v_l_tree_map_00_01_key_00_01_value_01_4_1_1_bronson_af2b8540129c8330bed5410f8941908ed.html#a49d8530307e3c1a0275eb063ebe71512", null ]
-];

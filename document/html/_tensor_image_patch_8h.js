@@ -1,7 +1,0 @@
-var _tensor_image_patch_8h =
-[
-    [ "Eigen::internal::traits< TensorImagePatchOp< Rows, Cols, XprType > >", "struct_eigen_1_1internal_1_1traits_3_01_tensor_image_patch_op_3_01_rows_00_01_cols_00_01_xpr_type_01_4_01_4.html", "struct_eigen_1_1internal_1_1traits_3_01_tensor_image_patch_op_3_01_rows_00_01_cols_00_01_xpr_type_01_4_01_4" ],
-    [ "Eigen::internal::eval< TensorImagePatchOp< Rows, Cols, XprType >, Eigen::Dense >", "struct_eigen_1_1internal_1_1eval_3_01_tensor_image_patch_op_3_01_rows_00_01_cols_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4.html", "struct_eigen_1_1internal_1_1eval_3_01_tensor_image_patch_op_3_01_rows_00_01_cols_00_01_xpr_type_01_4_00_01_eigen_1_1_dense_01_4" ],
-    [ "Eigen::internal::nested< TensorImagePatchOp< Rows, Cols, XprType >, 1, typename eval< TensorImagePatchOp< Rows, Cols, XprType > >::type >", "struct_eigen_1_1internal_1_1nested_3_01_tensor_image_patch_op_3_01_rows_00_01_cols_00_01_xpr_typbdbaf7e5a7b5b77870e0e3f45395b2a8.html", "struct_eigen_1_1internal_1_1nested_3_01_tensor_image_patch_op_3_01_rows_00_01_cols_00_01_xpr_typbdbaf7e5a7b5b77870e0e3f45395b2a8" ],
-    [ "Eigen::TensorImagePatchOp< Rows, Cols, XprType >", "class_eigen_1_1_tensor_image_patch_op.html", "class_eigen_1_1_tensor_image_patch_op" ]
-];

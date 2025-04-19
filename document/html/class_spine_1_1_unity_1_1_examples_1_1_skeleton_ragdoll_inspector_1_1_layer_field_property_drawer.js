@@ -1,4 +1,0 @@
-var class_spine_1_1_unity_1_1_examples_1_1_skeleton_ragdoll_inspector_1_1_layer_field_property_drawer =
-[
-    [ "OnGUI", "class_spine_1_1_unity_1_1_examples_1_1_skeleton_ragdoll_inspector_1_1_layer_field_property_drawer.html#a00f0e8bbc8d88a64e09178a3ffb2b98a", null ]
-];

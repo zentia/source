@@ -1,4 +1,0 @@
-var struct_eigen_1_1_tensor_sycl_1_1internal_1_1_leaf_count_3_01const_01_tensor_eval_to_op_3_01_expr_01_4_01_4 =
-[
-    [ "Count", "struct_eigen_1_1_tensor_sycl_1_1internal_1_1_leaf_count_3_01const_01_tensor_eval_to_op_3_01_expr_01_4_01_4.html#ae89da5a180ee54e9487068d065553695", null ]
-];

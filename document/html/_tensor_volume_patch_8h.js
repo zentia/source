@@ -1,8 +1,0 @@
-var _tensor_volume_patch_8h =
-[
-    [ "Eigen::internal::traits< TensorVolumePatchOp< Planes, Rows, Cols, XprType > >", "struct_eigen_1_1internal_1_1traits_3_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_01_cols_00_01_xpr_type_01_4_01_4.html", "struct_eigen_1_1internal_1_1traits_3_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_01_cols_00_01_xpr_type_01_4_01_4" ],
-    [ "Eigen::internal::eval< TensorVolumePatchOp< Planes, Rows, Cols, XprType >, Eigen::Dense >", "struct_eigen_1_1internal_1_1eval_3_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_01_cols_0fbbbfea9d11ccf46d4c751aec1ba44e4.html", "struct_eigen_1_1internal_1_1eval_3_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_01_cols_0fbbbfea9d11ccf46d4c751aec1ba44e4" ],
-    [ "Eigen::internal::nested< TensorVolumePatchOp< Planes, Rows, Cols, XprType >, 1, typename eval< TensorVolumePatchOp< Planes, Rows, Cols, XprType > >::type >", "struct_eigen_1_1internal_1_1nested_3_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_01_cols82921df878abaf81e0e304ae8f39bd52.html", "struct_eigen_1_1internal_1_1nested_3_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_01_cols82921df878abaf81e0e304ae8f39bd52" ],
-    [ "Eigen::TensorVolumePatchOp< Planes, Rows, Cols, XprType >", "class_eigen_1_1_tensor_volume_patch_op.html", "class_eigen_1_1_tensor_volume_patch_op" ],
-    [ "Eigen::TensorEvaluator< const TensorVolumePatchOp< Planes, Rows, Cols, ArgType >, Device >", "struct_eigen_1_1_tensor_evaluator_3_01const_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_7868d50e868058a145e213ecbb5a830e.html", "struct_eigen_1_1_tensor_evaluator_3_01const_01_tensor_volume_patch_op_3_01_planes_00_01_rows_00_7868d50e868058a145e213ecbb5a830e" ]
-];
