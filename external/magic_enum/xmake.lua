@@ -1,1 +1,0 @@
-table.insert(global_includedirs, "external/magic_enum/include")
