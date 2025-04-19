@@ -15,7 +15,6 @@ global_on_load = {}
 
 includes(
     "module/xmake.lua",
-    "platform/xmake.lua",
     "runtime/xmake.lua"
     )
 

@@ -1,0 +1,1 @@
+table.insert(global_includedirs, "runtime/magic_enum/include")

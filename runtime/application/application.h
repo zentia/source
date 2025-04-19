@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 
-#include "PlayerLoopController.h"
 #include "editor/input/editor_input_module.h"
 #include "editor/scene/editor_scene_manager.h"
 #include "module/asset/asset_module.h"
@@ -29,7 +28,6 @@ namespace source_runtime
         virtual void RequestLoadRenderDoc();
         virtual void SetSceneRepaintDirty() {}
         virtual void ForceRepaintNextFrame() {}
-        virtual bool IsPaused() const { return m_PlayerLoopController.IsPaused(); }
         std::shared_ptr<source_module::window::window_module>& get_window_system() { return m_window_module; }
         void update() const;
         void clear();
@@ -37,7 +35,6 @@ namespace source_runtime
 
         bool m_RecreateGfxDevice;
         bool m_LoadRenderDoc;
-        PlayerLoopController m_PlayerLoopController;
         std::shared_ptr<source_module::window::window_module> m_window_module;
         std::shared_ptr<source_runtime::config_module> m_config_module;
         std::shared_ptr<source_module::render::render_module> m_render_module;

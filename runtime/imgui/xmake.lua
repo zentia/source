@@ -1,5 +1,5 @@
 table.insert(global_includedirs, "runtime/imgui")
-table.insert(global_includedirs, "runtime/backends")
+table.insert(global_includedirs, "runtime/imgui/backends")
 
 table.insert(global_files, "runtime/imgui/imgui.cpp")
 table.insert(global_files, "runtime/imgui/imgui_draw.cpp")

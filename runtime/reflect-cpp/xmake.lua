@@ -1,0 +1,6 @@
+table.insert(global_includedirs, "runtime/reflect-cpp/include")
+table.insert(global_includedirs, "runtime/reflect-cpp/include/rfl")
+table.insert(global_includedirs, "runtime/reflect-cpp/include/rfl/thirdparty")
+table.insert(global_files, "runtime/reflect-cpp/src/rfl/json/*.cpp")
+table.insert(global_files, "runtime/reflect-cpp/src/reflectcpp.cpp")
+table.insert(global_files, "runtime/reflect-cpp/src/yyjson.c")

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <runtime/runtime/device.h>
-#include <runtime/core/dll_export.h>
 #include <runtime/core/basic_types.h>
 #include <runtime/core/stl/memory.h>
 #include <runtime/core/stl/string.h>
@@ -18,7 +17,7 @@ class Image;
 
 class Sampler;
 
-class LC_GUI_API ImGuiWindow {
+class ImGuiWindow {
 
 public:
     struct Config {
