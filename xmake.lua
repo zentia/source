@@ -74,8 +74,14 @@ target("source")
         "module/window/**.cpp",
         "module/world/**.cpp"
         )
-    add_files(table.unpack(global_files))
-
+    add_rules("c++.unity_build", {batchsize = 0})
+    for _, v in ipairs(global_files) do
+        if type(v) == "string" then 
+            add_files(v)
+        else 
+            add_files(v[1], {unity_group = v[2]})
+        end 
+    end
     add_headerfiles("configuration/**.h")
     if is_mode("debug") then
         add_cxflags("-DDEBUG")
@@ -98,7 +104,6 @@ target("source")
     add_deps(table.unpack(global_deps))
     add_defines(table.unpack(global_defines))
     add_rules("module")
-    -- add_rules("c++.unity_build", {batchsize = 2})
     on_load(function(target)
         import("runtime.backends.cuda.module")(target)
     end)

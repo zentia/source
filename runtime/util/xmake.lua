@@ -1,1 +1,1 @@
-table.insert(global_files, "runtime/util/*.cpp")
+table.insert(global_files, {"runtime/util/*.cpp", "util"})

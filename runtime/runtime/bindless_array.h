@@ -30,7 +30,7 @@ struct Expr;
 // BindlessArray is a heap that contain references to buffer, 2d-image and 3d-image
 // every element can contain one buffer, one 2d-image and one 3d-image's reference
 // see test_bindless.cpp as example
-class LC_RUNTIME_API BindlessArray final : public Resource {
+class BindlessArray final : public Resource {
 
 public:
     using Modification = BindlessArrayUpdateCommand::Modification;

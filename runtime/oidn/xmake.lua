@@ -1,7 +1,0 @@
-table.insert(global_includedirs, "runtime/oidn")
-table.insert(global_includedirs, "runtime/oidn/OpenImageDenoise")
-table.insert(global_defines, "OIDN_API=")
-table.insert(global_defines, "OIDN_API_NAMESPACE_BEGIN=namespace oidn {")
-table.insert(global_defines, "OIDN_API_NAMESPACE_END=}")
-table.insert(global_defines, "OIDN_NAMESPACE_BEGIN=namespace oidn {")
-table.insert(global_defines, "OIDN_NAMESPACE_END=}")

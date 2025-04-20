@@ -3,7 +3,7 @@
 
 #include "render_thread.h"
 #include "module/rhi/rhi_command_list.h"
-#include "runtime/utility/vector_extension.h"
+#include "runtime/util/vector_extension.h"
 
 namespace source_runtime::render_core
 {

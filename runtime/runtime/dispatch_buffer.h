@@ -20,7 +20,7 @@ namespace detail {
 class IndirectDispatchBufferExprProxy;
 }// namespace detail
 
-class LC_RUNTIME_API IndirectDispatchBuffer final : public Resource {
+class IndirectDispatchBuffer final : public Resource {
 
 private:
     size_t _capacity{};

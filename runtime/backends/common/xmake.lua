@@ -1,1 +1,1 @@
-table.insert(global_files, "runtime/backends/common/**.cpp")
+table.insert(global_files, {"runtime/backends/common/**.cpp", "common"})

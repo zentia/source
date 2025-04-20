@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "runtime/utility/vector_extension.h"
+#include "runtime/util/vector_extension.h"
 
 namespace source_module::rhi
 {

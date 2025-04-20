@@ -4,7 +4,7 @@
 #include "runtime/application/application.h"
 #include "runtime/memory/memory.h"
 #include "runtime/render_core/render_thread.h"
-#include "runtime/utility/enum_range.h"
+#include "runtime/util/enum_range.h"
 
 namespace source_module::rhi
 {

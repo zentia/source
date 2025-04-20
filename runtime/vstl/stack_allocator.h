@@ -57,7 +57,7 @@ public:
     uint64 allocate(uint64 size) override;
     void deallocate(uint64 handle) override;
 };
-class LC_VSTL_API VEngineMallocVisitor : public StackAllocatorVisitor {
+class VEngineMallocVisitor : public StackAllocatorVisitor {
 public:
     uint64 allocate(uint64 size) override;
     void deallocate(uint64 handle) override;

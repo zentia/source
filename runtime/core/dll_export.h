@@ -11,7 +11,7 @@
 #ifdef _MSC_VER
 #define LUISA_FORCE_INLINE inline
 #define LUISA_NEVER_INLINE __declspec(noinline)
-#define LUISA_EXPORT_API LUISA_EXTERN_C __declspec(dllexport)
+#define LUISA_EXPORT_API LUISA_EXTERN_C 
 #define LUISA_IMPORT_API LUISA_EXTERN_C __declspec(dllimport)
 #else
 #define LUISA_FORCE_INLINE __attribute__((always_inline, hot)) inline
@@ -23,7 +23,7 @@
 #ifdef _MSC_VER
 
 #ifdef LC_CORE_EXPORT_DLL
-#define LC_CORE_API __declspec(dllexport)
+#define LC_CORE_API 
 #else
 #define LC_CORE_API __declspec(dllimport)
 #endif
@@ -32,7 +32,7 @@
 #define LC_VSTL_API
 #else
 #ifdef LC_VSTL_EXPORT_DLL
-#define LC_VSTL_API __declspec(dllexport)
+#define LC_VSTL_API 
 #else
 #define LC_VSTL_API __declspec(dllimport)
 #endif
@@ -45,13 +45,13 @@
 #endif
 
 #ifdef LC_AST_EXPORT_DLL
-#define LC_AST_API __declspec(dllexport)
+#define LC_AST_API 
 #else
 #define LC_AST_API __declspec(dllimport)
 #endif
 
 #ifdef LC_RUNTIME_EXPORT_DLL
-#define LC_RUNTIME_API __declspec(dllexport)
+#define LC_RUNTIME_API 
 #else
 #define LC_RUNTIME_API __declspec(dllimport)
 #endif
@@ -60,7 +60,7 @@
 #define LC_DSL_API
 #else
 #ifdef LC_DSL_EXPORT_DLL
-#define LC_DSL_API __declspec(dllexport)
+#define LC_DSL_API 
 #else
 #define LC_DSL_API __declspec(dllimport)
 #endif

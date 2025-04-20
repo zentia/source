@@ -6,7 +6,7 @@
 
 #define HALF_NO_THROW
 #define HALF_ARITHMETIC_TYPE float
-#include <runtime/utility/half.hpp>
+#include <runtime/util/half.hpp>
 
 namespace luisa {
 

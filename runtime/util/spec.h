@@ -26,10 +26,10 @@ constexpr auto cie_sample_count = static_cast<uint>(
     visible_wavelength_max - visible_wavelength_min + 1.0f);
 static_assert(cie_sample_count == 471u);
 
-LUISA_IMPORT_API const std::array<float, cie_sample_count> cie_x_samples;
-LUISA_IMPORT_API const std::array<float, cie_sample_count> cie_y_samples;
-LUISA_IMPORT_API const std::array<float, cie_sample_count> cie_z_samples;
-LUISA_IMPORT_API const std::array<float, cie_sample_count> cie_d65_samples;
+extern const std::array<float, cie_sample_count> cie_x_samples;
+extern const std::array<float, cie_sample_count> cie_y_samples;
+extern const std::array<float, cie_sample_count> cie_z_samples;
+extern const std::array<float, cie_sample_count> cie_d65_samples;
 
 using compute::ArrayVar;
 using compute::BindlessArray;

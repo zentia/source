@@ -1,1 +1,1 @@
-table.insert(global_files, "module/asset/*.cpp")
+table.insert(global_files, {"module/asset/*.cpp", "asset"})
